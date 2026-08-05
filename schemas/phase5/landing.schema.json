@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/class-a-gpcr-atlas/schemas/phase5/landing.schema.json",
+  "title": "Landing payload",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "families",
+    "family_count"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "5.0.0"
+    },
+    "family_count": {
+      "type": "integer"
+    },
+    "taxonomy_source": {
+      "type": "string"
+    },
+    "families": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "major_family_id",
+          "family_slug",
+          "family_name",
+          "structure_count",
+          "receptor_count",
+          "analysis_unit_count",
+          "site_class_counts",
+          "warnings"
+        ],
+        "properties": {
+          "major_family_id": {
+            "type": "string"
+          },
+          "family_slug": {
+            "type": "string"
+          },
+          "family_name": {
+            "type": "string"
+          },
+          "structure_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "receptor_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "species_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "analysis_unit_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "coordinate_observed_ligand_observations": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "apo_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "site_class_counts": {
+            "type": "object"
+          },
+          "motif_coverage": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "generic_mapping_coverage": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "human_review_items": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "human_review_required": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "family_manifest_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "family_payload_url": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

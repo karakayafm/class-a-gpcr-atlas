@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/class-a-gpcr-atlas/schemas/structure_ligand_observation.schema.json",
+  "title": "Structure-ligand observation (Phase 2)",
+  "description": "The raw observation key of OD-12: structure x receptor instance x ligand entity. Pharmacology is kept in layers (OD-11) and is provisional in Phase 2 — no flattened agonist/antagonist field is authoritative, and no prevalence is computed.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "structure_ligand_id",
+    "pdb_id",
+    "receptor_instance_id",
+    "ligand_entity_id",
+    "provisional_pharmacology_annotations",
+    "source_conflicts",
+    "analysis_eligibility",
+    "provenance"
+  ],
+  "properties": {
+    "structure_ligand_id": {
+      "type": "string"
+    },
+    "pdb_id": {
+      "type": "string",
+      "pattern": "^[0-9A-Z]{4}$"
+    },
+    "receptor_instance_id": {
+      "type": "string"
+    },
+    "ligand_entity_id": {
+      "type": "string"
+    },
+    "site_occurrence": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "How many modelled instances of this entity are present. Instances are not different ligands."
+    },
+    "structural_state_annotation": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "structural_transducer_annotation": {
+      "type": [
+        "string",
+        "array",
+        "object",
+        "null"
+      ],
+      "description": "Structural observation only; never a pathway claim (SD-04)."
+    },
+    "provisional_pharmacology_annotations": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": [
+        "functional_pathway_evidence"
+      ],
+      "properties": {
+        "functional_pathway_evidence": {
+          "type": "null",
+          "description": "Out of Phase 2 scope. Must stay null; may never be inferred from the structural annotation."
+        }
+      },
+      "description": "Layered per OD-11: binding mode, efficacy at receptor, pathway-specific activity, allosteric modulation, database annotation, observed structural state, structural transducer and functional pathway evidence are separate fields and are not collapsed."
+    },
+    "source_conflicts": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "analysis_eligibility": {
+      "enum": [
+        "eligible",
+        "eligible_with_warning",
+        "excluded_environment",
+        "excluded_construct",
+        "excluded_non_pharmacological",
+        "unresolved_manual_review"
+      ]
+    },
+    "provenance": {
+      "type": "object",
+      "required": [
+        "source",
+        "source_field",
+        "rule_version",
+        "script"
+      ],
+      "additionalProperties": true,
+      "description": "Provenance for a derived field. A field whose source object was never loaded must say so with source_not_loaded / source_unavailable / source_field_absent; a silent null is a schema violation.",
+      "properties": {
+        "source": {
+          "type": "string"
+        },
+        "source_field": {
+          "type": "string"
+        },
+        "rule_version": {
+          "type": "string"
+        },
+        "script": {
+          "type": "string"
+        },
+        "parser_version": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

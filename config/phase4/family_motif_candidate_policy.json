@@ -1,0 +1,19 @@
+{
+  "policy": "family_specific_motifs",
+  "layers": {
+    "motifs.core.json": "active, production",
+    "motifs.family_candidates.json": "evaluation only, NEVER production",
+    "motifs.family.approved.json": "only motifs meeting every promotion requirement"
+  },
+  "promotion_requirements": [
+    "official or primary-literature support",
+    "generic-position definition",
+    "stated family applicability",
+    "measured receptor coverage",
+    "a measurable geometry or contact definition",
+    "an explicit limitation statement"
+  ],
+  "prohibition": "A family-specific motif may not be guessed into production in this phase. Candidate headings are evaluation topics, not a motif list.",
+  "core_vs_ligand_contact": "Core activation motifs and ligand-recognition positions are different concepts and are kept in different config layers. A position such as 3x32 may be a ligand-contact anchor in the Aminergic family without being a Class A core activation motif.",
+  "phase": 4
+}

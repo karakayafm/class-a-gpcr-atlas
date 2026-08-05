@@ -1,0 +1,35 @@
+name: 3D viewer problem
+description: The structure viewer fails, renders blank, or loses its context.
+labels: ["viewer"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Only NVIDIA hardware in Chromium and Firefox has been validated. Reports from AMD, Intel,
+        Apple Silicon, WebKit/Safari and mobile GPUs are especially useful.
+  - type: input
+    id: gpu
+    attributes: {label: GPU}
+    validations: {required: true}
+  - type: input
+    id: browser
+    attributes: {label: Browser and version}
+    validations: {required: true}
+  - type: input
+    id: renderer
+    attributes:
+      label: WebGL renderer
+      description: "From about:gpu, or webglreport.com — tells us whether hardware acceleration is active."
+  - type: input
+    id: pdb
+    attributes: {label: PDB identifier}
+    validations: {required: true}
+  - type: dropdown
+    id: symptom
+    attributes:
+      label: Symptom
+      options: ["Blank viewer", "Context lost", "Crash or freeze", "Wrong rendering", "Other"]
+    validations: {required: true}
+  - type: textarea
+    id: screenshot
+    attributes: {label: Screenshot}

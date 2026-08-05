@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/class-a-gpcr-atlas/schemas/family_manifest.schema.json",
+  "title": "Class A family manifest",
+  "description": "The authoritative list of Class A families with their counts. The number of families is a datum, not an assumption: any downstream file disagreeing with this manifest is wrong.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema",
+    "schema_version",
+    "parser_version",
+    "counts",
+    "families"
+  ],
+  "properties": {
+    "schema": {
+      "type": "string"
+    },
+    "schema_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "parser_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Volatile: excluded from content_sha256."
+    },
+    "counts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "families": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": [
+          "source_id",
+          "name"
+        ],
+        "properties": {
+          "source_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "project_slug": {
+            "type": "string",
+            "pattern": "^ca-"
+          },
+          "n_receptor_families": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "n_receptor_records": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "n_human_receptors": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    }
+  }
+}

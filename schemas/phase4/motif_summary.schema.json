@@ -1,0 +1,131 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/class-a-gpcr-atlas/schemas/phase4/motif_summary.schema.json",
+  "title": "Motif summary",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "group_key",
+    "motif_id",
+    "expected_structures",
+    "mapped_structures",
+    "observed_structures"
+  ],
+  "properties": {
+    "group_key": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "motif_id": {
+      "type": "string"
+    },
+    "generic_positions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "expected_structures": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "mapped_structures": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "observed_structures": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "canonical_identity_count": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "noncanonical_identity_count": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "mutation_count": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "coordinate_missing_count": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "generic_mapping_unresolved_count": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "metric_count": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "median": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "iqr": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "range": {
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "state_stratified": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "transducer_stratified": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "site_class_stratified": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "coverage": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "association_only": {
+      "const": true,
+      "description": "differences are reported as associations; no causal claim is made"
+    }
+  }
+}

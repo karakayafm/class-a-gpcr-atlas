@@ -1,0 +1,231 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/class-a-gpcr-atlas/schemas/structure.schema.json",
+  "title": "Structure record",
+  "description": "One deposited structure, joined from GPCRdb and RCSB. The two sources are never merged into a single field: where they disagree, both are kept and the record is flagged.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "pdb_id",
+    "receptor_entry",
+    "major_family_id",
+    "qc_flags",
+    "source_urls",
+    "inventory_availability",
+    "unresolved"
+  ],
+  "properties": {
+    "pdb_id": {
+      "type": "string",
+      "pattern": "^[0-9A-Z]{4}$"
+    },
+    "gpcrdb_structure_record": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "The GPCRdb record verbatim, including its raw ligand and signalling protein annotations. Raw means raw: not normalised in Phase 1."
+    },
+    "receptor_entry": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "receptor_display_name": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "gene_symbol": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "receptor_family_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "receptor_family_name": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "major_family_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "major_family_name": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "species": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "receptor_chain": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "GPCRdb preferred chain; not re-derived here."
+    },
+    "chain_candidates": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "experimental_method": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Full wwPDB controlled vocabulary from exptl[].method."
+    },
+    "experimental_method_abbrev": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "RCSB abbreviation ('EM', 'X-ray'). Kept because it is a different vocabulary, not a synonym."
+    },
+    "experimental_methods_all": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "nominal_resolution": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "description": "As reported. No cutoff is applied in Phase 1."
+    },
+    "deposition_date": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "release_date": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "primary_citation_available": {
+      "type": "boolean"
+    },
+    "transducer_observed_in_structure_raw": {
+      "type": [
+        "string",
+        "array",
+        "object",
+        "null"
+      ],
+      "description": "The GPCRdb signalling-protein annotation verbatim. For complexes it is an object keyed by entity, e.g. {'data': {'entity1': {'chain': 'D', 'entry_name': 'gnas2_human'}}, 'type': 'G protein'}. It is a structural observation, NOT a pathway claim, and is left un-normalised in Phase 1 (config/transducer_classes.json: normalised_in_phase_1 = false)."
+    },
+    "functional_pathway_evidence": {
+      "type": "null",
+      "description": "Reserved. Functional evidence is out of Phase 1 scope and must stay null; it may never be inferred from the structural annotation."
+    },
+    "inventory_availability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "polymer_entity_ids",
+        "non_polymer_entity_ids",
+        "branched_entity_ids",
+        "n_polymer_entities",
+        "n_non_polymer_entities",
+        "n_branched_entities"
+      ],
+      "properties": {
+        "polymer_entity_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "non_polymer_entity_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "branched_entity_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "n_polymer_entities": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "n_non_polymer_entities": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "n_branched_entities": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "construct_metadata_available": {
+      "type": "boolean"
+    },
+    "pdb_status": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "wwPDB status code, e.g. REL, OBS, WDRN."
+    },
+    "replacement_pdb_ids": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "string",
+        "pattern": "^[0-9A-Z]{4}$"
+      },
+      "description": "Populated only when the entry is superseded."
+    },
+    "source_urls": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "required": [
+        "gpcrdb",
+        "rcsb"
+      ]
+    },
+    "qc_flags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "description": "Values must exist in config/qc_flags.json. A flag describes a record; it never removes it from the raw universe."
+    },
+    "unresolved": {
+      "type": "boolean",
+      "description": "True when a join could not be completed. Still part of the universe."
+    }
+  }
+}

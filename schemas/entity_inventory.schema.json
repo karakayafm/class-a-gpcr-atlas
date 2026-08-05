@@ -1,0 +1,219 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/class-a-gpcr-atlas/schemas/entity_inventory.schema.json",
+  "title": "Entity inventory (Phase 2)",
+  "description": "Every modelled entity in the deposition. Nothing is dropped for being common, small or uninteresting: an entity enters the inventory first and is excluded by role afterwards. Water is the sole exception and is summarised at structure level rather than inventoried per molecule.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "entity_inventory_id",
+    "pdb_id",
+    "entity_form",
+    "biological_type",
+    "covalent_connection_status",
+    "source_identifiers",
+    "inventory_provenance",
+    "role_basis",
+    "role_evidence",
+    "final_role"
+  ],
+  "properties": {
+    "entity_inventory_id": {
+      "type": "string",
+      "description": "Deterministic key. Non-polymer: PDB:EI:np:comp:auth_chain:auth_seq:icode. Polymer: PDB:EI:poly:entity_id."
+    },
+    "pdb_id": {
+      "type": "string",
+      "pattern": "^[0-9A-Z]{4}$"
+    },
+    "entity_form": {
+      "enum": [
+        "nonpolymer_residue",
+        "nonpolymer_entity",
+        "polymer_chain",
+        "polymer_segment",
+        "receptor_segment",
+        "covalent_adduct",
+        "none",
+        "unresolved"
+      ]
+    },
+    "biological_type": {
+      "enum": [
+        "small_molecule",
+        "peptide",
+        "protein",
+        "lipid",
+        "nucleotide_or_nucleoside",
+        "retinal_or_chromophore",
+        "ion",
+        "carbohydrate",
+        "amino_acid_or_short_fragment",
+        "other",
+        "unknown"
+      ]
+    },
+    "polymer_entity_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "nonpolymer_comp_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "auth_asym_ids": {
+      "type": "array",
+      "items": {
+        "type": [
+          "string",
+          "null"
+        ]
+      }
+    },
+    "label_asym_ids": {
+      "type": "array",
+      "items": {
+        "type": [
+          "string",
+          "null"
+        ]
+      }
+    },
+    "auth_seq_id": {
+      "type": [
+        "integer",
+        "string",
+        "null"
+      ]
+    },
+    "insertion_code": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "sequence_range": {
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "sequence_length": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "entity_description": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "chemical_name": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "molecular_weight": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "formula": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "ccd_type": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "covalent_connection_status": {
+      "enum": [
+        "covalent",
+        "metal_coordination",
+        "none",
+        "unknown",
+        "not_applicable_polymer",
+        "not_applicable_branched"
+      ],
+      "description": "Metal coordination is NOT a covalent bond and never satisfies a covalent rule."
+    },
+    "covalent_annotation_types": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "source_identifiers": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "provisional_polymer_role": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Chain role from identity evidence alone (accession or description)."
+    },
+    "provisional_component_role": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Component role from chemical class alone. Never a ligand selection."
+    },
+    "final_role": {
+      "type": "string",
+      "description": "Identity evidence combined with any per-structure source ligand annotation."
+    },
+    "final_role_basis": {
+      "type": "string"
+    },
+    "role_basis": {
+      "type": "string"
+    },
+    "role_evidence": {
+      "type": "string",
+      "minLength": 1
+    },
+    "inventory_provenance": {
+      "type": "object",
+      "required": [
+        "source",
+        "source_field",
+        "rule_version",
+        "script"
+      ],
+      "additionalProperties": true,
+      "description": "Provenance for a derived field. A field whose source object was never loaded must say so with source_not_loaded / source_unavailable / source_field_absent; a silent null is a schema violation.",
+      "properties": {
+        "source": {
+          "type": "string"
+        },
+        "source_field": {
+          "type": "string"
+        },
+        "rule_version": {
+          "type": "string"
+        },
+        "script": {
+          "type": "string"
+        },
+        "parser_version": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

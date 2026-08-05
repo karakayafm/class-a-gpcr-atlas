@@ -1,0 +1,33 @@
+{
+  "policy": "production_contact_eligibility",
+  "requirements": [
+    "receptor instance mapping exact or approved",
+    "ligand entity approved",
+    "coordinate file available",
+    "coordinate context resolved",
+    "receptor coordinate chain resolved",
+    "ligand coordinate entity/chain/residue resolved",
+    "binding_site_class resolved",
+    "analysis_eligibility eligible or eligible_with_warning",
+    "entity is not environment or construct",
+    "no source conflict that breaks production identity"
+  ],
+  "statuses": [
+    "production_contact_eligible",
+    "raw_geometry_only",
+    "excluded_confirmed_apo",
+    "excluded_environment_entity",
+    "excluded_construct_component",
+    "excluded_receptor_mapping_unresolved",
+    "excluded_ligand_identity_unresolved",
+    "excluded_coordinate_unavailable",
+    "excluded_coordinate_context_unresolved",
+    "excluded_site_class_unresolved",
+    "excluded_source_conflict",
+    "excluded_other_with_reason"
+  ],
+  "generic_aggregate_rule": "A contacted residue that lies in a generic-numberable segment but carries no generic number makes the observation ineligible for generic aggregation. Raw author-numbered contacts are still retained. No percentage threshold is used to hide mapping gaps.",
+  "annotated_not_observed": "Where a source annotates a ligand that is absent from the coordinates, the annotation is retained, no contact observation is produced, and the status is annotated_not_observed.",
+  "no_silent_loss": "every observation receives exactly one status and every exclusion is counted and reported per PDB",
+  "phase": 3
+}

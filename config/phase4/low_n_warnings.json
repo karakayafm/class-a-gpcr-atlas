@@ -1,0 +1,29 @@
+{
+  "thresholds": {
+    "low_structure_count": 5,
+    "low_analysis_unit_count": 3,
+    "low_receptor_count": 2,
+    "single_receptor_dominance_fraction": 0.7,
+    "single_ligand_dominance_fraction": 0.7,
+    "single_species_dominance_fraction": 0.9,
+    "mapping_coverage_warning_below": 0.8,
+    "state_coverage_warning_below": 0.5,
+    "mutation_burden_warning_above": 0.25,
+    "structure_replication_imbalance_ratio": 10
+  },
+  "rule": "a low-N group is never hidden; it is shown with warnings",
+  "warning_ids": [
+    "low_structure_count",
+    "low_analysis_unit_count",
+    "low_receptor_count",
+    "single_receptor_dominated",
+    "single_ligand_dominated",
+    "single_species_dominated",
+    "mapping_coverage_warning",
+    "state_coverage_warning",
+    "mutation_burden_warning",
+    "structure_replication_imbalance"
+  ],
+  "sensitivity_note": "threshold sensitivity is reported so the choices above are auditable",
+  "phase": 4
+}

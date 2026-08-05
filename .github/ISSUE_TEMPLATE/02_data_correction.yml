@@ -1,0 +1,36 @@
+name: Scientific data correction
+description: A contact, ligand, site class, mapping or annotation looks wrong.
+labels: ["data-correction"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        These are the most valuable reports this project can receive. The atlas is a pre-release
+        beta and **189 review items still await human decision**; its scientific claims have not
+        been curated by a person.
+  - type: input
+    id: pdb
+    attributes: {label: PDB identifier}
+    validations: {required: true}
+  - type: input
+    id: receptor
+    attributes: {label: Receptor, placeholder: "UniProt accession or entry name"}
+  - type: input
+    id: ligand
+    attributes: {label: Ligand, placeholder: "chemical component id or chain"}
+  - type: input
+    id: field
+    attributes: {label: Disputed field, placeholder: "binding_site_class / contact_fraction_5A / generic position"}
+    validations: {required: true}
+  - type: textarea
+    id: proposed
+    attributes: {label: Proposed correction}
+    validations: {required: true}
+  - type: input
+    id: source
+    attributes: {label: Source DOI or database record}
+    validations: {required: true}
+  - type: textarea
+    id: evidence
+    attributes: {label: Evidence, description: What in that source establishes the correction?}
+    validations: {required: true}

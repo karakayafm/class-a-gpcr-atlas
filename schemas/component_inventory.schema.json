@@ -1,0 +1,180 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/class-a-gpcr-atlas/schemas/component_inventory.schema.json",
+  "title": "Component inventory",
+  "description": "Raw entity inventory. Two levels: 'global_availability' records only whether entity identifiers are retrievable; 'full_inventory' records every entity. Neither level selects a ligand or assigns pharmacology.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema",
+    "schema_version",
+    "parser_version",
+    "level",
+    "counts",
+    "structures"
+  ],
+  "properties": {
+    "schema": {
+      "type": "string"
+    },
+    "schema_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "parser_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Volatile: excluded from content_sha256."
+    },
+    "level": {
+      "enum": [
+        "global_availability",
+        "full_inventory"
+      ]
+    },
+    "family_source_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "counts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "structures": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": [
+          "pdb_id"
+        ],
+        "properties": {
+          "pdb_id": {
+            "type": "string",
+            "pattern": "^[0-9A-Z]{4}$"
+          },
+          "primary_ligand_id": {
+            "type": "null",
+            "description": "Reserved for Phase 2. Selecting a primary ligand is a scientific decision and is prohibited in Phase 1."
+          },
+          "entities": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true,
+              "required": [
+                "entity_kind",
+                "entity_id",
+                "entity_type_id",
+                "qc_flags",
+                "source_url"
+              ],
+              "properties": {
+                "entity_kind": {
+                  "enum": [
+                    "polymer",
+                    "nonpolymer",
+                    "branched"
+                  ]
+                },
+                "entity_id": {
+                  "type": "string"
+                },
+                "entity_type_id": {
+                  "type": "string",
+                  "description": "Must exist in config/entity_types.json."
+                },
+                "description": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "chem_comp_id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "formula_weight": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "sequence_length": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "polymer_type": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "auth_asym_ids": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "asym_ids": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "uniprot_ids": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "copies": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "component_category": {
+                  "type": "null",
+                  "description": "config/entity_types.json component categories are marked production_ready:false; assignment is deferred."
+                },
+                "binding_site_type": {
+                  "type": "null",
+                  "description": "config/binding_site_types.json: assigned_in_phase_1 = false."
+                },
+                "transducer_class": {
+                  "type": "null",
+                  "description": "config/transducer_classes.json: normalised_in_phase_1 = false."
+                },
+                "qc_flags": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "minItems": 1,
+                  "description": "Values must exist in config/qc_flags.json. A flag describes a record; it never removes it from the raw universe."
+                },
+                "source_url": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

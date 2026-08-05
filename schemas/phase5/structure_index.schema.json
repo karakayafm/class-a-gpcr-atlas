@@ -1,0 +1,157 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/class-a-gpcr-atlas/schemas/phase5/structure_index.schema.json",
+  "title": "Structure index",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "family_id",
+    "count",
+    "structures"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "5.0.0"
+    },
+    "family_id": {
+      "type": "string"
+    },
+    "count": {
+      "type": "integer"
+    },
+    "structures": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "pdb_id",
+          "species",
+          "apo_status",
+          "observations",
+          "observation_count"
+        ],
+        "properties": {
+          "pdb_id": {
+            "type": "string",
+            "pattern": "^[0-9A-Z]{4}$"
+          },
+          "receptor_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "receptor_entry_name": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "species": {
+            "type": "string"
+          },
+          "experimental_method": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "resolution": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "structural_state": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "apo_status": {
+            "type": "string"
+          },
+          "ligand_status": {
+            "type": "string"
+          },
+          "generic_mapping_status": {
+            "enum": [
+              "validated",
+              "unresolved"
+            ]
+          },
+          "assembly_review_status": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "human_review_items": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "observation_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "observations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "observation_id",
+                "ligand_role",
+                "entity_form",
+                "binding_site_class",
+                "coordinate_status"
+              ],
+              "properties": {
+                "observation_id": {
+                  "type": "string"
+                },
+                "ligand_name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "ligand_role": {
+                  "type": "string"
+                },
+                "entity_form": {
+                  "type": "string"
+                },
+                "binding_site_class": {
+                  "enum": [
+                    "canonical_7tm_pocket",
+                    "extended_orthosteric_pocket",
+                    "extracellular_polymer_interface",
+                    "intracellular_allosteric_pocket",
+                    "extracellular_allosteric_pocket",
+                    "lipid_facing_site",
+                    "covalent_core_site",
+                    "tethered_ligand_interface",
+                    "bitopic_or_multi_region_site",
+                    "other_site",
+                    "unresolved"
+                  ]
+                },
+                "coordinate_status": {
+                  "enum": [
+                    "observed",
+                    "annotated_not_observed",
+                    "no_coordinate_observation"
+                  ]
+                },
+                "is_polymer_interface": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

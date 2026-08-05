@@ -1,0 +1,145 @@
+{
+  "policy": "motif_geometry",
+  "atom_selection_note": "Every metric names its atom-selection rule and its fallback. A primary metric and its fallback are stored in separate fields and are never mixed into one number.",
+  "interpretation_limit": "Distances and dihedrals are descriptive geometry of static experimental structures. They do not establish state, efficacy or causation.",
+  "distance_metrics": [
+    {
+      "name": "d_3x50_6x30",
+      "generic_positions": [
+        "3x50",
+        "6x30"
+      ],
+      "atom_selection": "side-chain functional atom (Arg NH1/NH2/NE, Glu OE1/OE2, Asp OD1/OD2), minimum over the pair",
+      "fallback": "minimum heavy-atom distance",
+      "unit": "angstrom",
+      "interpretation_limit": "an ionic-lock distance is not a state label"
+    },
+    {
+      "name": "d_3x50_6x34",
+      "generic_positions": [
+        "3x50",
+        "6x34"
+      ],
+      "atom_selection": "side-chain functional atom",
+      "fallback": "minimum heavy-atom distance",
+      "unit": "angstrom",
+      "interpretation_limit": "descriptive only"
+    },
+    {
+      "name": "d_5x58_7x53",
+      "generic_positions": [
+        "5x58",
+        "7x53"
+      ],
+      "atom_selection": "side-chain hydroxyl oxygen (Tyr OH) where present",
+      "fallback": "minimum heavy-atom distance",
+      "unit": "angstrom",
+      "interpretation_limit": "descriptive only"
+    },
+    {
+      "name": "d_3x40_5x50",
+      "generic_positions": [
+        "3x40",
+        "5x50"
+      ],
+      "atom_selection": "side-chain centroid",
+      "fallback": "minimum heavy-atom distance",
+      "unit": "angstrom",
+      "interpretation_limit": "connector packing, descriptive only"
+    },
+    {
+      "name": "d_3x40_6x44",
+      "generic_positions": [
+        "3x40",
+        "6x44"
+      ],
+      "atom_selection": "side-chain centroid",
+      "fallback": "minimum heavy-atom distance",
+      "unit": "angstrom",
+      "interpretation_limit": "descriptive only"
+    },
+    {
+      "name": "d_5x50_6x44",
+      "generic_positions": [
+        "5x50",
+        "6x44"
+      ],
+      "atom_selection": "side-chain centroid",
+      "fallback": "minimum heavy-atom distance",
+      "unit": "angstrom",
+      "interpretation_limit": "descriptive only"
+    },
+    {
+      "name": "d_2x50_3x39",
+      "generic_positions": [
+        "2x50",
+        "3x39"
+      ],
+      "atom_selection": "side-chain functional atom (Asp OD1/OD2, Ser OG, Thr OG1)",
+      "fallback": "minimum heavy-atom distance",
+      "unit": "angstrom",
+      "interpretation_limit": "sodium-pocket geometry; sodium presence is a separate field"
+    },
+    {
+      "name": "d_2x50_7x49",
+      "generic_positions": [
+        "2x50",
+        "7x49"
+      ],
+      "atom_selection": "side-chain functional atom",
+      "fallback": "minimum heavy-atom distance",
+      "unit": "angstrom",
+      "interpretation_limit": "descriptive only"
+    },
+    {
+      "name": "d_7x49_7x53",
+      "generic_positions": [
+        "7x49",
+        "7x53"
+      ],
+      "atom_selection": "side-chain functional atom",
+      "fallback": "minimum heavy-atom distance",
+      "unit": "angstrom",
+      "interpretation_limit": "descriptive only"
+    }
+  ],
+  "dihedral_metrics": {
+    "angles": [
+      "chi1",
+      "chi2"
+    ],
+    "positions": [
+      "6x48",
+      "3x50",
+      "7x53",
+      "5x58",
+      "3x40",
+      "6x44"
+    ],
+    "atom_rules": {
+      "chi1": "N-CA-CB-<first side-chain gamma atom>",
+      "chi2": "CA-CB-<gamma>-<delta>"
+    },
+    "unsupported_residue": "not_applicable",
+    "missing_atoms": "coordinate_incomplete",
+    "unit": "degrees"
+  },
+  "covalent_geometry": {
+    "fields": [
+      "bonded_receptor_residue",
+      "ligand_atom",
+      "linkage_distance",
+      "linkage_type"
+    ],
+    "note": "kept separate from motif distances"
+  },
+  "sodium_environment": {
+    "values": [
+      "observed_sodium",
+      "absent_sodium",
+      "unresolved_ion_identity"
+    ],
+    "rule": "Motif residue geometry is computed whether or not sodium is modelled. Absence of sodium is NOT absence of the motif."
+  },
+  "phase": 4
+}

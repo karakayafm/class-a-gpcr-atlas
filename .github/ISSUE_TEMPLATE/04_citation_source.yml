@@ -1,0 +1,18 @@
+name: Citation or source problem
+description: A source link is broken, or a record cites the wrong thing.
+labels: ["source"]
+body:
+  - type: input
+    id: record
+    attributes: {label: Affected record, placeholder: "PDB id, family, or page"}
+    validations: {required: true}
+  - type: input
+    id: broken
+    attributes: {label: Broken or incorrect source link}
+    validations: {required: true}
+  - type: input
+    id: proposed
+    attributes: {label: Proposed persistent identifier, placeholder: "DOI preferred"}
+  - type: textarea
+    id: detail
+    attributes: {label: Detail}

@@ -1,0 +1,11 @@
+{
+  "transducer_classes": [
+    "Gs", "Gi/o", "Gq/11", "G12/13", "arrestin",
+    "other_g_protein", "multiple", "transducer_free", "unknown"
+  ],
+  "normalisation_status": {
+    "normalised_in_phase_1": false,
+    "note": "Phase 1 stores the raw GPCRdb signalling_protein annotation verbatim in raw_transducer_annotation. Mapping to these classes is a Phase 2+ step driven by this configurable vocabulary, never by hardcoded panels."
+  },
+  "separation_rule": "transducer_observed_in_structure and functional_pathway_evidence are separate fields and must never be merged."
+}

@@ -1,0 +1,129 @@
+{
+  "vocabulary": "biological_type",
+  "description": "What the entity is chemically or biologically. Derived from source chemistry, not from role.",
+  "biological_types": [
+    {
+      "id": "small_molecule",
+      "definition": "A non-polymer organic compound that is not primarily a lipid, ion, nucleotide or chromophore.",
+      "inclusion_rule": "Non-polymer with heavy-atom count above the ion threshold and a CCD type of NON-POLYMER or similar.",
+      "exclusion_rule": "Excluded when the component is on the curated lipid, detergent, buffer or cryoprotectant list.",
+      "decision_logic": "Chemical class from the PDB Chemical Component Dictionary; never inferred from how often the component appears.",
+      "permitted_transitions": [
+        "lipid",
+        "other"
+      ],
+      "phase_introduced": 2
+    },
+    {
+      "id": "peptide",
+      "definition": "A short polymer of amino acids, whether modelled as its own chain or as a non-polymer.",
+      "inclusion_rule": "Polymer entity of protein type below the peptide length threshold, or a source annotation of type 'peptide'.",
+      "exclusion_rule": "Not applied to a receptor chain or to a folded protein partner.",
+      "decision_logic": "Length is used only to separate peptide from protein, never to decide whether the chain is a ligand.",
+      "permitted_transitions": [
+        "protein"
+      ],
+      "phase_introduced": 2
+    },
+    {
+      "id": "protein",
+      "definition": "A folded protein polymer.",
+      "inclusion_rule": "Polymer entity of protein type at or above the peptide length threshold.",
+      "exclusion_rule": "Not applied to short peptide ligands.",
+      "decision_logic": "As above.",
+      "permitted_transitions": [
+        "peptide"
+      ],
+      "phase_introduced": 2
+    },
+    {
+      "id": "lipid",
+      "definition": "A membrane lipid, sterol or lipidic mesophase component.",
+      "inclusion_rule": "Component present on the curated lipid/sterol list, sourced from the CCD.",
+      "exclusion_rule": "A lipid that a source explicitly annotates as the structure's pharmacological ligand keeps this biological type but takes a pharmacological ligand_role.",
+      "decision_logic": "Biological type and role are independent axes: cholesterol is a lipid whether or not it is the ligand.",
+      "permitted_transitions": [
+        "small_molecule"
+      ],
+      "phase_introduced": 2
+    },
+    {
+      "id": "nucleotide_or_nucleoside",
+      "definition": "A nucleotide, nucleoside or close analogue.",
+      "inclusion_rule": "CCD parent or curated list membership.",
+      "exclusion_rule": "Not applied to nucleic-acid polymers, which are polymer chains.",
+      "decision_logic": "Relevant because in the Nucleotide family these are genuine ligands and in G-protein complexes (GDP, GTP analogues) they are cofactors of the transducer.",
+      "permitted_transitions": [
+        "small_molecule"
+      ],
+      "phase_introduced": 2
+    },
+    {
+      "id": "retinal_or_chromophore",
+      "definition": "Retinal or another covalently attached chromophore.",
+      "inclusion_rule": "Curated chromophore list membership.",
+      "exclusion_rule": "—",
+      "decision_logic": "Separated from small_molecule because opsin chromophores are covalent and their pharmacology is a distinct question.",
+      "permitted_transitions": [],
+      "phase_introduced": 2
+    },
+    {
+      "id": "ion",
+      "definition": "A monatomic or simple inorganic ion.",
+      "inclusion_rule": "Curated ion list membership, or a CCD formula of a single element with a formal charge.",
+      "exclusion_rule": "—",
+      "decision_logic": "Per OD-08 an ion is environment by default, including sodium in the 2x50 pocket.",
+      "permitted_transitions": [],
+      "phase_introduced": 2
+    },
+    {
+      "id": "carbohydrate",
+      "definition": "A sugar or oligosaccharide, typically a glycan.",
+      "inclusion_rule": "Branched entity, or curated saccharide list membership.",
+      "exclusion_rule": "—",
+      "decision_logic": "Branched entities are carbohydrate by construction in this dataset.",
+      "permitted_transitions": [],
+      "phase_introduced": 2
+    },
+    {
+      "id": "amino_acid_or_short_fragment",
+      "definition": "A free amino acid or a fragment of two or three residues modelled as a non-polymer.",
+      "inclusion_rule": "CCD parent is a standard amino acid, or curated list membership.",
+      "exclusion_rule": "—",
+      "decision_logic": "Kept distinct because a free amino acid can be a genuine ligand (e.g. at some sensory receptors) or a crystallisation additive.",
+      "permitted_transitions": [
+        "small_molecule",
+        "peptide"
+      ],
+      "phase_introduced": 2
+    },
+    {
+      "id": "other",
+      "definition": "A chemically identified entity that fits none of the above.",
+      "inclusion_rule": "Chemistry is known but outside the listed classes.",
+      "exclusion_rule": "Not a synonym for unknown.",
+      "decision_logic": "—",
+      "permitted_transitions": [],
+      "phase_introduced": 2
+    },
+    {
+      "id": "unknown",
+      "definition": "Chemistry could not be determined from available sources.",
+      "inclusion_rule": "CCD record missing or uninformative.",
+      "exclusion_rule": "—",
+      "decision_logic": "Routed to manual review.",
+      "permitted_transitions": [
+        "small_molecule",
+        "lipid",
+        "ion",
+        "other"
+      ],
+      "phase_introduced": 2
+    }
+  ],
+  "vocabulary_status": {
+    "closed": true,
+    "policy": "A value outside this file may not appear in any Phase 2 artefact. The test suite fails on an unknown value rather than accepting it. Adding a value requires an entry in governance/DECISION_LOG.md.",
+    "phase": 2
+  }
+}

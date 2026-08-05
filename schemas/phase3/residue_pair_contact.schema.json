@@ -1,0 +1,175 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/class-a-gpcr-atlas/schemas/phase3/residue_pair_contact.schema.json",
+  "title": "Residue-pair contact",
+  "type": "object",
+  "additionalProperties": true,
+  "description": "One receptor residue against one ligand residue. Polymer ligands keep residue-level identity and are never reduced to a chain-level bag of atoms.",
+  "required": [
+    "contact_id",
+    "structure_ligand_id",
+    "pdb_id",
+    "binding_site_class",
+    "coordinate_context",
+    "receptor_auth_asym_id",
+    "receptor_auth_seq_id",
+    "receptor_residue_name",
+    "ligand_auth_asym_id",
+    "ligand_residue_name",
+    "min_distance_angstrom",
+    "within_4A",
+    "within_4_5A",
+    "within_5A",
+    "provenance"
+  ],
+  "properties": {
+    "contact_id": {
+      "type": "string"
+    },
+    "structure_ligand_id": {
+      "type": "string"
+    },
+    "pdb_id": {
+      "type": "string",
+      "pattern": "^[0-9A-Z]{4}$"
+    },
+    "major_family_id": {
+      "type": "string"
+    },
+    "receptor_instance_id": {
+      "type": "string"
+    },
+    "ligand_entity_id": {
+      "type": "string"
+    },
+    "binding_site_class": {
+      "enum": [
+        "canonical_7tm_pocket",
+        "extended_orthosteric_pocket",
+        "extracellular_polymer_interface",
+        "intracellular_allosteric_pocket",
+        "extracellular_allosteric_pocket",
+        "lipid_facing_site",
+        "covalent_core_site",
+        "tethered_ligand_interface",
+        "bitopic_or_multi_region_site",
+        "other_site",
+        "unresolved"
+      ]
+    },
+    "coordinate_context": {
+      "enum": [
+        "deposited_asymmetric_unit",
+        "author_defined_biological_assembly",
+        "preferred_biological_assembly",
+        "nmr_ensemble",
+        "unresolved_coordinate_context"
+      ]
+    },
+    "assembly_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "model_id": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "receptor_auth_asym_id": {
+      "type": "string"
+    },
+    "receptor_auth_seq_id": {
+      "type": "string"
+    },
+    "receptor_insertion_code": {
+      "type": "string"
+    },
+    "receptor_residue_name": {
+      "type": "string"
+    },
+    "receptor_uniprot_position": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "receptor_generic_number": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "receptor_segment": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "receptor_mapping_status": {
+      "enum": [
+        "mapped_generic",
+        "mapped_sequence_only",
+        "non_generic_numberable_region",
+        "expected_generic_but_unmapped",
+        "construct_or_fusion_region",
+        "unresolved"
+      ]
+    },
+    "receptor_mutation_flag": {
+      "type": "boolean"
+    },
+    "ligand_entity_form": {
+      "type": "string"
+    },
+    "ligand_auth_asym_id": {
+      "type": "string"
+    },
+    "ligand_auth_seq_id": {
+      "type": "string"
+    },
+    "ligand_insertion_code": {
+      "type": "string"
+    },
+    "ligand_residue_name": {
+      "type": "string"
+    },
+    "min_distance_angstrom": {
+      "type": "number",
+      "minimum": 0,
+      "description": "exact minimum heavy-atom Euclidean distance; thresholds are derived from it"
+    },
+    "within_4A": {
+      "type": "boolean"
+    },
+    "within_4_5A": {
+      "type": "boolean"
+    },
+    "within_5A": {
+      "type": "boolean"
+    },
+    "closest_receptor_atom": {
+      "type": "string"
+    },
+    "closest_ligand_atom": {
+      "type": "string"
+    },
+    "covalent_connection": {
+      "type": "boolean",
+      "description": "a separate relationship; never a substitute for the distance cutoff"
+    },
+    "altloc_policy_result": {
+      "type": "string"
+    },
+    "provenance": {
+      "type": "object",
+      "required": [
+        "source",
+        "parser_version",
+        "rule_version"
+      ]
+    }
+  }
+}

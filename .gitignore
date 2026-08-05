@@ -1,0 +1,23 @@
+# Caches and build residue
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+node_modules/
+
+# Local artefacts that must never be published
+*.part
+*.tmp
+*.log
+.env
+.DS_Store
+
+# Working data that is not part of the publication package
+data/cache/
+data/raw/
+releases/
+reports/
+curation/packets/
+drafts/
+tests/
+_checksums_*.sha256

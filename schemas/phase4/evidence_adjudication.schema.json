@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/class-a-gpcr-atlas/schemas/phase4/evidence_adjudication.schema.json",
+  "title": "Evidence adjudication",
+  "description": "Adjudication performed from sources by the pipeline. It is NOT human curation: the human_* fields are separate and must stay null until a person decides.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "review_item_id",
+    "pdb_id",
+    "evidence_adjudication",
+    "adjudication_basis",
+    "adjudication_confidence",
+    "evidence_resolved_status",
+    "human_curator_decision",
+    "human_review_status"
+  ],
+  "properties": {
+    "review_item_id": {
+      "type": "string"
+    },
+    "pdb_id": {
+      "type": "string"
+    },
+    "issue_types": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "automated_proposal": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "evidence_adjudication": {
+      "enum": [
+        "evidence_resolved_include",
+        "evidence_resolved_exclude",
+        "evidence_resolved_metadata_only",
+        "evidence_resolved_annotated_not_observed",
+        "evidence_insufficient_human_review_required",
+        "source_conflict_unresolved",
+        "not_applicable"
+      ]
+    },
+    "adjudication_basis": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "adjudication_sources": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "adjudication_confidence": {
+      "enum": [
+        "high",
+        "medium",
+        "low"
+      ]
+    },
+    "evidence_resolved_status": {
+      "enum": [
+        "evidence_resolved_include",
+        "evidence_resolved_exclude",
+        "evidence_resolved_metadata_only",
+        "evidence_resolved_annotated_not_observed",
+        "evidence_insufficient_human_review_required",
+        "source_conflict_unresolved",
+        "not_applicable"
+      ]
+    },
+    "current_eligibility": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "human_curator_decision": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "human_curator_identity": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "human_review_date": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "human_review_status": {
+      "enum": [
+        "not_started",
+        "in_progress",
+        "completed"
+      ]
+    },
+    "provenance": {
+      "type": "object"
+    }
+  }
+}

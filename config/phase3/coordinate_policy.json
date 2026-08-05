@@ -1,0 +1,79 @@
+{
+  "policy": "coordinate_acquisition_and_context",
+  "primary_source": {
+    "provider": "RCSB / wwPDB",
+    "url_template": "https://files.rcsb.org/download/{PDB_ID}.cif.gz",
+    "format": "mmCIF, gzip",
+    "verified": "2026-08-04, HTTP 200 on 6MXT (267,993 B gz -> 1,034,253 B)",
+    "note": "The endpoint form was verified against a live entry before any bulk download; a failing record is never assumed to mean a wrong URL pattern."
+  },
+  "cache": {
+    "directory": "data/cache/coordinates",
+    "excluded_from_production_payload": true,
+    "manifest": "data/intermediate/phase3/coordinate_manifest.jsonl",
+    "rule": "Raw coordinates are never embedded in application data or in a Git-ready payload."
+  },
+  "download_behaviour": {
+    "max_workers": 6,
+    "retries": 3,
+    "backoff_seconds_base": 1.0,
+    "timeout_seconds": 180,
+    "cache_reuse": true,
+    "partial_download_cleanup": "a file is written to a .part path and renamed only after the gzip stream decodes and the entry id matches",
+    "response_validation": [
+      "gzip decodes",
+      "contains _atom_site.",
+      "data_ block matches the requested id"
+    ],
+    "deterministic_failure_list": "failures are sorted by pdb_id and recorded with reason"
+  },
+  "recorded_per_file": [
+    "pdb_id",
+    "requested_url",
+    "resolved_url",
+    "http_status",
+    "retrieved_at",
+    "etag",
+    "last_modified",
+    "compressed_sha256",
+    "decompressed_sha256",
+    "compressed_bytes",
+    "decompressed_bytes",
+    "parser_version",
+    "coordinate_availability",
+    "obsolete_status",
+    "replacement_pdb_ids",
+    "failure_reason"
+  ],
+  "unavailable_policy": "A structure without coordinates is retained in the manifest with coordinate_availability = coordinate_unavailable and an explicit reason. The two RCSB-metadata-absent entries are never silently removed.",
+  "coordinate_context": {
+    "allowed_values": [
+      "deposited_asymmetric_unit",
+      "author_defined_biological_assembly",
+      "preferred_biological_assembly",
+      "nmr_ensemble",
+      "unresolved_coordinate_context"
+    ],
+    "default": "deposited_asymmetric_unit",
+    "default_conditions": "the annotated receptor and ligand entities are both present in the deposited coordinates and their chains are consistent with the source annotation",
+    "forbidden": [
+      "generate crystal symmetry mates",
+      "automatically choose the nearest symmetry copy as the ligand",
+      "choose an arbitrary biological assembly",
+      "choose the assembly that yields the most contacts"
+    ],
+    "assembly_audit_triggers": [
+      "ligand annotated in the source but showing no plausible geometric proximity to the receptor",
+      "polymer ligand brought adjacent to the receptor only by an assembly operation",
+      "asymmetric unit contains several copies of the complex",
+      "one entity yields many symmetry or assembly instances"
+    ],
+    "assembly_selection_basis": [
+      "RCSB author-defined assembly",
+      "source publication",
+      "deposited biological assembly annotation",
+      "exact chain/entity relationship"
+    ]
+  },
+  "phase": 3
+}

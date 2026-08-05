@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/class-a-gpcr-atlas/schemas/phase5/family_summary.schema.json",
+  "title": "Family summary",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "family_id",
+    "structure_count",
+    "receptor_count",
+    "analysis_unit_count",
+    "site_class_counts",
+    "coverage",
+    "warnings"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "5.0.0"
+    },
+    "family_id": {
+      "type": "string"
+    },
+    "family_slug": {
+      "type": "string"
+    },
+    "family_name": {
+      "type": "string"
+    },
+    "structure_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "receptor_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "species_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "analysis_unit_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "site_class_counts": {
+      "type": "object"
+    },
+    "state_counts": {
+      "type": "object"
+    },
+    "coordinate_observed_ligand_observations": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "annotated_not_observed_observations": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "apo_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "human_review_items": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "human_review_required": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "coverage": {
+      "type": "object"
+    },
+    "warnings": {
+      "type": "array"
+    },
+    "unresolved_site_class_observations": {
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}

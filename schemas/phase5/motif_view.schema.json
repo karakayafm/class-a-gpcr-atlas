@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/class-a-gpcr-atlas/schemas/phase5/motif_view.schema.json",
+  "title": "Motif view",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "family_id",
+    "motif_layer",
+    "motifs",
+    "positions",
+    "state_never_derived_from_geometry"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "5.0.0"
+    },
+    "family_id": {
+      "type": "string"
+    },
+    "motif_layer": {
+      "const": "core_class_a"
+    },
+    "state_never_derived_from_geometry": {
+      "const": true
+    },
+    "motifs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "motif_id",
+          "generic_positions",
+          "canonical_identity",
+          "noncanonical_identity",
+          "association_only"
+        ],
+        "properties": {
+          "motif_id": {
+            "type": "string"
+          },
+          "generic_positions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "canonical_identity": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "noncanonical_identity": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "median_angstrom": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "coverage": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "association_only": {
+            "const": true
+          }
+        }
+      }
+    },
+    "positions": {
+      "type": "array"
+    }
+  }
+}

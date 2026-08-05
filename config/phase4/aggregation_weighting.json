@@ -1,0 +1,28 @@
+{
+  "schemes": [
+    {
+      "id": "unit_weighted_continuous",
+      "definition": "each analysis unit contributes its contact_fraction_5A equally",
+      "recommended": true,
+      "rationale": "does not let a heavily re-determined receptor dominate"
+    },
+    {
+      "id": "unit_weighted_any_contact",
+      "definition": "each unit contributes a binary any-contact value"
+    },
+    {
+      "id": "structure_weighted_binary",
+      "definition": "each structure contributes equally, binary contact"
+    },
+    {
+      "id": "receptor_weighted",
+      "definition": "units are summarised within a receptor first, then receptors weighted equally"
+    },
+    {
+      "id": "ligand_weighted",
+      "definition": "each normalized ligand identity weighted equally"
+    }
+  ],
+  "rule": "No weighting is presented as the single correct one. Phase 4 reports how far the ranking moves between schemes; the headline choice is a Phase 5 owner decision.",
+  "phase": 4
+}

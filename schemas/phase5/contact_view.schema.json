@@ -1,0 +1,167 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/class-a-gpcr-atlas/schemas/phase5/contact_view.schema.json",
+  "title": "Pocket contact view",
+  "description": "Small-molecule pocket aggregation only; polymer interfaces are a separate view.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "family_id",
+    "binding_site_class",
+    "is_polymer_interface",
+    "metric",
+    "denominator",
+    "positions",
+    "estimable"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "5.0.0"
+    },
+    "family_id": {
+      "type": "string"
+    },
+    "binding_site_class": {
+      "enum": [
+        "canonical_7tm_pocket",
+        "extended_orthosteric_pocket",
+        "extracellular_polymer_interface",
+        "intracellular_allosteric_pocket",
+        "extracellular_allosteric_pocket",
+        "lipid_facing_site",
+        "covalent_core_site",
+        "tethered_ligand_interface",
+        "bitopic_or_multi_region_site",
+        "other_site",
+        "unresolved"
+      ]
+    },
+    "is_polymer_interface": {
+      "const": false
+    },
+    "object_name": {
+      "type": "string"
+    },
+    "metric": {
+      "type": "object",
+      "required": [
+        "id",
+        "label_en",
+        "label_tr",
+        "definition_en",
+        "definition_tr"
+      ],
+      "properties": {
+        "id": {
+          "const": "unit_weighted_contact_fraction_5A"
+        }
+      }
+    },
+    "denominator": {
+      "type": "object",
+      "required": [
+        "type",
+        "count"
+      ],
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "analysis_units": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "structures": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "estimable": {
+      "type": "boolean"
+    },
+    "warnings": {
+      "type": "array"
+    },
+    "raw_unit_position_records": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "positions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "generic_position",
+          "units"
+        ],
+        "properties": {
+          "generic_position": {
+            "type": "string"
+          },
+          "units": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "units_with_any_contact": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "unit_weighted_contact_fraction_5A": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "unit_weighted_contact_fraction_4A": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "unit_weighted_contact_fraction_4_5A": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "unit_weighted_any_contact": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "structure_weighted_binary": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "median_min_distance": {
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "by_receptor_url": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "threshold_sensitivity": {
+      "type": "array"
+    },
+    "weighting_sensitivity": {
+      "type": "array"
+    }
+  }
+}

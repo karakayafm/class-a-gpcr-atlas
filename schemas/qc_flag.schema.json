@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/class-a-gpcr-atlas/schemas/qc_flag.schema.json",
+  "title": "QC flag definition",
+  "description": "Schema for config/qc_flags.json. Every flag emitted by any pipeline stage must be declared here first. No severity level excludes a record from the raw universe; that is stated in 'policy' and enforced by the test suite.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "policy",
+    "qc_flags"
+  ],
+  "properties": {
+    "policy": {
+      "type": "string",
+      "minLength": 1
+    },
+    "stage_note": {
+      "type": "string"
+    },
+    "qc_flags": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "severity",
+          "meaning"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9_]+$"
+          },
+          "severity": {
+            "enum": [
+              "none",
+              "info",
+              "medium",
+              "high"
+            ]
+          },
+          "meaning": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  }
+}

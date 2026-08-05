@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/class-a-gpcr-atlas/schemas/phase5/reference_payload.schema.json",
+  "title": "Reference payload",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "5.0.0"
+    },
+    "family_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "structure_sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "pdb_id",
+          "rcsb_entry",
+          "pdb_doi"
+        ],
+        "properties": {
+          "pdb_id": {
+            "type": "string"
+          },
+          "rcsb_entry": {
+            "type": "string"
+          },
+          "pdb_doi": {
+            "type": "string",
+            "pattern": "^https://doi\\.org/10\\.2210/pdb[0-9A-Za-z]{4}/pdb$"
+          },
+          "gpcrdb_structure": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "databases": {
+      "type": "array"
+    },
+    "atlas": {
+      "type": "object"
+    }
+  }
+}

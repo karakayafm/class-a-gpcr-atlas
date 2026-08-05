@@ -1,0 +1,194 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/class-a-gpcr-atlas/schemas/phase6a/curator_decision.schema.json",
+  "title": "Curator decision",
+  "description": "A decision made by a named human being. The pipeline may never write this record: an automated assessment lives in evidence_adjudication, which is a different artefact. A decision without a curator identity is not finalised.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "review_item_id",
+    "curator_name",
+    "review_date",
+    "decision",
+    "rationale",
+    "evidence_sources_used",
+    "confidence",
+    "source_freeze_hash"
+  ],
+  "properties": {
+    "review_item_id": {
+      "type": "string",
+      "minLength": 3
+    },
+    "curator_name": {
+      "type": "string",
+      "minLength": 2,
+      "description": "a person. An AI system name is not a valid curator."
+    },
+    "curator_affiliation": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "curator_identifier": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "ORCID or institutional id, optional; never invented"
+    },
+    "review_date": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "decision": {
+      "enum": [
+        "approve_automated_proposal",
+        "reject_automated_proposal",
+        "replace_with_curator_value",
+        "metadata_only",
+        "exclude_from_aggregation",
+        "unresolved_insufficient_evidence",
+        "defer_for_second_review"
+      ]
+    },
+    "curator_value": {
+      "type": [
+        "string",
+        "object",
+        "null"
+      ],
+      "description": "required when decision is replace_with_curator_value"
+    },
+    "rationale": {
+      "type": "string",
+      "minLength": 10
+    },
+    "evidence_sources_used": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "confidence": {
+      "enum": [
+        "high",
+        "medium",
+        "low"
+      ]
+    },
+    "conflict_of_interest_note": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "second_reviewer_required": {
+      "type": "boolean"
+    },
+    "second_reviewer_name": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "second_review_date": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "agreement_status": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "agree",
+        "disagree",
+        "partial",
+        "not_applicable",
+        null
+      ]
+    },
+    "notes": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "source_freeze_hash": {
+      "type": "string",
+      "description": "the Phase 4 output-manifest hash the decision was made against"
+    }
+  },
+  "allowed_decisions_by_issue_type": {
+    "receptor_mapping": [
+      "approve_automated_proposal",
+      "replace_with_curator_value",
+      "exclude_from_aggregation",
+      "unresolved_insufficient_evidence",
+      "defer_for_second_review"
+    ],
+    "generic_mapping_unvalidated": [
+      "approve_automated_proposal",
+      "replace_with_curator_value",
+      "exclude_from_aggregation",
+      "unresolved_insufficient_evidence",
+      "defer_for_second_review"
+    ],
+    "ligand_classification": [
+      "approve_automated_proposal",
+      "reject_automated_proposal",
+      "replace_with_curator_value",
+      "unresolved_insufficient_evidence",
+      "defer_for_second_review"
+    ],
+    "site_class_unresolved": [
+      "replace_with_curator_value",
+      "unresolved_insufficient_evidence",
+      "exclude_from_aggregation",
+      "defer_for_second_review"
+    ],
+    "apo_assignment": [
+      "approve_automated_proposal",
+      "reject_automated_proposal",
+      "replace_with_curator_value",
+      "unresolved_insufficient_evidence",
+      "defer_for_second_review"
+    ],
+    "polymer_chain_role": [
+      "replace_with_curator_value",
+      "unresolved_insufficient_evidence",
+      "defer_for_second_review"
+    ],
+    "tethered_ligand_candidate": [
+      "replace_with_curator_value",
+      "unresolved_insufficient_evidence",
+      "defer_for_second_review"
+    ],
+    "source_conflict:transducer_presence_disagreement": [
+      "metadata_only",
+      "unresolved_insufficient_evidence",
+      "defer_for_second_review"
+    ],
+    "source_conflict:annotated_component_absent": [
+      "metadata_only",
+      "exclude_from_aggregation",
+      "unresolved_insufficient_evidence",
+      "defer_for_second_review"
+    ],
+    "annotated_not_observed": [
+      "metadata_only",
+      "exclude_from_aggregation",
+      "unresolved_insufficient_evidence"
+    ],
+    "mutation_mapping_unresolved": [
+      "metadata_only",
+      "unresolved_insufficient_evidence"
+    ]
+  },
+  "finalisation_rule": "A record is finalised only when curator_name and review_date are present and, where second_reviewer_required is true, the second reviewer fields and agreement_status are also present."
+}

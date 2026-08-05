@@ -1,0 +1,50 @@
+{
+  "policy": "model_altloc_and_atom_selection",
+  "model_policy": {
+    "xray_and_em": {
+      "rule": "use the deposited model; where more than one model exists take the lowest model id",
+      "determinism": "model id ordering is numeric, not file order",
+      "report": "model_id is recorded on every contact row"
+    },
+    "nmr": {
+      "rule": "an NMR ensemble is NOT silently reduced to its first model. Minimum distance is computed per model and the ensemble fields are populated.",
+      "fields": [
+        "models_total",
+        "models_with_contact",
+        "contact_frequency",
+        "minimum_distance_across_models",
+        "median_minimum_distance"
+      ],
+      "note": "The schema supports these fields whether or not any NMR structure is present in the universe."
+    }
+  },
+  "altloc_policy": {
+    "order": [
+      "blank altloc takes precedence",
+      "otherwise the highest occupancy",
+      "on an occupancy tie the alphabetically first altloc"
+    ],
+    "consistency_rule": "within one residue, atoms from mutually incompatible conformers are never mixed: once an altloc is chosen for a residue, only blank and that altloc are used",
+    "verification": "tested against real parser behaviour on entries that carry altlocs"
+  },
+  "atom_policy": {
+    "heavy_atoms_only": true,
+    "excluded_elements": [
+      "H",
+      "D",
+      "T"
+    ],
+    "rationale": "the contact definition is heavy-atom to heavy-atom; hydrogens are model-dependent",
+    "metals_and_ions": "a metal or ion atom enters a contact observation only when the ligand entity's role permits it; environment ions produce no pharmacological contact",
+    "water": "excluded from contact computation entirely"
+  },
+  "completeness_fields": [
+    "observed_atom_count",
+    "expected_atom_count",
+    "coordinate_completeness",
+    "unresolved_residue",
+    "zero_coordinate_entity"
+  ],
+  "completeness_rule": "a missing atom or residue is never silently treated as present",
+  "phase": 3
+}

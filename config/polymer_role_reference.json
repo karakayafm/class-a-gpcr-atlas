@@ -1,0 +1,191 @@
+{
+  "reference": "polymer_role_reference",
+  "phase": 2,
+  "description": "Evidence table for classifying non-receptor polymer chains. Chain length and proximity to the receptor are NOT classification criteria — a nanobody and a peptide ligand can be the same length, and a transducer sits closer to the receptor than most ligands do. Identity evidence (UniProt accession, entity description) decides; length is recorded but never decides.",
+  "precedence": [
+    "1. receptor identity: UniProt accession matches the structure's GPCRdb receptor accession",
+    "2. curated UniProt accession match (transducer / fusion / arrestin)",
+    "3. description pattern match (case-insensitive)",
+    "4. source ligand annotation match (peptide/protein ligand)",
+    "5. unresolved"
+  ],
+  "forbidden_rules": [
+    "classify by chain length alone",
+    "classify a protein as ligand because it contacts the receptor",
+    "assume the shortest non-receptor chain is the ligand",
+    "assume any chain that is not receptor or transducer is a ligand"
+  ],
+  "receptor_identification": {
+    "primary_rule": "A polymer entity is a receptor instance when its UniProt accession set contains the accession of the structure's GPCRdb-assigned receptor.",
+    "chimera_rule": "Receptor entities frequently also carry a fusion accession (e.g. 'Adenosine receptor A2a,Soluble cytochrome b562,Adenosine receptor A2a' carries both P29274 and P0ABE7). Such an entity remains ONE receptor instance; the fusion is recorded as construct engineering, not as a separate ligand or partner chain.",
+    "fallback_rule": "Where accession evidence is absent, the GPCRdb preferred_chain is used to identify the receptor chain, and mapping_confidence is set to 'chain_annotation_only'.",
+    "failure_rule": "If neither applies, receptor_mapping_status = unresolved and the record is queued for review."
+  },
+  "uniprot_accessions": {
+    "transducer_component": {
+      "P63092": "GNAS, G alpha s (human)",
+      "P04895": "GNAS (bovine)",
+      "P63096": "GNAI1, G alpha i1 (human)",
+      "P04899": "GNAI2, G alpha i2 (human)",
+      "P08754": "GNAI3, G alpha i3 (human)",
+      "P59215": "GNAO1, G alpha o (human)",
+      "P50148": "GNAQ, G alpha q (human)",
+      "P29992": "GNA11 (human)",
+      "P08754_note": "—",
+      "Q03113": "GNA12 (human)",
+      "Q14344": "GNA13 (human)",
+      "P11488": "GNAT1, transducin alpha (human)",
+      "P04695": "GNAT1 (bovine)",
+      "P62873": "GNB1, G beta 1 (human)",
+      "P54311": "GNB1 (rat)",
+      "P62871": "GNB1 (bovine)",
+      "P59768": "GNG2, G gamma 2 (human)",
+      "P63212": "GNG2 (bovine)",
+      "P02698": "GNGT1 (bovine)",
+      "P49407": "ARRB1, beta-arrestin 1 (human)",
+      "P32121": "ARRB2, beta-arrestin 2 (human)",
+      "P10523": "SAG, visual arrestin (bovine)",
+      "P20443": "Arrestin (bovine, rod)"
+    },
+    "fusion_partner": {
+      "P0ABE7": "Soluble cytochrome b562 / BRIL (E. coli)",
+      "P00720": "Endolysin / T4 lysozyme",
+      "P00268": "Rubredoxin (Pyrococcus furiosus)",
+      "Q9V2J8": "P. abyssi glycogen synthase (PGS) fusion",
+      "P0A6F5": "GroEL apical domain fusion"
+    }
+  },
+  "description_patterns": [
+    {
+      "role": "transducer_component",
+      "patterns": [
+        "guanine nucleotide-binding protein",
+        "g protein subunit",
+        "mini-g",
+        "minig",
+        "gs-mini",
+        "g alpha",
+        "g-alpha",
+        "galpha",
+        "transducin",
+        "g subunit",
+        "g(s) subunit",
+        "g(i) subunit",
+        "g(q) subunit",
+        "g(o) subunit",
+        "gi1-gq",
+        "gs-mini-gq",
+        "g-protein subunit"
+      ],
+      "rationale": "Covers all G-protein subunits and engineered mini-G / chimeric constructs across species. Extended in Phase 2 after audit: entities are also described as 'G subunit alpha (q)' and 'G subunit q (Gi1-Gq chimeric)', which the original phrase did not match."
+    },
+    {
+      "role": "transducer_component",
+      "patterns": [
+        "arrestin"
+      ],
+      "rationale": "Beta-arrestin 1/2 and visual arrestin."
+    },
+    {
+      "role": "antibody_or_nanobody",
+      "patterns": [
+        "nanobody",
+        "nb35",
+        "nb-35",
+        "nb71",
+        "scfv",
+        "sc-fv",
+        "single-chain variable",
+        "single fab",
+        "fab fragment",
+        "antibody fragment",
+        "immunoglobulin",
+        "heavy chain",
+        "light chain",
+        "fab heavy",
+        "fab light",
+        "megabody",
+        "legobody",
+        "vhh",
+        "camelid",
+        "nanoboy",
+        "fv fragment",
+        "fragment variable",
+        "fv16",
+        "fab",
+        "sybody",
+        "darpin",
+        "affibody",
+        "monobody",
+        "single-chain fv",
+        "single chain fv"
+      ],
+      "rationale": "Matched case-insensitively because the same reagent appears with many spellings in this dataset: scFv16 occurs as scFv16, scFV16, ScFv16, scfv16, 'Antibody fragment scFv16' and 'single Fab chain (svFv16)'; Nb35 occurs as Nanobody 35, Nanobody35, Nanobody-35, nanobody Nb35 and Nb35. Extended in Phase 2 after audit of unclassified chains: the dataset also contains 'Camelid antibody VHH fragment', 'NabFab HC/LC', 'FabH', 'FabL', 'Single-chain Fv16', 'Single-Chain Fragment Variable 16' and the depositor typo 'Nanoboy 35'."
+    },
+    {
+      "role": "fusion_partner",
+      "patterns": [
+        "cytochrome b562",
+        "bril",
+        "lysozyme",
+        "endolysin",
+        "rubredoxin",
+        "glycogen synthase",
+        "flavodoxin",
+        "thermostabilized apocytochrome",
+        "t4l",
+        "thioredoxin",
+        "maltose-binding",
+        "maltose binding",
+        "sumo",
+        "green fluorescent",
+        "apoferritin"
+      ],
+      "rationale": "Standard crystallisation fusion partners, whether separate chains or chimeric segments. Extended in Phase 2: 'Thioredoxin 1' appears as a solubilisation fusion in this dataset."
+    },
+    {
+      "role": "auxiliary_protein",
+      "patterns": [
+        "receptor activity-modifying",
+        "ramp",
+        "chaperone",
+        "calmodulin",
+        "protein kinase",
+        "ubiquitin",
+        "kinase",
+        "isomerase",
+        "phosphatase",
+        "fkbp"
+      ],
+      "rationale": "Identified partners that are neither ligand, transducer, antibody nor fusion. Extended in Phase 2: GRK1/GRK2 ('Rhodopsin kinase GRK1', 'Beta-adrenergic receptor kinase 1') and the FKBP1A/calcineurin pair used in molecular-glue structures are identified partners, neither ligand nor transducer."
+    }
+  ],
+  "polymer_ligand_rule": {
+    "rule": "A polymer chain is a pharmacological ligand ONLY when the structure's source ligand annotation (GPCRdb) carries type 'peptide' or 'protein' and the chain is not already identified as receptor, transducer, antibody or fusion.",
+    "matching": "Where exactly one unclassified non-receptor polymer chain remains and the source annotates a peptide/protein ligand, that chain is the ligand with confidence 'single_candidate_match'. Where more than one remains, every candidate is emitted with confidence 'ambiguous_multiple_candidates' and queued for review — the pipeline does not pick one.",
+    "segment_rule": "Whether the whole chain or only a segment is the interacting ligand is a separate field, recorded as unresolved unless a source states the range. It is never inferred from geometry."
+  },
+  "peptide_length_threshold": {
+    "value": 50,
+    "used_for": "separating biological_type peptide from protein",
+    "not_used_for": "deciding whether a chain is a ligand",
+    "rationale": "A conventional cut-off for reporting only. Chain length has no role in role assignment: Nb35 is 128 residues and endothelin-1 is 21, but so are many engineered fragments."
+  },
+  "description_regex_rules": [
+    {
+      "role": "antibody_or_nanobody",
+      "regex": "^(c?nb|mb|nba|sb)[- ]?[0-9]+[a-z]?$",
+      "rationale": "Short depositor codes for nanobodies and megabodies, e.g. 'Nb6', 'CNb36', 'NBA3', 'MB52'. Anchored to the whole description so it cannot match a substring of a real protein name."
+    }
+  ],
+  "rule_change_log": [
+    {
+      "phase": 2,
+      "date": "2026-08-04",
+      "change": "Extended description patterns for transducer, antibody, fusion and auxiliary roles, and added anchored regex rules for short nanobody codes.",
+      "trigger": "Audit of the 382 polymer chains left unresolved by the first pass showed four systematic identity gaps rather than genuinely unknown chains.",
+      "principle": "Every addition is identity evidence — a reagent's name or accession. No pattern uses chain length or proximity to the receptor.",
+      "recorded_in": "governance/DECISION_LOG.md"
+    }
+  ]
+}

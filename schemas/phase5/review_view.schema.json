@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/class-a-gpcr-atlas/schemas/phase5/review_view.schema.json",
+  "title": "Review view",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "family_id",
+    "count",
+    "unit_of_count",
+    "label_en",
+    "label_tr",
+    "adjudication_is_not_human_curation",
+    "items"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "5.0.0"
+    },
+    "family_id": {
+      "type": "string"
+    },
+    "count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "human_review_required": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "unit_of_count": {
+      "const": "canonical_review_item"
+    },
+    "adjudication_is_not_human_curation": {
+      "const": true
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "review_item_id",
+          "pdb_id",
+          "issue_types",
+          "human_curator_decision",
+          "human_review_status"
+        ],
+        "properties": {
+          "review_item_id": {
+            "type": "string"
+          },
+          "pdb_id": {
+            "type": "string"
+          },
+          "issue_types": {
+            "type": "array"
+          },
+          "evidence_adjudication": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "adjudication_confidence": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "human_curator_decision": {
+            "type": "null"
+          },
+          "human_review_status": {
+            "const": "not_started"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "cohorts": [
+    {
+      "id": "all_eligible",
+      "definition": "every eligible observation"
+    },
+    {
+      "id": "no_contacted_reported_mutation",
+      "definition": "observations where no contacted receptor residue differs from the reference"
+    },
+    {
+      "id": "wild_type_confidence",
+      "definition": "observations whose contacted residues all matched the reference identity"
+    },
+    {
+      "id": "mutation_unresolved",
+      "definition": "observations with at least one contacted residue whose reference identity was unavailable"
+    },
+    {
+      "id": "engineered_construct",
+      "definition": "observations on structures with a chimeric fusion or reported mutations"
+    }
+  ],
+  "rules": [
+    "a mutated motif residue keeps its geometry record and is flagged mutation_sensitive",
+    "a structure carrying mutations is never excluded wholesale",
+    "warnings are raised at residue / contact / motif level only",
+    "an unresolved mutation is never treated as wild type"
+  ],
+  "phase": 4
+}

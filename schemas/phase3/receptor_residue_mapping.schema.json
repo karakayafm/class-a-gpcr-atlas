@@ -1,0 +1,168 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/class-a-gpcr-atlas/schemas/phase3/receptor_residue_mapping.schema.json",
+  "title": "Receptor residue mapping",
+  "type": "object",
+  "additionalProperties": true,
+  "description": "One row per modelled receptor residue. The identity key is PDB + receptor instance + auth chain + auth seq + insertion code; a residue number alone is never a key.",
+  "required": [
+    "pdb_id",
+    "receptor_instance_id",
+    "auth_asym_id",
+    "auth_seq_id",
+    "insertion_code",
+    "residue_name",
+    "mapping_status",
+    "mapping_source",
+    "mapping_confidence",
+    "mapping_route"
+  ],
+  "properties": {
+    "pdb_id": {
+      "type": "string",
+      "pattern": "^[0-9A-Z]{4}$"
+    },
+    "receptor_instance_id": {
+      "type": "string"
+    },
+    "auth_asym_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "label_asym_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "polymer_entity_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "auth_seq_id": {
+      "type": "string"
+    },
+    "insertion_code": {
+      "type": "string"
+    },
+    "label_seq_id": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "residue_name": {
+      "type": "string"
+    },
+    "uniprot_accession": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "uniprot_position": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "display_generic_number": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "canonical_generic_number": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "protein_segment": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "wild_type_residue": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "mapping_status": {
+      "enum": [
+        "mapped_generic",
+        "mapped_sequence_only",
+        "non_generic_numberable_region",
+        "expected_generic_but_unmapped",
+        "construct_or_fusion_region",
+        "unresolved"
+      ],
+      "description": "non_generic_numberable_region is an EXPECTED absence (N-term, C-tail, some loops); expected_generic_but_unmapped is a mapping FAILURE. They are not the same null."
+    },
+    "mapping_source": {
+      "type": "string"
+    },
+    "mapping_route": {
+      "enum": [
+        "rcsb_aligned_regions",
+        "author_numbering_equals_uniprot",
+        "identity_validated_piecewise_offset",
+        "no_validated_route"
+      ],
+      "description": "Which sourced hypothesis was validated against the observed residue identity."
+    },
+    "mapping_route_segments": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "route_sequence_agreement": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "residue_identity_matches_wild_type": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "mapping_confidence": {
+      "enum": [
+        "high",
+        "medium",
+        "low"
+      ]
+    },
+    "depositor_reported_mutation": {
+      "type": "boolean"
+    },
+    "mutation_mapping_confidence": {
+      "type": "string"
+    },
+    "wild_type_identity_available": {
+      "type": "boolean"
+    },
+    "construct_region": {
+      "type": "boolean"
+    },
+    "observed_atom_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "mapping_flags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

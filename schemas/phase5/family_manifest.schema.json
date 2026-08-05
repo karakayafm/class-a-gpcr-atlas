@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/class-a-gpcr-atlas/schemas/phase5/family_manifest.schema.json",
+  "title": "Family manifest",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "data_version",
+    "family_id",
+    "family_slug",
+    "files"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "5.0.0"
+    },
+    "data_version": {
+      "type": "string"
+    },
+    "family_id": {
+      "type": "string"
+    },
+    "family_slug": {
+      "type": "string"
+    },
+    "family_name": {
+      "type": "string"
+    },
+    "files": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "url",
+          "bytes",
+          "sha256",
+          "schema_version",
+          "required",
+          "semantic_role"
+        ],
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "schema_version": {
+            "const": "5.0.0"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "semantic_role": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

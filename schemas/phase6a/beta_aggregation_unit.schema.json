@@ -1,0 +1,71 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "title": "beta_aggregation_unit",
+ "description": "A Phase 4 aggregation unit carried into the public-beta overlay with its review-gated eligibility. The Phase 4 fields are copied unchanged; beta fields are added.",
+ "type": "object",
+ "required": [
+  "aggregation_unit_id",
+  "beta_eligible_observations_total",
+  "review_blocked_observations_total",
+  "beta_status",
+  "original_structures_total",
+  "source_phase4_unit",
+  "overlay_rule_version"
+ ],
+ "properties": {
+  "aggregation_unit_id": {
+   "type": "string"
+  },
+  "beta_eligible_observations": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "beta_eligible_observations_total": {
+   "type": "integer",
+   "minimum": 0
+  },
+  "review_blocked_observations": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "review_blocked_observations_total": {
+   "type": "integer",
+   "minimum": 0
+  },
+  "warning_only_observations_total": {
+   "type": "integer",
+   "minimum": 0
+  },
+  "beta_structures_total": {
+   "type": "integer",
+   "minimum": 0
+  },
+  "original_structures_total": {
+   "type": "integer",
+   "minimum": 0
+  },
+  "beta_status": {
+   "enum": [
+    "unchanged",
+    "modified",
+    "removed_zero_denominator"
+   ]
+  },
+  "review_item_ids": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "source_phase4_unit": {
+   "type": "string"
+  },
+  "overlay_rule_version": {
+   "type": "string"
+  }
+ }
+}

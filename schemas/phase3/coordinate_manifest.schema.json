@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/class-a-gpcr-atlas/schemas/phase3/coordinate_manifest.schema.json",
+  "title": "Coordinate manifest row",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "pdb_id",
+    "requested_url",
+    "coordinate_availability",
+    "parser_version",
+    "retrieved_at"
+  ],
+  "description": "One row per structure, including structures with no coordinates. Nothing is dropped.",
+  "properties": {
+    "pdb_id": {
+      "type": "string",
+      "pattern": "^[0-9A-Z]{4}$"
+    },
+    "requested_url": {
+      "type": "string"
+    },
+    "resolved_url": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "http_status": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "retrieved_at": {
+      "type": "string"
+    },
+    "etag": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "last_modified": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "compressed_sha256": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "decompressed_sha256": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "compressed_bytes": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "decompressed_bytes": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "parser_version": {
+      "type": "string"
+    },
+    "coordinate_availability": {
+      "enum": [
+        "available",
+        "coordinate_unavailable",
+        "cache_corrupt_removed"
+      ]
+    },
+    "obsolete_status": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "replacement_pdb_ids": {
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "failure_reason": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "cache_hit": {
+      "type": "boolean"
+    }
+  }
+}

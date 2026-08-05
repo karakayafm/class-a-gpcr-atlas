@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/class-a-gpcr-atlas/schemas/phase4/canonical_review_item.schema.json",
+  "title": "Canonical review item",
+  "description": "One scientific problem about one object. Source packets describing the same problem are merged; their ids are kept in source_packet_ids.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "review_item_id",
+    "issue_types",
+    "pdb_id",
+    "originating_phases",
+    "source_packet_ids",
+    "automated_proposal",
+    "automated_evidence",
+    "human_review_status"
+  ],
+  "properties": {
+    "review_item_id": {
+      "type": "string"
+    },
+    "issue_types": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "pdb_id": {
+      "type": "string",
+      "pattern": "^[0-9A-Z]{4}$"
+    },
+    "receptor_instance_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "ligand_entity_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "structure_ligand_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "originating_phases": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "source_packet_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "automated_proposal": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "automated_evidence": {
+      "type": "object"
+    },
+    "evidence_completeness": {
+      "enum": [
+        "sufficient",
+        "insufficient"
+      ]
+    },
+    "adjudication_status": {
+      "enum": [
+        "evidence_resolved_include",
+        "evidence_resolved_exclude",
+        "evidence_resolved_metadata_only",
+        "evidence_resolved_annotated_not_observed",
+        "evidence_insufficient_human_review_required",
+        "source_conflict_unresolved",
+        "not_applicable"
+      ]
+    },
+    "human_review_requirement": {
+      "enum": [
+        "required",
+        "optional_confirmation"
+      ]
+    },
+    "current_eligibility": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "human_curator_decision": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "human_curator_identity": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "human_review_date": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "human_review_status": {
+      "enum": [
+        "not_started",
+        "in_progress",
+        "completed"
+      ]
+    }
+  }
+}

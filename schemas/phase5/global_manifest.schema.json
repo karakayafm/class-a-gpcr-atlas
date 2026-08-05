@@ -1,0 +1,131 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/class-a-gpcr-atlas/schemas/phase5/global_manifest.schema.json",
+  "title": "Global manifest",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema",
+    "schema_version",
+    "atlas_title",
+    "version",
+    "phase",
+    "pre_release",
+    "data_version",
+    "families",
+    "family_count",
+    "structure_bundle_base",
+    "supported_languages",
+    "supported_themes",
+    "review_warning_count",
+    "review_warning_unit",
+    "licence_gates",
+    "totals"
+  ],
+  "properties": {
+    "schema": {
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "5.0.0"
+    },
+    "atlas_title": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string"
+    },
+    "phase": {
+      "const": 5
+    },
+    "pre_release": {
+      "const": true
+    },
+    "data_version": {
+      "type": "string"
+    },
+    "data_freeze_phase": {
+      "type": "string"
+    },
+    "phase4_manifest_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "families": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "family_id",
+          "slug",
+          "name",
+          "manifest_url",
+          "manifest_sha256"
+        ],
+        "properties": {
+          "family_id": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "manifest_url": {
+            "type": "string"
+          },
+          "manifest_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "manifest_bytes": {
+            "type": "integer"
+          },
+          "payload_bytes": {
+            "type": "integer"
+          }
+        }
+      }
+    },
+    "family_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "structure_bundle_base": {
+      "type": "string"
+    },
+    "review_warning_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "review_warning_unit": {
+      "const": "canonical_review_item"
+    },
+    "supported_languages": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "tr",
+          "en"
+        ]
+      }
+    },
+    "supported_themes": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "grey",
+          "dark"
+        ]
+      }
+    },
+    "licence_gates": {
+      "type": "array"
+    },
+    "totals": {
+      "type": "object"
+    }
+  }
+}

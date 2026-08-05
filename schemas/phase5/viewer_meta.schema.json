@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/class-a-gpcr-atlas/schemas/phase5/viewer_meta.schema.json",
+  "title": "Viewer bundle metadata",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "pdb_id",
+    "coordinate_file",
+    "coordinate_sha256",
+    "receptor_chains",
+    "observations",
+    "invented_coordinates"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "5.0.0"
+    },
+    "pdb_id": {
+      "type": "string",
+      "pattern": "^[0-9A-Z]{4}$"
+    },
+    "coordinate_file": {
+      "const": "viewer.cif"
+    },
+    "coordinate_bytes": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "coordinate_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "receptor_chains": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "apo_status": {
+      "type": "string"
+    },
+    "invented_coordinates": {
+      "const": false
+    },
+    "auxiliary_chains_included": {
+      "type": "boolean"
+    },
+    "full_structure_url": {
+      "type": "string"
+    },
+    "observations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "observation_id",
+          "binding_site_class",
+          "coordinate_status"
+        ],
+        "properties": {
+          "observation_id": {
+            "type": "string"
+          },
+          "binding_site_class": {
+            "enum": [
+              "canonical_7tm_pocket",
+              "extended_orthosteric_pocket",
+              "extracellular_polymer_interface",
+              "intracellular_allosteric_pocket",
+              "extracellular_allosteric_pocket",
+              "lipid_facing_site",
+              "covalent_core_site",
+              "tethered_ligand_interface",
+              "bitopic_or_multi_region_site",
+              "other_site",
+              "unresolved"
+            ]
+          },
+          "coordinate_status": {
+            "enum": [
+              "observed",
+              "annotated_not_observed",
+              "no_observation"
+            ]
+          },
+          "ligand_selection": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "no_ligand_reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "motif_residues": {
+      "type": "array"
+    },
+    "observed_sodium": {
+      "type": "array"
+    }
+  }
+}

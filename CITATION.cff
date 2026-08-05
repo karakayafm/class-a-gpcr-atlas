@@ -1,0 +1,50 @@
+cff-version: 1.2.0
+message: >-
+  If you use this atlas, please cite the repository, the release tag and the version below,
+  together with the underlying data resources (RCSB PDB, GPCRdb, UniProt). This is a pre-release
+  beta: it has no DOI and it is not a curated or independently validated resource.
+title: "Class A GPCR Structure-Ligand Contact and Interface Atlas"
+abstract: >-
+  Atlas of 1358 experimentally determined Class A (rhodopsin-like) GPCR structures across 11
+  GPCRdb major families. Contains exact minimum heavy-atom receptor-ligand contacts at 4.0, 4.5
+  and 5.0 Angstrom computed from deposited coordinates, residue-level GPCRdb generic numbering,
+  site-class-aware aggregation over 727 analysis units, and measurements over 8 core Class A
+  motifs. Small-molecule pockets and receptor-polymer interfaces are treated as separate analysis
+  objects and never share a denominator. The atlas contains no potency, affinity or functional
+  pathway activity data. Scientific claims have not been reviewed by a human curator: 189 review
+  items remain open, and public-beta pooled summaries are review-gated.
+type: software
+authors:
+  - family-names: "Karakaya"
+    given-names: "Muhammed Fatih"
+    affiliation: "Cancer Signaling Laboratory, Boğaziçi University"
+    email: "edu.mfatih@gmail.com"
+version: "0.1.0-beta.1"
+date-released: "2026-08-05"
+repository-code: "https://github.com/karakayafm/class-a-gpcr-atlas"
+url: "https://karakayafm.github.io/class-a-gpcr-atlas/"
+license-url: "https://polyformproject.org/licenses/noncommercial/1.0.0"
+keywords:
+  - GPCR
+  - Class A GPCR
+  - structural biology
+  - protein-ligand contacts
+  - GPCRdb generic numbering
+  - molecular visualization
+references:
+  - type: database
+    title: "RCSB Protein Data Bank"
+    url: "https://www.rcsb.org/"
+    notes: "Coordinates, entry metadata and entity inventory. PDB archive files CC0 1.0."
+  - type: database
+    title: "GPCRdb"
+    url: "https://gpcrdb.org/"
+    notes: "Taxonomy, receptor records, structure list and annotations. Data CC BY 4.0."
+  - type: database
+    title: "UniProt"
+    url: "https://www.uniprot.org/"
+    notes: "Accessions relayed through RCSB polymer entity records. CC BY 4.0."
+  - type: software
+    title: "NGL Viewer"
+    url: "https://github.com/nglviewer/ngl"
+    notes: "3D visualisation, version 2.3.1, MIT licence."

@@ -1,0 +1,100 @@
+{
+  "vocabulary": "entity_form",
+  "description": "The physical shape a modelled entity takes in a deposition. This is a structural fact from the source, never an interpretation of what the entity is for — that is ligand_role.",
+  "entity_forms": [
+    {
+      "id": "nonpolymer_residue",
+      "definition": "A single modelled instance of a non-polymer chemical component, identified by chain and residue number.",
+      "inclusion_rule": "One row per (comp_id, auth_asym_id, auth_seq_id, insertion_code) instance reported by RCSB nonpolymer_entity_instances.",
+      "exclusion_rule": "Not used for the entity as a chemical concept; that is nonpolymer_entity.",
+      "decision_logic": "Emitted whenever instance-level container identifiers are present. Instance identity is what distinguishes two copies of the same compound bound at two different sites.",
+      "permitted_transitions": [
+        "covalent_adduct"
+      ],
+      "phase_introduced": 2
+    },
+    {
+      "id": "nonpolymer_entity",
+      "definition": "A non-polymer chemical component as an entity, aggregating all its instances in the entry.",
+      "inclusion_rule": "One row per RCSB nonpolymer entity id.",
+      "exclusion_rule": "Never used to represent a specific binding event; a binding event is instance-level.",
+      "decision_logic": "Always emitted from rcsb_nonpolymer_entity_container_identifiers.entity_id.",
+      "permitted_transitions": [],
+      "phase_introduced": 2
+    },
+    {
+      "id": "polymer_chain",
+      "definition": "A complete polymer entity (protein, peptide or nucleic acid) modelled as its own chain.",
+      "inclusion_rule": "One row per RCSB polymer entity id.",
+      "exclusion_rule": "Not used when only part of a chain acts as the biological ligand; that is polymer_segment.",
+      "decision_logic": "Always emitted from rcsb_polymer_entity_container_identifiers.entity_id.",
+      "permitted_transitions": [
+        "polymer_segment"
+      ],
+      "phase_introduced": 2
+    },
+    {
+      "id": "polymer_segment",
+      "definition": "A defined residue range within a non-receptor polymer chain that is the interacting ligand.",
+      "inclusion_rule": "Requires an explicit residue range from a source annotation or the primary publication.",
+      "exclusion_rule": "May not be produced by geometric proximity alone.",
+      "decision_logic": "Assigned only where a source states which part of the chain is the ligand. Absent such a statement the form stays polymer_chain and the segment question is recorded as unresolved.",
+      "permitted_transitions": [
+        "polymer_chain"
+      ],
+      "phase_introduced": 2
+    },
+    {
+      "id": "receptor_segment",
+      "definition": "A residue range within the receptor chain itself that acts as a tethered ligand, as in protease-activated receptors.",
+      "inclusion_rule": "Requires official receptor annotation, a cleavage-site mapping, or a primary-publication statement.",
+      "exclusion_rule": "Never assigned from proximity, from sequence pattern matching, or from receptor family alone.",
+      "decision_logic": "Without a citable source the record is emitted with classification_confidence=unresolved and manual_review_status=required, rather than guessed.",
+      "permitted_transitions": [],
+      "phase_introduced": 2
+    },
+    {
+      "id": "covalent_adduct",
+      "definition": "An entity covalently bonded to the receptor.",
+      "inclusion_rule": "RCSB instance annotation HAS_COVALENT_LINKAGE, or an explicit source statement of a covalent bond.",
+      "exclusion_rule": "HAS_METAL_COORDINATION_LINKAGE is coordination, not a covalent bond, and does not qualify.",
+      "decision_logic": "Covalency is a bonding fact recorded independently of pharmacology. It never by itself implies agonism or an active state.",
+      "permitted_transitions": [
+        "nonpolymer_residue"
+      ],
+      "phase_introduced": 2
+    },
+    {
+      "id": "none",
+      "definition": "The structure carries no entity of this kind.",
+      "inclusion_rule": "Used at structure level when a positive source statement says no ligand is present.",
+      "exclusion_rule": "Never inferred from a zero count alone.",
+      "decision_logic": "Requires positive evidence, e.g. a GPCRdb annotation of 'Apo (no ligand)'.",
+      "permitted_transitions": [
+        "unresolved"
+      ],
+      "phase_introduced": 2
+    },
+    {
+      "id": "unresolved",
+      "definition": "The form could not be determined from available sources.",
+      "inclusion_rule": "Default whenever evidence is absent or contradictory.",
+      "exclusion_rule": "May not be used to hide a determination that the sources actually support.",
+      "decision_logic": "An honest unresolved is preferred to a confident guess; these records populate the manual review queue.",
+      "permitted_transitions": [
+        "nonpolymer_residue",
+        "polymer_chain",
+        "polymer_segment",
+        "receptor_segment",
+        "covalent_adduct",
+        "none"
+      ],
+      "phase_introduced": 2
+    }
+  ],
+  "vocabulary_status": {
+    "closed": true,
+    "policy": "A value outside this file may not appear in any Phase 2 artefact. The test suite fails on an unknown value rather than accepting it. Adding a value requires an entry in governance/DECISION_LOG.md.",
+    "phase": 2
+  }
+}

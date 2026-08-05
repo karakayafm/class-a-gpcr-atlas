@@ -1,0 +1,45 @@
+{
+  "policy": "curation_priority_classes",
+  "phase": "6A",
+  "rule": "Priority is a property of the issue type, not of the reviewer's convenience. An item carrying several issue types takes the highest priority among them.",
+  "classes": [
+    {
+      "id": "priority_1_aggregation_identity_blocker",
+      "rank": 1,
+      "definition": "the record cannot enter a headline aggregation unit until it is decided",
+      "issue_types": [
+        "receptor_mapping",
+        "generic_mapping_unvalidated",
+        "ligand_classification",
+        "site_class_unresolved",
+        "annotated_not_observed"
+      ],
+      "effect": "blocks aggregation identity"
+    },
+    {
+      "id": "priority_2_interpretation_blocker",
+      "rank": 2,
+      "definition": "the record can be aggregated but its interpretation is contested",
+      "issue_types": [
+        "source_conflict:annotated_component_absent",
+        "source_conflict:transducer_presence_disagreement",
+        "assembly_ambiguity",
+        "tethered_ligand_candidate",
+        "apo_assignment",
+        "polymer_chain_role"
+      ],
+      "effect": "blocks interpretation"
+    },
+    {
+      "id": "priority_3_metadata_completeness",
+      "rank": 3,
+      "definition": "provenance or metadata completeness, not an analytic decision",
+      "issue_types": [
+        "mutation_mapping_unresolved",
+        "aminergic_regression_discrepancy"
+      ],
+      "effect": "metadata completeness only"
+    }
+  ],
+  "human_review_scope": "Only canonical items whose human_review_requirement is 'required' are placed in the curation queue. Items already resolved by evidence adjudication are shipped as context, not as work."
+}

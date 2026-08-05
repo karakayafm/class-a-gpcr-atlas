@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/class-a-gpcr-atlas/schemas/phase3/observation_coordinate_context.schema.json",
+  "title": "Observation coordinate context",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "structure_ligand_id",
+    "pdb_id",
+    "coordinate_context",
+    "selection_evidence"
+  ],
+  "description": "Which coordinates a contact was computed from, and why those.",
+  "properties": {
+    "structure_ligand_id": {
+      "type": "string"
+    },
+    "pdb_id": {
+      "type": "string"
+    },
+    "coordinate_context": {
+      "enum": [
+        "deposited_asymmetric_unit",
+        "author_defined_biological_assembly",
+        "preferred_biological_assembly",
+        "nmr_ensemble",
+        "unresolved_coordinate_context"
+      ]
+    },
+    "assembly_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "assembly_operator": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "receptor_coordinate_chain": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "ligand_coordinate_chains": {
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "model_id": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "models_total": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "is_nmr_ensemble": {
+      "type": "boolean"
+    },
+    "selection_evidence": {
+      "type": "string",
+      "minLength": 1
+    },
+    "ambiguity": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

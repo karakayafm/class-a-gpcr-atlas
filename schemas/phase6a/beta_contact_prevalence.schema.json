@@ -1,0 +1,96 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "title": "beta_contact_prevalence",
+ "description": "Review-gated contact prevalence for one aggregation unit x generic position. Derived by masking frozen Phase 4 per-observation contributions; contacts are not recomputed.",
+ "type": "object",
+ "required": [
+  "aggregation_unit_id",
+  "generic_position",
+  "denominator_before_review_gate",
+  "denominator_after_review_gate",
+  "estimable",
+  "source_phase4_metric",
+  "overlay_rule_version"
+ ],
+ "properties": {
+  "aggregation_unit_id": {
+   "type": "string"
+  },
+  "generic_position": {
+   "type": "string"
+  },
+  "original_structures_total": {
+   "type": "integer"
+  },
+  "beta_eligible_structures": {
+   "type": "integer"
+  },
+  "review_blocked_structures": {
+   "type": "integer"
+  },
+  "warning_only_structures": {
+   "type": "integer"
+  },
+  "structures_with_contact_4A": {
+   "type": "integer"
+  },
+  "structures_with_contact_4_5A": {
+   "type": "integer"
+  },
+  "structures_with_contact_5A": {
+   "type": "integer"
+  },
+  "contact_fraction_4A": {
+   "type": [
+    "number",
+    "null"
+   ]
+  },
+  "contact_fraction_4_5A": {
+   "type": [
+    "number",
+    "null"
+   ]
+  },
+  "contact_fraction_5A": {
+   "type": [
+    "number",
+    "null"
+   ]
+  },
+  "denominator_before_review_gate": {
+   "type": "integer",
+   "minimum": 0
+  },
+  "denominator_after_review_gate": {
+   "type": "integer",
+   "minimum": 0
+  },
+  "estimable": {
+   "type": "boolean"
+  },
+  "not_estimable_reason": {
+   "type": [
+    "string",
+    "null"
+   ],
+   "description": "A zero denominator yields NA, never 0%."
+  },
+  "review_item_ids": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "review_gate_warning": {
+   "type": "boolean"
+  },
+  "source_phase4_metric": {
+   "type": "object",
+   "description": "The original Phase 4 values, carried for comparison and never overwritten."
+  },
+  "overlay_rule_version": {
+   "type": "string"
+  }
+ }
+}

@@ -1,0 +1,35 @@
+{
+  "unit_key": [
+    "receptor_accession",
+    "species_taxon",
+    "normalized_ligand_identity",
+    "ligand_entity_form",
+    "binding_site_class",
+    "normalized_structural_state"
+  ],
+  "eligibility_rules": {
+    "ligand_identity_unresolved": "stays in raw data; excluded from the headline aggregation unit",
+    "site_class_unresolved": "excluded from pooled aggregation",
+    "state_unknown": "excluded from state-stratified aggregation; included in state-agnostic same-site-class aggregation",
+    "receptor_mapping_unresolved": "excluded from generic-position aggregation"
+  },
+  "multi_structure_rule": "A unit may contain several structures. It is NEVER silently reduced to a binary. contact_fraction_5A is the primary continuous metric; any/all/majority binaries are produced alongside for comparison and none of them is labelled 'prevalence' on its own.",
+  "per_unit_position_fields": [
+    "structures_total",
+    "structures_contact_eligible",
+    "structures_with_contact_4A",
+    "structures_with_contact_4_5A",
+    "structures_with_contact_5A",
+    "contact_fraction_4A",
+    "contact_fraction_4_5A",
+    "contact_fraction_5A",
+    "contact_any_5A",
+    "contact_all_5A",
+    "min_distance",
+    "median_min_distance",
+    "distance_IQR",
+    "structure_heterogeneity_flag"
+  ],
+  "primary_metric": "contact_fraction_5A",
+  "phase": 4
+}

@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/class-a-gpcr-atlas/schemas/phase3/review_resolution.schema.json",
+  "title": "Review resolution packet",
+  "type": "object",
+  "additionalProperties": true,
+  "description": "A packet a curator can decide from. The automated proposal and the curator decision are separate fields; the pipeline may never mark its own proposal as completed.",
+  "required": [
+    "review_id",
+    "pdb_id",
+    "category",
+    "question",
+    "automated_proposal",
+    "automated_evidence",
+    "curator_decision",
+    "review_status"
+  ],
+  "properties": {
+    "review_id": {
+      "type": "string"
+    },
+    "pdb_id": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string"
+    },
+    "question": {
+      "type": "string"
+    },
+    "priority": {
+      "type": "string"
+    },
+    "source_values": {
+      "type": "object"
+    },
+    "coordinate_context": {
+      "type": "object"
+    },
+    "geometry_as_supporting_evidence_only": {
+      "type": "string"
+    },
+    "automated_proposal": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "automated_evidence": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "curator_decision": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "curator_identity": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "review_date": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "review_status": {
+      "enum": [
+        "open",
+        "in_progress",
+        "completed"
+      ]
+    }
+  }
+}

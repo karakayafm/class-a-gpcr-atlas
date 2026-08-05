@@ -1,0 +1,480 @@
+{
+  "reference": "component_class_reference",
+  "phase": 2,
+  "description": "Chemical-class reference for non-polymer components. Its ONLY job is to describe what a component is chemically and what it is normally present for. It does NOT select ligands: a component becomes a pharmacological ligand solely through a per-structure source annotation (see config/ligand_roles.json). Consequently a component left unclassified here can never be silently promoted to a ligand — it is reported as unresolved and reviewed.",
+  "sources": [
+    {
+      "name": "PDB Chemical Component Dictionary (via RCSB chem_comp)",
+      "used_for": "type, name, formula, formula weight, heavy-atom count",
+      "url": "https://www.wwpdb.org/data/ccd"
+    },
+    {
+      "name": "Curated component table (this project)",
+      "used_for": "environment classes the CCD type cannot distinguish: lipid vs detergent vs buffer",
+      "basis": "component identity and IUPAC/common name as recorded in the CCD entry itself"
+    }
+  ],
+  "precedence": [
+    "1. explicit component id in curated_components",
+    "2. ccd_type_rules (structural CCD classification)",
+    "3. name_pattern_rules",
+    "4. unresolved"
+  ],
+  "ccd_type_rules": [
+    {
+      "match_ccd_type_contains": "saccharide",
+      "biological_type": "carbohydrate",
+      "default_role": "glycan_or_post_translational_component",
+      "rationale": "The CCD classifies these as saccharides; in GPCR entries they are N-linked glycans."
+    },
+    {
+      "match_ccd_type_contains": "peptide linking",
+      "biological_type": "amino_acid_or_short_fragment",
+      "default_role": "unresolved",
+      "rationale": "A free or linking amino acid may be an additive or a genuine ligand; the CCD type cannot tell, so it is reviewed."
+    },
+    {
+      "match_ccd_type_contains": "peptide COOH",
+      "biological_type": "amino_acid_or_short_fragment",
+      "default_role": "unresolved",
+      "rationale": "As above."
+    },
+    {
+      "match_ccd_type_contains": "RNA linking",
+      "biological_type": "nucleotide_or_nucleoside",
+      "default_role": "unresolved",
+      "rationale": "Nucleotides are ligands in the Nucleotide family and transducer cofactors in G-protein complexes; the binding partner decides, not the chemistry."
+    },
+    {
+      "match_ccd_type_contains": "DNA linking",
+      "biological_type": "nucleotide_or_nucleoside",
+      "default_role": "unresolved",
+      "rationale": "As above."
+    }
+  ],
+  "ion_rule": {
+    "condition": "heavy atom count == 1 AND the CCD name ends with ' ION'",
+    "biological_type": "ion",
+    "default_role": "environment_ion",
+    "rationale": "Per OD-08 an ion is environment by default. This explicitly includes sodium, including the conserved 2x50 sodium pocket, which is a motif cofactor rather than a pharmacological ligand. Only an explicit source annotation may override this, and doing so requires manual review.",
+    "excluded_ids": [
+      "UNX",
+      "NH2"
+    ],
+    "excluded_rationale": "UNX is 'unknown atom or ion' and carries no chemical identity; NH2 is an amino group, not an ion. Both go to unresolved."
+  },
+  "curated_components": {
+    "CLR": [
+      "lipid",
+      "membrane_lipid",
+      "Cholesterol. Ubiquitous in GPCR preparations as membrane/mesophase component."
+    ],
+    "Y01": [
+      "lipid",
+      "membrane_lipid",
+      "Cholesterol hemisuccinate, a solubilisation additive."
+    ],
+    "CHD": [
+      "lipid",
+      "membrane_lipid",
+      "Cholic acid derivative."
+    ],
+    "OLC": [
+      "lipid",
+      "membrane_lipid",
+      "Monoolein; the lipidic cubic phase matrix itself."
+    ],
+    "OLB": [
+      "lipid",
+      "membrane_lipid",
+      "Monoolein stereoisomer; LCP matrix."
+    ],
+    "OLA": [
+      "lipid",
+      "membrane_lipid",
+      "Oleic acid; LCP/mesophase component."
+    ],
+    "PLM": [
+      "lipid",
+      "membrane_lipid",
+      "Palmitic acid."
+    ],
+    "MYR": [
+      "lipid",
+      "membrane_lipid",
+      "Myristic acid."
+    ],
+    "STE": [
+      "lipid",
+      "membrane_lipid",
+      "Stearic acid."
+    ],
+    "PGW": [
+      "lipid",
+      "membrane_lipid",
+      "Phosphatidylglycerol."
+    ],
+    "PEE": [
+      "lipid",
+      "membrane_lipid",
+      "Phosphatidylethanolamine."
+    ],
+    "PC1": [
+      "lipid",
+      "membrane_lipid",
+      "Phosphatidylcholine."
+    ],
+    "PCW": [
+      "lipid",
+      "membrane_lipid",
+      "Phosphatidylcholine."
+    ],
+    "POV": [
+      "lipid",
+      "membrane_lipid",
+      "POPC-type phospholipid."
+    ],
+    "PEV": [
+      "lipid",
+      "membrane_lipid",
+      "Phospholipid."
+    ],
+    "P5S": [
+      "lipid",
+      "membrane_lipid",
+      "Phospholipid."
+    ],
+    "D10": [
+      "lipid",
+      "membrane_lipid",
+      "Decane; aliphatic mesophase additive."
+    ],
+    "HEX": [
+      "lipid",
+      "membrane_lipid",
+      "Hexane."
+    ],
+    "DD9": [
+      "lipid",
+      "membrane_lipid",
+      "Nonane/aliphatic chain."
+    ],
+    "UND": [
+      "lipid",
+      "membrane_lipid",
+      "Undecane."
+    ],
+    "R16": [
+      "lipid",
+      "membrane_lipid",
+      "Hexadecane."
+    ],
+    "HTG": [
+      "lipid",
+      "detergent",
+      "Heptyl thioglucoside."
+    ],
+    "BOG": [
+      "small_molecule",
+      "detergent",
+      "Octyl beta-D-glucopyranoside, a standard membrane-protein detergent."
+    ],
+    "SOG": [
+      "small_molecule",
+      "detergent",
+      "Octyl 1-thio-beta-D-glucopyranoside."
+    ],
+    "2CV": [
+      "small_molecule",
+      "detergent",
+      "HEGA-10 detergent."
+    ],
+    "LMT": [
+      "small_molecule",
+      "detergent",
+      "Lauryl maltoside (DDM)."
+    ],
+    "LMU": [
+      "small_molecule",
+      "detergent",
+      "Undecyl maltoside."
+    ],
+    "JZR": [
+      "small_molecule",
+      "detergent",
+      "Maltoside detergent."
+    ],
+    "9YU": [
+      "small_molecule",
+      "detergent",
+      "Glyco-diosgenin / maltoside-type detergent."
+    ],
+    "C8E": [
+      "small_molecule",
+      "detergent",
+      "Octyl polyoxyethylene detergent."
+    ],
+    "P6G": [
+      "small_molecule",
+      "buffer_or_crystallization_additive",
+      "Hexaethylene glycol."
+    ],
+    "PEG": [
+      "small_molecule",
+      "buffer_or_crystallization_additive",
+      "Di(hydroxyethyl)ether; PEG fragment."
+    ],
+    "1PE": [
+      "small_molecule",
+      "buffer_or_crystallization_additive",
+      "Pentaethylene glycol."
+    ],
+    "PG4": [
+      "small_molecule",
+      "buffer_or_crystallization_additive",
+      "Tetraethylene glycol."
+    ],
+    "PGE": [
+      "small_molecule",
+      "buffer_or_crystallization_additive",
+      "Triethylene glycol."
+    ],
+    "2PE": [
+      "small_molecule",
+      "buffer_or_crystallization_additive",
+      "PEG fragment."
+    ],
+    "EDO": [
+      "small_molecule",
+      "buffer_or_crystallization_additive",
+      "Ethylene glycol; cryoprotectant."
+    ],
+    "GOL": [
+      "small_molecule",
+      "buffer_or_crystallization_additive",
+      "Glycerol; cryoprotectant."
+    ],
+    "SO4": [
+      "small_molecule",
+      "buffer_or_crystallization_additive",
+      "Sulfate ion; precipitant."
+    ],
+    "PO4": [
+      "small_molecule",
+      "buffer_or_crystallization_additive",
+      "Phosphate ion; buffer."
+    ],
+    "CIT": [
+      "small_molecule",
+      "buffer_or_crystallization_additive",
+      "Citrate; buffer/precipitant."
+    ],
+    "FLC": [
+      "small_molecule",
+      "buffer_or_crystallization_additive",
+      "Citrate anion."
+    ],
+    "ACT": [
+      "small_molecule",
+      "buffer_or_crystallization_additive",
+      "Acetate; buffer."
+    ],
+    "EPE": [
+      "small_molecule",
+      "buffer_or_crystallization_additive",
+      "HEPES buffer."
+    ],
+    "MES": [
+      "small_molecule",
+      "buffer_or_crystallization_additive",
+      "MES buffer."
+    ],
+    "TRS": [
+      "small_molecule",
+      "buffer_or_crystallization_additive",
+      "Tris buffer."
+    ],
+    "IMD": [
+      "small_molecule",
+      "buffer_or_crystallization_additive",
+      "Imidazole; buffer/elution reagent."
+    ],
+    "DMS": [
+      "small_molecule",
+      "buffer_or_crystallization_additive",
+      "DMSO; solvent."
+    ],
+    "MPD": [
+      "small_molecule",
+      "buffer_or_crystallization_additive",
+      "MPD; precipitant/cryoprotectant."
+    ],
+    "BU3": [
+      "small_molecule",
+      "buffer_or_crystallization_additive",
+      "Butanediol; cryoprotectant."
+    ],
+    "TLA": [
+      "small_molecule",
+      "buffer_or_crystallization_additive",
+      "Tartrate."
+    ],
+    "MLI": [
+      "small_molecule",
+      "buffer_or_crystallization_additive",
+      "Malonate."
+    ],
+    "FMT": [
+      "small_molecule",
+      "buffer_or_crystallization_additive",
+      "Formate."
+    ],
+    "AZI": [
+      "small_molecule",
+      "buffer_or_crystallization_additive",
+      "Azide; preservative."
+    ],
+    "GTP": [
+      "nucleotide_or_nucleoside",
+      "unresolved",
+      "GTP. In a G-protein complex this is a transducer cofactor; at a nucleotide receptor it can be the ligand. The partner decides."
+    ],
+    "GDP": [
+      "nucleotide_or_nucleoside",
+      "unresolved",
+      "GDP; see GTP."
+    ],
+    "GNP": [
+      "nucleotide_or_nucleoside",
+      "unresolved",
+      "GMPPNP, non-hydrolysable GTP analogue; see GTP."
+    ],
+    "GSP": [
+      "nucleotide_or_nucleoside",
+      "unresolved",
+      "GTP-gamma-S; see GTP."
+    ],
+    "ATP": [
+      "nucleotide_or_nucleoside",
+      "unresolved",
+      "ATP; see GTP."
+    ],
+    "ADP": [
+      "nucleotide_or_nucleoside",
+      "unresolved",
+      "ADP; see GTP."
+    ],
+    "ANP": [
+      "nucleotide_or_nucleoside",
+      "unresolved",
+      "AMPPNP; see GTP."
+    ],
+    "ADN": [
+      "nucleotide_or_nucleoside",
+      "unresolved",
+      "Adenosine; the endogenous agonist of adenosine receptors, but only a source annotation may say so for a given structure."
+    ],
+    "RET": [
+      "retinal_or_chromophore",
+      "unresolved",
+      "All-trans retinal; the covalent opsin chromophore. Its pharmacological role requires a source annotation, not its covalency."
+    ],
+    "NRE": [
+      "retinal_or_chromophore",
+      "unresolved",
+      "Retinal analogue."
+    ],
+    "9CR": [
+      "retinal_or_chromophore",
+      "unresolved",
+      "9-cis retinal."
+    ],
+    "NAG": [
+      "carbohydrate",
+      "glycan_or_post_translational_component",
+      "N-acetylglucosamine; N-linked glycan."
+    ],
+    "BMA": [
+      "carbohydrate",
+      "glycan_or_post_translational_component",
+      "Beta-D-mannose; glycan."
+    ],
+    "MAN": [
+      "carbohydrate",
+      "glycan_or_post_translational_component",
+      "Alpha-D-mannose; glycan."
+    ],
+    "FUC": [
+      "carbohydrate",
+      "glycan_or_post_translational_component",
+      "Fucose; glycan."
+    ],
+    "UNX": [
+      "unknown",
+      "unresolved",
+      "Unknown atom or ion; carries no chemical identity."
+    ],
+    "UNL": [
+      "unknown",
+      "unresolved",
+      "Unknown ligand; density modelled without identification."
+    ]
+  },
+  "name_pattern_rules": [
+    {
+      "pattern": "POLYETHYLENE GLYCOL",
+      "biological_type": "small_molecule",
+      "default_role": "buffer_or_crystallization_additive",
+      "rationale": "PEG series."
+    },
+    {
+      "pattern": "GLYCOL",
+      "biological_type": "small_molecule",
+      "default_role": "buffer_or_crystallization_additive",
+      "rationale": "Glycol cryoprotectants."
+    },
+    {
+      "pattern": "MALTOSIDE",
+      "biological_type": "small_molecule",
+      "default_role": "detergent",
+      "rationale": "Maltoside detergent series."
+    },
+    {
+      "pattern": "GLUCOPYRANOSIDE",
+      "biological_type": "small_molecule",
+      "default_role": "detergent",
+      "rationale": "Glucoside detergent series."
+    },
+    {
+      "pattern": "PHOSPHOCHOLINE",
+      "biological_type": "lipid",
+      "default_role": "membrane_lipid",
+      "rationale": "Phospholipid headgroup."
+    },
+    {
+      "pattern": "PHOSPHATIDYL",
+      "biological_type": "lipid",
+      "default_role": "membrane_lipid",
+      "rationale": "Phospholipid series."
+    },
+    {
+      "pattern": "CHOLESTEROL",
+      "biological_type": "lipid",
+      "default_role": "membrane_lipid",
+      "rationale": "Sterol series."
+    },
+    {
+      "pattern": "FATTY ACID",
+      "biological_type": "lipid",
+      "default_role": "membrane_lipid",
+      "rationale": "Free fatty acids."
+    },
+    {
+      "pattern": "RETINAL",
+      "biological_type": "retinal_or_chromophore",
+      "default_role": "unresolved",
+      "rationale": "Chromophore; role requires a source annotation."
+    }
+  ],
+  "unmatched_policy": "A component matching nothing above is emitted with biological_type=unknown and ligand_role=unresolved, and is added to the manual review queue. It is never assigned a role by guesswork and never becomes a pharmacological ligand without a source annotation."
+}

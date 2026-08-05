@@ -1,0 +1,110 @@
+/* Two themes only: grey (default) and dark. No unused legacy theme blocks were carried over. */
+:root[data-theme="grey"] {
+  --bg:#f4f5f6; --panel:#ffffff; --ink:#1e2124; --muted:#5b6169; --line:#d8dbde;
+  --accent:#2f6f8f; --accent-ink:#ffffff; --warn-bg:#fff6e0; --warn-ink:#7a4d00; --chip:#eceef0;
+}
+:root[data-theme="dark"] {
+  --bg:#15171a; --panel:#1d2024; --ink:#e6e8ea; --muted:#9aa2aa; --line:#2c3138;
+  --accent:#69b3d6; --accent-ink:#10141a; --warn-bg:#3a2f14; --warn-ink:#f0c96a; --chip:#262b31;
+}
+* { box-sizing:border-box; }
+html,body { margin:0; padding:0; }
+body { background:var(--bg); color:var(--ink); font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+a { color:var(--accent); }
+.skip { position:absolute; left:-9999px; }
+.skip:focus { left:8px; top:8px; z-index:100; background:var(--panel); padding:8px 12px; border:2px solid var(--accent); }
+header.top { background:var(--panel); border-bottom:1px solid var(--line); padding:10px 16px;
+  display:flex; gap:12px; align-items:center; flex-wrap:wrap; position:sticky; top:0; z-index:20; }
+header.top h1 { font-size:17px; margin:0; font-weight:650; }
+.spacer { flex:1; }
+select, input[type="search"] { background:var(--panel); color:var(--ink); border:1px solid var(--line);
+  border-radius:6px; padding:5px 8px; font:inherit; }
+nav#nav { display:flex; gap:4px; flex-wrap:wrap; padding:8px 16px; background:var(--panel);
+  border-bottom:1px solid var(--line); }
+.navlink { padding:5px 10px; border-radius:6px; text-decoration:none; color:var(--ink); font-size:14px; }
+.navlink.active { background:var(--accent); color:var(--accent-ink); }
+.navlink:focus-visible, .btn:focus-visible, select:focus-visible, input:focus-visible, a:focus-visible
+  { outline:3px solid var(--accent); outline-offset:2px; }
+#famlabel { padding:6px 16px; font-size:13px; color:var(--muted); }
+.crumb { margin-right:6px; } .crumb.sep { opacity:.6; }
+#prerelease { background:var(--warn-bg); color:var(--warn-ink); padding:8px 16px; font-size:13px;
+  border-bottom:1px solid var(--line); }
+#filewarn { background:var(--warn-bg); color:var(--warn-ink); padding:10px 16px; font-size:14px; }
+main { padding:16px; max-width:1400px; margin:0 auto; }
+.view h2 { margin-top:0; font-size:20px; }
+.cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:12px; }
+.card { display:block; background:var(--panel); border:1px solid var(--line); border-radius:10px;
+  padding:12px 14px; text-decoration:none; color:inherit; }
+.card:hover { border-color:var(--accent); }
+.card h3 { margin:0 0 4px; font-size:16px; }
+dl.kv { display:grid; grid-template-columns:auto auto; gap:2px 10px; margin:8px 0; font-size:13px; }
+dl.kv.wide { grid-template-columns:auto 1fr; max-width:520px; }
+dl.kv dt { color:var(--muted); } dl.kv dd { margin:0; text-align:right; }
+dl.kv.wide dd { text-align:left; }
+.chip, .badge { display:inline-block; background:var(--chip); border-radius:999px; padding:2px 8px;
+  font-size:12px; margin:2px 4px 2px 0; }
+.badge.warn { background:var(--warn-bg); color:var(--warn-ink); }
+.badges { display:block; margin-top:6px; }
+.sitechips { margin-top:6px; }
+.muted { color:var(--muted); } .small { font-size:12.5px; }
+.notice { background:var(--warn-bg); color:var(--warn-ink); border-radius:8px; padding:8px 12px; }
+.controls { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:10px 0; }
+.controls label { font-size:13px; color:var(--muted); }
+table.data { width:100%; border-collapse:collapse; background:var(--panel); border:1px solid var(--line);
+  border-radius:8px; overflow:hidden; margin:10px 0; font-size:13.5px; }
+table.data th, table.data td { border-bottom:1px solid var(--line); padding:6px 9px; text-align:left;
+  vertical-align:top; }
+table.data thead th { background:var(--chip); font-weight:600; position:sticky; top:0; }
+table.data td.num, table.data th.num { text-align:right; font-variant-numeric:tabular-nums; }
+ul.obs { margin:0; padding-left:14px; } ul.obs li { margin-bottom:3px; }
+ul.cols { columns:5; font-size:12.5px; }
+.pager { display:flex; gap:8px; margin:10px 0; flex-wrap:wrap; }
+.btn { background:var(--panel); color:var(--ink); border:1px solid var(--line); border-radius:6px;
+  padding:5px 10px; font:inherit; cursor:pointer; text-decoration:none; display:inline-block; }
+.btn:hover { border-color:var(--accent); } .btn[disabled] { opacity:.5; cursor:default; }
+.metric-head h3 { margin:6px 0 2px; font-size:15px; }
+.prose p { max-width:70ch; }
+.modal { position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:50; display:flex;
+  align-items:center; justify-content:center; padding:16px; }
+.modal[hidden] { display:none !important; }
+[hidden] { display:none !important; }
+.modal-inner { background:var(--panel); border-radius:12px; width:min(1200px,100%); height:min(80vh,860px);
+  display:flex; flex-direction:column; overflow:hidden; }
+.modal-head { display:flex; align-items:center; gap:10px; padding:8px 14px; border-bottom:1px solid var(--line); }
+.modal-head h2 { margin:0; font-size:16px; flex:1; }
+.modal-body { flex:1; display:grid; grid-template-columns:1fr 300px; min-height:0; }
+.viewport { min-height:320px; background:#fff; }
+:root[data-theme="dark"] .viewport { background:#0e1013; }
+.viewer-side { border-left:1px solid var(--line); padding:10px 12px; overflow:auto; }
+.toggles { display:grid; gap:3px; margin:8px 0; }
+.toggle { display:flex; gap:6px; align-items:center; font-size:13px; }
+body.modal-open { overflow:hidden; }
+@media (max-width:900px) { .modal-body { grid-template-columns:1fr; } ul.cols { columns:2; } }
+@media (prefers-reduced-motion: reduce) { * { animation:none !important; transition:none !important; } }
+
+/* --- Phase 6A.1 review gate and validation disclosure ------------------------------------ */
+.review-gate { border:1px solid var(--line); border-radius:8px; padding:12px 14px; margin:14px 0;
+  background:var(--panel); }
+.review-gate h3 { margin:0 0 6px; font-size:15px; }
+.review-gate .data.compact th { font-weight:500; text-align:left; }
+.review-gate .data.compact td, .review-gate .data.compact th { padding:3px 8px; }
+.badge.validation { border:1px solid var(--line); border-radius:999px; padding:2px 9px;
+  font-size:12px; display:inline-block; }
+.badge.validation.reference_tested_within_scope { background:var(--chip); }
+.badge.validation.transferred_method,
+.badge.validation.covalent_shell_untested,
+.badge.validation.mixed_validation_scope { background:var(--warn-bg); color:var(--warn-ink);
+  border-color:var(--warn-ink); }
+.badge.validation.descriptive_interface_rule { background:var(--warn-bg); color:var(--warn-ink);
+  border-color:var(--warn-ink); }
+.badge-link { text-decoration:none; }
+.notice.interface-shell { border-left:3px solid var(--warn-ink); background:var(--warn-bg);
+  color:var(--warn-ink); }
+.validation-notice p { margin:4px 0; }
+.original-aggregate { margin:12px 0; border:1px dashed var(--line); border-radius:8px;
+  padding:8px 10px; }
+.original-aggregate > summary { cursor:pointer; font-size:13px; color:var(--muted); }
+tr.statement td { border-top:0; padding-top:0; }
+.tablewrap { overflow-x:auto; }
+td.eff-exclude_from_public_beta_pooled_analysis { color:var(--warn-ink); font-weight:600; }
+td.eff-warning_only { color:var(--muted); }

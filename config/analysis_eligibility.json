@@ -1,0 +1,83 @@
+{
+  "vocabulary": "analysis_eligibility",
+  "description": "Whether a record may enter a later quantitative analysis, and if not, why.",
+  "policy": "Eligibility is a description attached to a record, never a deletion. Every record remains in the dataset. Per DD-11 the analysis decides which eligibility values it accepts; this field does not decide for it.",
+  "analysis_eligibility": [
+    {
+      "id": "eligible",
+      "definition": "Complete, unambiguous, and usable without caveat.",
+      "inclusion_rule": "Role and site class both determined from source evidence, no unresolved dependency, no source conflict.",
+      "exclusion_rule": "—",
+      "decision_logic": "—",
+      "permitted_transitions": [
+        "eligible_with_warning",
+        "unresolved_manual_review"
+      ],
+      "phase_introduced": 2
+    },
+    {
+      "id": "eligible_with_warning",
+      "definition": "Usable, but carries a caveat an analysis must acknowledge.",
+      "inclusion_rule": "Determined role but a provisional site class, a construct caveat, or a low-sample family context.",
+      "exclusion_rule": "—",
+      "decision_logic": "Per OD-10 low sample size and missing human receptors are warnings, never grounds for hiding a family.",
+      "permitted_transitions": [
+        "eligible",
+        "unresolved_manual_review"
+      ],
+      "phase_introduced": 2
+    },
+    {
+      "id": "excluded_environment",
+      "definition": "A genuine part of the structure that is not pharmacology.",
+      "inclusion_rule": "Role is environment_ion, membrane_lipid, detergent, buffer_or_crystallization_additive or glycan_or_post_translational_component.",
+      "exclusion_rule": "—",
+      "decision_logic": "Retained in the entity inventory; produces no pharmacological observation.",
+      "permitted_transitions": [
+        "eligible",
+        "unresolved_manual_review"
+      ],
+      "phase_introduced": 2
+    },
+    {
+      "id": "excluded_construct",
+      "definition": "Present because of the engineered construct.",
+      "inclusion_rule": "Role is construct_stabilizer, fusion_partner, or antibody_or_nanobody used as a chaperone.",
+      "exclusion_rule": "—",
+      "decision_logic": "—",
+      "permitted_transitions": [
+        "eligible",
+        "unresolved_manual_review"
+      ],
+      "phase_introduced": 2
+    },
+    {
+      "id": "excluded_non_pharmacological",
+      "definition": "A biologically real partner that is not a receptor ligand.",
+      "inclusion_rule": "Role is transducer_component, auxiliary_protein or cofactor.",
+      "exclusion_rule": "—",
+      "decision_logic": "Excluded from ligand pharmacology while remaining available for transducer analysis.",
+      "permitted_transitions": [
+        "eligible",
+        "unresolved_manual_review"
+      ],
+      "phase_introduced": 2
+    },
+    {
+      "id": "unresolved_manual_review",
+      "definition": "Cannot be judged automatically; a human must decide.",
+      "inclusion_rule": "Role or site class unresolved, sources in conflict, or a rule fired with low confidence.",
+      "exclusion_rule": "—",
+      "decision_logic": "These records populate the manual review queue and are counted honestly rather than assumed correct.",
+      "permitted_transitions": [
+        "*"
+      ],
+      "phase_introduced": 2
+    }
+  ],
+  "vocabulary_status": {
+    "closed": true,
+    "phase": 2,
+    "policy": "A value outside this file may not appear in any Phase 2 artefact. The test suite fails on an unknown value. Adding a value requires an entry in governance/DECISION_LOG.md."
+  }
+}

@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/class-a-gpcr-atlas/schemas/phase4/coverage_record.schema.json",
+  "title": "Coverage record",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "major_family_id",
+    "structure_count",
+    "warnings"
+  ],
+  "properties": {
+    "major_family_id": {
+      "type": "string"
+    },
+    "major_family_name": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "structure_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "structure_coverage": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "receptor_coverage": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "observation_coverage": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "generic_contact_coverage": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "state_coverage": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "ligand_identity_coverage": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "site_class_coverage": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "analysis_units": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "unique_receptors": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "unique_ligands": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "unique_species": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

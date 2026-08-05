@@ -1,0 +1,31 @@
+{
+  "required_fields": [
+    "denominator_type",
+    "denominator_count",
+    "numerator_definition",
+    "eligible_observations",
+    "excluded_observations",
+    "excluded_by_mapping",
+    "excluded_by_site_class",
+    "excluded_by_source_conflict",
+    "excluded_by_coordinate_absence",
+    "excluded_by_mutation_sensitivity",
+    "unknown_state_count",
+    "unique_receptor_count",
+    "unique_ligand_count",
+    "unique_species_count",
+    "structure_count"
+  ],
+  "zero_denominator_rule": "a zero denominator yields not_estimable (NA), never 0%",
+  "low_coverage_rule": "A low-coverage ratio is not hidden. It is published together with visible warning metadata, and no single coverage percentage is used to pass or fail a whole family.",
+  "coverage_dimensions": [
+    "structure_coverage",
+    "receptor_coverage",
+    "observation_coverage",
+    "generic_contact_coverage",
+    "state_coverage",
+    "ligand_identity_coverage",
+    "site_class_coverage"
+  ],
+  "phase": 4
+}

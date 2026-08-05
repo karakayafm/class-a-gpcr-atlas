@@ -1,0 +1,21 @@
+{
+  "project": "Class A GPCR Structural Pharmacology Atlas",
+  "scope_version": "1",
+  "phase": "1",
+  "python_requires": ">=3.10",
+  "dependencies": {
+    "runtime": [],
+    "note": "Pipeline uses the Python standard library only (urllib, json, hashlib, concurrent.futures). No requirements.txt is needed at Phase 1. Any future dependency must be justified in governance/DECISION_LOG.md."
+  },
+  "canonical_json": {
+    "sort_keys": true,
+    "separators": [",", ":"],
+    "ensure_ascii": false,
+    "encoding": "UTF-8",
+    "note": "Content hashes are computed over canonical JSON with volatile provenance fields removed; see pipeline/common/hashing.py"
+  },
+  "independence": {
+    "frozen_reference_project": "../ (aminergic pocket viewer)",
+    "rule": "Read-only. Never imported, never a runtime dependency, never modified."
+  }
+}

@@ -1,0 +1,160 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/class-a-gpcr-atlas/schemas/receptor_instance.schema.json",
+  "title": "Receptor instance (Phase 2)",
+  "description": "One modelled copy of the receptor. A chimeric construct (receptor fused to BRIL, T4 lysozyme, PGS or similar) remains ONE receptor instance; the fusion is recorded here as construct engineering, never as a separate partner chain.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receptor_instance_id",
+    "pdb_id",
+    "auth_asym_id",
+    "receptor_entry_name",
+    "species",
+    "mutation_count",
+    "mutation_mapping_status",
+    "receptor_mapping_source",
+    "mapping_confidence",
+    "mapping_flags",
+    "provenance"
+  ],
+  "properties": {
+    "receptor_instance_id": {
+      "type": "string"
+    },
+    "pdb_id": {
+      "type": "string",
+      "pattern": "^[0-9A-Z]{4}$"
+    },
+    "auth_asym_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "label_asym_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "polymer_entity_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "receptor_entry_name": {
+      "type": "string"
+    },
+    "receptor_accession": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "species": {
+      "type": "string"
+    },
+    "wild_type_accession": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Reference sequence for mutation calling. A residue differing from a WRONG reference is not evidence of engineering."
+    },
+    "construct_sequence_available": {
+      "type": "boolean"
+    },
+    "sequence_length": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "mutation_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "mutation_list": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "mutation_source": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "mutation_mapping_status": {
+      "enum": [
+        "depositor_reported",
+        "none_reported",
+        "unresolved",
+        "source_not_loaded"
+      ],
+      "description": "Phase 2 records mutation provenance only; no prevalence is computed (OD-05)."
+    },
+    "fusion_accessions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "is_chimeric_construct": {
+      "type": "boolean"
+    },
+    "construct_description": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "receptor_mapping_source": {
+      "type": "string"
+    },
+    "mapping_confidence": {
+      "enum": [
+        "high",
+        "chain_annotation_only",
+        "unresolved"
+      ]
+    },
+    "mapping_flags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "required": [
+        "source",
+        "source_field",
+        "rule_version",
+        "script"
+      ],
+      "additionalProperties": true,
+      "description": "Provenance for a derived field. A field whose source object was never loaded must say so with source_not_loaded / source_unavailable / source_field_absent; a silent null is a schema violation.",
+      "properties": {
+        "source": {
+          "type": "string"
+        },
+        "source_field": {
+          "type": "string"
+        },
+        "rule_version": {
+          "type": "string"
+        },
+        "script": {
+          "type": "string"
+        },
+        "parser_version": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

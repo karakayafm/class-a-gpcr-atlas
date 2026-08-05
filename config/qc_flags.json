@@ -1,0 +1,86 @@
+{
+  "qc_flags": [
+    {
+      "id": "ok",
+      "severity": "none",
+      "meaning": "No issue detected"
+    },
+    {
+      "id": "branched_entity_glycan",
+      "severity": "info",
+      "meaning": "Branched entity (oligosaccharide); typed as non-polymer for inventory purposes"
+    },
+    {
+      "id": "component_is_water",
+      "severity": "info",
+      "meaning": "Non-polymer component is crystallographic water; recorded, never silently dropped"
+    },
+    {
+      "id": "entity_inventory_empty",
+      "severity": "medium",
+      "meaning": "No entity record could be built for a structure that declares entity identifiers"
+    },
+    {
+      "id": "entity_role_ambiguous",
+      "severity": "medium",
+      "meaning": "A polymer entity matches more than one preliminary role"
+    },
+    {
+      "id": "method_not_experimental",
+      "severity": "high",
+      "meaning": "Experimental method outside the frozen inclusion list"
+    },
+    {
+      "id": "no_family_mapping",
+      "severity": "high",
+      "meaning": "Receptor cannot be placed under a Class A major family"
+    },
+    {
+      "id": "no_nonpolymer_component",
+      "severity": "info",
+      "meaning": "Entry has no non-polymer component"
+    },
+    {
+      "id": "no_receptor_chain",
+      "severity": "high",
+      "meaning": "GPCRdb preferred chain missing or empty"
+    },
+    {
+      "id": "no_receptor_mapping",
+      "severity": "high",
+      "meaning": "Structure lacks a resolvable GPCRdb receptor entry"
+    },
+    {
+      "id": "no_species",
+      "severity": "medium",
+      "meaning": "Species missing in the source record"
+    },
+    {
+      "id": "pdb_obsolete",
+      "severity": "medium",
+      "meaning": "RCSB reports the entry as obsolete or removed"
+    },
+    {
+      "id": "polymer_is_nucleic_acid",
+      "severity": "info",
+      "meaning": "Polymer entity is DNA/RNA rather than protein"
+    },
+    {
+      "id": "polymer_type_unrecognised",
+      "severity": "medium",
+      "meaning": "Source polymer type is outside the recognised vocabulary; entity left as unknown"
+    },
+    {
+      "id": "rcsb_unresolved",
+      "severity": "high",
+      "meaning": "PDB id present in GPCRdb but not retrievable from RCSB"
+    },
+    {
+      "id": "receptor_chain_not_in_entry",
+      "severity": "high",
+      "meaning": "Preferred chain not found among the entry's polymer chains"
+    }
+  ],
+  "policy": "A flag never removes a record from the raw universe. Production inclusion is a later, explicit decision.",
+  "stage_note": "Flags are emitted by the universe stage (join and entry metadata) and the inventory stage (entity typing). A new flag must be declared here before any pipeline stage may emit it."
+}

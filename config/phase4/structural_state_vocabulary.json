@@ -1,0 +1,52 @@
+{
+  "vocabulary": "normalized_structural_state",
+  "closed": true,
+  "source_rule": "Only values a source actually asserts may be used. active_like and inactive_like require the source to carry that meaning; they are never a softened restatement of a confident annotation.",
+  "prohibition": "structural state is NEVER derived from motif geometry (see section 17 policy)",
+  "states": [
+    {
+      "id": "active",
+      "definition": "source annotates an active state"
+    },
+    {
+      "id": "inactive",
+      "definition": "source annotates an inactive state"
+    },
+    {
+      "id": "intermediate",
+      "definition": "source annotates an intermediate state"
+    },
+    {
+      "id": "active_like",
+      "definition": "source explicitly qualifies the state as active-like"
+    },
+    {
+      "id": "inactive_like",
+      "definition": "source explicitly qualifies the state as inactive-like"
+    },
+    {
+      "id": "mixed_or_asymmetric",
+      "definition": "different copies in one entry carry different states"
+    },
+    {
+      "id": "unknown",
+      "definition": "no source state annotation",
+      "aggregation_rule": "excluded from state-stratified tables; included in state-agnostic same-site-class aggregation"
+    },
+    {
+      "id": "not_applicable",
+      "definition": "state is not a meaningful attribute for this record"
+    }
+  ],
+  "conflict_fields": [
+    "gpcrdb_state",
+    "depositor_annotation",
+    "transducer_presence",
+    "source_publication",
+    "chosen_normalized_state",
+    "decision_rule",
+    "conflict_status"
+  ],
+  "transducer_rule": "Transducer presence is a stratification field only. A G-protein-bound structure may well be active, but that inference may not be used to assign a state.",
+  "phase": 4
+}

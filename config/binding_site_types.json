@@ -1,0 +1,12 @@
+{
+  "binding_site_types": [
+    "canonical_7tm_pocket", "extended_extracellular_pocket", "protein_receptor_interface",
+    "intracellular_allosteric_site", "lipid_facing_site", "covalent_site",
+    "tethered_ligand_site", "other", "unknown", "none"
+  ],
+  "assignment_status": {
+    "assigned_in_phase_1": false,
+    "note": "Schema support only. No structure is assigned a site class in Phase 1."
+  },
+  "aggregation_rule": "Prevalence is never computed across different binding-site types."
+}

@@ -1,0 +1,35 @@
+{
+  "gpcrdb": {
+    "provider": "GPCRdb",
+    "base": "https://gpcrdb.org/services/",
+    "endpoints": {
+      "protein_family_children": "proteinfamily/children/{slug}/",
+      "protein_family_descendants": "proteinfamily/descendants/{slug}/",
+      "proteins_in_family": "proteinfamily/proteins/{slug}/",
+      "structure_list": "structure/"
+    },
+    "class_a_slug": "001",
+    "license_page": "https://docs.gpcrdb.org/legal_notice.html",
+    "terms": "Data: CC BY 4.0. Source code: Apache 2.0. This project uses data and annotations only.",
+    "rate": {"max_workers": 4, "delay_seconds": 0.15, "retries": 3, "timeout_seconds": 120}
+  },
+  "rcsb": {
+    "provider": "RCSB PDB",
+    "base": "https://data.rcsb.org/rest/v1/core/",
+    "endpoints": {
+      "entry": "entry/{pdb_id}",
+      "polymer_entity": "polymer_entity/{pdb_id}/{entity_id}",
+      "nonpolymer_entity": "nonpolymer_entity/{pdb_id}/{entity_id}",
+      "branched_entity": "branched_entity/{pdb_id}/{entity_id}"
+    },
+    "license_page": "https://www.rcsb.org/pages/policies",
+    "terms": "PDB archive data files: CC0 1.0 Public Domain Dedication.",
+    "rate": {"max_workers": 6, "delay_seconds": 0.0, "retries": 3, "timeout_seconds": 60}
+  },
+  "not_used_in_phase_1": {
+    "uniprot": "Licence not verified. Excluded from Phase 1 by policy.",
+    "gtopdb": "Pharmacology source. Not required for the universe; deferred to Phase 2+.",
+    "chembl": "Pharmacology source. Deferred to Phase 2+.",
+    "pubchem": "Chemical identity source. Deferred to Phase 2+."
+  }
+}

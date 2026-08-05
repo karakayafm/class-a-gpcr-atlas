@@ -1,0 +1,26 @@
+name: Software bug
+description: Something in the application does not work.
+labels: ["bug"]
+body:
+  - type: input
+    id: browser
+    attributes: {label: Browser and version, placeholder: "Firefox 153 / Chrome 149"}
+    validations: {required: true}
+  - type: input
+    id: os
+    attributes: {label: Operating system, placeholder: "Ubuntu 24.04 / Windows 11 / macOS 15"}
+    validations: {required: true}
+  - type: input
+    id: page
+    attributes: {label: Affected page or URL, placeholder: "#family=ca-001-001&view=contacts"}
+    validations: {required: true}
+  - type: input
+    id: pdb
+    attributes: {label: PDB identifier (if applicable), placeholder: "6GPX"}
+  - type: textarea
+    id: console
+    attributes: {label: Console error, description: Paste any error from the browser console.}
+  - type: textarea
+    id: steps
+    attributes: {label: Steps to reproduce}
+    validations: {required: true}

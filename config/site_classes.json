@@ -1,0 +1,139 @@
+{
+  "vocabulary": "binding_site_class",
+  "description": "Where an entity binds. Mandatory per OD-01. Different site classes are never pooled into a single prevalence denominator: a small-molecule 7TM pocket and a receptor-peptide interface are not the same analysis object.",
+  "aggregation_rule": "binding_site_class is a partitioning key for every later aggregate. Records whose class is unresolved are excluded from aggregates rather than defaulted into one.",
+  "binding_site_classes": [
+    {
+      "id": "canonical_7tm_pocket",
+      "definition": "The classical orthosteric pocket within the seven-transmembrane bundle.",
+      "inclusion_rule": "Small-molecule or small-peptide orthosteric ligand at a receptor whose family binds within the bundle.",
+      "exclusion_rule": "Not used for polymer ligands binding predominantly above the bundle.",
+      "decision_logic": "Assigned from entity form plus source binding-mode annotation. In Phase 2 it is provisional wherever geometry would be required to confirm it.",
+      "permitted_transitions": [
+        "extended_orthosteric_pocket",
+        "bitopic_or_multi_region_site",
+        "unresolved"
+      ],
+      "phase_introduced": 2
+    },
+    {
+      "id": "extended_orthosteric_pocket",
+      "definition": "An orthosteric site extending into the extracellular vestibule.",
+      "inclusion_rule": "Source statement of an extended or vestibule-spanning pose.",
+      "exclusion_rule": "—",
+      "decision_logic": "—",
+      "permitted_transitions": [
+        "canonical_7tm_pocket",
+        "unresolved"
+      ],
+      "phase_introduced": 2
+    },
+    {
+      "id": "extracellular_polymer_interface",
+      "definition": "A receptor–peptide or receptor–protein interface, typically involving the N terminus and extracellular loops.",
+      "inclusion_rule": "Polymer ligand, i.e. entity_form polymer_chain or polymer_segment with a pharmacological role.",
+      "exclusion_rule": "—",
+      "decision_logic": "This is the class that must never be pooled with canonical_7tm_pocket. It is the default site class for protein ligands.",
+      "permitted_transitions": [
+        "bitopic_or_multi_region_site",
+        "unresolved"
+      ],
+      "phase_introduced": 2
+    },
+    {
+      "id": "intracellular_allosteric_pocket",
+      "definition": "A site on the intracellular face, typically overlapping the transducer interface.",
+      "inclusion_rule": "Source statement of intracellular allosteric binding.",
+      "exclusion_rule": "—",
+      "decision_logic": "—",
+      "permitted_transitions": [
+        "unresolved"
+      ],
+      "phase_introduced": 2
+    },
+    {
+      "id": "extracellular_allosteric_pocket",
+      "definition": "An allosteric site on the extracellular face outside the orthosteric pocket.",
+      "inclusion_rule": "Source statement of extracellular allosteric binding.",
+      "exclusion_rule": "—",
+      "decision_logic": "—",
+      "permitted_transitions": [
+        "unresolved"
+      ],
+      "phase_introduced": 2
+    },
+    {
+      "id": "lipid_facing_site",
+      "definition": "A site on the lipid-exposed outer surface of the bundle.",
+      "inclusion_rule": "Source statement of a lipid-facing or membrane-embedded allosteric site.",
+      "exclusion_rule": "Not assigned merely because the entity is a lipid; environment lipids receive no site class.",
+      "decision_logic": "—",
+      "permitted_transitions": [
+        "unresolved"
+      ],
+      "phase_introduced": 2
+    },
+    {
+      "id": "covalent_core_site",
+      "definition": "The site of a covalently bonded ligand within the bundle, as for opsin retinal.",
+      "inclusion_rule": "Covalent linkage to a receptor residue plus a pharmacological role.",
+      "exclusion_rule": "—",
+      "decision_logic": "—",
+      "permitted_transitions": [
+        "canonical_7tm_pocket",
+        "unresolved"
+      ],
+      "phase_introduced": 2
+    },
+    {
+      "id": "tethered_ligand_interface",
+      "definition": "The site engaged by a tethered receptor-segment ligand.",
+      "inclusion_rule": "entity_form receptor_segment with a sourced range.",
+      "exclusion_rule": "—",
+      "decision_logic": "—",
+      "permitted_transitions": [
+        "unresolved"
+      ],
+      "phase_introduced": 2
+    },
+    {
+      "id": "bitopic_or_multi_region_site",
+      "definition": "A single entity engaging more than one region.",
+      "inclusion_rule": "Source statement of bitopic or multi-region binding.",
+      "exclusion_rule": "Not inferred from molecular size.",
+      "decision_logic": "—",
+      "permitted_transitions": [
+        "canonical_7tm_pocket",
+        "unresolved"
+      ],
+      "phase_introduced": 2
+    },
+    {
+      "id": "other_site",
+      "definition": "A characterised site outside the listed classes.",
+      "inclusion_rule": "Source describes a site that does not match any class above.",
+      "exclusion_rule": "Not a synonym for unresolved.",
+      "decision_logic": "—",
+      "permitted_transitions": [
+        "unresolved"
+      ],
+      "phase_introduced": 2
+    },
+    {
+      "id": "unresolved",
+      "definition": "The site class could not be determined.",
+      "inclusion_rule": "Default for any pharmacological ligand whose site is not stated by a source and cannot be assigned from entity form.",
+      "exclusion_rule": "—",
+      "decision_logic": "Excluded from aggregates; queued for manual review. Guessing a site class would corrupt every later prevalence figure.",
+      "permitted_transitions": [
+        "*"
+      ],
+      "phase_introduced": 2
+    }
+  ],
+  "vocabulary_status": {
+    "closed": true,
+    "phase": 2,
+    "policy": "A value outside this file may not appear in any Phase 2 artefact. The test suite fails on an unknown value. Adding a value requires an entry in governance/DECISION_LOG.md."
+  }
+}

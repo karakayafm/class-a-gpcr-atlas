@@ -1,0 +1,175 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/class-a-gpcr-atlas/schemas/phase4/motif_residue.schema.json",
+  "title": "Motif residue",
+  "description": "One receptor instance at one core-motif generic position. Motif membership is a list, so an overlapping position yields ONE record, not one per motif. A non-canonical residue at a present position is observed_noncanonical_identity — never 'motif absent'.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "motif_residue_id",
+    "pdb_id",
+    "receptor_instance_id",
+    "generic_position",
+    "motif_memberships",
+    "observation_status",
+    "coordinate_observed",
+    "sodium_environment"
+  ],
+  "properties": {
+    "motif_residue_id": {
+      "type": "string"
+    },
+    "pdb_id": {
+      "type": "string"
+    },
+    "receptor_instance_id": {
+      "type": "string"
+    },
+    "major_family_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "receptor_family_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "receptor_entry_name": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "species": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "source_structural_state": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "structural_transducer": {
+      "type": [
+        "string",
+        "array",
+        "object",
+        "null"
+      ]
+    },
+    "generic_position": {
+      "type": "string"
+    },
+    "motif_memberships": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "auth_asym_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "auth_seq_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "insertion_code": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "residue_identity": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "wild_type_residue_identity": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "construct_residue_identity": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "mutation_flag": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "coordinate_observed": {
+      "type": "boolean"
+    },
+    "side_chain_complete": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "backbone_complete": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "mapping_status": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "mapping_confidence": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "observation_status": {
+      "enum": [
+        "observed_canonical_identity",
+        "observed_noncanonical_identity",
+        "expected_but_unresolved",
+        "coordinate_missing",
+        "construct_or_fusion",
+        "generic_mapping_unresolved",
+        "not_applicable",
+        "source_conflict"
+      ]
+    },
+    "sodium_environment": {
+      "enum": [
+        "observed_sodium",
+        "absent_sodium",
+        "unresolved_ion_identity"
+      ],
+      "description": "absence of sodium is NOT absence of the motif"
+    },
+    "exclusion_flags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "provenance": {
+      "type": "object"
+    }
+  }
+}

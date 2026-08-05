@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/class-a-gpcr-atlas/schemas/taxonomy_node.schema.json",
+  "title": "Class A taxonomy node",
+  "description": "One node of the GPCRdb Class A hierarchy: the class root, a major family or a receptor family. Source identifiers and project identifiers are kept in separate fields so a project-generated id can never be mistaken for an upstream one.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "source_id",
+    "source_id_type",
+    "level",
+    "name",
+    "project_slug",
+    "hierarchy_path",
+    "parent_source_id"
+  ],
+  "properties": {
+    "source_id": {
+      "type": "string",
+      "description": "Identifier as issued by the source (GPCRdb family slug)."
+    },
+    "source_id_type": {
+      "const": "gpcrdb_family_slug"
+    },
+    "level": {
+      "enum": [
+        "class",
+        "major_family",
+        "receptor_family"
+      ]
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "project_slug": {
+      "type": "string",
+      "pattern": "^ca-",
+      "description": "Project-generated. The 'ca-' prefix marks it as ours."
+    },
+    "hierarchy_path": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "parent_source_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  }
+}

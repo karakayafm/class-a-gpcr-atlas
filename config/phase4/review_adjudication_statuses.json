@@ -1,0 +1,60 @@
+{
+  "policy": "evidence_adjudication_vs_human_curation",
+  "critical_separation": "Evidence adjudication performed by this pipeline is NOT human curation. The two are stored in disjoint field sets and a test asserts the human fields stay null. An automated adjudication may never be recorded as 'manual review completed'.",
+  "automated_fields": [
+    "automated_proposal",
+    "evidence_adjudication",
+    "adjudication_basis",
+    "adjudication_confidence",
+    "evidence_resolved_status"
+  ],
+  "human_fields": [
+    "human_curator_decision",
+    "human_curator_identity",
+    "human_review_date",
+    "human_review_status"
+  ],
+  "evidence_resolved_statuses": [
+    {
+      "id": "evidence_resolved_include",
+      "definition": "sources support including the record in production aggregation",
+      "requires": "a positive statement from a source of the appropriate priority tier"
+    },
+    {
+      "id": "evidence_resolved_exclude",
+      "definition": "sources support excluding it",
+      "requires": "an explicit basis; never mere absence of evidence"
+    },
+    {
+      "id": "evidence_resolved_metadata_only",
+      "definition": "the record is real but carries no usable coordinate observation",
+      "requires": "source annotation present, coordinate observation impossible"
+    },
+    {
+      "id": "evidence_resolved_annotated_not_observed",
+      "definition": "a ligand is annotated but absent from the deposited coordinates",
+      "requires": "source annotation plus verified absence from the coordinate file"
+    },
+    {
+      "id": "evidence_insufficient_human_review_required",
+      "definition": "available sources do not settle the question",
+      "requires": "nothing; this is the honest default"
+    },
+    {
+      "id": "source_conflict_unresolved",
+      "definition": "sources disagree and none has priority",
+      "requires": "two or more sources with incompatible statements"
+    },
+    {
+      "id": "not_applicable",
+      "definition": "the issue does not apply to this record"
+    }
+  ],
+  "adjudication_confidence": [
+    "high",
+    "medium",
+    "low"
+  ],
+  "performance_metric_rule": "Accuracy, sensitivity and specificity may be computed ONLY against an independent human-reviewed gold subset. With no such subset, no performance rate is produced.",
+  "phase": 4
+}

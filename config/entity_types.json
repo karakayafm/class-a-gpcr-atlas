@@ -1,0 +1,24 @@
+{
+  "ligand_entity_types": [
+    {"id": "nonpolymer", "label": "Non-polymer chemical component"},
+    {"id": "polymer_chain", "label": "Whole polymer chain acting as ligand"},
+    {"id": "polymer_segment", "label": "Segment of a polymer chain acting as ligand"},
+    {"id": "tethered_receptor_segment", "label": "Ligand that is part of the receptor chain"},
+    {"id": "covalent_nonpolymer", "label": "Non-polymer covalently linked to the receptor"},
+    {"id": "endogenous_cofactor", "label": "Endogenous cofactor"},
+    {"id": "ion", "label": "Ion"},
+    {"id": "lipid", "label": "Lipid"},
+    {"id": "unknown", "label": "Type not determined"},
+    {"id": "none", "label": "No ligand entity"}
+  ],
+  "preliminary_component_categories": [
+    "likely_receptor", "likely_transducer", "likely_polymer_ligand",
+    "likely_nonpolymer_ligand", "likely_fusion_or_stabilizer",
+    "likely_solvent_or_additive", "unknown"
+  ],
+  "preliminary_category_status": {
+    "production_ready": false,
+    "method": "rule_based",
+    "note": "Preliminary only. Never used to exclude a component. Every component is retained."
+  }
+}

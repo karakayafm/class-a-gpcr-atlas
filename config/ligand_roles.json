@@ -1,0 +1,271 @@
+{
+  "vocabulary": "ligand_role",
+  "description": "What an entity is present for. Role is independent of entity_form and of biological_type: cholesterol is a lipid by chemistry and membrane_lipid by role, and only an explicit source annotation can change the latter.",
+  "forbidden_inference_rules": [
+    "most frequent component in the family is the ligand",
+    "largest molecule is the ligand",
+    "component closest to the receptor is the ligand",
+    "every organic molecule in a GPCR structure is a ligand",
+    "first item in a source ligand list is the ligand",
+    "cholesterol or any lipid is always a ligand",
+    "every ion is a ligand",
+    "every non-polymer component is excluded",
+    "a chain is a ligand because it is short, or a transducer because it is long",
+    "a protein is a ligand because it is near the receptor"
+  ],
+  "ligand_roles": [
+    {
+      "id": "pharmacological_orthosteric_ligand",
+      "definition": "An entity annotated as acting at the receptor's orthosteric site.",
+      "inclusion_rule": "Source ligand annotation with function Agonist, Agonist (partial), Antagonist or Inverse agonist, matched to this entity.",
+      "exclusion_rule": "Excluded when the source function names an allosteric mode.",
+      "decision_logic": "Assigned only when a source annotates this entity as the structure's ligand with the corresponding pharmacological function. Frequency, size and proximity carry no weight.",
+      "permitted_transitions": [
+        "pharmacological_bitopic_ligand",
+        "unresolved"
+      ],
+      "phase_introduced": 2
+    },
+    {
+      "id": "pharmacological_allosteric_ligand",
+      "definition": "An entity annotated as acting at an allosteric site without a stated positive or negative direction.",
+      "inclusion_rule": "Source function Allosteric agonist or Allosteric antagonist.",
+      "exclusion_rule": "Excluded when the source states PAM or NAM, which are more specific.",
+      "decision_logic": "Assigned only when a source annotates this entity as the structure's ligand with the corresponding pharmacological function. Frequency, size and proximity carry no weight.",
+      "permitted_transitions": [
+        "positive_allosteric_modulator",
+        "negative_allosteric_modulator",
+        "unresolved"
+      ],
+      "phase_introduced": 2
+    },
+    {
+      "id": "pharmacological_bitopic_ligand",
+      "definition": "A single chemical entity annotated as occupying both orthosteric and allosteric regions.",
+      "inclusion_rule": "Explicit source statement of bitopic binding.",
+      "exclusion_rule": "Not inferred from a large molecular weight or from spanning two sites geometrically.",
+      "decision_logic": "Assigned only when a source annotates this entity as the structure's ligand with the corresponding pharmacological function. Frequency, size and proximity carry no weight.",
+      "permitted_transitions": [
+        "pharmacological_orthosteric_ligand",
+        "unresolved"
+      ],
+      "phase_introduced": 2
+    },
+    {
+      "id": "pharmacological_covalent_ligand",
+      "definition": "A pharmacological ligand covalently bonded to the receptor.",
+      "inclusion_rule": "A pharmacological source annotation AND a covalent linkage record.",
+      "exclusion_rule": "A covalent bond alone is insufficient; covalency is not pharmacology.",
+      "decision_logic": "Both axes must be satisfied independently. Retinal in an opsin qualifies only because sources annotate it as the ligand, not because it is covalent.",
+      "permitted_transitions": [
+        "cofactor",
+        "unresolved"
+      ],
+      "phase_introduced": 2
+    },
+    {
+      "id": "endogenous_polymer_ligand",
+      "definition": "A peptide or protein annotated as the receptor's endogenous or pharmacological ligand.",
+      "inclusion_rule": "Source ligand annotation of type peptide or protein, matched to a polymer chain.",
+      "exclusion_rule": "Excluded for transducers, antibodies, nanobodies and fusion partners regardless of length.",
+      "decision_logic": "Assigned only when a source annotates this entity as the structure's ligand with the corresponding pharmacological function. Frequency, size and proximity carry no weight.",
+      "permitted_transitions": [
+        "tethered_ligand",
+        "unresolved"
+      ],
+      "phase_introduced": 2
+    },
+    {
+      "id": "tethered_ligand",
+      "definition": "A segment of the receptor chain itself acting as the ligand after cleavage.",
+      "inclusion_rule": "Official receptor annotation, cleavage-site mapping or primary-publication statement giving a residue range.",
+      "exclusion_rule": "Never assigned from proximity or from receptor family membership alone.",
+      "decision_logic": "Absent a citable range the record is emitted unresolved and queued for manual review.",
+      "permitted_transitions": [
+        "unresolved"
+      ],
+      "phase_introduced": 2
+    },
+    {
+      "id": "pharmacological_co_ligand",
+      "definition": "A second pharmacologically relevant entity present alongside a primary ligand.",
+      "inclusion_rule": "A structure carries more than one source-annotated ligand and this entity is not the first-listed.",
+      "exclusion_rule": "Ordering is presentational only and carries no scientific priority.",
+      "decision_logic": "Per OD-07 no ligand is designated primary; this role marks co-occurrence, not subordination.",
+      "permitted_transitions": [
+        "pharmacological_orthosteric_ligand",
+        "unresolved"
+      ],
+      "phase_introduced": 2
+    },
+    {
+      "id": "positive_allosteric_modulator",
+      "definition": "An entity annotated PAM or Ago-PAM.",
+      "inclusion_rule": "Source function PAM or Ago-PAM.",
+      "exclusion_rule": "—",
+      "decision_logic": "Assigned only when a source annotates this entity as the structure's ligand with the corresponding pharmacological function. Frequency, size and proximity carry no weight.",
+      "permitted_transitions": [
+        "pharmacological_allosteric_ligand"
+      ],
+      "phase_introduced": 2
+    },
+    {
+      "id": "negative_allosteric_modulator",
+      "definition": "An entity annotated NAM.",
+      "inclusion_rule": "Source function NAM.",
+      "exclusion_rule": "—",
+      "decision_logic": "Assigned only when a source annotates this entity as the structure's ligand with the corresponding pharmacological function. Frequency, size and proximity carry no weight.",
+      "permitted_transitions": [
+        "pharmacological_allosteric_ligand"
+      ],
+      "phase_introduced": 2
+    },
+    {
+      "id": "silent_allosteric_modulator",
+      "definition": "An entity annotated as binding allosterically without altering efficacy.",
+      "inclusion_rule": "Explicit source statement.",
+      "exclusion_rule": "Not a default for unclassified allosteric binders.",
+      "decision_logic": "Assigned only when a source annotates this entity as the structure's ligand with the corresponding pharmacological function. Frequency, size and proximity carry no weight.",
+      "permitted_transitions": [
+        "pharmacological_allosteric_ligand"
+      ],
+      "phase_introduced": 2
+    },
+    {
+      "id": "cofactor",
+      "definition": "An entity required for function or for the partner protein's chemistry, not a receptor ligand.",
+      "inclusion_rule": "Source function Cofactor, or a nucleotide bound to a transducer chain (GDP/GTP analogues in G proteins).",
+      "exclusion_rule": "Excluded when a source annotates the entity as the receptor's ligand.",
+      "decision_logic": "The binding partner matters: GDP in a Gα subunit is a transducer cofactor, not a receptor ligand.",
+      "permitted_transitions": [
+        "environment_ion",
+        "unresolved"
+      ],
+      "phase_introduced": 2
+    },
+    {
+      "id": "environment_ion",
+      "definition": "An ion present as part of the chemical environment.",
+      "inclusion_rule": "Biological type ion and no pharmacological source annotation.",
+      "exclusion_rule": "Overridden only by an explicit source record giving the ion a pharmacological role, which requires manual review.",
+      "decision_logic": "Per OD-08 this is the default for Na+ including the conserved 2x50 sodium pocket, which is a motif cofactor rather than a ligand.",
+      "permitted_transitions": [
+        "cofactor"
+      ],
+      "phase_introduced": 2
+    },
+    {
+      "id": "membrane_lipid",
+      "definition": "A lipid or sterol present as membrane or mesophase environment.",
+      "inclusion_rule": "Biological type lipid and no pharmacological source annotation.",
+      "exclusion_rule": "A lipid annotated by a source as the ligand takes a pharmacological role instead; this is the normal case in the Lipid receptor family.",
+      "decision_logic": "Default for cholesterol, monoolein and oleic acid. Their frequency contributes nothing to ligand selection.",
+      "permitted_transitions": [
+        "pharmacological_orthosteric_ligand"
+      ],
+      "phase_introduced": 2
+    },
+    {
+      "id": "detergent",
+      "definition": "A detergent or amphiphile used for solubilisation.",
+      "inclusion_rule": "Curated detergent list membership.",
+      "exclusion_rule": "Overridden by an explicit pharmacological annotation.",
+      "decision_logic": "Sample-preparation chemistry, recorded and excluded from pharmacology.",
+      "permitted_transitions": [
+        "membrane_lipid"
+      ],
+      "phase_introduced": 2
+    },
+    {
+      "id": "buffer_or_crystallization_additive",
+      "definition": "A buffer, salt, precipitant or cryoprotectant.",
+      "inclusion_rule": "Curated additive list membership.",
+      "exclusion_rule": "Overridden by an explicit pharmacological annotation.",
+      "decision_logic": "Covers PEG, glycerol, sulfate, acetate and similar.",
+      "permitted_transitions": [],
+      "phase_introduced": 2
+    },
+    {
+      "id": "glycan_or_post_translational_component",
+      "definition": "A glycan or other post-translational modification.",
+      "inclusion_rule": "Branched entity, or curated saccharide list membership.",
+      "exclusion_rule": "—",
+      "decision_logic": "Structural feature of the protein, not a ligand.",
+      "permitted_transitions": [],
+      "phase_introduced": 2
+    },
+    {
+      "id": "construct_stabilizer",
+      "definition": "A component present because of the engineered construct.",
+      "inclusion_rule": "Bound to a fusion partner rather than to the receptor, or a known construct additive.",
+      "exclusion_rule": "—",
+      "decision_logic": "Kept separate so construct chemistry never enters receptor pharmacology.",
+      "permitted_transitions": [
+        "buffer_or_crystallization_additive"
+      ],
+      "phase_introduced": 2
+    },
+    {
+      "id": "transducer_component",
+      "definition": "A G-protein subunit, arrestin or other signalling partner chain.",
+      "inclusion_rule": "UniProt accession or entity description matching the curated transducer table.",
+      "exclusion_rule": "Never assigned from chain length or from proximity to the receptor.",
+      "decision_logic": "A structural observation only; it is never promoted to a pathway claim (SD-04).",
+      "permitted_transitions": [
+        "auxiliary_protein",
+        "unresolved"
+      ],
+      "phase_introduced": 2
+    },
+    {
+      "id": "antibody_or_nanobody",
+      "definition": "An antibody fragment, single-domain antibody or scFv.",
+      "inclusion_rule": "Entity description or UniProt evidence of an immunoglobulin fold used as a crystallisation or conformational chaperone.",
+      "exclusion_rule": "An antibody that a source annotates as the pharmacological ligand takes a pharmacological role instead.",
+      "decision_logic": "Retained as a structure entity but produces no pharmacological observation.",
+      "permitted_transitions": [
+        "endogenous_polymer_ligand",
+        "unresolved"
+      ],
+      "phase_introduced": 2
+    },
+    {
+      "id": "fusion_partner",
+      "definition": "A soluble protein fused to the receptor to aid expression or crystallisation.",
+      "inclusion_rule": "Curated fusion table match (BRIL/cytochrome b562, T4 lysozyme, rubredoxin, PGS, flavodoxin, thermostabilised apocytochrome), whether a separate chain or a chimeric segment.",
+      "exclusion_rule": "—",
+      "decision_logic": "When fused into the receptor entity the chain remains a receptor instance and the fusion is recorded as construct engineering, not as a separate ligand.",
+      "permitted_transitions": [
+        "auxiliary_protein"
+      ],
+      "phase_introduced": 2
+    },
+    {
+      "id": "auxiliary_protein",
+      "definition": "A protein partner that is neither ligand, transducer, antibody nor fusion.",
+      "inclusion_rule": "Identified protein chain outside the other categories, e.g. RAMPs or scaffolding proteins.",
+      "exclusion_rule": "Not a fallback for unidentified chains, which are unresolved.",
+      "decision_logic": "—",
+      "permitted_transitions": [
+        "unresolved"
+      ],
+      "phase_introduced": 2
+    },
+    {
+      "id": "unresolved",
+      "definition": "The role could not be determined from available sources.",
+      "inclusion_rule": "Default when evidence is absent, insufficient or contradictory.",
+      "exclusion_rule": "May not be used where the sources do support a determination.",
+      "decision_logic": "Routed to the manual review queue. An honest unresolved is preferred to a confident guess.",
+      "permitted_transitions": [
+        "*"
+      ],
+      "phase_introduced": 2
+    }
+  ],
+  "vocabulary_status": {
+    "closed": true,
+    "phase": 2,
+    "policy": "A value outside this file may not appear in any Phase 2 artefact. The test suite fails on an unknown value. Adding a value requires an entry in governance/DECISION_LOG.md."
+  }
+}

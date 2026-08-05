@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/class-a-gpcr-atlas/schemas/phase4/aggregation_unit.schema.json",
+  "title": "Aggregation unit",
+  "description": "receptor-species identity x ligand entity x binding-site class x structural-state bin. A unit may span several structures and is never silently reduced to a binary.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "aggregation_unit_id",
+    "receptor_accession",
+    "species_taxon",
+    "normalized_ligand_identity",
+    "ligand_entity_form",
+    "binding_site_class",
+    "normalized_structural_state",
+    "structures",
+    "structures_total",
+    "observations_total"
+  ],
+  "properties": {
+    "aggregation_unit_id": {
+      "type": "string"
+    },
+    "receptor_accession": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "species_taxon": {
+      "type": "string"
+    },
+    "normalized_ligand_identity": {
+      "type": "string"
+    },
+    "ligand_entity_form": {
+      "type": "string"
+    },
+    "binding_site_class": {
+      "enum": [
+        "canonical_7tm_pocket",
+        "extended_orthosteric_pocket",
+        "extracellular_polymer_interface",
+        "intracellular_allosteric_pocket",
+        "extracellular_allosteric_pocket",
+        "lipid_facing_site",
+        "covalent_core_site",
+        "tethered_ligand_interface",
+        "bitopic_or_multi_region_site",
+        "other_site",
+        "unresolved"
+      ]
+    },
+    "normalized_structural_state": {
+      "enum": [
+        "active",
+        "inactive",
+        "intermediate",
+        "active_like",
+        "inactive_like",
+        "mixed_or_asymmetric",
+        "unknown",
+        "not_applicable"
+      ]
+    },
+    "is_polymer_interface": {
+      "type": "boolean"
+    },
+    "major_family_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "receptor_family_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "receptor_entry_name": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "structures": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "structures_total": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "observations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "observations_total": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "generic_eligible_observations": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "state_stratifiable": {
+      "type": "boolean"
+    },
+    "generic_aggregation_eligible": {
+      "type": "boolean"
+    }
+  }
+}

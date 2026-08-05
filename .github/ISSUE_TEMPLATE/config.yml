@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security or data-integrity issue (not public)
+    url: https://github.com/karakayafm/class-a-gpcr-atlas/blob/main/SECURITY.md
+    about: Email edu.mfatih@gmail.com instead of opening a public issue.

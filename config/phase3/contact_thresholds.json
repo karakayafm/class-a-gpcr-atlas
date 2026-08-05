@@ -1,0 +1,32 @@
+{
+  "policy": "contact_thresholds",
+  "canonical_measurement": {
+    "definition": "exact minimum Euclidean distance between a receptor heavy atom and a ligand heavy atom",
+    "applies_to": "every ligand form, small molecule and polymer alike",
+    "storage": "min_distance_angstrom, full float precision; display rounding is a separate field",
+    "rule": "thresholds are DERIVED from the exact distance; the data are never rounded at generation time"
+  },
+  "thresholds": [
+    {
+      "value_angstrom": 4.0,
+      "field": "within_4A",
+      "meaning": "strict / direct contact indicator"
+    },
+    {
+      "value_angstrom": 4.5,
+      "field": "within_4_5A",
+      "meaning": "sensitivity threshold"
+    },
+    {
+      "value_angstrom": 5.0,
+      "field": "within_5A",
+      "meaning": "main display / contact-shell threshold, consistent with the frozen aminergic work"
+    }
+  ],
+  "monotonicity": "within_4A implies within_4_5A implies within_5A; asserted by test",
+  "polymer_interface_naming": "for polymer site classes the 5 Å result is an 'interface shell'. It does not by itself constitute a shared pocket and is never pooled with small-molecule pockets.",
+  "covalent": "a covalent bond is stored as a separate relationship and never substitutes for a distance cutoff",
+  "prohibition": "no threshold is used to assign ligand identity or pharmacology",
+  "pathology_rule": "if a pilot shows unexpected pathology: keep the exact distance data, halt production eligibility for the affected site class, do NOT silently change the threshold, and raise a blocker in the Phase 3 status report",
+  "phase": 3
+}

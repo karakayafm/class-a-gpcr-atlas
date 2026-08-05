@@ -1,0 +1,219 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/class-a-gpcr-atlas/schemas/ligand_entity.schema.json",
+  "title": "Ligand entity (Phase 2)",
+  "description": "A ligand in any of its forms (OD-06): a non-polymer component, a whole polymer chain, a polymer segment, a segment of the receptor chain itself, or a covalent adduct. Ligands are optional and may be many (OD-07); no primary ligand is designated.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "ligand_entity_id",
+    "pdb_id",
+    "receptor_instance_id",
+    "entity_form",
+    "biological_type",
+    "ligand_role",
+    "pharmacological_relevance",
+    "binding_site_class",
+    "covalent_status",
+    "selection_evidence",
+    "exclusion_evidence",
+    "classification_confidence",
+    "analysis_eligibility",
+    "manual_review_status",
+    "ambiguity_flags",
+    "provenance"
+  ],
+  "properties": {
+    "ligand_entity_id": {
+      "type": "string"
+    },
+    "pdb_id": {
+      "type": "string",
+      "pattern": "^[0-9A-Z]{4}$"
+    },
+    "receptor_instance_id": {
+      "type": "string"
+    },
+    "entity_inventory_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "entity_form": {
+      "enum": [
+        "nonpolymer_residue",
+        "nonpolymer_entity",
+        "polymer_chain",
+        "polymer_segment",
+        "receptor_segment",
+        "covalent_adduct",
+        "none",
+        "unresolved"
+      ]
+    },
+    "biological_type": {
+      "enum": [
+        "small_molecule",
+        "peptide",
+        "protein",
+        "lipid",
+        "nucleotide_or_nucleoside",
+        "retinal_or_chromophore",
+        "ion",
+        "carbohydrate",
+        "amino_acid_or_short_fragment",
+        "other",
+        "unknown"
+      ]
+    },
+    "ligand_role": {
+      "enum": [
+        "pharmacological_orthosteric_ligand",
+        "pharmacological_allosteric_ligand",
+        "pharmacological_bitopic_ligand",
+        "pharmacological_covalent_ligand",
+        "endogenous_polymer_ligand",
+        "tethered_ligand",
+        "pharmacological_co_ligand",
+        "positive_allosteric_modulator",
+        "negative_allosteric_modulator",
+        "silent_allosteric_modulator",
+        "cofactor",
+        "environment_ion",
+        "membrane_lipid",
+        "detergent",
+        "buffer_or_crystallization_additive",
+        "glycan_or_post_translational_component",
+        "construct_stabilizer",
+        "transducer_component",
+        "antibody_or_nanobody",
+        "fusion_partner",
+        "auxiliary_protein",
+        "unresolved"
+      ]
+    },
+    "pharmacological_relevance": {
+      "enum": [
+        "relevant",
+        "not_relevant",
+        "unresolved"
+      ]
+    },
+    "binding_mode": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "binding_site_class": {
+      "enum": [
+        "canonical_7tm_pocket",
+        "extended_orthosteric_pocket",
+        "extracellular_polymer_interface",
+        "intracellular_allosteric_pocket",
+        "extracellular_allosteric_pocket",
+        "lipid_facing_site",
+        "covalent_core_site",
+        "tethered_ligand_interface",
+        "bitopic_or_multi_region_site",
+        "other_site",
+        "unresolved"
+      ],
+      "description": "Mandatory per OD-01. Site classes are never pooled into one prevalence denominator."
+    },
+    "covalent_status": {
+      "enum": [
+        "covalent",
+        "none",
+        "unknown"
+      ],
+      "description": "Bonding fact only. Covalency never implies agonism or an active state."
+    },
+    "polymer_chain_or_segment": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "source_annotations": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "selection_evidence": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "description": "Why this entity is a ligand. An empty array is only valid when the record is unresolved."
+    },
+    "exclusion_evidence": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "classification_confidence": {
+      "enum": [
+        "source_annotated_component_match",
+        "single_candidate_match",
+        "ambiguous_multiple_candidates",
+        "no_polymer_candidate",
+        "annotated_component_absent_from_deposition",
+        "unmatchable_annotation",
+        "unresolved"
+      ]
+    },
+    "analysis_eligibility": {
+      "enum": [
+        "eligible",
+        "eligible_with_warning",
+        "excluded_environment",
+        "excluded_construct",
+        "excluded_non_pharmacological",
+        "unresolved_manual_review"
+      ]
+    },
+    "manual_review_status": {
+      "enum": [
+        "required",
+        "not_required",
+        "completed"
+      ]
+    },
+    "ambiguity_flags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "required": [
+        "source",
+        "source_field",
+        "rule_version",
+        "script"
+      ],
+      "additionalProperties": true,
+      "description": "Provenance for a derived field. A field whose source object was never loaded must say so with source_not_loaded / source_unavailable / source_field_absent; a silent null is a schema violation.",
+      "properties": {
+        "source": {
+          "type": "string"
+        },
+        "source_field": {
+          "type": "string"
+        },
+        "rule_version": {
+          "type": "string"
+        },
+        "script": {
+          "type": "string"
+        },
+        "parser_version": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

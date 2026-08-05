@@ -1,0 +1,165 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/class-a-gpcr-atlas/schemas/phase3/observation_contact_summary.schema.json",
+  "title": "Observation contact summary",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "structure_ligand_id",
+    "pdb_id",
+    "binding_site_class",
+    "raw_contact_eligibility",
+    "generic_contact_eligibility",
+    "production_status",
+    "contact_hash"
+  ],
+  "properties": {
+    "structure_ligand_id": {
+      "type": "string"
+    },
+    "pdb_id": {
+      "type": "string"
+    },
+    "major_family_id": {
+      "type": "string"
+    },
+    "binding_site_class": {
+      "enum": [
+        "canonical_7tm_pocket",
+        "extended_orthosteric_pocket",
+        "extracellular_polymer_interface",
+        "intracellular_allosteric_pocket",
+        "extracellular_allosteric_pocket",
+        "lipid_facing_site",
+        "covalent_core_site",
+        "tethered_ligand_interface",
+        "bitopic_or_multi_region_site",
+        "other_site",
+        "unresolved"
+      ]
+    },
+    "ligand_entity_form": {
+      "type": "string"
+    },
+    "is_polymer_interface": {
+      "type": "boolean"
+    },
+    "raw_receptor_contact_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "receptor_residues_4A": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "receptor_residues_4_5A": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "receptor_residues_5A": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "ligand_residue_contact_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "residue_pair_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "generic_mapped_contact_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "non_generic_region_contact_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "unmapped_expected_generic_contacts": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "mutated_contact_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "covalent_contact_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "min_distance_overall": {
+      "type": "number",
+      "minimum": 0
+    },
+    "raw_contact_eligibility": {
+      "enum": [
+        "yes",
+        "no"
+      ]
+    },
+    "generic_contact_eligibility": {
+      "enum": [
+        "yes",
+        "no"
+      ]
+    },
+    "production_status": {
+      "enum": [
+        "production_contact_eligible",
+        "raw_geometry_only",
+        "excluded_confirmed_apo",
+        "excluded_environment_entity",
+        "excluded_construct_component",
+        "excluded_receptor_mapping_unresolved",
+        "excluded_ligand_identity_unresolved",
+        "excluded_coordinate_unavailable",
+        "excluded_coordinate_context_unresolved",
+        "excluded_site_class_unresolved",
+        "excluded_source_conflict",
+        "excluded_other_with_reason",
+        "excluded_non_pharmacological_entity"
+      ]
+    },
+    "model_id": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "models_total": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "models_with_contact": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "contact_frequency": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "minimum_distance_across_models": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "median_minimum_distance": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "contact_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}

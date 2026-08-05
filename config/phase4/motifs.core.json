@@ -1,0 +1,124 @@
+{
+  "layer": "core_class_a_motifs",
+  "definition_basis": "GPCRdb generic position. Amino-acid identity is NEVER part of the definition.",
+  "overlap_rule": "Motifs overlap by design (3x40, 5x50, 6x44, 6x48, 7x49, 7x53, 3x50 each belong to more than one). A residue is stored ONCE with a motif_membership list; it is never duplicated per motif.",
+  "identity_rule": "Where a receptor carries a non-canonical residue at a motif position, the record is motif_position_present with residue_identity_noncanonical. It is NOT reported as 'motif absent' — a present position with a different residue is a different fact from a missing position.",
+  "motifs": [
+    {
+      "id": "PIF_connector",
+      "generic_positions": [
+        "3x40",
+        "5x50",
+        "6x44"
+      ],
+      "description": "PIF / connector region linking the ligand pocket to the transmembrane core.",
+      "canonical_residue_hint": null,
+      "hint_note": "no canonical residue is asserted; identity is measured, not assumed"
+    },
+    {
+      "id": "CWxP_W6x48_switch",
+      "generic_positions": [
+        "6x47",
+        "6x48",
+        "6x49",
+        "6x50"
+      ],
+      "description": "CWxP region containing the W6x48 rotamer switch.",
+      "canonical_residue_hint": null,
+      "hint_note": "no canonical residue is asserted; identity is measured, not assumed"
+    },
+    {
+      "id": "DRY_region",
+      "generic_positions": [
+        "3x49",
+        "3x50",
+        "3x51"
+      ],
+      "description": "DRY motif at the intracellular end of TM3.",
+      "canonical_residue_hint": null,
+      "hint_note": "no canonical residue is asserted; identity is measured, not assumed"
+    },
+    {
+      "id": "ionic_lock_pair",
+      "generic_positions": [
+        "3x50",
+        "6x30"
+      ],
+      "description": "Ionic-lock residue pair between TM3 and TM6.",
+      "canonical_residue_hint": null,
+      "hint_note": "no canonical residue is asserted; identity is measured, not assumed"
+    },
+    {
+      "id": "sodium_pocket_network",
+      "generic_positions": [
+        "2x50",
+        "3x39",
+        "7x45",
+        "7x46",
+        "7x49"
+      ],
+      "description": "Conserved sodium-binding polar network.",
+      "canonical_residue_hint": null,
+      "hint_note": "no canonical residue is asserted; identity is measured, not assumed"
+    },
+    {
+      "id": "NPxxY_region",
+      "generic_positions": [
+        "7x49",
+        "7x50",
+        "7x51",
+        "7x52",
+        "7x53"
+      ],
+      "description": "NPxxY motif at the intracellular end of TM7.",
+      "canonical_residue_hint": null,
+      "hint_note": "no canonical residue is asserted; identity is measured, not assumed"
+    },
+    {
+      "id": "TM5_TM7_tyrosine_network",
+      "generic_positions": [
+        "5x58",
+        "7x53"
+      ],
+      "description": "Tyrosine pair coupling TM5 and TM7.",
+      "canonical_residue_hint": null,
+      "hint_note": "no canonical residue is asserted; identity is measured, not assumed"
+    },
+    {
+      "id": "ligand_transmission_connector",
+      "generic_positions": [
+        "3x40",
+        "5x50",
+        "6x44",
+        "6x48"
+      ],
+      "description": "Connector set transmitting ligand-pocket changes toward the core.",
+      "canonical_residue_hint": null,
+      "hint_note": "no canonical residue is asserted; identity is measured, not assumed"
+    }
+  ],
+  "all_positions": [
+    "2x50",
+    "3x39",
+    "3x40",
+    "3x49",
+    "3x50",
+    "3x51",
+    "5x50",
+    "5x58",
+    "6x30",
+    "6x44",
+    "6x47",
+    "6x48",
+    "6x49",
+    "6x50",
+    "7x45",
+    "7x46",
+    "7x49",
+    "7x50",
+    "7x51",
+    "7x52",
+    "7x53"
+  ],
+  "phase": 4
+}

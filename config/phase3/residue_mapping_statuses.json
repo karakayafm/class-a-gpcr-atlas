@@ -1,0 +1,47 @@
+{
+  "policy": "receptor_residue_mapping_status",
+  "identity_key": [
+    "pdb_id",
+    "receptor_instance_id",
+    "auth_asym_id",
+    "auth_seq_id",
+    "insertion_code"
+  ],
+  "identity_rule": "a residue number alone is never an identity key",
+  "statuses": [
+    {
+      "id": "mapped_generic",
+      "definition": "residue carries a GPCRdb generic number",
+      "generic_aggregate_eligible": true
+    },
+    {
+      "id": "mapped_sequence_only",
+      "definition": "residue maps to a UniProt position but has no generic number",
+      "generic_aggregate_eligible": false
+    },
+    {
+      "id": "non_generic_numberable_region",
+      "definition": "residue lies in a region GPCRdb does not number generically (N-terminus, C-tail, some loops)",
+      "generic_aggregate_eligible": false,
+      "note": "this is an expected absence, NOT a mapping failure"
+    },
+    {
+      "id": "expected_generic_but_unmapped",
+      "definition": "residue lies in a generic-numberable segment yet carries no generic number",
+      "generic_aggregate_eligible": false,
+      "note": "this IS a mapping failure and blocks generic aggregation for the observation"
+    },
+    {
+      "id": "construct_or_fusion_region",
+      "definition": "residue belongs to a fusion partner or construct region, not the receptor",
+      "generic_aggregate_eligible": false
+    },
+    {
+      "id": "unresolved",
+      "definition": "mapping could not be determined",
+      "generic_aggregate_eligible": false
+    }
+  ],
+  "critical_distinction": "A missing generic number in an N-terminus or loop and a missing generic number on a TM core residue are NOT the same null. The first is non_generic_numberable_region; the second is expected_generic_but_unmapped and is a defect.",
+  "phase": 3
+}

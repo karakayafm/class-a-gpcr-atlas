@@ -1,0 +1,175 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/class-a-gpcr-atlas/schemas/phase4/contact_prevalence.schema.json",
+  "title": "Contact prevalence record",
+  "description": "One aggregation unit at one generic position. The denominator is the unit's generic-eligible observations where the position is MAPPED, so a mapped-but-never-contacted position carries a zero numerator rather than being absent.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "aggregation_unit_id",
+    "binding_site_class",
+    "generic_position",
+    "structures_total",
+    "structures_contact_eligible",
+    "contact_fraction_5A",
+    "denominator_type",
+    "denominator_count",
+    "numerator_definition",
+    "primary_metric"
+  ],
+  "properties": {
+    "aggregation_unit_id": {
+      "type": "string"
+    },
+    "binding_site_class": {
+      "enum": [
+        "canonical_7tm_pocket",
+        "extended_orthosteric_pocket",
+        "extracellular_polymer_interface",
+        "intracellular_allosteric_pocket",
+        "extracellular_allosteric_pocket",
+        "lipid_facing_site",
+        "covalent_core_site",
+        "tethered_ligand_interface",
+        "bitopic_or_multi_region_site",
+        "other_site",
+        "unresolved"
+      ]
+    },
+    "is_polymer_interface": {
+      "type": "boolean"
+    },
+    "major_family_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "receptor_family_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "receptor_accession": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "species_taxon": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "normalized_ligand_identity": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "normalized_structural_state": {
+      "enum": [
+        "active",
+        "inactive",
+        "intermediate",
+        "active_like",
+        "inactive_like",
+        "mixed_or_asymmetric",
+        "unknown",
+        "not_applicable"
+      ]
+    },
+    "generic_position": {
+      "type": "string"
+    },
+    "structures_total": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "structures_contact_eligible": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "structures_with_contact_4A": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "structures_with_contact_4_5A": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "structures_with_contact_5A": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "contact_fraction_4A": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0,
+      "maximum": 1
+    },
+    "contact_fraction_4_5A": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0,
+      "maximum": 1
+    },
+    "contact_fraction_5A": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0,
+      "maximum": 1
+    },
+    "contact_any_5A": {
+      "type": "boolean"
+    },
+    "contact_all_5A": {
+      "type": "boolean"
+    },
+    "min_distance": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "median_min_distance": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "distance_IQR": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "structure_heterogeneity_flag": {
+      "type": "boolean"
+    },
+    "position_mapped_in_unit": {
+      "type": "boolean"
+    },
+    "denominator_type": {
+      "type": "string"
+    },
+    "denominator_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "numerator_definition": {
+      "type": "string"
+    },
+    "primary_metric": {
+      "const": "contact_fraction_5A"
+    }
+  }
+}

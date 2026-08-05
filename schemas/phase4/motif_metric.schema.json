@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/class-a-gpcr-atlas/schemas/phase4/motif_metric.schema.json",
+  "title": "Motif geometry metric",
+  "description": "Descriptive geometry only. state_label_derived is pinned false: a distance or rotamer never produces a state or a pharmacology claim.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "metric_id",
+    "pdb_id",
+    "receptor_instance_id",
+    "metric_name",
+    "metric_type",
+    "generic_positions",
+    "atom_selection_rule",
+    "unit",
+    "interpretation_limit",
+    "state_label_derived"
+  ],
+  "properties": {
+    "metric_id": {
+      "type": "string"
+    },
+    "pdb_id": {
+      "type": "string"
+    },
+    "receptor_instance_id": {
+      "type": "string"
+    },
+    "major_family_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "receptor_entry_name": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "species": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "source_structural_state": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "metric_name": {
+      "type": "string"
+    },
+    "metric_type": {
+      "enum": [
+        "distance",
+        "dihedral"
+      ]
+    },
+    "generic_positions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "atom_selection_rule": {
+      "type": "string"
+    },
+    "primary_value_angstrom": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "fallback_min_heavy_atom_angstrom": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "value_used": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "primary",
+        "fallback",
+        null
+      ]
+    },
+    "selection_note": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "primary_value_degrees": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "status": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "computed",
+        "not_applicable",
+        "coordinate_incomplete",
+        "coordinate_missing",
+        "position_unmapped",
+        null
+      ]
+    },
+    "residue_identity": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "unit": {
+      "enum": [
+        "angstrom",
+        "degrees"
+      ]
+    },
+    "mutation_sensitive": {
+      "type": "boolean"
+    },
+    "interpretation_limit": {
+      "type": "string",
+      "minLength": 1
+    },
+    "state_label_derived": {
+      "const": false
+    },
+    "provenance": {
+      "type": "object"
+    }
+  }
+}

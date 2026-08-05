@@ -1,0 +1,127 @@
+{
+ "$schema": "https://json-schema.org/draft/2020-12/schema",
+ "title": "review_aggregation_impact",
+ "description": "One record per canonical review record, stating what that review item actually affects in a pooled analysis. Existence of an item is never itself an exclusion reason.",
+ "type": "object",
+ "additionalProperties": false,
+ "required": [
+  "review_item_id",
+  "issue_type",
+  "pdb_id",
+  "affected_scope",
+  "aggregation_effect",
+  "effect_reason",
+  "rule_id",
+  "rule_version"
+ ],
+ "properties": {
+  "review_item_id": {
+   "type": "string"
+  },
+  "issue_type": {
+   "type": "string"
+  },
+  "pdb_id": {
+   "type": "string"
+  },
+  "structure_ligand_id": {
+   "type": [
+    "string",
+    "null"
+   ]
+  },
+  "receptor_instance_id": {
+   "type": [
+    "string",
+    "null"
+   ]
+  },
+  "ligand_entity_id": {
+   "type": [
+    "string",
+    "null"
+   ]
+  },
+  "aggregation_unit_id": {
+   "type": [
+    "array",
+    "null"
+   ],
+   "items": {
+    "type": "string"
+   }
+  },
+  "affected_observations": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "affected_scope": {
+   "enum": [
+    "metadata_only",
+    "observation",
+    "structure_slot",
+    "aggregation_unit",
+    "family_summary",
+    "no_current_aggregate_effect",
+    "already_excluded_upstream",
+    "unresolved"
+   ]
+  },
+  "aggregation_effect": {
+   "enum": [
+    "exclude_from_public_beta_pooled_analysis",
+    "warning_only",
+    "already_excluded",
+    "no_effect",
+    "human_policy_required",
+    "unresolved_blocker"
+   ]
+  },
+  "effect_reason": {
+   "type": "string",
+   "minLength": 20
+  },
+  "affected_site_class": {
+   "type": [
+    "string",
+    "null"
+   ]
+  },
+  "affected_thresholds": {
+   "type": "array",
+   "items": {
+    "enum": [
+     "4A",
+     "4.5A",
+     "5A"
+    ]
+   }
+  },
+  "affected_weightings": {
+   "type": "array",
+   "items": {
+    "type": "string"
+   }
+  },
+  "current_review_status": {
+   "type": [
+    "string",
+    "null"
+   ]
+  },
+  "source_evidence_status": {
+   "type": [
+    "string",
+    "null"
+   ]
+  },
+  "rule_id": {
+   "type": "string"
+  },
+  "rule_version": {
+   "type": "string"
+  }
+ }
+}
