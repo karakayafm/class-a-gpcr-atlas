@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="tr" data-theme="grey">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Class A GPCR Atlas</title>
+<link rel="stylesheet" href="css/atlas.css">
+</head>
+<body data-payload-base="data/web/">
+<a class="skip" href="#main">Skip to content</a>
+<header class="top">
+  <h1>Class A GPCR Atlas</h1>
+  <span class="chip" id="verchip">pre-release</span>
+  <span class="spacer"></span>
+  <label for="lang" class="small muted">Lang</label>
+  <select id="lang" aria-label="Language"></select>
+  <label for="theme" class="small muted">Theme</label>
+  <select id="theme" aria-label="Theme"></select>
+</header>
+<p id="prerelease" role="note"></p>
+<p id="filewarn" role="alert" hidden></p>
+<nav id="nav" aria-label="Main"></nav>
+<div id="famlabel" aria-live="polite"></div>
+<p id="status" class="muted small" style="padding:0 16px" aria-live="polite"></p>
+<main id="main" tabindex="-1"></main>
+<footer class="muted small" style="padding:16px;max-width:1400px;margin:0 auto">
+  <span id="footnote"></span>
+</footer>
+<script src="vendor/ngl.js"></script>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

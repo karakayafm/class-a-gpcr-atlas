@@ -1,0 +1,67 @@
+{
+ "ngl": {
+  "url": "https://raw.githubusercontent.com/nglviewer/ngl/v2.3.1/LICENSE",
+  "http_status": 200,
+  "bytes": 1083,
+  "sha256": "72883774990bc4687d410aafac767cacea8a3eb78fe2c0c7f67d937f77db7add",
+  "retrieved": true
+ },
+ "threejs": {
+  "url": "https://raw.githubusercontent.com/mrdoob/three.js/r158/LICENSE",
+  "http_status": 200,
+  "bytes": 1081,
+  "sha256": "852e0e8699169bf9f6fdc6bda3e682d078dcbc738b5d33e74df594721bff271d",
+  "retrieved": true
+ },
+ "chroma": {
+  "url": "https://raw.githubusercontent.com/gka/chroma.js/master/LICENSE",
+  "http_status": 200,
+  "bytes": 2418,
+  "sha256": "85aae6740628115550c6e67a85e8f8e70835cd5b14d4a2cb878c90c998f506db",
+  "retrieved": true
+ },
+ "jssignals": {
+  "url": "https://raw.githubusercontent.com/millermedeiros/js-signals/master/LICENSE.txt",
+  "retrieved": false,
+  "error": "HTTPError: HTTP Error 404: Not Found"
+ },
+ "vendored_ngl_js_sha256": "0e8fea984b0e306d948d675f30e10f5a275ab5b4ce2135191a6787ec1b29dc5d",
+ "upstream_bundle_check": {
+  "url": "https://cdn.jsdelivr.net/npm/ngl@2.3.1/dist/ngl.js",
+  "http_status": 200,
+  "bytes": 1283924,
+  "sha256": "0e8fea984b0e306d948d675f30e10f5a275ab5b4ce2135191a6787ec1b29dc5d",
+  "retrieved": true,
+  "matches_vendored": true
+ },
+ "apache_2_0": {
+  "url": "https://www.apache.org/licenses/LICENSE-2.0.txt",
+  "http_status": 200,
+  "bytes": 11358,
+  "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+  "retrieved": true,
+  "applies_to": "ColorBrewer colour tables embedded in chroma.js"
+ },
+ "polyform_noncommercial_1_0_0": {
+  "url": "https://raw.githubusercontent.com/polyformproject/polyform-licenses/1.0.0/PolyForm-Noncommercial-1.0.0.md",
+  "bytes": 4563,
+  "sha256": "c0ea4a896d2c8c394b29f9427589996db826cd501c512279ff0ed3ef48fabbe5",
+  "retrieved": true,
+  "format": "plain"
+ },
+ "cc_by_nc_4_0": {
+  "url": "https://creativecommons.org/licenses/by-nc/4.0/legalcode.txt",
+  "http_status": 200,
+  "bytes": 19347,
+  "sha256": "41003d4a74749c0220e33dd415042164b5a1093ed401f36277234f772d22d3d0",
+  "retrieved": true
+ },
+ "_note": "Reference texts for the licences the owner selected. Retrieved for the record; NO project LICENSE file has been written, because the copyright holder is not yet confirmed and a licence grant needs a grantor.",
+ "cc_by_4_0": {
+  "url": "https://raw.githubusercontent.com/spdx/license-list-data/main/text/CC-BY-4.0.txt",
+  "http_status": 200,
+  "bytes": 17023,
+  "sha256": "d557539df68e771cc1eedcc91d13f70fca930e508d11eedcafa4b15db49e3744",
+  "retrieved": true
+ }
+}

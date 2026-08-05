@@ -1,0 +1,70 @@
+{
+ "copyright_holder": "Muhammed Fatih Karakaya",
+ "year": "2026",
+ "code_licence": "PolyForm-Noncommercial-1.0.0",
+ "data_licence": "CC-BY-NC-4.0",
+ "open_source_status": "source_available_noncommercial_not_OSI_open_source",
+ "commercial_use": "requires separate written permission from Muhammed Fatih Karakaya",
+ "note": "Scope is declared in LICENSE-NOTICE.md and here. The licence texts themselves are distributed unmodified; no scope commentary is inserted into either.",
+ "scope": [
+  {
+   "path_prefix": "data/web/structures/",
+   "governing_licence": "CC0 1.0 (RCSB PDB)",
+   "project_licence_applies": false,
+   "share_of_release_bytes": "~92%"
+  },
+  {
+   "path_prefix": "vendor/",
+   "governing_licence": "MIT / BSD-3-Clause / Apache-2.0",
+   "project_licence_applies": false,
+   "notice": "THIRD_PARTY_NOTICES.md"
+  },
+  {
+   "path_prefix": "js/",
+   "governing_licence": "PolyForm-Noncommercial-1.0.0",
+   "project_licence_applies": true
+  },
+  {
+   "path_prefix": "css/",
+   "governing_licence": "PolyForm-Noncommercial-1.0.0",
+   "project_licence_applies": true
+  },
+  {
+   "path_prefix": "pipeline/",
+   "governing_licence": "PolyForm-Noncommercial-1.0.0",
+   "project_licence_applies": true
+  },
+  {
+   "path_prefix": "data/web/families/",
+   "governing_licence": "CC-BY-NC-4.0 for project-computed values; GPCRdb-derived fields remain CC BY 4.0",
+   "project_licence_applies": true,
+   "mixed_record_note": "The noncommercial condition attaches to computed values only."
+  },
+  {
+   "path_prefix": "data/web/overlay/",
+   "governing_licence": "CC-BY-NC-4.0",
+   "project_licence_applies": true
+  },
+  {
+   "path_prefix": "data/web/global/",
+   "governing_licence": "CC-BY-NC-4.0 for project content; source licence statements relayed unchanged",
+   "project_licence_applies": true
+  }
+ ],
+ "attribution_required": [
+  "RCSB PDB (requested)",
+  "GPCRdb (required, CC BY 4.0)",
+  "UniProt (CC BY 4.0)"
+ ],
+ "licence_texts": {
+  "code": "data/licences/third_party/PolyForm-Noncommercial-1.0.0.md",
+  "data": "data/licences/third_party/CC-BY-NC-4.0.legalcode.txt"
+ },
+ "required_notice": "Required Notice: Copyright © 2026 Muhammed Fatih Karakaya",
+ "licence_texts_unmodified": true,
+ "licence_text_hashes": {
+  "LICENSE (PolyForm-Noncommercial-1.0.0)": "c0ea4a896d2c8c394b29f9427589996db826cd501c512279ff0ed3ef48fabbe5",
+  "LICENSE-DATA (CC-BY-NC-4.0 legalcode)": "41003d4a74749c0220e33dd415042164b5a1093ed401f36277234f772d22d3d0"
+ },
+ "notice_file": "LICENSE-NOTICE.md"
+}
