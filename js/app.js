@@ -25,14 +25,14 @@ function fatal(msg) {
 /* ------------------------------------------------------------------ chrome */
 function buildChrome(manifest) {
   const nav = document.getElementById("nav");
+  const globalSearch = document.getElementById("global-search");
+  if (globalSearch && globalSearch.parentNode === nav) nav.removeChild(globalSearch);
   clear(nav);
   const r = parseRoute();
   const items = r.family
-    ? [["overview", "nav_overview"], ["structures", "nav_structures"], ["contacts", "nav_contacts"],
-       ["interfaces", "nav_interfaces"], ["motifs", "nav_motifs"], ["compare", "nav_compare"],
-       ["evidence", "nav_evidence"], ["methods", "nav_methods"], ["sources", "nav_sources"],
+    ? [["structures", "nav_structures"], ["methods", "nav_methods"], ["sources", "nav_sources"],
        ["references", "nav_references"], ["cite", "nav_cite"]]
-    : [["landing", "families"], ["compare", "nav_compare"], ["methods", "nav_methods"],
+    : [["landing", "families"], ["methods", "nav_methods"],
        ["sources", "nav_sources"], ["references", "nav_references"], ["cite", "nav_cite"]];
   for (const [view, key] of items) {
     const on = r.view === view;
@@ -40,6 +40,7 @@ function buildChrome(manifest) {
       href: "#" + (r.family && view !== "landing" ? "family=" + r.family + "&" : "") + "view=" + view,
       "aria-current": on ? "page" : null, text: t(key) }));
   }
+  if (globalSearch) nav.appendChild(globalSearch);
   const fam = document.getElementById("famlabel");
   clear(fam);
   if (r.family) {
@@ -48,6 +49,69 @@ function buildChrome(manifest) {
     fam.appendChild(el("span", { class: "crumb sep", text: "›" }));
     fam.appendChild(el("span", { class: "crumb", text: f ? f.name : r.family }));
   }
+  const globalInput = document.getElementById("global-search-input");
+  if (globalInput) {
+    globalInput.placeholder = t("global_search_placeholder");
+    globalInput.setAttribute("aria-label", t("global_search"));
+  }
+}
+
+function setupGlobalSearch() {
+  const input = document.getElementById("global-search-input");
+  const panel = document.getElementById("global-search-results");
+  if (!input || !panel) return;
+  let timer = null, request = 0;
+  const hide = () => { panel.hidden=true; input.setAttribute("aria-expanded", "false"); };
+  const show = () => { panel.hidden=false; input.setAttribute("aria-expanded", "true"); };
+  const resultText = row => {
+    const receptor = V.plainName(row.receptor_name || row.receptor_entry_name || "—");
+    const ligands = (row.ligands || []).map(V.plainName).join(", ");
+    return { receptor, ligands };
+  };
+  const run = async () => {
+    const raw = input.value.trim(), q = raw.toLocaleLowerCase(getLang() === "tr" ? "tr" : "en");
+    const token = ++request;
+    clear(panel);
+    if (q.length < 2) { hide(); return; }
+    panel.appendChild(el("p", { class:"global-search-message", text:t("global_search_loading") }));
+    show(); input.setAttribute("aria-busy", "true");
+    let index;
+    try { index = await L.loadSearchIndex(); }
+    catch (e) { if (token === request) { clear(panel); panel.appendChild(el("p", {
+      class:"global-search-message", text:L.errorMessage(e) })); } return; }
+    finally { if (token === request) input.removeAttribute("aria-busy"); }
+    if (token !== request) return;
+    const scored = [];
+    for (const row of index) {
+      const txt = resultText(row), pdb = String(row.pdb_id || "").toLowerCase();
+      const receptor = (txt.receptor + " " + (row.receptor_entry_name || "")).toLocaleLowerCase();
+      const ligands = txt.ligands.toLocaleLowerCase();
+      let score = pdb === q ? 0 : pdb.startsWith(q) ? 1 : receptor.startsWith(q) ? 2 :
+        ligands.startsWith(q) ? 3 : (pdb + " " + receptor + " " + ligands).includes(q) ? 4 : 99;
+      if (score < 99) scored.push({ row, txt, score });
+    }
+    scored.sort((a,b) => a.score-b.score || a.row.pdb_id.localeCompare(b.row.pdb_id));
+    clear(panel);
+    if (!scored.length) panel.appendChild(el("p", { class:"global-search-message", text:t("global_search_empty") }));
+    for (const hit of scored.slice(0, 15)) {
+      panel.appendChild(el("button", { class:"global-search-result", role:"option", onclick:() => {
+        input.value=""; hide();
+        navigate({ family:hit.row.family_slug, view:"structures", pdb:hit.row.pdb_id });
+      } }, [
+        el("strong", { text:hit.row.pdb_id }),
+        el("span", { text:hit.txt.receptor }),
+        el("small", { text:(hit.txt.ligands || t("apo")) + " · " + V.plainName(hit.row.family_name) })
+      ]));
+    }
+    show();
+  };
+  input.addEventListener("input", () => { clearTimeout(timer); timer=setTimeout(run, 160); });
+  input.addEventListener("focus", () => { if (panel.childElementCount && input.value.trim().length >= 2) show(); });
+  input.addEventListener("keydown", e => { if (e.key === "Escape") { hide(); input.blur(); } });
+  document.addEventListener("pointerdown", e => {
+    const host = document.getElementById("global-search");
+    if (host && !host.contains(e.target)) hide();
+  });
 }
 
 /* ------------------------------------------------------------------ 3D modal */
@@ -107,6 +171,8 @@ async function openModal(pdb, observationId) {
   const meta = await VIEW.open(document.getElementById("viewport"), pdb, observationId,
     msg => { st.textContent = msg; st.hidden = !msg; });
   if (!meta) return;
+  document.getElementById("modal-title").textContent = meta.pdb_id + " · " +
+    V.plainName(meta.receptor_name || "") + " · " + t("binding_site_workspace");
   buildViewerSide(meta);
   const note = VIEW.statusMessage();
   st.textContent = note; st.hidden = !note;
@@ -121,7 +187,7 @@ function closeModal() {
   document.body.classList.remove("modal-open");
   setBackgroundInert(false);
   const r = parseRoute(); delete r.pdb; delete r.observation;
-  if (r.view === "3d") r.view = r.family ? "structures" : "landing";
+    if (r.view === "3d") r.view = r.family ? "structures" : "landing";
   navigate(r, true);
   if (modalOpener && modalOpener.focus) modalOpener.focus();
   modalOpener = null;
@@ -129,7 +195,7 @@ function closeModal() {
 function buildViewerSide(meta) {
   const side = document.getElementById("viewer-side");
   clear(side);
-  side.appendChild(el("h3", { text: meta.pdb_id + " — " + (meta.receptor_name || "") }));
+  side.appendChild(el("h3", { text: meta.pdb_id + " — " + V.plainName(meta.receptor_name || "") }));
   side.appendChild(el("p", { class: "muted small", text: meta.species + " · " +
     (meta.experimental_method || "") + " · " + (meta.resolution != null ? meta.resolution + " Å" : "") }));
   if ((meta.observations || []).length > 1) {
@@ -143,34 +209,194 @@ function buildViewerSide(meta) {
       selected: o.observation_id === VIEW.currentObservation() }));
     side.appendChild(el("label", { text: t("observation") })); side.appendChild(sel);
   }
-  const on = { cartoon: true, contacts: true, motifs: false, motifLabels: false,
-    surface: false, lines: false, allLigands: false, ions: false, aux: false, spin: false };
-  const ctrl = el("div", { class: "toggles" });
+  const on = { cartoon: true, ligand: true, contacts: true, motifs: false, motifLabels: true,
+    surface: false, surfaceReceptor:false, surfaceLigand:false, lines: true,
+    allLigands: false, ions: false, aux: false, spin: false };
+  const ctrl = el("div", { class: "viewer-tools" });
   const add = (key, label, disabled) => {
-    const id = "tg-" + key;
-    const cb = el("input", { type: "checkbox", id, checked: on[key], disabled: !!disabled,
-      onchange: e => { on[key] = e.target.checked; VIEW.toggles[key](e.target.checked); } });
-    ctrl.appendChild(el("div", { class: "toggle" }, [cb, el("label", { for: id, text: label })]));
+    const b = el("button", { class: "viewer-tool", disabled: !!disabled,
+      "aria-pressed": on[key] ? "true" : "false", text: label, onclick: () => {
+        on[key] = !on[key]; b.setAttribute("aria-pressed", on[key] ? "true" : "false");
+        VIEW.toggles[key](on[key]);
+      } });
+    ctrl.appendChild(b);
+    return b;
   };
   const apo = meta.apo_status === "confirmed_apo";
   const cur = (meta.observations || []).find(o => o.observation_id === VIEW.currentObservation());
   const hasLig = !!(cur && cur.ligand_selection);
   add("cartoon", t("v_cartoon"));
-  add("allLigands", t("v_all_ligands"), apo || !hasLig);
-  add("contacts", (cur && cur.is_polymer_interface) ? t("v_interface") : t("v_contacts"), apo || !hasLig);
-  add("lines", t("v_lines"), apo || !hasLig);
-  add("surface", t("v_surface"), apo || !hasLig);
-  add("motifs", t("v_motifs"));
   add("motifLabels", t("v_motif_labels"));
-  add("ions", t("v_ions"), !(meta.observed_sodium || []).length);
-  add("aux", t("v_aux"), !meta.auxiliary_chains_included);
+  const interactionsButton = add("lines", t("v_interactions"), apo || !hasLig);
+  let covalentButton = null;
+  let ligandPanel = null;
+  if (hasLig && VIEW.isPolymerLigand()) {
+    ligandPanel = el("div", { class:"ligand-options", hidden:true,
+      "aria-label":t("v_ligand") });
+    const ligandModeButton = (mode, label, selected) => el("button", {
+      class:"viewer-tool ligand-option", "aria-pressed":selected ? "true" : "false",
+      text:label, onclick:() => {
+        cartoonLigand.setAttribute("aria-pressed", mode === "cartoon" ? "true" : "false");
+        licoriceLigand.setAttribute("aria-pressed", mode === "licorice" ? "true" : "false");
+        VIEW.toggles.ligandMode(mode);
+      }
+    });
+    const cartoonLigand = ligandModeButton("cartoon", t("v_ligand_cartoon"), true);
+    const licoriceLigand = ligandModeButton("licorice", t("v_ligand_licorice"), false);
+    const ligandVisibility = el("button", { class:"viewer-tool ligand-visibility",
+      "aria-pressed":"true", text:t("v_ligand_hide"), onclick:() => {
+        on.ligand = !on.ligand;
+        ligandVisibility.setAttribute("aria-pressed", on.ligand ? "true" : "false");
+        ligandVisibility.textContent = t(on.ligand ? "v_ligand_hide" : "v_ligand_show");
+        cartoonLigand.disabled = !on.ligand;
+        licoriceLigand.disabled = !on.ligand;
+        on.lines = on.ligand;
+        interactionsButton.disabled = !on.ligand;
+        interactionsButton.setAttribute("aria-pressed", on.lines ? "true" : "false");
+        if (covalentButton) {
+          covalentButton.setAttribute("aria-pressed", on.ligand ? "true" : "false");
+          covalentButton.classList.toggle("selected", on.ligand);
+        }
+        VIEW.toggles.ligand(on.ligand);
+      } });
+    ligandPanel.append(cartoonLigand, licoriceLigand, ligandVisibility);
+    const ligandButton = el("button", { class:"viewer-tool", "aria-expanded":"false",
+      text:t("v_ligand"), onclick:() => {
+        ligandPanel.hidden = !ligandPanel.hidden;
+        ligandButton.setAttribute("aria-expanded", ligandPanel.hidden ? "false" : "true");
+      } });
+    ctrl.appendChild(ligandButton);
+  } else {
+    const ligandButton = el("button", { class:"viewer-tool", disabled:apo || !hasLig,
+      "aria-pressed":hasLig ? "true" : "false", text:t("v_ligand_hide"), onclick:() => {
+        on.ligand = !on.ligand;
+        ligandButton.setAttribute("aria-pressed", on.ligand ? "true" : "false");
+        ligandButton.textContent = t(on.ligand ? "v_ligand_hide" : "v_ligand_show");
+        on.lines = on.ligand;
+        interactionsButton.disabled = !on.ligand;
+        interactionsButton.setAttribute("aria-pressed", on.lines ? "true" : "false");
+        if (covalentButton) {
+          covalentButton.setAttribute("aria-pressed", on.ligand ? "true" : "false");
+          covalentButton.classList.toggle("selected", on.ligand);
+        }
+        VIEW.toggles.ligand(on.ligand);
+      } });
+    ctrl.appendChild(ligandButton);
+  }
+  const surfacePanel = el("div", { class:"surface-options", hidden:true,
+    "aria-label":t("v_surface") });
+  const surfaceOption = (key, label, toggle) => {
+    const b = el("button", { class:"viewer-tool surface-option", "aria-pressed":"false",
+      text:label, onclick:() => {
+        on[key] = !on[key]; b.setAttribute("aria-pressed", on[key] ? "true" : "false");
+        toggle(on[key]);
+      } });
+    surfacePanel.appendChild(b); return b;
+  };
+  const receptorSurface = surfaceOption("surfaceReceptor", t("v_surface_receptor"), VIEW.toggles.surfaceReceptor);
+  const ligandSurface = surfaceOption("surfaceLigand", t("v_surface_ligand"), VIEW.toggles.surfaceLigand);
+  const surfaceMaster = el("button", { class:"viewer-tool", disabled:apo || !hasLig,
+    "aria-pressed":"false", text:t("v_surface"), onclick:() => {
+      on.surface = !on.surface;
+      surfaceMaster.setAttribute("aria-pressed", on.surface ? "true" : "false");
+      surfacePanel.hidden = !on.surface;
+      on.surfaceReceptor = on.surface; on.surfaceLigand = on.surface;
+      receptorSurface.setAttribute("aria-pressed", on.surface ? "true" : "false");
+      ligandSurface.setAttribute("aria-pressed", on.surface ? "true" : "false");
+      VIEW.toggles.surface(on.surface);
+    } });
+  ctrl.appendChild(surfaceMaster);
   add("spin", t("v_spin"));
+  ctrl.appendChild(el("button", { class: "viewer-tool", text: t("v_reset"),
+    onclick: () => { VIEW.resetView(); buildViewerSide(meta); } }));
+  ctrl.appendChild(el("button", { class: "viewer-tool", text: t("v_snapshot"),
+    onclick: () => VIEW.snapshot() }));
   side.appendChild(ctrl);
-  side.appendChild(el("button", { class: "btn", text: t("v_reset"), onclick: () => VIEW.resetView() }));
+  if (ligandPanel) side.appendChild(ligandPanel);
+  side.appendChild(surfacePanel);
+  side.appendChild(el("div", { class: "viewer-actions" }, [
+    el("button", { class: "btn", text: t("v_pocket"), onclick: () => VIEW.focusPocket() })
+  ]));
+
+  const motifs = VIEW.motifGroups();
+  if (motifs.length || VIEW.hasCovalentBond()) {
+    side.appendChild(el("h4", { class: "viewer-section-title", text: t("v_motif_shortcuts") }));
+    const list = el("div", { class: "motif-picker" });
+    if (VIEW.hasCovalentBond()) {
+      list.appendChild(el("div", { class:"motif-group-title group-covalent",
+        text:t("v_group_covalent") }));
+      const row = el("div", { class:"motif-group-row" });
+      const b = el("button", { class:"motif-button covalent-button selected",
+        "aria-pressed":"true", text:t("v_covalent_toggle"), onclick:() => {
+          const on = b.getAttribute("aria-pressed") !== "true";
+          b.setAttribute("aria-pressed", on ? "true" : "false");
+          b.classList.toggle("selected", on);
+          VIEW.toggles.covalent(on);
+        } });
+      row.appendChild(b); list.appendChild(row);
+      covalentButton = b;
+    }
+    for (const group of ["ligand", "activation", "structural"]) {
+      const rows = motifs.filter(m => m.group === group);
+      if (!rows.length) continue;
+      list.appendChild(el("div", { class: "motif-group-title group-" + group,
+        text: t("v_group_" + group) }));
+      const row = el("div", { class: "motif-group-row" });
+      for (const motif of rows) {
+        const b = el("button", { class: "motif-button motif-" + motif.group, "aria-pressed": "false",
+          text: motif.label, onclick: () => {
+            const selected = VIEW.toggleMotif(motif.id);
+            b.classList.toggle("selected", selected);
+            b.setAttribute("aria-pressed", selected ? "true" : "false");
+          } });
+        row.appendChild(b);
+      }
+      list.appendChild(row);
+    }
+    side.appendChild(list);
+  }
+  side.appendChild(el("button", { class: "clear-selection", text: t("v_clear_selection"),
+    onclick: () => { VIEW.clearSelections(); buildViewerSide(meta); } }));
+
+  const contacts = VIEW.contactResidues();
+  if (contacts.length) {
+    side.appendChild(el("h4", { class: "viewer-section-title", text: t("v_contact_list") }));
+    side.appendChild(el("p", { class: "muted small", text: t("v_click_hint") }));
+    const list = el("div", { class: "residue-picker" });
+    for (const r of contacts) {
+      const b = el("button", { class: "residue-button", "aria-pressed": "false", onclick: () => {
+          const selected = VIEW.toggleResidue(r.chain, r.seq);
+          b.classList.toggle("selected", selected);
+          b.setAttribute("aria-pressed", selected ? "true" : "false");
+        } });
+      if (r.motif) {
+        b.appendChild(el("strong", { class: "residue-motif", text: r.motif }));
+        b.appendChild(el("span", { class: "residue-name", text: r.residue }));
+        b.appendChild(el("span", { class: "residue-distance", text: r.distance }));
+      } else b.textContent = r.label;
+      list.appendChild(b);
+    }
+    side.appendChild(list);
+  }
+
+  const legend = el("div", { class: "viewer-legend" });
+  const legendRow = (cls, text) => el("div", { class: "legend-row" }, [
+    el("i", { class: "legend-swatch " + cls }), el("span", { text }) ]);
+  legend.appendChild(legendRow("ligand", (cur && cur.ligand_name) || t("ligand")));
+  legend.appendChild(legendRow("contact", t("v_legend_contact")));
+  legend.appendChild(legendRow("selected", t("v_legend_selected")));
+  legend.appendChild(legendRow("motif-ligand", t("v_legend_motif_ligand")));
+  legend.appendChild(legendRow("motif-activation", t("v_legend_motif_activation")));
+  if (cur && cur.binding_site_class === "covalent_core_site")
+    legend.appendChild(legendRow("covalent", t("v_legend_covalent")));
+  side.appendChild(legend);
+  side.appendChild(el("p", { class: "viewer-hint", text: t("v_mouse_hint") }));
   side.appendChild(el("a", { class: "btn link", href: meta.full_structure_url, target: "_blank",
     rel: "noopener", text: t("v_source") }));
   if (!meta.auxiliary_chains_included)
-    side.appendChild(el("p", { class: "muted small", text: meta.auxiliary_note_en }));
+    side.appendChild(el("p", { class: "muted small", text:
+      (document.documentElement.lang === "tr" ? meta.auxiliary_note_tr : meta.auxiliary_note_en) ||
+      meta.auxiliary_note_en }));
 }
 
 /* ------------------------------------------------------------------ render */
@@ -185,13 +411,10 @@ async function render(r) {
     let node;
     switch (r.view) {
       case "landing": node = await V.landing(main); break;
-      case "overview": node = await V.overview(main, r.family); break;
-      case "structures": node = await V.structures(main, r.family, openModal); break;
-      case "contacts": node = await V.contacts(main, r.family, r.site, false); break;
-      case "interfaces": node = await V.contacts(main, r.family, r.site, true); break;
-      case "motifs": node = await V.motifs(main, r.family); break;
-      case "compare": node = await V.compare(main); break;
-      case "evidence": node = await V.evidence(main, r.family); break;
+      case "overview": navigate({ family: r.family, view: "structures" }, true); return;
+      case "structures": node = await V.structures(main, r.family, openModal, r.site, r.pdb); break;
+      case "contacts": case "interfaces": case "motifs": case "compare": case "evidence":
+        navigate(r.family ? { family: r.family, view: "structures" } : { view: "landing" }, true); return;
       case "methods": node = await V.methods(); break;
       case "sources": node = await V.sources(); break;
       case "references": node = await V.references(main, r.family); break;
@@ -199,7 +422,7 @@ async function render(r) {
       case "3d":
         // A deep link may name a structure without naming a family. The modal is the point of
         // the route, so render whatever context we can behind it rather than failing.
-        node = r.family ? await V.structures(main, r.family, openModal) : await V.landing(main);
+        node = r.family ? await V.structures(main, r.family, openModal, r.site, r.pdb) : await V.landing(main);
         break;
       default: node = null;
     }
@@ -247,11 +470,12 @@ async function boot() {
   try { await L.loadManifest(); }
   catch (e) { fatal(L.errorMessage(e)); return; }
   const m = L.getManifest();
-  // The banner carries the two scope statements a reader needs before any number is read: the
-  // release is unreviewed, and the contact rule's validation is not uniform across families.
-  document.getElementById("prerelease").textContent =
-    t("prerelease_notice") + " (" + m.review_warning_count + " " + t("review_items") + ") — " +
-    t("validation_global");
+  setupGlobalSearch();
+  // One short line that says what the build is and where the detail lives. The counts and the
+  // per-family validation matrix are shown in context — in Methods, in each family overview and
+  // in the review-gate panel beside the numbers they qualify — which is where a reader can act
+  // on them. A banner long enough to state everything is a banner nobody reads.
+  document.getElementById("prerelease").textContent = t("prerelease_notice");
   document.title = m.atlas_title + " — " + m.version;
   onRoute(render);
   startRouter();
