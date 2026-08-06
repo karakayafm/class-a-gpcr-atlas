@@ -7,6 +7,7 @@ const MAX_BUNDLE_ENTRIES = 4;
 const famCache = new Map();
 const bundleCache = new Map();
 let manifest = null;
+let searchIndexPromise = null;
 export let isFileProtocol = location.protocol === "file:";
 
 function lru(map, max) {
@@ -40,6 +41,22 @@ export async function loadManifest() {
   return m;
 }
 export function getManifest() { return manifest; }
+
+export function loadSearchIndex() {
+  if (searchIndexPromise) return searchIndexPromise;
+  searchIndexPromise = loadManifest().then(async m => {
+    const families = m.families || [];
+    const payloads = await Promise.all(families.map(async family => ({
+      family, data: await loadFamilyFile(family.slug, "structures.json")
+    })));
+    return payloads.flatMap(({ family, data }) => (data && data.structures || []).map(x => ({
+      pdb_id:x.pdb_id, family_slug:family.slug, family_name:family.name,
+      receptor_name:x.receptor_name, receptor_entry_name:x.receptor_entry_name,
+      ligands:Array.from(new Set((x.observations || []).map(o => o.ligand_name).filter(Boolean)))
+    })));
+  }).catch(e => { searchIndexPromise=null; throw e; });
+  return searchIndexPromise;
+}
 
 export async function loadGlobal(name) {
   const m = await loadManifest();

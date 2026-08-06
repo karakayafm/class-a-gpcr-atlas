@@ -15,7 +15,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-RC = ROOT / "releases/phase6a/rc9"
+RC = ROOT / "releases/phase6a/rc10"
 OUT = ROOT / "releases/phase6b/public_repository"
 OVERLAY = ROOT / "data/release_overlays/rc6"
 
@@ -64,7 +64,7 @@ def copy_tree(src: Path, dst: Path) -> tuple[int, int]:
 def main() -> int:
     # --- gate: the release candidate must be the one that was validated -------------------
     if not RC.is_dir():
-        print("rc9 missing", file=sys.stderr)
+        print("rc10 missing", file=sys.stderr)
         return 2
     n9 = named(RC / "NAMED_HASHES.txt")
     p5 = named(ROOT / "releases/phase5/NAMED_HASHES.txt")
@@ -83,13 +83,32 @@ def main() -> int:
     OUT.mkdir(parents=True)
 
     report = {"staged_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-              "source_release_candidate": "0.1.0-rc.9",
+              "source_release_candidate": "0.1.0-rc.10",
               "rc_manifest_sha": n9["rc_manifest_sha"],
               "trees": {}}
 
     # --- the deployable site ----------------------------------------------------------------
     f, b = copy_tree(RC / "site", OUT / "site")
     report["trees"]["site"] = {"files": f, "bytes": b}
+
+    # The release candidate freezes scientific payloads and coordinate bundles, not the user
+    # interface. Overlay the maintained application source so a UI-only release does not require
+    # rebuilding or mutating the frozen science tree.
+    ui_files, ui_bytes = copy_tree(ROOT / "app", OUT / "site")
+    report["trees"]["site_ui_overlay"] = {"files": ui_files, "bytes": ui_bytes,
+                                             "source": "app/"}
+    # Viewer metadata is presentation data derived from the frozen Phase 3 contact records.
+    # Keep the frozen coordinate files, but ship the maintained metadata so per-structure
+    # GPCRdb labels and distances are not discarded by an older release-candidate copy.
+    meta_files = meta_bytes = 0
+    for src in sorted((ROOT / "data/web/structures").glob("*/viewer_meta.json")):
+        dst = OUT / "site/data/web/structures" / src.parent.name / src.name
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src, dst)
+        meta_files += 1
+        meta_bytes += src.stat().st_size
+    report["trees"]["viewer_metadata_overlay"] = {
+        "files": meta_files, "bytes": meta_bytes, "source": "data/web/structures/*/viewer_meta.json"}
 
     # --- source code -------------------------------------------------------------------------
     for t in CODE_TREES:
@@ -98,6 +117,23 @@ def main() -> int:
             continue
         f, b = copy_tree(src, OUT / t)
         report["trees"][t] = {"files": f, "bytes": b}
+
+    # --- root documents, from a version-controlled source ------------------------------------
+    # These were once written straight into the staging directory, which meant a rebuild silently
+    # deleted them. They now live in docs_src/phase6b/ so the package is reproducible from source.
+    DOCS_SRC = ROOT / "docs_src/phase6b"
+    if not DOCS_SRC.is_dir():
+        print("docs_src/phase6b missing; refusing to stage an undocumented package",
+              file=sys.stderr)
+        return 5
+    doc_n = 0
+    for f2 in sorted(DOCS_SRC.rglob("*")):
+        if f2.is_file() and publishable(f2.relative_to(DOCS_SRC)):
+            d = OUT / f2.relative_to(DOCS_SRC)
+            d.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(f2, d)
+            doc_n += 1
+    report["trees"]["root_documents"] = {"files": doc_n}
 
     # --- licences and notices, from the repository root ------------------------------------
     for name in ("LICENSE", "LICENSE-DATA", "LICENSE-NOTICE.md", "LICENSE-SCOPE.json"):

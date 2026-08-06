@@ -9,7 +9,7 @@ export function parseRoute() {
     if (i < 0) { out[decodeURIComponent(part)] = true; continue; }
     out[decodeURIComponent(part.slice(0, i))] = decodeURIComponent(part.slice(i + 1));
   }
-  if (!out.view) out.view = out.family ? "overview" : "landing";
+  if (!out.view) out.view = out.family ? "structures" : "landing";
   return out;
 }
 export function buildHash(state) {

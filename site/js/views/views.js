@@ -1,6 +1,6 @@
 // All views. Each returns a DOM node; none recomputes science — every number is read from a
 // Phase 4-derived payload field.
-import { t, siteClassLabel, stateLabel, warnLabel, getLang } from "../core/i18n.js";
+import { t, siteClassLabel, siteClassDefinition, stateLabel, warnLabel, getLang } from "../core/i18n.js";
 import { el, clear, fmt, pct, paginate, debounce } from "../components/dom.js";
 import { toCSV, download } from "../components/csv.js";
 import * as L from "../data/loader.js";
@@ -9,6 +9,26 @@ import { navigate } from "../core/router.js";
 import * as RG from "./reviewgate.js";
 
 const POLYMER = { extracellular_polymer_interface: 1, tethered_ligand_interface: 1 };
+
+export function plainName(value) {
+  const node = document.createElement("span");
+  node.innerHTML = String(value || "").replace(/<sub>(.*?)<\/sub>/gi, "$1");
+  return (node.textContent || "").replace(/\s+/g, " ").trim();
+}
+function familyDisplayName(value) {
+  const clean = plainName(value);
+  if (getLang() !== "tr") return clean;
+  return ({ "Aminergic receptors": "Aminergik reseptörler", "Peptide receptors": "Peptit reseptörleri",
+    "Lipid receptors": "Lipit reseptörleri", "Orphan receptors": "Yetim reseptörler",
+    "Nucleotide receptors": "Nükleotit reseptörleri", "Protein receptors": "Protein reseptörleri",
+    "Sensory receptors": "Duyusal reseptörler", "Melatonin receptors": "Melatonin reseptörleri",
+    "Steroid receptors": "Steroid reseptörleri", "Other": "Diğer" })[clean] || clean;
+}
+function modeClass(value) {
+  const key = String(value || "").toLowerCase();
+  return key === "agonist" ? " mode-agonist" : key === "partial agonist" ? " mode-partial" : key === "antagonist" ? " mode-antagonist" :
+    key === "inverse agonist" ? " mode-inverse" : (key === "pam" || key === "nam") ? " mode-modulator" : "";
+}
 
 function warnBadges(ws) {
   if (!ws || !ws.length) return null;
@@ -24,22 +44,55 @@ function metricHead(payload) {
   ]);
 }
 
+let pinnedSiteHelp = null;
+function siteClassChip(id, count, familySlug) {
+  const tipId = "site-help-" + id + "-" + Math.random().toString(36).slice(2, 8);
+  const tip = el("span", { class:"site-help-popover", id:tipId, role:"tooltip", hidden:true,
+    text:siteClassDefinition(id) });
+  let pinned = false;
+  const button = el("button", { class:"site-help-button", type:"button", text:"?",
+    "aria-label":siteClassLabel(id) + " — " + t("site_help_aria"),
+    "aria-describedby":tipId, "aria-expanded":"false" });
+  const filterLink = el("span", { class:"chip site-filter-link", role:"link", tabindex:"0",
+    text:siteClassLabel(id) + " " + count });
+  const openFiltered = e => { e.preventDefault(); e.stopPropagation();
+    navigate({ family:familySlug, view:"structures", site:id }); };
+  filterLink.addEventListener("click", openFiltered);
+  filterLink.addEventListener("keydown", e => {
+    if (e.key === "Enter" || e.key === " ") openFiltered(e);
+  });
+  const wrap = el("span", { class:"sitechip-wrap" }, [filterLink, button, tip]);
+  const show = () => { tip.hidden=false; button.setAttribute("aria-expanded", "true"); };
+  const hide = () => { if (!pinned) { tip.hidden=true; button.setAttribute("aria-expanded", "false"); } };
+  wrap.addEventListener("mouseenter", show);
+  wrap.addEventListener("mouseleave", hide);
+  button.addEventListener("focus", show);
+  button.addEventListener("blur", hide);
+  button.addEventListener("click", e => {
+    e.preventDefault(); e.stopPropagation();
+    if (pinnedSiteHelp && pinnedSiteHelp.button !== button) pinnedSiteHelp.close();
+    pinned = !pinned;
+    if (pinned) { show(); pinnedSiteHelp = { button, close:() => {
+      pinned=false; tip.hidden=true; button.setAttribute("aria-expanded", "false");
+    } }; }
+    else { tip.hidden=true; button.setAttribute("aria-expanded", "false"); pinnedSiteHelp=null; }
+  });
+  return wrap;
+}
+
 /* ---------------------------------------------------------------- landing */
 export async function landing(root) {
   const m = await L.loadManifest();
   const d = await L.loadGlobal("landing.json");
   const wrap = el("section", { class: "view" });
   wrap.appendChild(el("h2", { text: t("families") + " (" + d.family_count + ")" }));
-  // A global one-liner, so the varying scope is visible before any family is opened.
-  wrap.appendChild(el("p", { class: "muted small", text: t("validation_global") }));
   const fvs = await L.loadOverlay("global/family_validation_status.json");
   const badgeOf = fid => (fvs && fvs.per_family_badge ? fvs.per_family_badge[fid] : null);
   const grid = el("div", { class: "cards" });
   for (const f of d.families) {
-    const card = el("a", { class: "card", href: "#family=" + f.family_slug + "&view=overview",
+    const card = el("a", { class: "card", href: "#family=" + f.family_slug + "&view=structures",
       "aria-label": f.family_name }, [
-      el("h3", { text: f.family_name }),
-      el("div", { class: "muted small", text: f.major_family_id }),
+      el("h3", { text: familyDisplayName(f.family_name) }),
       el("dl", { class: "kv" }, [
         el("dt", { text: t("structures") }), el("dd", { text: String(f.structure_count) }),
         el("dt", { text: t("receptors") }), el("dd", { text: String(f.receptor_count) }),
@@ -48,7 +101,7 @@ export async function landing(root) {
         el("dt", { text: t("review_items") }), el("dd", { text: String(f.human_review_required) })
       ]),
       el("div", { class: "sitechips" }, Object.keys(f.site_class_counts || {}).sort().map(k =>
-        el("span", { class: "chip", text: siteClassLabel(k) + " " + f.site_class_counts[k] }))),
+        siteClassChip(k, f.site_class_counts[k], f.family_slug))),
       RG.validationBadge(badgeOf(f.major_family_id) ? {
         badge: badgeOf(f.major_family_id).badge,
         global_statement_en: fvs.global_statement_en,
@@ -135,90 +188,188 @@ export async function overview(root, slug) {
 }
 
 /* ---------------------------------------------------------------- structures */
-export async function structures(root, slug, onOpen3D) {
+export async function structures(root, slug, onOpen3D, initialSite, initialPdb) {
   const d = await L.loadFamilyFile(slug, "structures.json");
-  const st = ST.get();
   const wrap = el("section", { class: "view" });
-  wrap.appendChild(el("h2", { text: t("nav_structures") + " (" + d.count + ")" }));
-  const controls = el("div", { class: "controls" });
-  const mk = (key, label, values) => {
-    const s = el("select", { "aria-label": label, onchange: e => { ST.set({ [key]: e.target.value, page: 0 }); render(); } });
-    s.appendChild(el("option", { value: "", text: label + " —" }));
-    for (const v of values) s.appendChild(el("option", { value: v, text: v, selected: ST.get()[key] === v }));
-    return s;
-  };
-  const uniq = f => Array.from(new Set(d.structures.map(f).filter(Boolean))).sort();
-  const search = el("input", { type: "search", placeholder: "PDB / " + t("receptors") + " / " + t("ligand"),
-    "aria-label": "search", value: st.search,
-    oninput: debounce(e => { ST.set({ search: e.target.value, page: 0 }); render(); }, 200) });
-  controls.appendChild(search);
-  controls.appendChild(mk("receptorFilter", t("receptors"), uniq(x => x.receptor_name)));
-  controls.appendChild(mk("speciesFilter", t("species"), uniq(x => x.species)));
-  controls.appendChild(mk("methodFilter", t("method"), uniq(x => x.experimental_method)));
-  controls.appendChild(mk("stateFilter", t("state"), uniq(x => x.structural_state)));
-  wrap.appendChild(controls);
-  const body = el("div");
-  wrap.appendChild(body);
+  const family = (L.getManifest().families || []).find(f => f.slug === slug);
+  const availableSites = new Set(d.structures.flatMap(x => x.observations.map(o => o.binding_site_class).filter(Boolean)));
+  const filters = { family: "", receptor: "", mode: "", state: "",
+    site: availableSites.has(initialSite) ? initialSite : "", search: "", sort: "resolution" };
+  let selected = d.structures.find(x => x.pdb_id === String(initialPdb || "").toUpperCase()) ||
+    d.structures.find(x => x.pdb_id === "9IJE") || d.structures[0];
+  let revealInitialSelection = !!initialPdb;
+  const uniq = fn => Array.from(new Set(d.structures.flatMap(fn).filter(Boolean))).sort();
+  const observed = d.structures.filter(x => x.observations.some(o => o.coordinate_status === "observed"));
+  const ligandNames = new Set(observed.flatMap(x => x.observations.map(o => o.ligand_name).filter(Boolean)));
+  const receptorNames = new Set(d.structures.map(x => x.receptor_entry_name).filter(Boolean));
+  const contactCounts = observed.flatMap(x => x.observations.map(o => o.receptor_residues_5A || 0));
+  const median = contactCounts.slice().sort((a,b) => a-b)[Math.floor(contactCounts.length / 2)] || 0;
+
+  wrap.appendChild(el("section", { class: "atlas-intro" }, [
+    el("div", {}, [el("h2", { text: familyDisplayName(family ? family.name : slug) }),
+      el("p", { text: t("workspace_intro") })]),
+    el("div", { class: "summary-strip" }, [
+      summaryMetric(d.count, t("structures")), summaryMetric(receptorNames.size, t("receptors")),
+      summaryMetric(ligandNames.size, t("different_ligands")), summaryMetric(median, t("median_contacts"))
+    ])
+  ]));
+
+  const quick = el("div", { class: "quick-filters", "aria-label": t("ligand_class") });
+  const modeCounts = new Map();
+  for (const x of d.structures) for (const mode of new Set(x.observations.map(o => o.binding_mode).filter(Boolean)))
+    modeCounts.set(mode, (modeCounts.get(mode) || 0) + 1);
+  const filterControls = {};
+  const quickModes = ["", "Agonist", "Partial agonist", "Antagonist", "Inverse agonist", "PAM", "NAM"];
+  for (const mode of quickModes) if (!mode || modeCounts.has(mode)) {
+    const b = el("button", { class: "quick-filter" + modeClass(mode) + (!mode ? " active" : ""), "data-mode": mode,
+      text: (mode || t("all")) + "  " + (mode ? modeCounts.get(mode) : d.count), onclick: () => {
+        filters.mode = mode; if (filterControls.mode) filterControls.mode.value = mode;
+        for (const n of quick.querySelectorAll("button")) n.classList.toggle("active", n === b);
+        drawList(); drawDetail();
+      } });
+    quick.appendChild(b);
+  }
+  wrap.appendChild(quick);
+
+  const layout = el("div", { class: "explorer-layout" });
+  const rail = el("aside", { class: "explorer-rail" });
+  const detail = el("section", { class: "structure-detail", "aria-live": "polite" });
+  layout.appendChild(rail); layout.appendChild(detail); wrap.appendChild(layout);
+
+  const filterGrid = el("div", { class: "filter-grid" });
+  function selectFilter(key, label, values, display) {
+    const box = el("label", { class: "filter-field" }, [el("span", { text: label })]);
+    const s = el("select", { onchange: e => { filters[key] = e.target.value;
+      if (key === "mode") for (const n of quick.querySelectorAll("button"))
+        n.classList.toggle("active", n.getAttribute("data-mode") === e.target.value);
+      drawList(); drawDetail(); } });
+    filterControls[key] = s;
+    s.appendChild(el("option", { value: "", text: t("all") }));
+    for (const value of values) s.appendChild(el("option", { value,
+      text: display ? display(value) : plainName(value), selected:filters[key] === value }));
+    box.appendChild(s); return box;
+  }
+  filterGrid.appendChild(selectFilter("family", t("receptor_family"), uniq(x => [x.receptor_family_name])));
+  filterGrid.appendChild(selectFilter("receptor", t("receptors"), uniq(x => [x.receptor_name])));
+  filterGrid.appendChild(selectFilter("mode", t("ligand_class"), uniq(x => x.observations.map(o => o.binding_mode))));
+  filterGrid.appendChild(selectFilter("site", t("site_class"),
+    uniq(x => x.observations.map(o => o.binding_site_class)), siteClassLabel));
+  filterGrid.appendChild(selectFilter("state", t("state"), uniq(x => [x.structural_state])));
+  rail.appendChild(filterGrid);
+  rail.appendChild(el("label", { class: "filter-field search-field" }, [
+    el("span", { text: t("search") }), el("input", { type: "search", placeholder: t("search_placeholder"),
+      oninput: debounce(e => { filters.search = e.target.value; drawList(); drawDetail(); }, 120) })
+  ]));
+  const listHead = el("div", { class: "result-head" });
+  const resultList = el("div", { class: "result-list" });
+  rail.appendChild(listHead); rail.appendChild(resultList);
+  rail.appendChild(el("div", { class: "rail-actions" }, [
+    el("button", { class: "btn", text: t("export_csv"), onclick: () => exportStructures(filtered(), slug) })
+  ]));
 
   function filtered() {
-    const s = ST.get(); const q = (s.search || "").toLowerCase();
-    return d.structures.filter(x =>
-      (!s.receptorFilter || x.receptor_name === s.receptorFilter) &&
-      (!s.speciesFilter || x.species === s.speciesFilter) &&
-      (!s.methodFilter || x.experimental_method === s.methodFilter) &&
-      (!s.stateFilter || x.structural_state === s.stateFilter) &&
-      (!q || x.pdb_id.toLowerCase().includes(q) ||
-        (x.receptor_name || "").toLowerCase().includes(q) ||
-        x.observations.some(o => (o.ligand_name || "").toLowerCase().includes(q))));
+    const q = filters.search.trim().toLowerCase();
+    const rows = d.structures.filter(x =>
+      (!filters.family || x.receptor_family_name === filters.family) &&
+      (!filters.receptor || x.receptor_name === filters.receptor) &&
+      (!filters.mode || x.observations.some(o => o.binding_mode === filters.mode)) &&
+      (!filters.site || x.observations.some(o => o.binding_site_class === filters.site)) &&
+      (!filters.state || x.structural_state === filters.state) &&
+      (!q || [x.pdb_id, plainName(x.receptor_name), x.receptor_entry_name,
+        ...x.observations.map(o => o.ligand_name || "")].join(" ").toLowerCase().includes(q)));
+    return rows.sort((a,b) => (a.resolution == null) - (b.resolution == null) ||
+      (a.resolution || 99) - (b.resolution || 99) || a.pdb_id.localeCompare(b.pdb_id));
   }
-  function render() {
-    clear(body);
-    const rows = filtered();
-    const pg = paginate(rows, ST.get().page, ST.get().pageSize);
-    body.appendChild(el("p", { class: "muted small",
-      text: rows.length + " " + t("structures") + " · " + (pg.page + 1) + "/" + pg.pages }));
-    const tbl = el("table", { class: "data" });
-    tbl.appendChild(el("thead", {}, el("tr", {}, ["PDB", t("receptors"), t("species"), t("method"),
-      t("resolution"), t("state"), "Apo", t("observations"), t("nav_evidence"), ""].map(h => el("th", { text: h })))));
-    const tb = el("tbody");
-    for (const x of pg.rows) {
-      const obsCell = el("ul", { class: "obs" }, x.observations.map(o => el("li", {}, [
-        el("span", { class: "chip", text: o.ligand_name || (o.ligand_components || []).join("+") || "—" }),
-        el("span", { class: "muted small", text: " " + o.ligand_role + " · " + o.entity_form + " · " +
-          siteClassLabel(o.binding_site_class) + " · " + o.coordinate_status }),
-        o.binding_site_class === "unresolved" ? el("span", { class: "badge warn", text: t("unresolved_site") }) : null,
-        o.coordinate_status === "annotated_not_observed" ? el("span", { class: "badge warn", text: t("ano_msg") }) : null
-      ])));
-      tb.appendChild(el("tr", {}, [
-        el("td", {}, el("a", { href: "https://www.rcsb.org/structure/" + x.pdb_id,
-          target: "_blank", rel: "noopener", text: x.pdb_id })),
-        el("td", { text: x.receptor_name || "—" }), el("td", { text: x.species }),
-        el("td", { text: x.experimental_method || "—" }), el("td", { text: fmt(x.resolution, 2) }),
-        el("td", { text: stateLabel(x.structural_state || "unknown") }),
-        el("td", { text: x.apo_status }),
-        el("td", {}, obsCell),
-        el("td", { text: String(x.human_review_required) }),
-        el("td", {}, el("button", { class: "btn", text: t("viewer"),
-          onclick: () => onOpen3D(x.pdb_id, (x.observations[0] || {}).observation_id) }))
-      ]));
+  function drawList() {
+    const rows = filtered(); clear(resultList); clear(listHead);
+    if (rows.length && !rows.includes(selected)) selected = rows[0];
+    listHead.appendChild(el("strong", { text: rows.length + " " + t("results") }));
+    listHead.appendChild(el("span", { class: "muted small", text: t("sorted_resolution") }));
+    let selectedItem = null;
+    for (const x of rows) {
+      const o = observationFor(x);
+      const item = el("button", { class: "result-item" + (selected === x ? " selected" : ""),
+        "aria-pressed": selected === x ? "true" : "false", onclick: () => {
+          selected = x;
+          for (const n of resultList.querySelectorAll(".result-item")) {
+            const active = n === item;
+            n.classList.toggle("selected", active);
+            n.setAttribute("aria-pressed", active ? "true" : "false");
+          }
+          drawDetail();
+        } }, [
+        el("div", { class: "result-line" }, [el("strong", { text: x.pdb_id }),
+          el("span", { text: plainName(x.receptor_name || "—") }),
+          el("small", { text: fmt(x.resolution, 2) + " Å · " + (o.receptor_residues_5A || 0) + " " + t("contacts_short") })]),
+        el("div", { class: "result-ligand", text: plainName(o.ligand_name || t("apo")) }),
+        o.binding_mode ? el("span", { class: "mode-pill" + modeClass(o.binding_mode), text: o.binding_mode }) : null
+      ]);
+      if (selected === x) selectedItem = item;
+      resultList.appendChild(item);
     }
-    tbl.appendChild(tb);
-    body.appendChild(tbl);
-    const nav = el("div", { class: "pager" }, [
-      el("button", { class: "btn", text: "‹", disabled: pg.page === 0,
-        onclick: () => { ST.set({ page: pg.page - 1 }); render(); } }),
-      el("button", { class: "btn", text: "›", disabled: pg.page >= pg.pages - 1,
-        onclick: () => { ST.set({ page: pg.page + 1 }); render(); } }),
-      el("button", { class: "btn", text: t("export_csv") + " — " + t("export_structures"),
-        onclick: () => exportStructures(rows, slug) }),
-      el("button", { class: "btn", text: t("export_csv") + " — " + t("export_observations"),
-        onclick: () => exportObservations(rows, slug) })
-    ]);
-    body.appendChild(nav);
+    if (revealInitialSelection && selectedItem) {
+      requestAnimationFrame(() => { resultList.scrollTop = Math.max(0,
+        selectedItem.offsetTop - resultList.clientHeight / 2); });
+      revealInitialSelection = false;
+    }
+    if (!rows.length) resultList.appendChild(el("p", { class: "notice", text: t("no_results") }));
   }
-  render();
+  function observationFor(x) {
+    return x.observations.find(o => (!filters.site || o.binding_site_class === filters.site) &&
+      (!filters.mode || o.binding_mode === filters.mode)) || x.observations[0] || {};
+  }
+  function drawDetail() {
+    clear(detail);
+    const rows = filtered();
+    if (!rows.length) { detail.appendChild(el("p", { class:"notice", text:t("no_results") })); return; }
+    if (!rows.includes(selected)) selected = rows[0];
+    const x = selected; const o = observationFor(x);
+    detail.appendChild(el("header", { class: "detail-head" }, [
+      el("div", {}, [el("div", { class: "detail-title" }, [el("strong", { text: x.pdb_id }),
+        el("span", { text: plainName(o.ligand_name || t("apo")) })]),
+        el("p", { class: "muted", text: plainName(x.receptor_name || "—") + " · " + x.receptor_entry_name })]),
+      el("button", { class: "btn btn-primary", text: t("open_binding_site"),
+        onclick: () => onOpen3D(x.pdb_id, o.observation_id) })
+    ]));
+    detail.appendChild(el("div", { class: "detail-tags" }, [
+      el("span", { class: "chip", text: plainName(x.receptor_family_name || "—") }),
+      el("span", { class: "chip", text: stateLabel(x.structural_state || "unknown") }),
+      o.binding_mode ? el("span", { class: "chip mode-pill" + modeClass(o.binding_mode), text: o.binding_mode }) : null,
+      el("span", { class: "chip", text: siteClassLabel(o.binding_site_class || "unresolved") })
+    ]));
+    detail.appendChild(el("div", { class: "detail-facts" }, [
+      fact(t("receptors"), plainName(x.receptor_name || "—")), fact(t("resolution"), fmt(x.resolution,2) + " Å"),
+      fact(t("method"), x.experimental_method || "—"), fact(t("species"), x.species || "—"),
+      fact(t("ligand_class"), o.binding_mode || "—"), fact(t("contact_shell"),
+        (o.receptor_residues_5A || 0) + " " + t("residues"))
+    ]));
+    detail.appendChild(el("section", { class: "detail-section" }, [
+      el("h3", { text: t("binding_site_summary") }),
+      el("p", { text: t("binding_site_explain") }),
+      el("div", { class: "contact-levels" }, [
+        contactLevel("≤ 4.0 Å", o.receptor_residues_4A || 0),
+        contactLevel("≤ 4.5 Å", o.receptor_residues_4_5A || 0),
+        contactLevel("≤ 5.0 Å", o.receptor_residues_5A || 0)
+      ])
+    ]));
+    detail.appendChild(el("section", { class: "detail-section sources" }, [
+      el("h3", { text: t("source_links") }),
+      el("a", { class: "btn", href: "https://www.rcsb.org/structure/" + x.pdb_id,
+        target: "_blank", rel: "noopener", text: "RCSB " + x.pdb_id }),
+      el("a", { class: "btn", href: "https://gpcrdb.org/structure/" + x.pdb_id,
+        target: "_blank", rel: "noopener", text: "GPCRdb " + x.pdb_id })
+    ]));
+  }
+  drawList(); drawDetail();
   return wrap;
 }
+
+function summaryMetric(value, label) { return el("div", { class: "summary-metric" }, [
+  el("strong", { text: String(value) }), el("span", { text: label }) ]); }
+function fact(label, value) { return el("div", { class: "detail-fact" }, [
+  el("span", { text: label }), el("strong", { text: String(value) }) ]); }
+function contactLevel(label, value) { return el("div", { class: "contact-level" }, [
+  el("span", { text: label }), el("strong", { text: String(value) }), el("small", { text: t("residues") }) ]); }
 
 function meta(slug, extra) {
   const m = L.getManifest();

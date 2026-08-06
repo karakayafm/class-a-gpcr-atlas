@@ -14,7 +14,7 @@ ROOT=Path(__file__).resolve().parents[2]; sys.path.insert(0,str(ROOT/"pipeline")
 from common.canonical import canonical_dumps, content_sha256, write_json  # noqa: E402
 from common.http import utc_now                                          # noqa: E402
 P5=ROOT/"releases/phase5"; WEB=ROOT/"data/web"; APP=ROOT/"app"
-RC_VERSION="0.1.0-rc.9"
+RC_VERSION="0.1.0-rc.10"
 PUBLIC_VERSION="0.1.0-beta.1"
 PROJECT_TITLE="Class A GPCR Structure\u2013Ligand Contact and Interface Atlas"
 SHORT_NAME="Class A GPCR Contact Atlas"
@@ -98,6 +98,22 @@ def main()->int:
         d["commercial_use"]="requires separate written permission from the copyright holder"
         d["open_source_status"]="source_available_noncommercial_not_OSI_open_source"
         d["licence_effective"]=True
+        # Supersede the Phase 5 wording: it was written while the licence and redistribution
+        # gates were open, and both are now closed. Leaving it would have the site state a
+        # condition that no longer exists.
+        d["pre_release_notice_en"]=("Pre-release research build. Scientific claims are not yet "
+            "human-reviewed; see Methods for scope and limitations.")
+        d["pre_release_notice_tr"]=("Ön-sürüm araştırma derlemesi. Bilimsel sonuçlar henüz insan "
+            "incelemesinden geçmemiştir; kapsam ve sınırlamalar için Yöntemler bölümüne bakın.")
+        d["release_gates"]=[
+            {"gate":"code_licence","status":"closed",
+             "note":"PolyForm Noncommercial 1.0.0, approved by the copyright holder."},
+            {"gate":"derived_data_licence","status":"closed",
+             "note":"CC BY-NC 4.0 on project-created outputs; source-derived fields retain their source licences."},
+            {"gate":"public_redistribution","status":"closed",
+             "note":"Approved by the copyright holder."},
+            {"gate":"human_curation","status":"open",
+             "note":"189 review items await human decision; pooled beta summaries are review-gated."}]
         d["licence_note_en"]=("Project-created code is under PolyForm Noncommercial 1.0.0 and "
             "project-created data under CC BY-NC 4.0. Roughly 92% of this distribution by size is "
             "CC0 coordinate data from the RCSB PDB, which these licences do not cover. See "

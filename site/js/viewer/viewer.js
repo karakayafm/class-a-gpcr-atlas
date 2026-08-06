@@ -6,11 +6,119 @@ import { loadBundleMeta, bundleCifUrl, errorMessage } from "../data/loader.js";
 import * as LC from "./lifecycle.js";
 
 let comp = null, meta = null, current = null, reps = {};
+let ligandMode = "cartoon";
+const selectedResidues = new Set();
+const selectedMotifs = new Set();
 const POLYMER = { extracellular_polymer_interface: 1, tethered_ligand_interface: 1 };
 
 function sel(residues) {
   if (!residues || !residues.length) return "none";
   return residues.map(r => r[1] + ":" + r[0]).join(" or ");
+}
+
+function activeReceptorChain() {
+  const o = obs();
+  const chain = o && (o.contact_receptor_details || [])[0] && o.contact_receptor_details[0].auth_asym_id;
+  return chain || (meta && meta.receptor_chains && meta.receptor_chains[0]) || "";
+}
+
+function receptorSelection() {
+  const chain = activeReceptorChain();
+  return chain ? ":" + chain : "polymer";
+}
+
+function withoutHydrogen(selection) { return "(" + selection + ") and not hydrogen"; }
+
+function ligandSelection(o) {
+  if (!o || !o.ligand_selection) return "none";
+  // Contact residues are intentionally sparse.  Using them as the displayed
+  // selection fragments peptide/protein ligands and makes their backbone look
+  // missing.  The bundle already records the ligand chain paired with this
+  // receptor instance, so polymer interfaces must display that complete chain.
+  if (POLYMER[o.binding_site_class] && (o.ligand_selection.chains || []).length)
+    return o.ligand_selection.chains.map(chain => ":" + chain).join(" or ");
+  // Ligand selections may contain symmetry-related copies from every protomer.
+  // The contact list identifies the copy paired with the active receptor chain.
+  return sel((o.contact_ligand_residues || []).length
+    ? o.contact_ligand_residues : o.ligand_selection.residues);
+}
+
+function heavyAtomsWithContactHydrogens(residueSelection, ligandSele, cutoff=2.7) {
+  if (!comp || !window.NGL) return withoutHydrogen(residueSelection);
+  const ligandHeavy = [], chosen = [];
+  try {
+    comp.structure.eachAtom(a => {
+      if (a.number === 7 || a.number === 8 || a.number === 16)
+        ligandHeavy.push([a.x, a.y, a.z]);
+    }, new window.NGL.Selection(withoutHydrogen(ligandSele)));
+    const cutoff2 = cutoff * cutoff;
+    comp.structure.eachAtom(a => {
+      if (a.number !== 1) { chosen.push(a.index); return; }
+      let donorHydrogen = false;
+      try { a.eachBondedAtom(b => { if (b.number === 7 || b.number === 8 || b.number === 16) donorHydrogen = true; }); }
+      catch (e) {}
+      if (!donorHydrogen) return;
+      for (const p of ligandHeavy) {
+        const dx=a.x-p[0], dy=a.y-p[1], dz=a.z-p[2];
+        if (dx*dx + dy*dy + dz*dz <= cutoff2) { chosen.push(a.index); break; }
+      }
+    }, new window.NGL.Selection(residueSelection));
+  } catch (e) { return withoutHydrogen(residueSelection); }
+  return chosen.length ? "@" + chosen.join(",") : withoutHydrogen(residueSelection);
+}
+
+function addCovalentHighlight(o) {
+  if (!comp || !o || o.binding_site_class !== "covalent_core_site") return;
+  const ligandAtoms = [], receptorAtoms = [];
+  try {
+    comp.structure.eachAtom(a => { if (a.number !== 1) ligandAtoms.push({ i:a.index, x:a.x, y:a.y, z:a.z }); },
+      new window.NGL.Selection(withoutHydrogen(ligandSelection(o))));
+    comp.structure.eachAtom(a => { if (a.number !== 1) receptorAtoms.push({ i:a.index, x:a.x, y:a.y, z:a.z }); },
+      new window.NGL.Selection(withoutHydrogen(sel(o.contact_receptor_residues))));
+  } catch (e) { return; }
+  let best = null, best2 = Infinity;
+  for (const a of ligandAtoms) for (const b of receptorAtoms) {
+    const dx=a.x-b.x, dy=a.y-b.y, dz=a.z-b.z, d2=dx*dx+dy*dy+dz*dz;
+    if (d2 < best2) { best2=d2; best=[a.i,b.i]; }
+  }
+  // A generous upper bound covers deposited covalent bonds while excluding ordinary contacts.
+  if (!best || best2 > 2.2*2.2) return;
+  addRep("covalent_atoms", "ball+stick", { sele:"@" + best.join(","),
+    colorScheme:"element", scale:1.18, aspectRatio:2.2 });
+  addRep("covalent_bond", "distance", { atomPair:[best], colorValue:0xf28c00,
+    labelColor:0xffb14a, labelUnit:"angstrom", labelSize:0.9, labelFixedSize:true,
+    useCylinder:false, linewidth:5 });
+}
+
+function addLigandRepresentation(o) {
+  if (!o || !o.ligand_selection) return;
+  const lsel = ligandSelection(o);
+  if (POLYMER[o.binding_site_class]) {
+    if (ligandMode === "licorice") {
+      addRep("ligand", "licorice", { sele:withoutHydrogen(lsel),
+        colorScheme:"element", opacity:0.96, radiusScale:1.08 });
+    } else {
+      addRep("ligand", "cartoon", { sele:lsel, color:"#eadb72", opacity:0.96 });
+      // Keep the old hybrid view: the whole peptide is a cartoon, while only
+      // ligand residues that contact the receptor remain atomically readable.
+      const contacting = sel(o.contact_ligand_residues || []);
+      if (contacting !== "none")
+        addRep("ligand_stick", "licorice", { sele:withoutHydrogen(contacting),
+          colorScheme:"element", opacity:0.96, radiusScale:1.08 });
+    }
+  } else {
+    addRep("ligand", "ball+stick", { sele:withoutHydrogen(lsel), colorScheme:"element" });
+  }
+}
+
+export function hasCovalentBond() {
+  const o = obs();
+  return !!(o && o.binding_site_class === "covalent_core_site");
+}
+
+export function isPolymerLigand() {
+  const o = obs();
+  return !!(o && POLYMER[o.binding_site_class]);
 }
 
 export async function open(host, pdb, observationId, onStatus) {
@@ -20,13 +128,16 @@ export async function open(host, pdb, observationId, onStatus) {
   try { meta = await loadBundleMeta(pdb); }
   catch (e) { onStatus(errorMessage(e)); return null; }
   let stage;
-  try { stage = LC.createStage(NGL, host, { backgroundColor: "white", quality: "medium" }); }
+  try { stage = LC.createStage(NGL, host, { backgroundColor: "#0b0d10", quality: "high" }); }
   catch (e) { onStatus(t("err_webgl")); return null; }
   // the host is visible by the time we get here; resize after creation and after load
   LC.resizeStageIfVisible();
   try {
     comp = await stage.loadFile(bundleCifUrl(pdb), { ext: "cif" });
   } catch (e) { onStatus(t("err_bundle")); LC.destroyStage(); return null; }
+  // NGL appends the component name to its atom hover tooltip.  The transport
+  // filename "viewer.cif" is an implementation detail; use the meaningful PDB id.
+  try { comp.setName(meta.pdb_id); comp.structure.name = meta.pdb_id; } catch (e) {}
   // A WebGL canvas is opaque to assistive technology: without a name it is announced as nothing
   // at all. Name it after the structure it is showing, and re-name it whenever that changes.
   labelCanvas(host, pdb);
@@ -45,7 +156,8 @@ function labelCanvas(host, pdb) {
   cv.setAttribute("aria-label", t("viewer_canvas_label").replace("{pdb}", pdb || ""));
 }
 
-export function close() { LC.destroyStage(); comp = null; meta = null; current = null; reps = {}; }
+export function close() { LC.destroyStage(); comp = null; meta = null; current = null; reps = {};
+  selectedResidues.clear(); selectedMotifs.clear(); }
 export function meta_() { return meta; }
 export function currentObservation() { return current; }
 export function setObservation(id) { if (!comp) { current = id; return; } current = id; applyDefaults(); }
@@ -69,20 +181,23 @@ function dropRep(key) {
 export function applyDefaults() {
   if (!comp || !meta) return;
   for (const k of Object.keys(reps)) dropRep(k);
-  const rc = (meta.receptor_chains || []).map(c => ":" + c).join(" or ") || "polymer";
-  addRep("cartoon", "cartoon", { sele: rc, color: "residueindex", opacity: 0.9 });
+  const rc = receptorSelection();
+  ligandMode = "cartoon";
+  selectedResidues.clear(); selectedMotifs.clear();
+  addRep("cartoon", "cartoon", { sele: rc, color: "#646a73", opacity: 0.68 });
   const o = obs();
   if (o && o.ligand_selection) {
-    const lsel = sel(o.ligand_selection.residues);
+    const lsel = ligandSelection(o);
+    addLigandRepresentation(o);
     if (POLYMER[o.binding_site_class]) {
-      addRep("ligand", "cartoon", { sele: lsel, color: "orange" });
-      addRep("ligand_stick", "licorice", { sele: lsel, color: "orange", opacity: 0.85 });
-      addRep("iface", "licorice", { sele: sel(o.contact_receptor_residues), color: "steelblue" });
+      addRep("iface", "licorice", { sele: withoutHydrogen(sel(o.contact_receptor_residues)), colorScheme:"element", colorValue:0x8ab8e8 });
     } else {
-      addRep("ligand", "ball+stick", { sele: lsel, color: "orange" });
-      addRep("contacts", "licorice", { sele: sel(o.contact_receptor_residues), color: "steelblue" });
+      addRep("contacts", "licorice", { sele: withoutHydrogen(sel(o.contact_receptor_residues)), colorScheme:"element", colorValue:0x8ab8e8 });
     }
-    frame(lsel);
+    addInteractionLines();
+    addCovalentHighlight(o);
+    addContactLabels();
+    frame(lsel + " or " + sel(o.contact_receptor_residues));
   } else {
     comp.autoView(400);
   }
@@ -93,9 +208,202 @@ export function frame(selection) {
   try { comp.autoView(selection, 400); } catch (e) { comp.autoView(400); }
 }
 
+function residueKey(chain, seq) { return String(seq) + ":" + String(chain); }
+function motifLabel(id) {
+  const key = ({ tm5_polar:"v_motif_tm5_polar", aromatic_pocket:"v_motif_aromatic",
+    PIF_connector:"v_motif_pif", CWxP_W6x48_switch:"v_motif_cwxp",
+    DRY_region:"v_motif_dry", ionic_lock_pair:"v_motif_ionic_lock",
+    sodium_pocket_network:"v_motif_sodium", NPxxY_region:"v_motif_npxxy",
+    TM5_TM7_tyrosine_network:"v_motif_tyrosine_network" })[id];
+  return key ? t(key) : id.replaceAll("_", " ");
+}
+function genericShort(value) {
+  const s = String(value || "");
+  const m = s.match(/^(\d+)(?:\.\d+)?x(\d+)$/);
+  return m ? m[1] + "x" + m[2] : s;
+}
+function oneLetter(name) { return ({ ALA:"A",ARG:"R",ASN:"N",ASP:"D",CYS:"C",GLN:"Q",GLU:"E",
+  GLY:"G",HIS:"H",ILE:"I",LEU:"L",LYS:"K",MET:"M",PHE:"F",PRO:"P",SER:"S",THR:"T",
+  TRP:"W",TYR:"Y",VAL:"V" })[String(name || "").toUpperCase()] || "?"; }
+
+function labelTextFor(details) {
+  const wanted = new Map((details || []).filter(r => r.generic_position).map(r =>
+    [residueKey(r.auth_asym_id, r.auth_seq_id), oneLetter(r.residue_name || r.residue_identity) + genericShort(r.generic_position)]));
+  const text = {};
+  if (!comp || !wanted.size) return text;
+  try {
+    comp.structure.eachAtom(a => {
+      const label = wanted.get(residueKey(a.chainname, a.resno));
+      if (label) text[a.index] = label;
+    }, new window.NGL.Selection(".CA"));
+  } catch (e) {}
+  return text;
+}
+
+function addContactLabels() {
+  const o = obs(), details = o && o.contact_receptor_details || [];
+  if (!details.length) return;
+  const s = details.map(r => residueKey(r.auth_asym_id, r.auth_seq_id)).join(" or ");
+  addRep("motif_labels", "label", { sele:"(" + s + ") and .CA", labelType:"text",
+    labelText:labelTextFor(details), color:"white", backgroundColor:"#111111",
+    backgroundOpacity:0.68, showBackground:true, fixedSize:false, labelSize:2.2, radius:0.8, zOffset:2 });
+}
+
+function addInteractionLines() {
+  const o = obs();
+  if (!o || !o.ligand_selection) return;
+  addRep("lines", "contact", { sele:sel(o.contact_receptor_residues) + " or " +
+    ligandSelection(o), maxHbondDist:3.6, maxHydrophobicDist:4.2,
+    maxPiStackingDist:5.5, labelVisible:true, labelUnit:"angstrom", labelSize:0.72 });
+}
+
+export function contactResidues() {
+  const o = obs();
+  if (!o) return [];
+  if ((o.contact_receptor_details || []).length) return o.contact_receptor_details.map(r => ({
+    chain: r.auth_asym_id, seq: String(r.auth_seq_id),
+    motif: r.generic_position ? oneLetter(r.residue_name) + genericShort(r.generic_position) : r.residue_name + r.auth_seq_id,
+    residue: r.residue_name + r.auth_seq_id,
+    distance: Number(r.min_distance_angstrom).toFixed(1) + " Å"
+  }));
+  const motifByResidue = new Map((meta.motif_residues || []).map(r =>
+    [residueKey(r.auth_asym_id, r.auth_seq_id), r]));
+  return (o.contact_receptor_residues || []).map(([chain, seq]) => {
+    const m = motifByResidue.get(residueKey(chain, seq));
+    return { chain, seq: String(seq), label: m
+      ? m.residue_identity + seq + " · " + m.generic_position
+      : chain + ":" + seq };
+  });
+}
+
+export function motifGroups() {
+  const groups = new Map();
+  const activeChain = activeReceptorChain();
+  for (const r of (meta && meta.motif_residues || []).filter(r => !activeChain || r.auth_asym_id === activeChain))
+    for (const id of (r.motif_memberships || [])) {
+    if (id === "ligand_transmission_connector") continue;
+    if (!groups.has(id)) groups.set(id, []);
+    groups.get(id).push(r);
+  }
+  const details = (obs() && obs().contact_receptor_details) || [];
+  const pseudo = { tm5_polar: new Set(["5x42","5x43","5x46","5x461"]),
+    aromatic_pocket: new Set(["6x48","6x51","6x52","7x42"]) };
+  for (const [id, positions] of Object.entries(pseudo)) {
+    const residues = (meta.shortcut_residues || details)
+      .filter(r => positions.has(r.generic_short || genericShort(r.generic_position)));
+    if (residues.length) groups.set(id, residues);
+  }
+  const ligand = new Set(["tm5_polar","aromatic_pocket"]);
+  const structural = new Set([]);
+  return Array.from(groups, ([id]) => ({ id, label:motifLabel(id),
+    group:structural.has(id) ? "structural" : ligand.has(id) ? "ligand" : "activation" }));
+}
+
+function residuesForMotif(id) {
+  if (id === "tm5_polar" || id === "aromatic_pocket") {
+    const positions = id === "tm5_polar" ? new Set(["5x42","5x43","5x46","5x461"])
+      : new Set(["6x48","6x51","6x52","7x42"]);
+    const source = (meta && meta.shortcut_residues && meta.shortcut_residues.length)
+      ? meta.shortcut_residues : ((obs() && obs().contact_receptor_details) || []);
+    return source.filter(r => positions.has(r.generic_short || genericShort(r.generic_position)))
+      .map(r => ({ auth_asym_id:r.auth_asym_id, auth_seq_id:r.auth_seq_id }));
+  }
+  const activeChain = activeReceptorChain();
+  return (meta.motif_residues || []).filter(r => (!activeChain || r.auth_asym_id === activeChain) &&
+    (r.motif_memberships || []).includes(id));
+}
+
+function selectionInView(selection, margin) {
+  const stage = LC.getStage();
+  if (!comp || !stage || !selection) return true;
+  const viewer = stage.viewer, trans = viewer.translationGroup.position,
+    rot = viewer.rotationGroup.matrix, cam = viewer.camera;
+  let seen = 0, inside = true;
+  try {
+    comp.structure.eachAtom(a => {
+      seen++;
+      if (!inside) return;
+      const p = new window.NGL.Vector3(a.x, a.y, a.z).add(trans).applyMatrix4(rot).project(cam);
+      if (Math.abs(p.x) > margin || Math.abs(p.y) > margin || p.z < -1 || p.z > 1) inside = false;
+    }, new window.NGL.Selection(selection));
+  } catch (e) { return true; }
+  return seen > 0 && inside;
+}
+
+function redrawSelections() {
+  dropRep("picked_residues"); dropRep("picked_labels"); dropRep("picked_motifs"); dropRep("picked_motif_labels");
+  if (selectedResidues.size) {
+    const s = Array.from(selectedResidues).join(" or ");
+    const o = obs(), details = ((o && o.contact_receptor_details) || []).filter(r =>
+      selectedResidues.has(residueKey(r.auth_asym_id, r.auth_seq_id)));
+    const pickedSele = heavyAtomsWithContactHydrogens(s, ligandSelection(o));
+    addRep("picked_residues", "ball+stick", { sele:pickedSele, colorScheme:"element",
+      colorValue:0xef72aa, scale:1.15 });
+    addRep("picked_labels", "label", { sele: "(" + s + ") and .CA", labelType: "text",
+      labelText:labelTextFor(details), color: "white", backgroundColor: "#12151a",
+      backgroundOpacity:0.75, showBackground:true, fixedSize:false, labelSize:2.2, radius:0.85, zOffset:2 });
+  }
+  if (selectedMotifs.size) {
+    const residues = Array.from(selectedMotifs).flatMap(residuesForMotif);
+    const s = residues.map(r => residueKey(r.auth_asym_id, r.auth_seq_id)).join(" or ");
+    if (s) {
+      addRep("picked_motifs", "ball+stick", { sele:withoutHydrogen(s), colorScheme:"uniform",
+        colorValue:0x32b56b, scale:1.18, aspectRatio:2.1 });
+      addRep("picked_motif_labels", "label", { sele: "(" + s + ") and .CA", labelType: "text",
+        labelText:labelTextFor(residues), color:"white", backgroundColor:"#17683b",
+        backgroundOpacity:0.78, showBackground:true, fixedSize:false, labelSize:2.2, radius:0.8, zOffset:2 });
+    }
+  }
+}
+
+export function toggleResidue(chain, seq) {
+  const key = residueKey(chain, seq);
+  const removing = selectedResidues.has(key);
+  removing ? selectedResidues.delete(key) : selectedResidues.add(key);
+  redrawSelections();
+  if (!removing) {
+    const o = obs(), ligand = ligandSelection(o);
+    const both = "(" + Array.from(selectedResidues).join(" or ") + ") or (" + ligand + ")";
+    if (!selectionInView(both, 0.92)) frame(both);
+  }
+  return selectedResidues.has(key);
+}
+
+export function toggleMotif(id) {
+  selectedMotifs.has(id) ? selectedMotifs.delete(id) : selectedMotifs.add(id);
+  redrawSelections();
+  const residues = residuesForMotif(id);
+  if (selectedMotifs.has(id) && residues.length) {
+    const o = obs(), motif = residues.map(r => residueKey(r.auth_asym_id, r.auth_seq_id)).join(" or ");
+    const ligand = ligandSelection(o);
+    const both = "(" + motif + ") or (" + ligand + ")";
+    if (!selectionInView(both, 0.92)) frame(both);
+  }
+  return selectedMotifs.has(id);
+}
+
+export function clearSelections() {
+  selectedResidues.clear(); selectedMotifs.clear(); redrawSelections();
+}
+
+export async function snapshot() {
+  const stage = LC.getStage();
+  if (!stage || !meta) return;
+  const blob = await stage.makeImage({ factor:3, antialias:true, trim:false, transparent:true });
+  const url = URL.createObjectURL(blob), a = document.createElement("a");
+  a.href = url; a.download = meta.pdb_id + "_binding_site.png"; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+export function focusPocket() {
+  const o = obs();
+  if (o && o.ligand_selection) frame(ligandSelection(o) + " or " + sel(o.contact_receptor_residues));
+  else if (comp) comp.autoView(400);
+}
+
 export const toggles = {
-  cartoon(on) { const rc = (meta.receptor_chains || []).map(c => ":" + c).join(" or ") || "polymer";
-    on ? addRep("cartoon", "cartoon", { sele: rc, color: "residueindex", opacity: 0.9 }) : dropRep("cartoon"); },
+  cartoon(on) { const rc = receptorSelection();
+    on ? addRep("cartoon", "cartoon", { sele:rc, color:"#646a73", opacity:0.68 }) : dropRep("cartoon"); },
   allLigands(on) {
     if (!on) { dropRep("all_lig"); return; }
     const all = (meta.observations || []).filter(o => o.ligand_selection)
@@ -104,21 +412,34 @@ export const toggles = {
   },
   contacts(on) { const o = obs(); if (!on || !o) { dropRep("contacts"); dropRep("iface"); return; }
     const key = POLYMER[o.binding_site_class] ? "iface" : "contacts";
-    addRep(key, "licorice", { sele: sel(o.contact_receptor_residues), color: "steelblue" }); },
-  lines(on) { const o = obs(); if (!on || !o || !o.ligand_selection) { dropRep("lines"); return; }
-    addRep("lines", "contact", { sele: sel(o.contact_receptor_residues) + " or " +
-      sel(o.ligand_selection.residues), maxDistance: 5.0 }); },
-  surface(on) { const o = obs(); if (!on || !o) { dropRep("surface"); return; }
-    addRep("surface", "surface", { sele: sel(o.contact_receptor_residues),
+    addRep(key, "licorice", { sele:withoutHydrogen(sel(o.contact_receptor_residues)), colorScheme:"element", colorValue:0x8ab8e8 }); },
+  lines(on) { if (!on) { dropRep("lines"); return; } addInteractionLines(); },
+  ligand(on) {
+    if (!on) { dropRep("ligand"); dropRep("ligand_stick"); dropRep("lines");
+      dropRep("covalent_atoms"); dropRep("covalent_bond"); return; }
+    addLigandRepresentation(obs()); addInteractionLines(); addCovalentHighlight(obs()); },
+  ligandMode(mode) {
+    ligandMode = mode === "licorice" ? "licorice" : "cartoon";
+    dropRep("ligand"); dropRep("ligand_stick");
+    addLigandRepresentation(obs());
+  },
+  surface(on) { this.surfaceReceptor(on); this.surfaceLigand(on); },
+  surfaceReceptor(on) { const o = obs(); if (!on || !o) { dropRep("surface_receptor"); return; }
+    addRep("surface_receptor", "surface", { sele: "(" + sel(o.contact_receptor_residues) + ") and protein",
       opacity: 0.28, colorValue: "lightgrey" }); },
+  surfaceLigand(on) { const o = obs(); if (!on || !o || !o.ligand_selection) { dropRep("surface_ligand"); return; }
+    addRep("surface_ligand", "surface", { sele:withoutHydrogen(ligandSelection(o)),
+      opacity:0.34, colorValue:"#f3df78" }); },
   motifs(on) { if (!on) { dropRep("motifs"); return; }
-    const m = (meta.motif_residues || []).map(r => r.auth_seq_id + ":" + r.auth_asym_id);
+    const activeChain = activeReceptorChain();
+    const m = (meta.motif_residues || []).filter(r => !activeChain || r.auth_asym_id === activeChain)
+      .map(r => r.auth_seq_id + ":" + r.auth_asym_id);
     if (m.length) addRep("motifs", "licorice", { sele: m.join(" or "), color: "green" }); },
-  motifLabels(on) { if (!on) { dropRep("motif_labels"); return; }
-    const m = (meta.motif_residues || []).map(r => r.auth_seq_id + ":" + r.auth_asym_id);
-    if (m.length) addRep("motif_labels", "label", { sele: m.join(" or ") + " and .CA",
-      labelType: "text", labelText: (meta.motif_residues || []).map(r => r.generic_position),
-      color: "black", zOffset: 2 }); },
+  motifLabels(on) { if (!on) { dropRep("motif_labels"); return; } addContactLabels(); },
+  covalent(on) {
+    if (!on) { dropRep("covalent_atoms"); dropRep("covalent_bond"); return; }
+    addCovalentHighlight(obs());
+  },
   ions(on) { if (!on) { dropRep("ions"); return; }
     const na = (meta.observed_sodium || []).map(r => r.auth_seq_id + ":" + r.auth_asym_id);
     if (na.length) addRep("ions", "spacefill", { sele: na.join(" or "), color: "purple", scale: 0.4 }); },

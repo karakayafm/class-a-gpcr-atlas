@@ -19,7 +19,13 @@
 </header>
 <p id="prerelease" role="note"></p>
 <p id="filewarn" role="alert" hidden></p>
-<nav id="nav" aria-label="Main"></nav>
+<nav id="nav" aria-label="Main">
+  <div class="global-search" id="global-search">
+    <input id="global-search-input" type="search" autocomplete="off" spellcheck="false"
+      aria-controls="global-search-results" aria-expanded="false">
+    <div id="global-search-results" class="global-search-results" role="listbox" hidden></div>
+  </div>
+</nav>
 <div id="famlabel" aria-live="polite"></div>
 <p id="status" class="muted small" style="padding:0 16px" aria-live="polite"></p>
 <main id="main" tabindex="-1"></main>

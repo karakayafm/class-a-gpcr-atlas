@@ -38,6 +38,12 @@ export function createStage(NGL, node, params) {
   host = node;
   contextLost = false;
   stage = new NGL.Stage(node, params || {});
+  // Wheel rotation keeps NGL's normal zoom behaviour. Holding the wheel (middle button) and
+  // dragging pans, matching the right-button behaviour used by the aminergic reference viewer.
+  try {
+    stage.mouseControls.remove("drag-middle");
+    stage.mouseControls.add("drag-middle", NGL.MouseActions.panDrag);
+  } catch (e) { /* retain the library defaults if a future NGL build changes this API */ }
   const canvas = node.querySelector("canvas");
   if (canvas) {
     track(canvas, "webglcontextlost", ev => {

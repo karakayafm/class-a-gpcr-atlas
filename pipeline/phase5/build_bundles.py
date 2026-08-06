@@ -18,6 +18,20 @@ from common.canonical import content_sha256                   # noqa: E402
 IN,P3,P4=ROOT/"data/intermediate",ROOT/"data/intermediate/phase3",ROOT/"data/intermediate/phase4"
 WEB=ROOT/"data/web/structures"; SCHEMA_VERSION="5.0.0"
 POLYMER={"extracellular_polymer_interface","tethered_ligand_interface"}
+# Deposited-chain corrections confirmed against the source entry. In 7XWO, chain D is the
+# pharmacological peptide; chain F was incorrectly merged into the same ambiguous polymer
+# ligand candidate and must not enter the viewer selection or its contact shell.
+EXCLUDED_LIGAND_CHAINS={"7XWO":{"F"}, "3ZEV":{"D"}, "4BV0":{"D"},
+                        "4RWA":{"G"}, "6UP7":{"V"}, "7W0N":{"D"},
+                        "8F7Q":{"P"}, "8F7R":{"P"}, "8F7S":{"P"}, "8GY7":{"P"}}
+STRUCTURE_LIGAND_OVERRIDES={
+  "8HCQ":{"inventory_ids":{"8HCQ:EI:poly:5"},"ligand_chain":"L","ligand_entity":"5",
+           "receptor_chain":"R","receptor_entity":"6"},
+  "8HCX":{"inventory_ids":{"8HCX:EI:poly:4"},"ligand_chain":"D","ligand_entity":"4",
+           "receptor_chain":"C","receptor_entity":"3"},
+}
+SHORTCUT_GENERIC_POSITIONS={"5x42","5x43","5x46","5x461",
+                            "6x48","6x51","6x52","7x42"}
 AUX_BUDGET_BYTES=450_000
 PHARM={"pharmacological_orthosteric_ligand","pharmacological_allosteric_ligand",
        "pharmacological_bitopic_ligand","pharmacological_covalent_ligand",
@@ -108,6 +122,7 @@ def main()->int:
     SUMO={s["structure_ligand_id"]:s for s in rd(ROOT/"data/contacts/observation_contact_summary.jsonl")}
     ANO={a["structure_ligand_id"]:a for a in rd(P4/"annotated_not_observed.jsonl")}
     MR=rd(P4/"motif_residues.jsonl")
+    RM=rd(P3/"receptor_residue_mapping.jsonl")
     REMED={r["receptor_instance_id"]:r for r in rd(P4/"mapping_remediation.jsonl")}
     STN={r["pdb_id"]:r["chosen_normalized_state"] for r in rd(P4/"structural_state_normalization.jsonl")}
     ri_by_pdb=defaultdict(list)
@@ -118,6 +133,8 @@ def main()->int:
     for o in OB: obs_by_pdb[o["pdb_id"]].append(o)
     mr_by=defaultdict(list)
     for m in MR: mr_by[(m["pdb_id"],m["receptor_instance_id"])].append(m)
+    rm_by=defaultdict(list)
+    for r in RM: rm_by[(r["pdb_id"],r["receptor_instance_id"])].append(r)
     contacts=defaultdict(list)
     for f in sorted((ROOT/"data/contacts/by_family").glob("*/residue_pair_contacts.jsonl.gz")):
         for l in gzip.open(f,"rt"):
@@ -147,7 +164,8 @@ def main()->int:
         for o in sorted(obs_by_pdb[pid],key=lambda x:x["structure_ligand_id"]):
             slid=o["structure_ligand_id"]; lg=LC[o["ligand_entity_id"]]
             pharm=lg["ligand_role"] in PHARM
-            observed=slid in SUMO
+            override=STRUCTURE_LIGAND_OVERRIDES.get(pid)
+            observed=slid in SUMO or override is not None
             mine=set()
             if pharm and observed:
                 if lg["entity_form"] in ("nonpolymer_residue","covalent_adduct"):
@@ -155,14 +173,68 @@ def main()->int:
                         if i in EId and EId[i]["auth_asym_ids"]:
                             mine.add(("np",EId[i]["auth_asym_ids"][0],str(EId[i]["auth_seq_id"])))
                 else:
-                    for i in lg["entity_inventory_ids"]:
+                    inventory_ids=(override["inventory_ids"] if override else
+                                   set(lg["entity_inventory_ids"]))
+                    for i in inventory_ids:
                         if i in EId:
                             for ch in (EId[i]["auth_asym_ids"] or []):
                                 mine.add(("poly",ch,str(EId[i]["polymer_entity_id"])))
-                lig_keys |= mine
+                excluded=EXCLUDED_LIGAND_CHAINS.get(pid,set())
+                if excluded: mine={k for k in mine if k[1] not in excluded}
             crows=contacts.get(slid,[])
+            if override and not crows:
+                receptor_atoms=defaultdict(list); ligand_atoms=defaultdict(list)
+                for a in A:
+                    if (a["auth_asym"]==override["receptor_chain"] and
+                        a["entity"]==override["receptor_entity"]):
+                        receptor_atoms[(a["auth_asym"],a["auth_seq"])].append(a)
+                    elif (a["auth_asym"]==override["ligand_chain"] and
+                          a["entity"]==override["ligand_entity"]):
+                        ligand_atoms[(a["auth_asym"],a["auth_seq"])].append(a)
+                mapping={}
+                for inst in insts:
+                    for m in rm_by.get((pid,inst["receptor_instance_id"]),[]):
+                        mapping[(m["auth_asym_id"],str(m["auth_seq_id"]))]=m
+                for (rch,rseq),ras in receptor_atoms.items():
+                    for (lch,lseq),las in ligand_atoms.items():
+                        d2=min((ra["x"]-la["x"])**2+(ra["y"]-la["y"])**2+
+                               (ra["z"]-la["z"])**2 for ra in ras for la in las)
+                        if d2>25.0: continue
+                        m=mapping.get((rch,rseq),{})
+                        crows.append({"receptor_auth_asym_id":rch,
+                          "receptor_auth_seq_id":rseq,
+                          "receptor_residue_name":ras[0]["comp"],
+                          "receptor_generic_number":m.get("canonical_generic_number"),
+                          "receptor_segment":m.get("protein_segment"),
+                          "receptor_uniprot_position":m.get("uniprot_position"),
+                          "ligand_auth_asym_id":lch,"ligand_auth_seq_id":lseq,
+                          "ligand_residue_name":las[0]["comp"],
+                          "min_distance_angstrom":d2**0.5})
+            excluded=EXCLUDED_LIGAND_CHAINS.get(pid,set())
+            if excluded: crows=[c for c in crows if c["ligand_auth_asym_id"] not in excluded]
+            # A polymer entity may have symmetry-/protomer-related copies.  The contact table is
+            # receptor-instance-specific, so retain only the ligand chain paired with that active
+            # receptor instead of displaying every deposited copy of the entity.
+            if lg["entity_form"]=="polymer_chain" and crows:
+                paired={c["ligand_auth_asym_id"] for c in crows}
+                mine={k for k in mine if k[0]!="poly" or k[1] in paired}
+            lig_keys |= mine
             rres=sorted({(c["receptor_auth_asym_id"],c["receptor_auth_seq_id"]) for c in crows})
             lres=sorted({(c["ligand_auth_asym_id"],c["ligand_auth_seq_id"]) for c in crows})
+            # Preserve the already-computed per-structure GPCRdb mapping in the viewer payload.
+            # The old UI exposed this as D3x32 / ASP117; reducing it to chain:residue made the
+            # binding-site list scientifically opaque even though the mapping was available.
+            rdetail=[]
+            for ch,seq in rres:
+                hits=[c for c in crows if c["receptor_auth_asym_id"]==ch and
+                      c["receptor_auth_seq_id"]==seq]
+                hit=min(hits,key=lambda c:c["min_distance_angstrom"])
+                rdetail.append({"auth_asym_id":ch,"auth_seq_id":seq,
+                  "residue_name":hit["receptor_residue_name"],
+                  "generic_position":hit.get("receptor_generic_number"),
+                  "segment":hit.get("receptor_segment"),
+                  "uniprot_position":hit.get("receptor_uniprot_position"),
+                  "min_distance_angstrom":hit["min_distance_angstrom"]})
             obs_meta.append({"observation_id":slid,
               "ligand_entity_id":lg["ligand_entity_id"],
               "ligand_name":(lg["source_annotations"].get("gpcrdb_ligand") or {}).get("name"),
@@ -177,6 +249,7 @@ def main()->int:
                  "selection_kind":("nonpolymer" if any(k[0]=="np" for k in mine) else "polymer_chain")}
                  if mine else None),
               "contact_receptor_residues":rres,
+              "contact_receptor_details":rdetail,
               "contact_ligand_residues":lres,
               "residue_pair_count":len(crows),
               "no_ligand_reason":(None if mine else
@@ -198,6 +271,17 @@ def main()->int:
                       "auth_asym_id":m["auth_asym_id"],"auth_seq_id":m["auth_seq_id"],
                       "residue_identity":m["residue_identity"],
                       "noncanonical":m["observation_status"]=="observed_noncanonical_identity"})
+        shortcut=[]
+        for r in insts:
+            for m in rm_by.get((pid,r["receptor_instance_id"]),[]):
+                gp=m.get("canonical_generic_number")
+                if not gp or "x" not in gp or not m.get("observed_atom_count"): continue
+                left,right=gp.split("x",1)
+                short=f"{left.split('.',1)[0]}x{right}"
+                if short in SHORTCUT_GENERIC_POSITIONS:
+                    shortcut.append({"generic_position":gp,"generic_short":short,
+                      "auth_asym_id":m["auth_asym_id"],"auth_seq_id":m["auth_seq_id"],
+                      "residue_identity":m["residue_name"]})
         na=[{"auth_asym_id":a["auth_asym"],"auth_seq_id":a["auth_seq"]} for a in A if a["comp"]=="NA"]
 
         # filter the deposited atom_site rows
@@ -247,6 +331,7 @@ def main()->int:
           "receptor_chains":sorted(rec_chains),
           "observations":obs_meta,
           "motif_residues":motif,
+          "shortcut_residues":shortcut,
           "observed_sodium":na,
           "auxiliary_chains_included":aux_included,
           "auxiliary_chains":[c for c in aux_chains if c],
@@ -255,6 +340,11 @@ def main()->int:
             "additive) are hidden by default." + ("" if aux_included else
             " They are not included in this bundle because it would exceed the size budget; use "
             "the RCSB link for the full deposited structure.")),
+          "auxiliary_note_tr":("Yardımcı ve çevresel zincirler (antikor, nanokor, G proteini, "
+            "arrestin, füzyon ortağı, deterjan, tampon, yığın lipid, glikan ve kristalizasyon "
+            "katkısı) varsayılan olarak gizlenir." + ("" if aux_included else
+            " Bu bundle boyut sınırını aşacağı için bu zincirler dahil edilmemiştir; çökeltilmiş "
+            "yapının tamamı için RCSB bağlantısını kullanın.")),
           "full_structure_url":f"https://www.rcsb.org/structure/{pid}",
           "invented_coordinates":False}
         (d/"viewer_meta.json").write_text(json.dumps(meta,sort_keys=True,separators=(",",":"),
