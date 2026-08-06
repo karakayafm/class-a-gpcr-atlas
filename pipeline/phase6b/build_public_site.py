@@ -97,6 +97,18 @@ def main() -> int:
     ui_files, ui_bytes = copy_tree(ROOT / "app", OUT / "site")
     report["trees"]["site_ui_overlay"] = {"files": ui_files, "bytes": ui_bytes,
                                              "source": "app/"}
+    # app/index.html is served from /app/ during local development, where the payload is one
+    # directory above it.  The deployable copy is served from the Pages root, so keeping that
+    # relative URL would escape the repository path (for example /data instead of
+    # /class-a-gpcr-atlas/data).  Rewrite only the staged copy; the local app keeps its layout.
+    staged_index = OUT / "site/index.html"
+    staged_html = staged_index.read_text(encoding="utf-8")
+    local_base = 'data-payload-base="../data/web/"'
+    pages_base = 'data-payload-base="data/web/"'
+    if local_base not in staged_html:
+        print("app payload base marker missing; refusing to stage", file=sys.stderr)
+        return 5
+    staged_index.write_text(staged_html.replace(local_base, pages_base, 1), encoding="utf-8")
     # Viewer metadata is presentation data derived from the frozen Phase 3 contact records.
     # Keep the frozen coordinate files, but ship the maintained metadata so per-structure
     # GPCRdb labels and distances are not discarded by an older release-candidate copy.
