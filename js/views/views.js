@@ -172,8 +172,7 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb) 
   const median = contactCounts.slice().sort((a,b) => a-b)[Math.floor(contactCounts.length / 2)] || 0;
 
   wrap.appendChild(el("section", { class: "atlas-intro" }, [
-    el("div", {}, [el("h2", { text: familyDisplayName(family ? family.name : slug) }),
-      el("p", { text: t("workspace_intro") })]),
+    el("div", {}, [el("h2", { text: familyDisplayName(family ? family.name : slug) })]),
     el("div", { class: "summary-strip" }, [
       summaryMetric(d.count, t("structures")), summaryMetric(receptorNames.size, t("receptors")),
       summaryMetric(ligandNames.size, t("different_ligands")), summaryMetric(median, t("median_contacts"))
