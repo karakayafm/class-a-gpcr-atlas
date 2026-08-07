@@ -86,8 +86,6 @@ export async function landing(root) {
   const d = await L.loadGlobal("landing.json");
   const wrap = el("section", { class: "view" });
   wrap.appendChild(el("h2", { text: t("families") + " (" + d.family_count + ")" }));
-  const fvs = await L.loadOverlay("global/family_validation_status.json");
-  const badgeOf = fid => (fvs && fvs.per_family_badge ? fvs.per_family_badge[fid] : null);
   const grid = el("div", { class: "cards" });
   for (const f of d.families) {
     const card = el("a", { class: "card", href: "#family=" + f.family_slug + "&view=structures",
@@ -102,10 +100,6 @@ export async function landing(root) {
       ]),
       el("div", { class: "sitechips" }, Object.keys(f.site_class_counts || {}).sort().map(k =>
         siteClassChip(k, f.site_class_counts[k], f.family_slug))),
-      RG.validationBadge(badgeOf(f.major_family_id) ? {
-        badge: badgeOf(f.major_family_id).badge,
-        global_statement_en: fvs.global_statement_en,
-        global_statement_tr: fvs.global_statement_tr } : null),
       warnBadges(f.warnings)
     ]);
     grid.appendChild(card);
@@ -144,34 +138,6 @@ export async function overview(root, slug) {
     wrap.appendChild(el("p", { class: "notice", text: t("warn_lown", {
       units: s.analysis_unit_count, receptors: s.receptor_count }) }));
     wrap.appendChild(wb);
-  }
-  // Validation scope, at the granularity it actually varies: site class and ligand form.
-  const val = await RG.validationFor(slug);
-  if (val && val.rows && val.rows.length) {
-    wrap.appendChild(el("h3", { text: t("validation_table") }));
-    wrap.appendChild(el("p", { class: "muted small", text: val["global_statement_" + getLang()] ||
-      val.global_statement_en }));
-    const vt = el("table", { class: "data" });
-    vt.appendChild(el("thead", {}, el("tr", {}, [t("v_site_class"), t("v_ligand_form"),
-      t("units"), t("v_ref_status"), t("v_ref_count"), t("v_human"), t("v_limitation")]
-      .map(h => el("th", { text: h })))));
-    const vtb = el("tbody");
-    for (const r of val.rows) {
-      vtb.appendChild(el("tr", {}, [
-        el("th", { scope: "row", text: r.site_class ? siteClassLabel(r.site_class) : "—" }),
-        el("td", { text: r.ligand_entity_form || "—" }),
-        el("td", { class: "num", text: String(r.aggregation_units) }),
-        el("td", { text: r.reference_test_status }),
-        el("td", { class: "num", text: String(r.reference_structure_count) }),
-        el("td", { text: r.independent_human_validation_status }),
-        el("td", { class: "small", text: r.limitations })
-      ]));
-      vtb.appendChild(el("tr", { class: "statement" }, [
-        el("td", { colspan: "7", class: "small muted",
-          text: r["statement_" + getLang()] || r.statement_en })]));
-    }
-    vt.appendChild(vtb);
-    wrap.appendChild(el("div", { class: "tablewrap" }, vt));
   }
   // Review gate for this family, at family level.
   const gate = await RG.gateFor(slug);
@@ -424,7 +390,6 @@ export async function contacts(root, slug, siteClass, polymer) {
   // Public-beta default: the review-gated overlay. The original Phase 4 values stay reachable
   // through a labelled panel below, never as the default and never in the ranking.
   const gate = await RG.gateFor(slug);
-  const val = await RG.validationFor(slug);
   const betaPos = RG.betaPositions(gate, site);
   const betaBy = {};
   if (betaPos) for (const p of betaPos) betaBy[p.generic_position] = p;
@@ -439,12 +404,6 @@ export async function contacts(root, slug, siteClass, polymer) {
   wrap.appendChild(bar);
   wrap.appendChild(metricHead(d));
   if (betaPos) wrap.appendChild(el("p", { class: "muted small", text: t("rg_default_note") }));
-  const vb = RG.validationBadge(val, { href: "#family=" + slug + "&view=overview" });
-  if (vb) wrap.appendChild(el("p", { class: "small" }, [
-    el("span", { class: "muted", text: t("validation_scope") + ": " }), vb]));
-  const vn = RG.validationNotice(val, site);
-  if (vn) wrap.appendChild(vn);
-  if (polymer) wrap.appendChild(RG.interfaceShellWarning());
   const gp = RG.gatePanel(gate, site);
   if (gp) wrap.appendChild(gp);
   if (polymer) wrap.appendChild(el("p", { class: "muted small", text: t("interface_terms") + " — " +
@@ -578,7 +537,6 @@ export async function compare(root) {
   const wrap = el("section", { class: "view" });
   wrap.appendChild(el("h2", { text: t("nav_compare") }));
   wrap.appendChild(el("p", { class: "muted", text: cf["comparison_rule_" + getLang()] || cf.comparison_rule_en }));
-  wrap.appendChild(el("p", { class: "muted small", text: t("validation_global") }));
   const bar = el("div", { class: "controls" });
   const classes = Object.keys(cf.site_class_families).sort();
   const csel = el("select", { "aria-label": t("site_class") });
@@ -606,17 +564,9 @@ export async function compare(root) {
     const tbl = el("table", { class: "data" });
     tbl.appendChild(el("thead", {}, el("tr", {}, ["", "A", "B"].map(h => el("th", { text: h })))));
     const tb = el("tbody");
-    // A coloured comparison without validation scope invites the reader to treat two families
-    // as equally evidenced when one inherited its contact rule untested. The scope travels with
-    // the denominator.
     const slugOf = fid => { const f = (m.families || []).find(x => x.family_id === fid);
       return f ? f.slug : null; };
-    const [va, vb] = await Promise.all([RG.validationFor(slugOf(A)), RG.validationFor(slugOf(B))]);
     const [ga, gb] = await Promise.all([RG.gateFor(slugOf(A)), RG.gateFor(slugOf(B))]);
-    const scopeText = (v, sc) => {
-      const r = RG.validationRowsFor(v, sc)[0];
-      return r ? (r.transfer_status || "—") : "—";
-    };
     const gateDen = (g) => {
       const s = g && g.site_classes ? g.site_classes[c] : null;
       return s ? (s.denominator_after_review_gate + " / " + s.denominator_before_review_gate) : "—";
@@ -624,7 +574,6 @@ export async function compare(root) {
     const rows = [[t("units"), a.analysis_units, b.analysis_units],
       [t("structures"), a.structures, b.structures],
       [t("receptors"), a.unique_receptors, b.unique_receptors],
-      [t("validation_scope"), scopeText(va, c), scopeText(vb, c)],
       [t("rg_denominator_after") + " / " + t("rg_denominator_before"), gateDen(ga), gateDen(gb)],
       [t("denominator"), a.denominator_count + " " + t("denominator_units"),
         b.denominator_count + " " + t("denominator_units")],
@@ -741,7 +690,6 @@ export async function methods() {
     ["Coverage warnings", "Seven coverage dimensions and ten machine-readable warning types from the Phase 4 freeze."],
     ["Evidence adjudication versus human curation", "Adjudication was performed from sources by the pipeline. It is not human curation, and no accuracy figure is reported."],
     ["Public-beta review gate", "Pooled public-beta summaries are review-gated: an observation or structure slot is excluded where an unresolved review item can change receptor identity, ligand identity, site classification, coordinate context or aggregation eligibility. Metadata-only items stay visible and remove nothing. Most open items change no pooled metric, and the gate is applied per item rather than per structure."],
-    ["Contact-rule validation scope", "Validation of the 5 Å rule varies by family and site class, and the per-family matrix is shown in each family overview. The rule was reference-tested on aminergic small-molecule pockets; other families inherited it without a family-specific reference test; polymer interfaces use it as a descriptive interface shell rather than a validated biological threshold; and for covalent sites the bond is evidenced by deposited connectivity while the surrounding shell is not reference-tested."],
     ["Limitations", "189 evidence items still require human review; 103 binding-site classes and 26 receptor-instance mappings remain unresolved and are excluded from pooled aggregation. No accuracy figure exists for the automated adjudication, and none can be computed until human decisions exist."]
   ];
   for (const [h, b] of items) { wrap.appendChild(el("h3", { text: h })); wrap.appendChild(el("p", { text: b })); }
@@ -765,27 +713,6 @@ export async function methods() {
       tb.appendChild(el("tr", {}, [el("th", { scope: "row", text: String(k) }),
         el("td", { class: "num", text: String(v) })]));
     tbl.appendChild(tb); wrap.appendChild(tbl);
-  }
-  const fvs = await L.loadOverlay("global/family_validation_status.json");
-  if (fvs) {
-    wrap.appendChild(el("h3", { text: t("validation_table") }));
-    wrap.appendChild(el("p", { text: fvs["global_statement_" + getLang()] || fvs.global_statement_en }));
-    const ae = fvs.aminergic_reference_evidence || {};
-    wrap.appendChild(el("p", { class: "muted small", text:
-      "Aminergic reference evidence: " + ae.independent_reference_structures +
-      " independent reference structures; crosswalk over " + ae.crosswalk_observations +
-      " observations with " + ae.crosswalk_discrepancies + " discrepancies. " + (ae.note || "") }));
-    const vt = el("table", { class: "data" });
-    vt.appendChild(el("thead", {}, el("tr", {}, [t("families"), t("v_site_class"),
-      t("v_ligand_form"), t("v_rule")].map(h => el("th", { text: h })))));
-    const vb = el("tbody");
-    for (const r of fvs.rows) vb.appendChild(el("tr", {}, [
-      el("th", { scope: "row", text: r.family_name }),
-      el("td", { text: r.site_class ? siteClassLabel(r.site_class) : "—" }),
-      el("td", { text: r.ligand_entity_form || "—" }),
-      el("td", { class: "small", text: r.transfer_status })]));
-    vt.appendChild(vb);
-    wrap.appendChild(el("div", { class: "tablewrap" }, vt));
   }
   return wrap;
 }

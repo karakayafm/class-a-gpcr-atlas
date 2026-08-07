@@ -1,14 +1,9 @@
 // Phase 6A.1 — review-gate and validation-scope presentation.
 //
-// Two commitments made in the release policy live here. Both are about not letting a number look
-// more settled than it is:
+// The public presentation uses the review-gated overlay. The original Phase 4 value is still
+// available, but only in a labelled panel — never as the default, never in the main ranking,
+// never in a comparison.
 //
-//   1. Pooled public-beta values come from the review-gated overlay. The original Phase 4 value
-//      is still available, but only in a labelled panel — never as the default, never in the main
-//      ranking, never in a comparison.
-//   2. Contact-rule validation scope is shown wherever a contact number is shown. The 5 Å rule
-//      was reference-tested on aminergic small-molecule pockets; everything else inherited it,
-//      and a reader is entitled to know which they are looking at.
 import { t, getLang } from "../core/i18n.js";
 import { el } from "../components/dom.js";
 import * as L from "../data/loader.js";
@@ -16,59 +11,7 @@ import * as L from "../data/loader.js";
 const L10N = k => (getLang() === "tr" ? k + "_tr" : k + "_en");
 
 export async function gateFor(slug) { return L.loadOverlay("families/" + slug + "/review_gate.json"); }
-export async function validationFor(slug) { return L.loadOverlay("families/" + slug + "/validation.json"); }
 export async function globalIndex() { return L.loadOverlay("global/review_gate_index.json"); }
-
-/* ------------------------------------------------------------------ validation badge */
-const BADGE_TEXT = {
-  reference_tested_within_scope: { en: "Reference-tested within scope", tr: "Kapsam içinde referans testli" },
-  transferred_method: { en: "Transferred method", tr: "Aktarılmış yöntem" },
-  descriptive_interface_rule: { en: "Descriptive interface rule", tr: "Betimleyici arayüz kuralı" },
-  covalent_shell_untested: { en: "Covalent shell untested", tr: "Kovalent kabuk test edilmemiş" },
-  mixed_validation_scope: { en: "Mixed validation scope", tr: "Karma doğrulama kapsamı" },
-  unresolved: { en: "Validation scope unresolved", tr: "Doğrulama kapsamı belirsiz" },
-  not_applicable: { en: "Not applicable", tr: "Kapsam dışı" }
-};
-
-export function validationBadge(val, opts) {
-  if (!val || !val.badge) return null;
-  const b = BADGE_TEXT[val.badge] || BADGE_TEXT.unresolved;
-  const txt = b[getLang()] || b.en;
-  const node = el("span", {
-    class: "badge validation " + val.badge,
-    title: (val["global_statement_" + getLang()] || val.global_statement_en || "") +
-           " — " + txt,
-    text: txt
-  });
-  if (opts && opts.href) {
-    return el("a", { class: "badge-link", href: opts.href, "aria-label": txt }, node);
-  }
-  return node;
-}
-
-/* Per site class, the row that applies to what is currently being shown. */
-export function validationRowsFor(val, siteClass) {
-  if (!val || !val.rows) return [];
-  return val.rows.filter(r => !siteClass || r.site_class === siteClass);
-}
-
-export function validationNotice(val, siteClass) {
-  const rows = validationRowsFor(val, siteClass);
-  if (!rows.length) return null;
-  const wrap = el("div", { class: "notice validation-notice" });
-  for (const r of rows) {
-    wrap.appendChild(el("p", { class: "small",
-      text: r["statement_" + getLang()] || r.statement_en }));
-  }
-  return wrap;
-}
-
-/* A polymer interface must never be presented as a validated pocket. This warning is persistent
-   rather than dismissable, because the mistake it prevents is a reader treating a descriptive
-   shell as a biological threshold. */
-export function interfaceShellWarning() {
-  return el("p", { class: "notice interface-shell", text: t("descriptive_shell_warning") });
-}
 
 /* ------------------------------------------------------------------ review gate panel */
 export function gatePanel(gate, siteClass) {
