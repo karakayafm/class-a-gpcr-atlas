@@ -227,16 +227,31 @@ function buildViewerSide(meta) {
   side.appendChild(el("p", { class: "muted small", text: meta.species + " · " +
     (meta.experimental_method || "") + " · " + (meta.resolution != null ? meta.resolution + " Å" : "") }));
   if ((meta.observations || []).length > 1) {
-    const sel = el("select", { "aria-label": t("observation"),
-      onchange: e => { VIEW.setObservation(e.target.value);
-        const n = VIEW.statusMessage(); const st = document.getElementById("viewer-status");
-        st.textContent = n; st.hidden = !n;
-        const r = parseRoute(); navigate(Object.assign({}, r, { observation: e.target.value }), true);
-        updateModalTitle(meta); buildViewerSide(meta); } });
+    const selectObservation = id => { VIEW.setObservation(id);
+      const n = VIEW.statusMessage(); const st = document.getElementById("viewer-status");
+      st.textContent = n; st.hidden = !n;
+      const r = parseRoute(); navigate(Object.assign({}, r, { observation:id }), true);
+      updateModalTitle(meta); buildViewerSide(meta); };
+    // Keep a native selector for assistive technology and automated keyboard checks, while the
+    // visible disclosure below can wrap very long chemical/peptide names inside the side panel.
+    const sel = el("select", { class:"observation-native", "aria-label": t("observation"),
+      onchange:e => selectObservation(e.target.value) });
     for (const o of meta.observations) sel.appendChild(el("option", { value: o.observation_id,
       text: (o.ligand_name || o.ligand_entity_id) + " — " + o.ligand_role,
       selected: o.observation_id === VIEW.currentObservation() }));
-    side.appendChild(el("label", { text: t("observation") })); side.appendChild(sel);
+    const currentObservation = meta.observations.find(o =>
+      o.observation_id === VIEW.currentObservation()) || meta.observations[0];
+    const observationText = o => (o.ligand_name || o.ligand_entity_id) + " — " + o.ligand_role;
+    const picker = el("details", { class:"observation-picker" }, [
+      el("summary", { text:observationText(currentObservation) }),
+      el("div", { class:"observation-options" }, meta.observations.map(o => el("button", {
+        class:"observation-option" + (o === currentObservation ? " selected" : ""),
+        type:"button", "aria-current":o === currentObservation ? "true" : null,
+        text:observationText(o), onclick:() => selectObservation(o.observation_id)
+      })))
+    ]);
+    side.appendChild(el("label", { class:"observation-heading", text:t("observation") }));
+    side.appendChild(sel); side.appendChild(picker);
   }
   const on = { cartoon: true, ligand: true, contacts: true, motifs: false, motifLabels: true,
     surface: false, surfaceReceptor:false, surfaceLigand:false, lines: true,
