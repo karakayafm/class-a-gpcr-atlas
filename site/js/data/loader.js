@@ -49,9 +49,11 @@ export function loadSearchIndex() {
     const payloads = await Promise.all(families.map(async family => ({
       family, data: await loadFamilyFile(family.slug, "structures.json")
     })));
-    return payloads.flatMap(({ family, data }) => (data && data.structures || []).map(x => ({
+    const rows = payloads.flatMap(({ family, data }) => (data && data.structures || [])
+      .filter(x => !x.superseded_by).map(x => ({
       pdb_id:x.pdb_id, family_slug:family.slug, family_name:family.name,
       receptor_name:x.receptor_name, receptor_entry_name:x.receptor_entry_name,
+      aliases:x.pdb_id === "8IA7" ? ["7XOX"] : [],
       ligands:Array.from(new Set((x.observations || []).map(o => o.ligand_name).filter(Boolean)))
     })));
   }).catch(e => { searchIndexPromise=null; throw e; });
