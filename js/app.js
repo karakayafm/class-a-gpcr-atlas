@@ -84,9 +84,11 @@ function setupGlobalSearch() {
     const scored = [];
     for (const row of index) {
       const txt = resultText(row), pdb = String(row.pdb_id || "").toLowerCase();
+      const aliases = (row.aliases || []).map(x => String(x).toLowerCase());
       const receptor = (txt.receptor + " " + (row.receptor_entry_name || "")).toLocaleLowerCase();
       const ligands = txt.ligands.toLocaleLowerCase();
-      let score = pdb === q ? 0 : pdb.startsWith(q) ? 1 : receptor.startsWith(q) ? 2 :
+      let score = pdb === q || aliases.includes(q) ? 0 : pdb.startsWith(q) ||
+        aliases.some(x => x.startsWith(q)) ? 1 : receptor.startsWith(q) ? 2 :
         ligands.startsWith(q) ? 3 : (pdb + " " + receptor + " " + ligands).includes(q) ? 4 : 99;
       if (score < 99) scored.push({ row, txt, score });
     }
@@ -171,13 +173,28 @@ async function openModal(pdb, observationId) {
   const meta = await VIEW.open(document.getElementById("viewport"), pdb, observationId,
     msg => { st.textContent = msg; st.hidden = !msg; });
   if (!meta) return;
-  document.getElementById("modal-title").textContent = meta.pdb_id + " · " +
-    V.plainName(meta.receptor_name || "") + " · " + t("binding_site_workspace");
+  updateModalTitle(meta);
   buildViewerSide(meta);
   const note = VIEW.statusMessage();
   st.textContent = note; st.hidden = !note;
   document.getElementById("modal-close").focus();
   const r = parseRoute(); navigate(Object.assign({}, r, { pdb, observation: VIEW.currentObservation(), view: "3d" }), true);
+}
+function updateModalTitle(meta) {
+  const title = document.getElementById("modal-title");
+  clear(title);
+  title.appendChild(el("span", { text:meta.pdb_id + " · " +
+    V.plainName(meta.receptor_name || "") + " · " + t("binding_site_workspace") }));
+  const current = (meta.observations || []).find(o =>
+    o.observation_id === VIEW.currentObservation());
+  if (current && current.binding_mode) title.appendChild(el("span", {
+    class:"mode-pill modal-mode-pill" + V.modeClass(current.binding_mode),
+    text:current.binding_mode
+  }));
+  if (current && (current.ligand_name || current.ligand_entity_id)) title.appendChild(el("span", {
+    class:"modal-ligand-name",
+    text:V.plainName(current.ligand_name || current.ligand_entity_id)
+  }));
 }
 function closeModal() {
   const m = document.getElementById("modal");
@@ -203,7 +220,8 @@ function buildViewerSide(meta) {
       onchange: e => { VIEW.setObservation(e.target.value);
         const n = VIEW.statusMessage(); const st = document.getElementById("viewer-status");
         st.textContent = n; st.hidden = !n;
-        const r = parseRoute(); navigate(Object.assign({}, r, { observation: e.target.value }), true); } });
+        const r = parseRoute(); navigate(Object.assign({}, r, { observation: e.target.value }), true);
+        updateModalTitle(meta); buildViewerSide(meta); } });
     for (const o of meta.observations) sel.appendChild(el("option", { value: o.observation_id,
       text: (o.ligand_name || o.ligand_entity_id) + " — " + o.ligand_role,
       selected: o.observation_id === VIEW.currentObservation() }));
@@ -413,7 +431,8 @@ async function render(r) {
       case "landing": node = await V.landing(main); break;
       case "overview": navigate({ family: r.family, view: "structures" }, true); return;
       case "structures": node = await V.structures(main, r.family, openModal, r.site, r.pdb); break;
-      case "contacts": case "interfaces": case "motifs": case "compare": case "evidence":
+      case "evidence": node = await V.evidence(main, r.family, r.open === "1"); break;
+      case "contacts": case "interfaces": case "motifs": case "compare":
         navigate(r.family ? { family: r.family, view: "structures" } : { view: "landing" }, true); return;
       case "methods": node = await V.methods(); break;
       case "sources": node = await V.sources(); break;

@@ -5,7 +5,7 @@ import { el, clear, fmt, pct, paginate, debounce } from "../components/dom.js";
 import { toCSV, download } from "../components/csv.js";
 import * as L from "../data/loader.js";
 import * as ST from "../core/state.js";
-import { navigate } from "../core/router.js";
+import { buildHash, navigate } from "../core/router.js";
 import * as RG from "./reviewgate.js";
 
 const POLYMER = { extracellular_polymer_interface: 1, tethered_ligand_interface: 1 };
@@ -24,10 +24,11 @@ function familyDisplayName(value) {
     "Sensory receptors": "Duyusal reseptörler", "Melatonin receptors": "Melatonin reseptörleri",
     "Steroid receptors": "Steroid reseptörleri", "Other": "Diğer" })[clean] || clean;
 }
-function modeClass(value) {
+export function modeClass(value) {
   const key = String(value || "").toLowerCase();
-  return key === "agonist" ? " mode-agonist" : key === "partial agonist" ? " mode-partial" : key === "antagonist" ? " mode-antagonist" :
-    key === "inverse agonist" ? " mode-inverse" : (key === "pam" || key === "nam") ? " mode-modulator" : "";
+  return key.includes("partial agonist") ? " mode-partial" : key.includes("inverse agonist") ? " mode-inverse" :
+    (key === "pam" || key === "nam" || key.includes("pam") || key.includes("nam")) ? " mode-modulator" :
+    key.includes("antagonist") ? " mode-antagonist" : key.includes("agonist") ? " mode-agonist" : "";
 }
 
 function warnBadges(ws) {
@@ -45,6 +46,12 @@ function metricHead(payload) {
 }
 
 let pinnedSiteHelp = null;
+function openRouteInNewTab(state, event) {
+  if (!event || event.button !== 1) return;
+  event.preventDefault();
+  event.stopPropagation();
+  window.open(new URL(buildHash(state), window.location.href).href, "_blank", "noopener");
+}
 function siteClassChip(id, count, familySlug) {
   const tipId = "site-help-" + id + "-" + Math.random().toString(36).slice(2, 8);
   const tip = el("span", { class:"site-help-popover", id:tipId, role:"tooltip", hidden:true,
@@ -58,6 +65,8 @@ function siteClassChip(id, count, familySlug) {
   const openFiltered = e => { e.preventDefault(); e.stopPropagation();
     navigate({ family:familySlug, view:"structures", site:id }); };
   filterLink.addEventListener("click", openFiltered);
+  filterLink.addEventListener("auxclick", e => openRouteInNewTab(
+    { family:familySlug, view:"structures", site:id }, e));
   filterLink.addEventListener("keydown", e => {
     if (e.key === "Enter" || e.key === " ") openFiltered(e);
   });
@@ -80,6 +89,26 @@ function siteClassChip(id, count, familySlug) {
   return wrap;
 }
 
+function reviewItemLink(count, familySlug) {
+  if (!(Number(count) > 0)) return [];
+  const open = e => { e.preventDefault(); e.stopPropagation();
+    navigate({ family:familySlug, view:"evidence", open:"1" }); };
+  return [
+    el("dt", {}, el("span", { class:"review-item-link", role:"link", tabindex:"0",
+      text:t("review_items"), onclick:open,
+      onauxclick:e => openRouteInNewTab({ family:familySlug, view:"evidence", open:"1" }, e),
+      onkeydown:e => {
+        if (e.key === "Enter" || e.key === " ") open(e);
+      } })),
+    el("dd", {}, el("span", { class:"review-item-link", role:"link", tabindex:"0",
+      text:String(count), onclick:open,
+      onauxclick:e => openRouteInNewTab({ family:familySlug, view:"evidence", open:"1" }, e),
+      onkeydown:e => {
+        if (e.key === "Enter" || e.key === " ") open(e);
+      } }))
+  ];
+}
+
 /* ---------------------------------------------------------------- landing */
 export async function landing(root) {
   const m = await L.loadManifest();
@@ -88,15 +117,19 @@ export async function landing(root) {
   wrap.appendChild(el("h2", { text: t("families") + " (" + d.family_count + ")" }));
   const grid = el("div", { class: "cards" });
   for (const f of d.families) {
+    const reviewRows = reviewItemLink(f.human_review_required, f.family_slug);
     const card = el("a", { class: "card", href: "#family=" + f.family_slug + "&view=structures",
-      "aria-label": f.family_name }, [
+      "aria-label": f.family_name, onauxclick:e => {
+        if (e.target.closest(".sitechip-wrap,.review-item-link")) return;
+        openRouteInNewTab({ family:f.family_slug, view:"structures" }, e);
+      } }, [
       el("h3", { text: familyDisplayName(f.family_name) }),
       el("dl", { class: "kv" }, [
         el("dt", { text: t("structures") }), el("dd", { text: String(f.structure_count) }),
         el("dt", { text: t("receptors") }), el("dd", { text: String(f.receptor_count) }),
         el("dt", { text: t("units") }), el("dd", { text: String(f.analysis_unit_count) }),
         el("dt", { text: t("coverage") }), el("dd", { text: pct(f.generic_mapping_coverage) }),
-        el("dt", { text: t("review_items") }), el("dd", { text: String(f.human_review_required) })
+        ...reviewRows
       ]),
       el("div", { class: "sitechips" }, Object.keys(f.site_class_counts || {}).sort().map(k =>
         siteClassChip(k, f.site_class_counts[k], f.family_slug))),
@@ -120,10 +153,16 @@ export async function overview(root, slug) {
     [t("species"), s.species_count], [t("units"), s.analysis_unit_count],
     ["Apo", s.apo_count],
     [t("observations") + " (coordinate-observed)", s.coordinate_observed_ligand_observations],
-    ["annotated_not_observed", s.annotated_not_observed_observations],
-    [t("review_items"), s.human_review_required]
+    ["annotated_not_observed", s.annotated_not_observed_observations]
   ];
   for (const [k, v] of rows) { kv.appendChild(el("dt", { text: k })); kv.appendChild(el("dd", { text: String(v) })); }
+  if (s.human_review_required > 0) {
+    const open = () => navigate({ family:slug, view:"evidence", open:"1" });
+    kv.appendChild(el("dt", {}, el("button", { class:"review-inline-link", type:"button",
+      text:t("review_items"), onclick:open })));
+    kv.appendChild(el("dd", {}, el("button", { class:"review-inline-link", type:"button",
+      text:String(s.human_review_required), onclick:open })));
+  }
   wrap.appendChild(kv);
   if (s.unresolved_site_class_observations)
     wrap.appendChild(el("p", { class: "notice", text: t("unresolved_site") + " — " +
@@ -229,12 +268,14 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb) 
   const resultList = el("div", { class: "result-list" });
   rail.appendChild(listHead); rail.appendChild(resultList);
   rail.appendChild(el("div", { class: "rail-actions" }, [
-    el("button", { class: "btn", text: t("export_csv"), onclick: () => exportStructures(filtered(), slug) })
+    el("button", { class: "btn", text: t("export_csv"),
+      "aria-label": t("export_structures") + " / " + t("export_observations"),
+      onclick: () => exportStructures(filtered(), slug) })
   ]));
 
   function filtered() {
     const q = filters.search.trim().toLowerCase();
-    const rows = d.structures.filter(x =>
+    const rows = d.structures.filter(x => !x.superseded_by &&
       (!filters.family || x.receptor_family_name === filters.family) &&
       (!filters.receptor || x.receptor_name === filters.receptor) &&
       (!filters.mode || x.observations.some(o => o.binding_mode === filters.mode)) &&
@@ -253,6 +294,8 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb) 
     let selectedItem = null;
     for (const x of rows) {
       const o = observationFor(x);
+      const shown = observationsFor(x);
+      const ligandText = Array.from(new Set(shown.map(v => plainName(v.ligand_name || t("apo"))))).join(" + ");
       const item = el("button", { class: "result-item" + (selected === x ? " selected" : ""),
         "aria-pressed": selected === x ? "true" : "false", onclick: () => {
           selected = x;
@@ -266,8 +309,9 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb) 
         el("div", { class: "result-line" }, [el("strong", { text: x.pdb_id }),
           el("span", { text: plainName(x.receptor_name || "—") }),
           el("small", { text: fmt(x.resolution, 2) + " Å · " + (o.receptor_residues_5A || 0) + " " + t("contacts_short") })]),
-        el("div", { class: "result-ligand", text: plainName(o.ligand_name || t("apo")) }),
-        o.binding_mode ? el("span", { class: "mode-pill" + modeClass(o.binding_mode), text: o.binding_mode }) : null
+        el("div", { class: "result-ligand", text: ligandText }),
+        el("div", { class: "result-modes" }, Array.from(new Set(shown.map(v => v.binding_mode).filter(Boolean)))
+          .map(mode => el("span", { class: "mode-pill" + modeClass(mode), text: mode })))
       ]);
       if (selected === x) selectedItem = item;
       resultList.appendChild(item);
@@ -279,19 +323,25 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb) 
     }
     if (!rows.length) resultList.appendChild(el("p", { class: "notice", text: t("no_results") }));
   }
+  function observationsFor(x) {
+    const matched = x.observations.filter(o => (!filters.site || o.binding_site_class === filters.site) &&
+      (!filters.mode || o.binding_mode === filters.mode));
+    return matched.length ? matched : x.observations;
+  }
   function observationFor(x) {
-    return x.observations.find(o => (!filters.site || o.binding_site_class === filters.site) &&
-      (!filters.mode || o.binding_mode === filters.mode)) || x.observations[0] || {};
+    return observationsFor(x)[0] || {};
   }
   function drawDetail() {
     clear(detail);
     const rows = filtered();
     if (!rows.length) { detail.appendChild(el("p", { class:"notice", text:t("no_results") })); return; }
     if (!rows.includes(selected)) selected = rows[0];
-    const x = selected; const o = observationFor(x);
+    const x = selected; const o = observationFor(x); const shown = observationsFor(x);
+    const ligandText = Array.from(new Set(shown.map(v => plainName(v.ligand_name || t("apo"))))).join(" + ");
+    const modes = Array.from(new Set(shown.map(v => v.binding_mode).filter(Boolean)));
     detail.appendChild(el("header", { class: "detail-head" }, [
       el("div", {}, [el("div", { class: "detail-title" }, [el("strong", { text: x.pdb_id }),
-        el("span", { text: plainName(o.ligand_name || t("apo")) })]),
+        el("span", { text: ligandText })]),
         el("p", { class: "muted", text: plainName(x.receptor_name || "—") + " · " + x.receptor_entry_name })]),
       el("button", { class: "btn btn-primary", text: t("open_binding_site"),
         onclick: () => onOpen3D(x.pdb_id, o.observation_id) })
@@ -299,13 +349,13 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb) 
     detail.appendChild(el("div", { class: "detail-tags" }, [
       el("span", { class: "chip", text: plainName(x.receptor_family_name || "—") }),
       el("span", { class: "chip", text: stateLabel(x.structural_state || "unknown") }),
-      o.binding_mode ? el("span", { class: "chip mode-pill" + modeClass(o.binding_mode), text: o.binding_mode }) : null,
+      ...modes.map(mode => el("span", { class: "chip mode-pill" + modeClass(mode), text: mode })),
       el("span", { class: "chip", text: siteClassLabel(o.binding_site_class || "unresolved") })
     ]));
     detail.appendChild(el("div", { class: "detail-facts" }, [
       fact(t("receptors"), plainName(x.receptor_name || "—")), fact(t("resolution"), fmt(x.resolution,2) + " Å"),
       fact(t("method"), x.experimental_method || "—"), fact(t("species"), x.species || "—"),
-      fact(t("ligand_class"), o.binding_mode || "—"), fact(t("contact_shell"),
+      fact(t("ligand_class"), modes.join(" + ") || "—"), fact(t("contact_shell"),
         (o.receptor_residues_5A || 0) + " " + t("residues"))
     ]));
     detail.appendChild(el("section", { class: "detail-section" }, [
@@ -602,7 +652,7 @@ export async function compare(root) {
 }
 
 /* ---------------------------------------------------------------- evidence */
-export async function evidence(root, slug) {
+export async function evidence(root, slug, openOnly) {
   const d = await L.loadFamilyFile(slug, "reviews.json");
   // Every review item is shown with what it actually does to a pooled metric. Without this the
   // reader cannot tell an item that removed data from one that changed nothing.
@@ -624,7 +674,8 @@ export async function evidence(root, slug) {
   function draw() {
     clear(body);
     const f = isel.value;
-    const rows = d.items.filter(i => !f || i.issue_types.indexOf(f) >= 0);
+    const rows = d.items.filter(i => (!openOnly || (i.human_review_requirement === "required" &&
+      i.human_review_status !== "completed")) && (!f || i.issue_types.indexOf(f) >= 0));
     const pg = paginate(rows, 0, 60);
     const tbl = el("table", { class: "data" });
     tbl.appendChild(el("thead", {}, el("tr", {}, ["PDB", "issue", t("adjudication"), "confidence",
@@ -634,7 +685,9 @@ export async function evidence(root, slug) {
     for (const i of pg.rows) {
       const e = effect[i.review_item_id];
       tb.appendChild(el("tr", {}, [
-        el("td", { text: i.pdb_id }), el("td", { class: "small", text: i.issue_types.join(", ") }),
+        el("td", {}, el("a", { class:"pdb-review-link", text:i.pdb_id,
+          href:buildHash({ family:slug, view:"3d", pdb:i.pdb_id }),
+          title:i.pdb_id + " — 3B" })),
         el("td", { class: "small", text: i.evidence_adjudication || "—" }),
         el("td", { text: i.adjudication_confidence || "—" }),
         el("td", { text: t("human_not_started") }),

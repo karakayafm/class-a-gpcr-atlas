@@ -31,6 +31,8 @@ function withoutHydrogen(selection) { return "(" + selection + ") and not hydrog
 
 function ligandSelection(o) {
   if (!o || !o.ligand_selection) return "none";
+  if (o.ligand_selection.selection_kind === "polymer_segment")
+    return sel(o.ligand_selection.residues || []);
   // Contact residues are intentionally sparse.  Using them as the displayed
   // selection fragments peptide/protein ligands and makes their backbone look
   // missing.  The bundle already records the ligand chain paired with this
@@ -39,8 +41,12 @@ function ligandSelection(o) {
     return o.ligand_selection.chains.map(chain => ":" + chain).join(" or ");
   // Ligand selections may contain symmetry-related copies from every protomer.
   // The contact list identifies the copy paired with the active receptor chain.
-  return sel((o.contact_ligand_residues || []).length
+  const residueSele = sel((o.contact_ligand_residues || []).length
     ? o.contact_ligand_residues : o.ligand_selection.residues);
+  // Author residue numbers are not globally unique across ATOM and HETATM records.  Without
+  // this guard, a ligand such as A:301 also selects receptor residue A:301 and creates a false
+  // second ligand/contact focus. Polymer ligands take the complete-chain branch above.
+  return residueSele === "none" ? residueSele : "(" + residueSele + ") and hetero";
 }
 
 function heavyAtomsWithContactHydrogens(residueSelection, ligandSele, cutoff=2.7) {
@@ -90,25 +96,54 @@ function addCovalentHighlight(o) {
     useCylinder:false, linewidth:5 });
 }
 
-function addLigandRepresentation(o) {
+function addSelectedCarbonHighlight(key, type, selection, params={}) {
+  // In multi-ligand structures the observation selector also acts as a visual focus control.
+  // Overlay carbon atoms in white while leaving N/O/S/halogens in their normal element colours.
+  addRep(key + "_selected_carbon", type, Object.assign({
+    sele:"(" + withoutHydrogen(selection) + ") and _C", color:"#ffffff", opacity:1
+  }, params));
+}
+
+function addLigandRepresentation(o, key="ligand", selected=false) {
   if (!o || !o.ligand_selection) return;
   const lsel = ligandSelection(o);
   if (POLYMER[o.binding_site_class]) {
     if (ligandMode === "licorice") {
-      addRep("ligand", "licorice", { sele:withoutHydrogen(lsel),
+      addRep(key, "licorice", { sele:withoutHydrogen(lsel),
         colorScheme:"element", opacity:0.96, radiusScale:1.08 });
+      if (selected) addSelectedCarbonHighlight(key, "licorice", lsel, { radiusScale:1.1 });
     } else {
-      addRep("ligand", "cartoon", { sele:lsel, color:"#eadb72", opacity:0.96 });
+      addRep(key, "cartoon", { sele:lsel, color:"#eadb72", opacity:0.96 });
       // Keep the old hybrid view: the whole peptide is a cartoon, while only
       // ligand residues that contact the receptor remain atomically readable.
       const contacting = sel(o.contact_ligand_residues || []);
       if (contacting !== "none")
-        addRep("ligand_stick", "licorice", { sele:withoutHydrogen(contacting),
+        addRep(key + "_stick", "licorice", { sele:withoutHydrogen(contacting),
           colorScheme:"element", opacity:0.96, radiusScale:1.08 });
+      if (selected && contacting !== "none")
+        addSelectedCarbonHighlight(key + "_stick", "licorice", contacting, { radiusScale:1.1 });
     }
   } else {
-    addRep("ligand", "ball+stick", { sele:withoutHydrogen(lsel), colorScheme:"element" });
+    addRep(key, "ball+stick", { sele:withoutHydrogen(lsel), colorScheme:"element" });
+    if (selected) addSelectedCarbonHighlight(key, "ball+stick", lsel);
   }
+}
+
+function ligandObservations() {
+  return (meta && meta.observations || []).filter(o => o.ligand_selection);
+}
+
+function dropByPrefix(prefix) {
+  for (const key of Object.keys(reps)) if (key === prefix || key.startsWith(prefix + "_")) dropRep(key);
+}
+
+function addDisplayedLigands() {
+  const active = obs();
+  const ligands = ligandObservations();
+  const ordered = ligands.slice().sort((a, b) =>
+    (a === active ? -1 : 0) - (b === active ? -1 : 0));
+  ordered.forEach((o, i) => addLigandRepresentation(o,
+    i ? "ligand_extra_" + i : "ligand", ligands.length > 1 && o === active));
 }
 
 export function hasCovalentBond() {
@@ -187,17 +222,16 @@ export function applyDefaults() {
   addRep("cartoon", "cartoon", { sele: rc, color: "#646a73", opacity: 0.68 });
   const o = obs();
   if (o && o.ligand_selection) {
-    const lsel = ligandSelection(o);
-    addLigandRepresentation(o);
-    if (POLYMER[o.binding_site_class]) {
-      addRep("iface", "licorice", { sele: withoutHydrogen(sel(o.contact_receptor_residues)), colorScheme:"element", colorValue:0x8ab8e8 });
-    } else {
-      addRep("contacts", "licorice", { sele: withoutHydrogen(sel(o.contact_receptor_residues)), colorScheme:"element", colorValue:0x8ab8e8 });
-    }
-    addInteractionLines();
+    const all = ligandObservations();
+    addDisplayedLigands();
+    all.forEach((lig, i) => addRep((POLYMER[lig.binding_site_class] ? "iface_" : "contacts_") + i,
+      "licorice", { sele:withoutHydrogen(sel(lig.contact_receptor_residues)),
+        colorScheme:"element", colorValue:0x8ab8e8 }));
+    addDisplayedInteractions();
     addCovalentHighlight(o);
     addContactLabels();
-    frame(lsel + " or " + sel(o.contact_receptor_residues));
+    frame(all.map(lig => "(" + ligandSelection(lig) + ") or (" +
+      sel(lig.contact_receptor_residues) + ")").join(" or "));
   } else {
     comp.autoView(400);
   }
@@ -249,12 +283,15 @@ function addContactLabels() {
     backgroundOpacity:0.68, showBackground:true, fixedSize:false, labelSize:2.2, radius:0.8, zOffset:2 });
 }
 
-function addInteractionLines() {
-  const o = obs();
+function addInteractionLines(o=obs(), key="lines") {
   if (!o || !o.ligand_selection) return;
-  addRep("lines", "contact", { sele:sel(o.contact_receptor_residues) + " or " +
+  addRep(key, "contact", { sele:sel(o.contact_receptor_residues) + " or " +
     ligandSelection(o), maxHbondDist:3.6, maxHydrophobicDist:4.2,
     maxPiStackingDist:5.5, labelVisible:true, labelUnit:"angstrom", labelSize:0.72 });
+}
+
+function addDisplayedInteractions() {
+  ligandObservations().forEach((o, i) => addInteractionLines(o, i ? "lines_extra_" + i : "lines"));
 }
 
 export function contactResidues() {
@@ -410,24 +447,30 @@ export const toggles = {
       .map(o => sel(o.ligand_selection.residues)).filter(s => s !== "none");
     if (all.length) addRep("all_lig", "ball+stick", { sele: all.join(" or "), color: "element" });
   },
-  contacts(on) { const o = obs(); if (!on || !o) { dropRep("contacts"); dropRep("iface"); return; }
-    const key = POLYMER[o.binding_site_class] ? "iface" : "contacts";
-    addRep(key, "licorice", { sele:withoutHydrogen(sel(o.contact_receptor_residues)), colorScheme:"element", colorValue:0x8ab8e8 }); },
-  lines(on) { if (!on) { dropRep("lines"); return; } addInteractionLines(); },
+  contacts(on) {
+    dropByPrefix("contacts"); dropByPrefix("iface");
+    if (!on) return;
+    ligandObservations().forEach((o, i) => addRep((POLYMER[o.binding_site_class] ? "iface_" : "contacts_") + i,
+      "licorice", { sele:withoutHydrogen(sel(o.contact_receptor_residues)),
+        colorScheme:"element", colorValue:0x8ab8e8 }));
+  },
+  lines(on) { if (!on) { dropByPrefix("lines"); return; } addDisplayedInteractions(); },
   ligand(on) {
-    if (!on) { dropRep("ligand"); dropRep("ligand_stick"); dropRep("lines");
+    if (!on) { dropByPrefix("ligand"); dropByPrefix("lines");
       dropRep("covalent_atoms"); dropRep("covalent_bond"); return; }
-    addLigandRepresentation(obs()); addInteractionLines(); addCovalentHighlight(obs()); },
+    addDisplayedLigands(); addDisplayedInteractions(); addCovalentHighlight(obs()); },
   ligandMode(mode) {
     ligandMode = mode === "licorice" ? "licorice" : "cartoon";
-    dropRep("ligand"); dropRep("ligand_stick");
-    addLigandRepresentation(obs());
+    dropByPrefix("ligand");
+    addDisplayedLigands();
   },
   surface(on) { this.surfaceReceptor(on); this.surfaceLigand(on); },
   surfaceReceptor(on) { const o = obs(); if (!on || !o) { dropRep("surface_receptor"); return; }
     addRep("surface_receptor", "surface", { sele: "(" + sel(o.contact_receptor_residues) + ") and protein",
       opacity: 0.28, colorValue: "lightgrey" }); },
   surfaceLigand(on) { const o = obs(); if (!on || !o || !o.ligand_selection) { dropRep("surface_ligand"); return; }
+    // The observation selector defines the active ligand.  Showing every ligand surface in a
+    // multi-ligand structure obscures which orthosteric/allosteric partner is being inspected.
     addRep("surface_ligand", "surface", { sele:withoutHydrogen(ligandSelection(o)),
       opacity:0.34, colorValue:"#f3df78" }); },
   motifs(on) { if (!on) { dropRep("motifs"); return; }
