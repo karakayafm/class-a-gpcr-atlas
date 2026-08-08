@@ -89,6 +89,24 @@ function siteClassChip(id, count, familySlug) {
   return wrap;
 }
 
+function metricHelp(text) {
+  const tipId = "metric-help-" + Math.random().toString(36).slice(2, 8);
+  const tip = el("span", { class:"site-help-popover", id:tipId, role:"tooltip", hidden:true, text });
+  let pinned = false;
+  const button = el("button", { class:"site-help-button", type:"button", text:"?",
+    "aria-label":text, "aria-describedby":tipId, "aria-expanded":"false" });
+  const wrap = el("span", { class:"metric-help-wrap" }, [button, tip]);
+  const show = () => { tip.hidden=false; button.setAttribute("aria-expanded", "true"); };
+  const hide = () => { if (!pinned) { tip.hidden=true; button.setAttribute("aria-expanded", "false"); } };
+  wrap.addEventListener("mouseenter", show); wrap.addEventListener("mouseleave", hide);
+  button.addEventListener("focus", show); button.addEventListener("blur", hide);
+  button.addEventListener("click", e => {
+    e.preventDefault(); e.stopPropagation(); pinned = !pinned;
+    if (pinned) show(); else { tip.hidden=true; button.setAttribute("aria-expanded", "false"); }
+  });
+  return wrap;
+}
+
 function reviewItemLink(count, familySlug) {
   if (!(Number(count) > 0)) return [];
   const open = e => { e.preventDefault(); e.stopPropagation();
@@ -125,15 +143,14 @@ export async function landing(root) {
       } }, [
       el("h3", { text: familyDisplayName(f.family_name) }),
       el("dl", { class: "kv" }, [
-        el("dt", { text: t("structures") }), el("dd", { text: String(f.structure_count) }),
-        el("dt", { text: t("receptors") }), el("dd", { text: String(f.receptor_count) }),
-        el("dt", { text: t("units") }), el("dd", { text: String(f.analysis_unit_count) }),
-        el("dt", { text: t("coverage") }), el("dd", { text: pct(f.generic_mapping_coverage) }),
+        el("dt", {}, [document.createTextNode(t("structure_count") + " "), metricHelp(t("structure_count_help"))]),
+        el("dd", { text: String(f.analysis_unit_count) + " / " + String(f.structure_count) }),
+        el("dt", { text: t("receptor_family_count") }), el("dd", { text: String(f.receptor_family_count) }),
+        el("dt", { text: t("receptor_count") }), el("dd", { text: String(f.receptor_count) }),
         ...reviewRows
       ]),
       el("div", { class: "sitechips" }, Object.keys(f.site_class_counts || {}).sort().map(k =>
-        siteClassChip(k, f.site_class_counts[k], f.family_slug))),
-      warnBadges(f.warnings)
+        siteClassChip(k, f.site_class_counts[k], f.family_slug)))
     ]);
     grid.appendChild(card);
   }

@@ -325,6 +325,16 @@ function buildViewerSide(meta) {
     } });
   ctrl.appendChild(surfaceMaster);
   add("spin", t("v_spin"));
+  const background = VIEW.currentBackground();
+  const backgroundButton = (mode, label) => el("button", { class:"viewer-tool",
+    "aria-pressed":background === mode ? "true" : "false", text:label, onclick:() => {
+      VIEW.setBackground(mode);
+      blackBackground.setAttribute("aria-pressed", mode === "black" ? "true" : "false");
+      whiteBackground.setAttribute("aria-pressed", mode === "white" ? "true" : "false");
+    } });
+  const blackBackground = backgroundButton("black", t("v_background_black"));
+  const whiteBackground = backgroundButton("white", t("v_background_white"));
+  ctrl.append(blackBackground, whiteBackground);
   ctrl.appendChild(el("button", { class: "viewer-tool", text: t("v_reset"),
     onclick: () => { VIEW.resetView(); buildViewerSide(meta); } }));
   ctrl.appendChild(el("button", { class: "viewer-tool", text: t("v_snapshot"),

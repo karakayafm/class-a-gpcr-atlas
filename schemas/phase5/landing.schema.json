@@ -28,6 +28,7 @@
           "family_slug",
           "family_name",
           "structure_count",
+          "receptor_family_count",
           "receptor_count",
           "analysis_unit_count",
           "site_class_counts",
@@ -48,6 +49,10 @@
             "minimum": 0
           },
           "receptor_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "receptor_family_count": {
             "type": "integer",
             "minimum": 0
           },

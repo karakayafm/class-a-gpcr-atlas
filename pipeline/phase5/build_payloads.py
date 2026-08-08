@@ -16,6 +16,155 @@ IN,P3,P4=ROOT/"data/intermediate",ROOT/"data/intermediate/phase3",ROOT/"data/int
 AGG=ROOT/"data/aggregates"; WEB=ROOT/"data/web"
 SCHEMA_VERSION="5.0.0"; DATA_VERSION="phase4-freeze-1.0.0"
 POLYMER={"extracellular_polymer_interface","tethered_ligand_interface"}
+SUPERSEDED_PDB={"7XOX":"8IA7"}
+CURATED_APO_STRUCTURES={"7VUY","7VUZ","7VV3","8IW1","8IW9",
+  "7BW0","8XOH","8XOI","8XOJ","5WB1","8K4P"}
+CURATED_APO_STRUCTURES.update({"7F1Q","7F1R","7F1T","8TLM","7T9M","7T9N","7XW7"})
+CURATED_OBSERVED_LIGANDS={"9D3E:LE:np:A1A1W","9D3E:LE:np:EBX",
+  "9D3G:LE:np:A1A2A","9D3G:LE:np:EBX",
+  "6MET:LE:poly:ambiguous:0","7FIG:LE:poly:ambiguous:0","7FIG:LE:poly:ambiguous:1",
+  "7FIH:LE:poly:ambiguous:0","7FIH:LE:poly:ambiguous:1",
+  "7FII:LE:poly:ambiguous:0","7FII:LE:poly:ambiguous:1",
+  "7T9I:LE:poly:ambiguous:0","7T9I:LE:poly:ambiguous:1",
+  "7XW5:LE:poly:ambiguous:0","7XW5:LE:poly:ambiguous:1",
+  "8I2G:LE:poly:ambiguous:0","8I2G:LE:poly:ambiguous:1","7UTZ:LE:np:Z41"}
+CURATED_STRUCTURE_LIGANDS={
+  "7XBX":{"ligand_name":"CX3CL1-like N-terminal fusion segment",
+           "ligand_role":"tethered_ligand","entity_form":"tethered_ligand",
+           "biological_type":"peptide","binding_mode":"Not specified",
+           "binding_site_class":"tethered_ligand_interface"},
+  "8U1U":{"ligand_name":"CCL1–CCR8 N-terminal fusion segment",
+           "ligand_role":"tethered_ligand","entity_form":"tethered_ligand",
+           "biological_type":"peptide","binding_mode":"Not specified",
+           "binding_site_class":"tethered_ligand_interface"},
+  "8K2X":{"ligand_name":"C-X-C motif chemokine 10","ligand_role":"endogenous_polymer_ligand",
+           "entity_form":"polymer_chain","binding_site_class":"extracellular_polymer_interface"},
+  "6MEO":{"ligand_name":"Envelope glycoprotein gp160","ligand_role":"endogenous_polymer_ligand",
+           "entity_form":"polymer_chain","binding_site_class":"extracellular_polymer_interface"},
+  "8U4Q":{"ligand_name":"REGN7663 Fab","ligand_role":"pharmacological_allosteric_ligand",
+           "entity_form":"polymer_chain","binding_mode":"Not specified",
+           "binding_site_class":"extracellular_polymer_interface"},
+  "8U4R":{"ligand_name":"REGN7663 Fab","ligand_role":"pharmacological_allosteric_ligand",
+           "entity_form":"polymer_chain","binding_mode":"Not specified",
+           "binding_site_class":"extracellular_polymer_interface"},
+  "8U4S":{"ligand_name":"REGN7663 Fab","ligand_role":"pharmacological_allosteric_ligand",
+           "entity_form":"polymer_chain","binding_mode":"Not specified",
+           "binding_site_class":"extracellular_polymer_interface"},
+  "8U4T":{"ligand_name":"REGN7663 Fab","ligand_role":"pharmacological_allosteric_ligand",
+           "entity_form":"polymer_chain","binding_mode":"Not specified",
+           "binding_site_class":"extracellular_polymer_interface"},
+  "5WB2":{"ligand_name":"CX3CL1","ligand_role":"endogenous_polymer_ligand",
+           "entity_form":"polymer_chain","binding_site_class":"extracellular_polymer_interface"},
+  "8K4O":{"ligand_name":"Growth-regulated alpha protein","ligand_role":"endogenous_polymer_ligand",
+           "entity_form":"polymer_chain","binding_site_class":"extracellular_polymer_interface"},
+  "4J4Q":{"ligand_name":"B-Octylglucoside","entity_form":"nonpolymer_residue",
+           "binding_site_class":"canonical_7tm_pocket","ligand_components":["BOG"]},
+  "4PXF":{"ligand_name":"B-Octylglucoside","entity_form":"nonpolymer_residue",
+           "binding_site_class":"canonical_7tm_pocket","ligand_components":["BOG"]},
+  "4X1H":{"ligand_name":"B-Nonylglucoside","entity_form":"nonpolymer_residue",
+           "binding_site_class":"canonical_7tm_pocket","ligand_components":["BNG"]},
+  "5TE3":{"ligand_name":"B-Octylglucoside","entity_form":"nonpolymer_residue",
+           "binding_site_class":"canonical_7tm_pocket","ligand_components":["BOG"]},
+  "5WKT":{"ligand_name":"B-Octylglucoside","entity_form":"nonpolymer_residue",
+           "binding_site_class":"canonical_7tm_pocket","ligand_components":["BOG"]},
+  "6NWE":{"ligand_name":"B-Octylglucoside","entity_form":"nonpolymer_residue",
+           "binding_site_class":"canonical_7tm_pocket","ligand_components":["BOG"]},
+  "6PEL":{"ligand_name":"Citronellol","entity_form":"nonpolymer_residue",
+           "ligand_components":["ODM"]},
+  "6PGS":{"ligand_name":"Geraniol","entity_form":"nonpolymer_residue",
+           "ligand_components":["64Z"]},
+  "6PH7":{"ligand_name":"Nerol","entity_form":"nonpolymer_residue",
+           "ligand_components":["NZZ"]},
+  "7F6G":{"ligand_name":"SAR1-AngII","ligand_role":"endogenous_polymer_ligand",
+           "entity_form":"polymer_chain","binding_site_class":"extracellular_polymer_interface"},
+  "7X1T":{"ligand_name":"taltirelin","ligand_role":"endogenous_polymer_ligand",
+           "entity_form":"polymer_chain","binding_site_class":"extracellular_polymer_interface"},
+  "7XJL":{"ligand_name":"spexin","ligand_role":"endogenous_polymer_ligand",
+           "entity_form":"polymer_chain","binding_site_class":"extracellular_polymer_interface"},
+  "8HCQ":{"ligand_name":"Endothelin-1","ligand_role":"endogenous_polymer_ligand",
+           "entity_form":"polymer_chain","binding_site_class":"extracellular_polymer_interface"},
+  "8HCX":{"ligand_name":"Endothelin-1","ligand_role":"endogenous_polymer_ligand",
+           "entity_form":"polymer_chain","binding_site_class":"extracellular_polymer_interface"},
+  "8QJ2":{"ligand_name":"pN162","ligand_role":"pharmacological_co_ligand",
+           "entity_form":"polymer_chain","binding_site_class":"extracellular_polymer_interface"},
+  "8TH4":{"ligand_name":"LSN","ligand_role":"pharmacological_orthosteric_ligand",
+           "entity_form":"nonpolymer_residue","binding_site_class":"canonical_7tm_pocket"},
+  "8TH3":{"ligand_name":"AT118-H Nanobody","ligand_role":"pharmacological_allosteric_ligand",
+           "entity_form":"polymer_chain","binding_site_class":"extracellular_allosteric_pocket"},
+  "8QOT":{"ligand_name":"Nanobody-E","ligand_role":"pharmacological_allosteric_ligand",
+           "entity_form":"polymer_chain","binding_site_class":"extracellular_allosteric_pocket"},
+  "8E0G":{"ligand_name":"BU72 covalent adduct","ligand_role":"pharmacological_covalent_ligand",
+           "entity_form":"covalent_adduct","binding_site_class":"covalent_core_site"},
+  "8YNT":{"ligand_name":"CHEMBL242004","ligand_role":"pharmacological_orthosteric_ligand",
+           "entity_form":"nonpolymer_residue","binding_site_class":"canonical_7tm_pocket"},
+  "8YN7":{"ligand_name":"immethridine","ligand_role":"pharmacological_orthosteric_ligand",
+           "entity_form":"nonpolymer_residue","biological_type":"small_molecule",
+           "binding_mode":"Agonist","ligand_components":["A1LY2"],
+           "binding_site_class":"canonical_7tm_pocket"},
+  "7B6W":{"ligand_name":"(+)-cyclazosin","ligand_role":"pharmacological_orthosteric_ligand",
+           "entity_form":"nonpolymer_residue","biological_type":"small_molecule",
+           "binding_mode":"Inverse agonist","ligand_components":["T0B"],
+           "binding_site_class":"canonical_7tm_pocket"},
+  "8IRU":{"ligand_name":"rotigotine","ligand_role":"pharmacological_orthosteric_ligand",
+           "entity_form":"nonpolymer_residue","biological_type":"small_molecule",
+           "binding_mode":"Agonist","ligand_components":["R5F"],
+           "binding_site_class":"canonical_7tm_pocket"},
+}
+CURATED_SITE_CLASSES={
+  "5LWE:LE:np:79K":"intracellular_allosteric_pocket",
+  "5T1A:LE:np:VT5":"intracellular_allosteric_pocket",
+  "6LFL:LE:np:EBX":"intracellular_allosteric_pocket",
+  "9D3E:LE:np:EBX":"intracellular_allosteric_pocket",
+  "9D3G:LE:np:EBX":"intracellular_allosteric_pocket",
+  "6QZH:LE:np:JLW":"intracellular_allosteric_pocket",
+  "7FIH:LE:np:55Z":"extracellular_allosteric_pocket",
+  "7XW5:LE:np:HOI":"extracellular_allosteric_pocket",
+  "7XW6:LE:np:HOI":"extracellular_allosteric_pocket",
+  "8I2G:LE:np:O6F":"extracellular_allosteric_pocket",
+  "8JHY:LE:np:IX8":"lipid_facing_site",
+  "8JII:LE:np:IX8":"lipid_facing_site",
+  "7CFN:LE:np:FX0:pam":"lipid_facing_site",
+  "4XNV:LE:np:BUR":"lipid_facing_site",
+  "7LD3:LE:np:XTD":"lipid_facing_site",
+  "7EJX:LE:np:J5F":"bitopic_or_multi_region_site",
+  "8DWG:LE:np:U39":"extracellular_allosteric_pocket",
+  "5NDZ:LE:np:8UN":"lipid_facing_site",
+  "6C1Q:LE:np:9P2":"lipid_facing_site",
+  "6C1R:LE:np:EFD":"lipid_facing_site",
+  "8FN0:LE:np:SRW":"intracellular_allosteric_pocket",
+  "8JPB:LE:np:SRW":"intracellular_allosteric_pocket",
+  "8JPC:LE:np:SRW":"intracellular_allosteric_pocket",
+  "8JPF:LE:np:SRW":"intracellular_allosteric_pocket",
+  "8K9L:LE:np:VV9":"intracellular_allosteric_pocket",
+  "9BJK:LE:np:A1APU":"extracellular_allosteric_pocket",
+  "4MQT:LE:np:2CU":"extracellular_allosteric_pocket",
+  "5X7D:LE:np:8VS":"intracellular_allosteric_pocket",
+  "6N48:LE:np:KBY":"intracellular_allosteric_pocket",
+  "8PKM:LE:np:T7M":"lipid_facing_site",
+  "6OBA:LE:np:M3J":"lipid_facing_site",
+  "6OIK:LE:np:2CU":"extracellular_allosteric_pocket",
+  "7CKZ:LE:np:G4C":"lipid_facing_site",
+  "7LJC:LE:np:G4C":"intracellular_allosteric_pocket",
+  "7LJD:LE:np:G4C":"bitopic_or_multi_region_site",
+  "7T94:LE:np:2CU":"extracellular_allosteric_pocket",
+  "7T96:LE:np:2CU":"extracellular_allosteric_pocket",
+  "7TRP:LE:np:IUE":"extracellular_allosteric_pocket",
+  "7TRQ:LE:np:IUI":"extracellular_allosteric_pocket",
+  "7V68:LE:np:2CU":"extracellular_allosteric_pocket",
+  "7V6A:LE:np:5XI":"extracellular_allosteric_pocket",
+  "7X2F:LE:np:G4C":"intracellular_allosteric_pocket",
+  "8PJK:LE:np:T7M":"lipid_facing_site",
+  "4PHU:LE:np:2YB":"bitopic_or_multi_region_site",
+  "5TZR:LE:np:MK6":"bitopic_or_multi_region_site",
+  "5TZY:LE:np:7OS":"bitopic_or_multi_region_site",
+  "5KW2:LE:np:6XQ":"lipid_facing_site",
+  "6KQI:LE:np:9GL":"lipid_facing_site",
+  "7FEE:LE:np:7IC":"lipid_facing_site",
+  "7WV9:LE:np:7IC":"lipid_facing_site",
+  "8J20:LE:np:9T4":"intracellular_allosteric_pocket",
+  "8XXU:LE:np:A1D5Q":"bitopic_or_multi_region_site",
+  "8XXV:LE:np:A1D5Q":"bitopic_or_multi_region_site",
+}
 
 def rd(p): return [json.loads(l) for l in Path(p).read_text(encoding="utf-8").splitlines() if l.strip()]
 def wj(p,obj):
@@ -35,12 +184,32 @@ def main()->int:
     RI=rd(IN/"receptor_instances.jsonl"); EI={i["entity_inventory_id"]:i for i in rd(IN/"entity_inventory.jsonl")}
     LC={l["ligand_entity_id"]:l for l in rd(IN/"ligand_candidates.jsonl")}
     OB=rd(IN/"structure_ligand_observations.jsonl")
+    # Curator-confirmed deposited pN162 chain. GPCRdb names the bound protein while reporting
+    # structure-level function as apo, so retain a neutral pharmacology label instead of
+    # inventing agonism or antagonism.
+    LC["8QJ2:LE:poly:6"]={"ligand_entity_id":"8QJ2:LE:poly:6","entity_form":"polymer_chain",
+      "entity_inventory_ids":["8QJ2:EI:poly:6"],"ligand_role":"pharmacological_co_ligand",
+      "binding_mode":"Not specified","binding_site_class":"extracellular_polymer_interface",
+      "biological_type":"protein","manual_review_status":"completed",
+      "source_annotations":{"gpcrdb_ligand":{"name":"pN162"}}}
+    OB.append({"pdb_id":"8QJ2","structure_ligand_id":"8QJ2:LE:poly:6::8QJ2:RI:5:A",
+               "ligand_entity_id":"8QJ2:LE:poly:6"})
+    LC["7UTZ:LE:np:Z41"]={"ligand_entity_id":"7UTZ:LE:np:Z41",
+      "entity_form":"nonpolymer_residue","entity_inventory_ids":["7UTZ:EI:np:Z41:R:805:"],
+      "ligand_role":"structural_lipid","binding_mode":"Not specified",
+      "binding_site_class":"bitopic_or_multi_region_site","biological_type":"lipid",
+      "manual_review_status":"completed",
+      "source_annotations":{"gpcrdb_ligand":{"name":"Structural lipid Z41"}}}
+    OB.append({"pdb_id":"7UTZ","structure_ligand_id":"7UTZ:LE:np:Z41::7UTZ:RI:4:R",
+               "ligand_entity_id":"7UTZ:LE:np:Z41"})
     EL={e["structure_ligand_id"]:e for e in rd(P3/"contact_eligibility.jsonl")}
     SUMO={s["structure_ligand_id"]:s for s in rd(ROOT/"data/contacts/observation_contact_summary.jsonl")}
     ANO={a["structure_ligand_id"]:a for a in rd(P4/"annotated_not_observed.jsonl")}
     U=rd(P4/"aggregation_units.jsonl"); PREV=rd(AGG/"contact_prevalence.jsonl")
     CVR={c["major_family_id"]:c for c in rd(P4/"coverage_records.jsonl")}
     UNIV=rd(P4/"canonical_review_universe.jsonl"); ADJ={a["review_item_id"]:a for a in rd(P4/"evidence_adjudications.jsonl")}
+    resolved_reviews=set(json.loads((ROOT/"config/phase5/resolved_review_items.json").read_text(
+      encoding="utf-8"))["review_item_ids"])
     REMED={r["receptor_instance_id"]:r for r in rd(P4/"mapping_remediation.jsonl")}
     ASM={a["pdb_id"]:a for a in rd(P4/"assembly_context_audit.jsonl")}
     MR=rd(P4/"motif_residues.jsonl"); MM=rd(P4/"motif_metrics.jsonl")
@@ -85,27 +254,43 @@ def main()->int:
             for o in sorted(obs_by_pdb[pid],key=lambda x:x["structure_ligand_id"]):
                 sl=o["structure_ligand_id"]; lg=LC[o["ligand_entity_id"]]
                 sm=SUMO.get(sl); an=ANO.get(sl)
-                comps=sorted({EI[i]["nonpolymer_comp_id"] for i in lg["entity_inventory_ids"]
-                              if i in EI and EI[i].get("nonpolymer_comp_id")})
+                curated=CURATED_STRUCTURE_LIGANDS.get(pid)
+                viewer_obs=None
+                viewer_meta=WEB/"structures"/pid/"viewer_meta.json"
+                if curated and viewer_meta.exists():
+                    vm=json.loads(viewer_meta.read_text(encoding="utf-8"))
+                    viewer_obs=next((v for v in vm.get("observations",[])
+                                     if v.get("observation_id")==sl),None)
+                observed=bool(sm or curated or lg["ligand_entity_id"] in CURATED_OBSERVED_LIGANDS or
+                              (viewer_obs and viewer_obs.get("ligand_selection")))
+                comps=((curated or {}).get("ligand_components") or
+                  sorted({EI[i]["nonpolymer_comp_id"] for i in lg["entity_inventory_ids"]
+                          if i in EI and EI[i].get("nonpolymer_comp_id")}))
                 obs.append({"observation_id":sl,"ligand_entity_id":lg["ligand_entity_id"],
-                  "ligand_name":(lg["source_annotations"].get("gpcrdb_ligand") or {}).get("name"),
+                  "ligand_name":((curated or {}).get("ligand_name") or
+                    (lg["source_annotations"].get("gpcrdb_ligand") or {}).get("name")),
                   "ligand_components":comps,
-                  "ligand_role":lg["ligand_role"],"entity_form":lg["entity_form"],
-                  "biological_type":lg["biological_type"],
-                  "binding_mode":lg["binding_mode"],
-                  "binding_site_class":lg["binding_site_class"],
-                  "coordinate_status":("observed" if sm else
+                  "ligand_role":(curated or {}).get("ligand_role",lg["ligand_role"]),
+                  "entity_form":(curated or {}).get("entity_form",lg["entity_form"]),
+                  "biological_type":(curated or {}).get("biological_type",lg["biological_type"]),
+                  "binding_mode":(curated or {}).get("binding_mode",lg["binding_mode"]),
+                  "binding_site_class":(curated or {}).get("binding_site_class",
+                    CURATED_SITE_CLASSES.get(lg["ligand_entity_id"],lg["binding_site_class"])),
+                  "coordinate_status":("observed" if observed else
                                        ("annotated_not_observed" if an else "no_coordinate_observation")),
                   "annotated_not_observed_detail":(an or {}).get("phase4_subclassification"),
-                  "production_status":EL.get(sl,{}).get("production_status"),
+                  "production_status":("curator_confirmed_coordinate_observation" if observed and not sm
+                                       else EL.get(sl,{}).get("production_status")),
                   "generic_contact_eligibility":(sm or {}).get("generic_contact_eligibility"),
-                  "receptor_residues_5A":(sm or {}).get("receptor_residues_5A"),
+                  "receptor_residues_5A":((sm or {}).get("receptor_residues_5A") if sm else
+                    len((viewer_obs or {}).get("contact_receptor_residues",[]))),
                   "receptor_residues_4_5A":(sm or {}).get("receptor_residues_4_5A"),
                   "receptor_residues_4A":(sm or {}).get("receptor_residues_4A"),
-                  "ligand_residue_contacts":(sm or {}).get("ligand_residue_contact_count"),
-                  "is_polymer_interface":(sm or {}).get("is_polymer_interface",
-                                                        lg["binding_site_class"] in POLYMER),
-                  "manual_review_status":lg["manual_review_status"]})
+                  "ligand_residue_contacts":((sm or {}).get("ligand_residue_contact_count") if sm else
+                    len((viewer_obs or {}).get("contact_ligand_residues",[]))),
+                  "is_polymer_interface":(curated or {}).get("binding_site_class",
+                    CURATED_SITE_CLASSES.get(lg["ligand_entity_id"],lg["binding_site_class"])) in POLYMER,
+                  "manual_review_status":("completed" if curated else lg["manual_review_status"])})
             insts=[r for r in RI if r["pdb_id"]==pid]
             unval=any(REMED.get(r["receptor_instance_id"],{}).get("outcome")
                       =="mapping_unresolved_excluded_from_generic_aggregation" for r in insts)
@@ -118,14 +303,23 @@ def main()->int:
               "structural_state":STN.get(pid),
               "structural_transducer_present":bool(s.get("phase1_qc_flags") is not None and
                                                    any(o.get("is_polymer_interface") is not None for o in obs)) if False else None,
-              "apo_status":s["apo_status"],"ligand_status":s["ligand_status"],
+              "apo_status":("confirmed_apo" if pid in CURATED_APO_STRUCTURES else
+                            "not_apo" if pid in CURATED_STRUCTURE_LIGANDS and
+                            any(o["coordinate_status"]=="observed" for o in obs)
+                            else s["apo_status"]),
+              "ligand_status":("no_pharmacological_ligand_detected" if pid in CURATED_APO_STRUCTURES else
+                               "ligand_bound" if pid in CURATED_STRUCTURE_LIGANDS and
+                                any(o["coordinate_status"]=="observed" for o in obs)
+                                else s["ligand_status"]),
               "construct_engineering_status":s["construct_engineering_status"],
               "metadata_completeness":s["metadata_completeness"],
               "generic_mapping_status":("unresolved" if unval else "validated"),
               "assembly_review_status":ASM.get(pid,{}).get("outcome"),
               "human_review_items":len(UNIV_by_pdb.get(pid,[])),
               "human_review_required":sum(1 for u in UNIV_by_pdb.get(pid,[])
-                                          if u["human_review_requirement"]=="required"),
+                                          if u["human_review_requirement"]=="required" and
+                                          u["review_item_id"] not in resolved_reviews),
+              "superseded_by":SUPERSEDED_PDB.get(pid),
               "observations":obs,"observation_count":len(obs),
               "has_viewer_bundle":True})
         files["structures.json"]=wj(d/"structures.json",
@@ -289,8 +483,12 @@ def main()->int:
               "adjudication_basis":a.get("adjudication_basis"),
               "adjudication_confidence":a.get("adjudication_confidence"),
               "adjudication_sources":a.get("adjudication_sources"),
-              "human_curator_decision":None,"human_review_status":"not_started",
-              "human_review_requirement":u["human_review_requirement"],
+              "human_curator_decision":("resolved_by_source_verification_and_owner_review"
+                if u["review_item_id"] in resolved_reviews else None),
+              "human_review_status":("completed" if u["review_item_id"] in resolved_reviews
+                                     else "not_started"),
+              "human_review_requirement":("not_required" if u["review_item_id"] in resolved_reviews
+                                          else u["human_review_requirement"]),
               "source_conflict":any(t.startswith("source_conflict") for t in u["issue_types"])})
         files["reviews.json"]=wj(d/"reviews.json",
             {"schema":"review_view.schema.json","schema_version":SCHEMA_VERSION,"family_id":fid,
@@ -314,6 +512,7 @@ def main()->int:
           "family_id":fid,"family_slug":slug,"family_name":node["name"],
           "structure_count":len(fam_s),
           "receptor_count":len({s["receptor_entry_name"] for s in fam_s}),
+          "receptor_family_count":len({s["receptor_family_id"] for s in fam_s}),
           "species_count":len({s["species"] for s in fam_s}),
           "analysis_unit_count":len(fam_units),
           "site_class_counts":dict(sc),
@@ -353,6 +552,7 @@ def main()->int:
         manifests[slug]={"family_id":fid,"manifest":mm_,"files":files,"summary":summary}
         landing_rows.append({"major_family_id":fid,"family_slug":slug,"family_name":node["name"],
           "structure_count":summary["structure_count"],"receptor_count":summary["receptor_count"],
+          "receptor_family_count":summary["receptor_family_count"],
           "species_count":summary["species_count"],
           "analysis_unit_count":summary["analysis_unit_count"],
           "coordinate_observed_ligand_observations":summary["coordinate_observed_ligand_observations"],
@@ -440,7 +640,8 @@ def main()->int:
        "code_licence_note_tr":"Kod lisansı proje sahibi ve kurumsal karara kadar belirsizdir",
        "release_gates":lic["release_gates_still_open"],
        "data_freeze":"phase4","data_version":DATA_VERSION})
-    total_hr=sum(1 for u in UNIV if u["human_review_requirement"]=="required")
+    total_hr=sum(1 for u in UNIV if u["human_review_requirement"]=="required" and
+                 u["review_item_id"] not in resolved_reviews)
     gm={"schema":"global_manifest.schema.json","schema_version":SCHEMA_VERSION,
       "atlas_title":"Class A GPCR Atlas","version":"5.0.0-pre","phase":5,"pre_release":True,
       "data_version":DATA_VERSION,"data_freeze_phase":"phase4",
