@@ -240,7 +240,8 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb) 
   for (const x of d.structures) for (const mode of new Set(x.observations.map(o => o.binding_mode).filter(Boolean)))
     modeCounts.set(mode, (modeCounts.get(mode) || 0) + 1);
   const filterControls = {};
-  const quickModes = ["", "Agonist", "Partial agonist", "Antagonist", "Inverse agonist", "PAM", "NAM"];
+  const quickModes = ["", "Agonist", "Agonist (partial)", "Antagonist", "Inverse agonist",
+    "Allosteric agonist", "Allosteric antagonist", "PAM", "NAM"];
   for (const mode of quickModes) if (!mode || modeCounts.has(mode)) {
     const b = el("button", { class: "quick-filter" + modeClass(mode) + (!mode ? " active" : ""), "data-mode": mode,
       text: (mode || t("all")) + "  " + (mode ? modeCounts.get(mode) : d.count), onclick: () => {

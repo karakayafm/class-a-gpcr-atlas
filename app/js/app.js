@@ -68,7 +68,12 @@ function setupGlobalSearch() {
     const ligands = (row.ligands || []).map(V.plainName).join(", ");
     return { receptor, ligands };
   };
-  const run = async () => {
+  const openHit = hit => {
+    if (!hit) return;
+    input.value=""; hide();
+    navigate({ family:hit.row.family_slug, view:"structures", pdb:hit.row.pdb_id });
+  };
+  const run = async (activateFirst=false) => {
     const raw = input.value.trim(), q = raw.toLocaleLowerCase(getLang() === "tr" ? "tr" : "en");
     const token = ++request;
     clear(panel);
@@ -93,13 +98,14 @@ function setupGlobalSearch() {
       if (score < 99) scored.push({ row, txt, score });
     }
     scored.sort((a,b) => a.score-b.score || a.row.pdb_id.localeCompare(b.row.pdb_id));
+    const exact = scored.find(hit => String(hit.row.pdb_id).toLowerCase() === q ||
+      (hit.row.aliases || []).some(alias => String(alias).toLowerCase() === q));
+    if (activateFirst) { openHit(exact || scored[0]); return; }
     clear(panel);
     if (!scored.length) panel.appendChild(el("p", { class:"global-search-message", text:t("global_search_empty") }));
     for (const hit of scored.slice(0, 15)) {
-      panel.appendChild(el("button", { class:"global-search-result", role:"option", onclick:() => {
-        input.value=""; hide();
-        navigate({ family:hit.row.family_slug, view:"structures", pdb:hit.row.pdb_id });
-      } }, [
+      panel.appendChild(el("button", { class:"global-search-result", role:"option",
+        onclick:() => openHit(hit) }, [
         el("strong", { text:hit.row.pdb_id }),
         el("span", { text:hit.txt.receptor }),
         el("small", { text:(hit.txt.ligands || t("apo")) + " · " + V.plainName(hit.row.family_name) })
@@ -109,7 +115,12 @@ function setupGlobalSearch() {
   };
   input.addEventListener("input", () => { clearTimeout(timer); timer=setTimeout(run, 160); });
   input.addEventListener("focus", () => { if (panel.childElementCount && input.value.trim().length >= 2) show(); });
-  input.addEventListener("keydown", e => { if (e.key === "Escape") { hide(); input.blur(); } });
+  input.addEventListener("keydown", e => {
+    if (e.key === "Escape") { hide(); input.blur(); }
+    else if (e.key === "Enter" && input.value.trim().length >= 2) {
+      e.preventDefault(); clearTimeout(timer); run(true);
+    }
+  });
   document.addEventListener("pointerdown", e => {
     const host = document.getElementById("global-search");
     if (host && !host.contains(e.target)) hide();
@@ -372,12 +383,26 @@ function buildViewerSide(meta) {
       const row = el("div", { class: "motif-group-row" });
       for (const motif of rows) {
         const b = el("button", { class: "motif-button motif-" + motif.group, "aria-pressed": "false",
-          text: motif.label, onclick: () => {
+          text: motif.label,
+          "aria-label":motif.label + " — " + motif.tooltip,
+          onclick: () => {
             const selected = VIEW.toggleMotif(motif.id);
             b.classList.toggle("selected", selected);
             b.setAttribute("aria-pressed", selected ? "true" : "false");
           } });
-        row.appendChild(b);
+        const tip = el("span", { class:"motif-pattern-popover", role:"tooltip" });
+        motif.pattern.forEach((token, index) => {
+          if (index) tip.appendChild(document.createTextNode(", "));
+          if (token.wildcard) tip.appendChild(el("span", { class:"motif-pattern-wildcard",
+            text:token.wildcard }));
+          else {
+            tip.appendChild(el("strong", { text:token.aa }));
+            tip.appendChild(el("span", { text:token.position }));
+          }
+        });
+        if (motif.differenceText) tip.appendChild(el("span", {
+          class:"motif-pattern-warning", text:motif.differenceText }));
+        row.appendChild(el("span", { class:"motif-button-wrap" }, [b, tip]));
       }
       list.appendChild(row);
     }

@@ -239,6 +239,17 @@ body.modal-open { overflow:hidden; }
 .motif-group-title.group-structural::before { background:#e25252; }
 .motif-group-title.group-covalent::before { background:#f28c00; }
 .motif-group-row { display:flex; flex-wrap:wrap; gap:5px; }
+.motif-button-wrap { position:relative; display:inline-flex; }
+.motif-pattern-popover { display:none; position:absolute; left:0; bottom:calc(100% + 7px); z-index:45;
+  white-space:nowrap; padding:8px 10px; border:1px solid var(--line); border-radius:7px;
+  background:var(--panel); color:var(--ink); box-shadow:0 7px 20px rgba(10,20,30,.2);
+  font-size:12px; font-weight:400; }
+.motif-button-wrap:hover .motif-pattern-popover,
+.motif-button-wrap:focus-within .motif-pattern-popover { display:block; }
+.motif-pattern-popover strong { font-weight:750; }
+.motif-pattern-wildcard { font-weight:600; }
+.motif-pattern-warning { display:block; margin-top:5px; padding-top:5px; border-top:1px solid var(--line);
+  color:var(--warn-ink); }
 .motif-button { width:auto; }.motif-button.motif-ligand { border-color:#eaa300; }
 .motif-button.motif-activation { border-color:#9986ed; }.motif-button.motif-structural { border-color:#e25252; }
 .motif-button.selected { background:#6d59cf; color:white; border-color:#6d59cf; }

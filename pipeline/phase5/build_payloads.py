@@ -20,6 +20,11 @@ SUPERSEDED_PDB={"7XOX":"8IA7"}
 CURATED_APO_STRUCTURES={"7VUY","7VUZ","7VV3","8IW1","8IW9",
   "7BW0","8XOH","8XOI","8XOJ","5WB1","8K4P"}
 CURATED_APO_STRUCTURES.update({"7F1Q","7F1R","7F1T","8TLM","7T9M","7T9N","7XW7"})
+# 8G94 chains F/G are CD69 antigen molecules, not pharmacological S1P1 ligands.
+# Keep the receptor structure available, but do not expose the source's mistaken
+# polymer-ligand/agonist annotation in filters, summaries, or the viewer.
+CURATED_APO_STRUCTURES.add("8G94")
+CURATED_NON_LIGAND_STRUCTURES={"8G94"}
 CURATED_OBSERVED_LIGANDS={"9D3E:LE:np:A1A1W","9D3E:LE:np:EBX",
   "9D3G:LE:np:A1A2A","9D3G:LE:np:EBX",
   "6MET:LE:poly:ambiguous:0","7FIG:LE:poly:ambiguous:0","7FIG:LE:poly:ambiguous:1",
@@ -237,7 +242,7 @@ def main()->int:
     mm_by_fam=defaultdict(list)
     for m in MM: mm_by_fam[m["major_family_id"]].append(m)
 
-    manifests={}; landing_rows=[]; total_prev=0
+    manifests={}; landing_rows=[]; search_rows=[]; total_prev=0
     for node in famnodes:
         fid=node["source_id"]; slug=node["project_slug"]
         fam_s=[s for s in S.values() if s["major_family_id"]==fid]
@@ -252,6 +257,8 @@ def main()->int:
         for s in sorted(fam_s,key=lambda x:x["pdb_id"]):
             pid=s["pdb_id"]; obs=[]
             for o in sorted(obs_by_pdb[pid],key=lambda x:x["structure_ligand_id"]):
+                if pid in CURATED_NON_LIGAND_STRUCTURES:
+                    continue
                 sl=o["structure_ligand_id"]; lg=LC[o["ligand_entity_id"]]
                 sm=SUMO.get(sl); an=ANO.get(sl)
                 curated=CURATED_STRUCTURE_LIGANDS.get(pid)
@@ -325,6 +332,13 @@ def main()->int:
         files["structures.json"]=wj(d/"structures.json",
             {"schema":"structure_index.schema.json","schema_version":SCHEMA_VERSION,
              "family_id":fid,"family_slug":slug,"count":len(srows),"structures":srows})
+        search_rows.extend({
+          "pdb_id":s["pdb_id"],"family_slug":slug,"family_name":node["name"],
+          "receptor_name":s["receptor_name"],
+          "receptor_entry_name":s["receptor_entry_name"],
+          "aliases":["7XOX"] if s["pdb_id"]=="8IA7" else [],
+          "ligands":sorted({o["ligand_name"] for o in s["observations"] if o.get("ligand_name")})
+        } for s in srows if not s.get("superseded_by"))
 
         # ---- receptors --------------------------------------------------------------------
         rec=defaultdict(lambda: {"structures":0,"units":0,"species":set(),"pdbs":[]})
@@ -573,6 +587,9 @@ def main()->int:
        "families":sorted(landing_rows,key=lambda r:-r["structure_count"]),
        "taxonomy_source":"data/normalized/class_a_taxonomy.json",
        "family_count":len(landing_rows)})
+    gfiles["search_index.json"]=wj(G/"search_index.json",
+      {"schema":"global_search_index","schema_version":SCHEMA_VERSION,
+       "count":len(search_rows),"structures":sorted(search_rows,key=lambda r:r["pdb_id"])})
     gfiles["cross_family_summary.json"]=wj(G/"cross_family_summary.json",
       {"schema":"cross_family_summary","schema_version":SCHEMA_VERSION,
        "comparison_rule_en":("Cross-family comparison is only valid within one binding-site "

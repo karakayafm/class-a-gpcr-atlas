@@ -11,7 +11,25 @@ let viewerBackground = "black";
 const selectedResidues = new Set();
 const selectedMotifs = new Set();
 const POLYMER = { extracellular_polymer_interface: 1, tethered_ligand_interface: 1 };
-
+const MOTIF_SPECS = {
+  PIF_connector: { positions:["3x40","5x50","6x44"], expected:{
+    "3x40":["I"], "5x50":["P"], "6x44":["F"] } },
+  DRY_region: { positions:["3x49","3x50","3x51"], expected:{
+    "3x49":["D","E"], "3x50":["R"], "3x51":["Y"] } },
+  ionic_lock_pair: { positions:["3x50","6x30"], expected:{
+    "3x50":["R"], "6x30":["D","E"] } },
+  CWxP_W6x48_switch: { positions:["6x47","6x48","6x50"], expected:{
+    "6x47":["C"], "6x48":["W"], "6x50":["P"] } },
+  NPxxY_region: { positions:["7x49","7x50","7x51","7x52","7x53"], expected:{
+    "7x49":["N"], "7x50":["P"], "7x53":["Y"] } },
+  TM5_TM7_tyrosine_network: { positions:["5x58","7x53"], expected:{
+    "5x58":["Y"], "7x53":["Y"] } }
+};
+const MOTIF_POSITIONS = {
+  tm5_polar:["5x42","5x43","5x46","5x461"],
+  aromatic_pocket:["6x48","6x51","6x52","7x42"],
+  sodium_pocket_network:["2x50","3x39","7x45","7x46","7x49"]
+};
 function backgroundColor() { return viewerBackground === "white" ? "#ffffff" : "#0b0d10"; }
 export function currentBackground() { return viewerBackground; }
 export function setBackground(mode) {
@@ -341,8 +359,29 @@ export function motifGroups() {
   }
   const ligand = new Set(["tm5_polar","aromatic_pocket"]);
   const structural = new Set([]);
-  return Array.from(groups, ([id]) => ({ id, label:motifLabel(id),
-    group:structural.has(id) ? "structural" : ligand.has(id) ? "ligand" : "activation" }));
+  return Array.from(groups, ([id, residues]) => {
+    const spec = MOTIF_SPECS[id];
+    const byPosition = new Map(residues.map(r =>
+      [r.generic_short || genericShort(r.generic_position), oneLetter(r.residue_identity || r.residue_name)]));
+    let differences = 0;
+    if (spec) for (const position of spec.positions) {
+      const actual = byPosition.get(position), expected = spec.expected[position];
+      if (expected && (!actual || !expected.includes(actual))) differences++;
+    }
+    const motifPositions = spec ? spec.positions : MOTIF_POSITIONS[id] || Array.from(byPosition.keys());
+    const positions = motifPositions.join(", ");
+    const pattern = id === "NPxxY_region"
+      ? [{ aa:byPosition.get("7x49") || "?", position:"7x49" },
+         { aa:byPosition.get("7x50") || "?", position:"7x50" }, { wildcard:"xx" },
+         { aa:byPosition.get("7x53") || "?", position:"7x53" }]
+      : motifPositions.map(position => ({ aa:byPosition.get(position) || "?", position }));
+    const differenceText = differences ? t(differences === 1
+      ? "v_motif_difference_one" : "v_motif_difference_many", { count:differences }) : "";
+    return { id, label:motifLabel(id) + (differences ? " *" : ""), differences,
+      pattern, differenceText,
+      tooltip:t("v_motif_positions", { positions }) + (differenceText ? " — " + differenceText : ""),
+      group:structural.has(id) ? "structural" : ligand.has(id) ? "ligand" : "activation" };
+  });
 }
 
 function residuesForMotif(id) {
@@ -355,8 +394,10 @@ function residuesForMotif(id) {
       .map(r => ({ auth_asym_id:r.auth_asym_id, auth_seq_id:r.auth_seq_id }));
   }
   const activeChain = activeReceptorChain();
+  const positions = MOTIF_SPECS[id] && new Set(MOTIF_SPECS[id].positions);
   return (meta.motif_residues || []).filter(r => (!activeChain || r.auth_asym_id === activeChain) &&
-    (r.motif_memberships || []).includes(id));
+    (r.motif_memberships || []).includes(id) &&
+    (!positions || positions.has(r.generic_short || genericShort(r.generic_position))));
 }
 
 function selectionInView(selection, margin) {
