@@ -7,9 +7,18 @@ import * as LC from "./lifecycle.js";
 
 let comp = null, meta = null, current = null, reps = {};
 let ligandMode = "cartoon";
+let viewerBackground = "black";
 const selectedResidues = new Set();
 const selectedMotifs = new Set();
 const POLYMER = { extracellular_polymer_interface: 1, tethered_ligand_interface: 1 };
+
+function backgroundColor() { return viewerBackground === "white" ? "#ffffff" : "#0b0d10"; }
+export function currentBackground() { return viewerBackground; }
+export function setBackground(mode) {
+  viewerBackground = mode === "white" ? "white" : "black";
+  const stage = LC.getStage();
+  if (stage) stage.setParameters({ backgroundColor:backgroundColor() });
+}
 
 function sel(residues) {
   if (!residues || !residues.length) return "none";
@@ -163,7 +172,7 @@ export async function open(host, pdb, observationId, onStatus) {
   try { meta = await loadBundleMeta(pdb); }
   catch (e) { onStatus(errorMessage(e)); return null; }
   let stage;
-  try { stage = LC.createStage(NGL, host, { backgroundColor: "#0b0d10", quality: "high" }); }
+  try { stage = LC.createStage(NGL, host, { backgroundColor: backgroundColor(), quality: "high" }); }
   catch (e) { onStatus(t("err_webgl")); return null; }
   // the host is visible by the time we get here; resize after creation and after load
   LC.resizeStageIfVisible();
