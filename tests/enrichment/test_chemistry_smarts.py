@@ -140,26 +140,35 @@ def main() -> int:
 
     print("\nparent-child consistency over the corpus")
     mols = corpus_molecules()
-    print(f"  ({len(mols)} corpus components)")
-    hits = {name: {code for code, mol in mols.items() if mol.HasSubstructMatch(query)}
-            for name, query in queries.items()}
-    for name, spec in sorted(patterns.items()):
-        parent = spec.get("parent")
-        if not parent or parent not in hits:
-            continue
-        extra = hits[name] - hits[parent]
-        check(f"{name} is a subset of {parent}", not extra, str(sorted(extra)[:4]))
+    # The component cache is far too large to ship, so a fresh clone has no corpus. The
+    # pattern and example checks above still mean something without it, but the corpus checks
+    # do not run — and a summary that said "all checks passed" would overstate what was tested.
+    corpus_available = bool(mols)
+    if not corpus_available:
+        print(f"  SKIPPED — no component cache at {CHEMCOMP.relative_to(ROOT)}; "
+              "run inside a working area to check hierarchy against real molecules")
+    else:
+        print(f"  ({len(mols)} corpus components)")
+        hits = {name: {code for code, mol in mols.items() if mol.HasSubstructMatch(query)}
+                for name, query in queries.items()}
+        for name, spec in sorted(patterns.items()):
+            parent = spec.get("parent")
+            if not parent or parent not in hits:
+                continue
+            extra = hits[name] - hits[parent]
+            check(f"{name} is a subset of {parent}", not extra, str(sorted(extra)[:4]))
+        matched = sum(1 for name in queries if hits[name])
+        print(f"\npatterns with at least one corpus match: {matched}/{len(queries)}")
 
     print()
-    total = 0
-    for name in sorted(queries):
-        if hits[name]:
-            total += 1
-    print(f"patterns with at least one corpus match: {total}/{len(queries)}")
     if failures:
-        print(f"\n{len(failures)} failed")
+        print(f"{len(failures)} failed")
         return 1
-    print("\nchemistry SMARTS: all checks passed")
+    if not corpus_available:
+        print("chemistry SMARTS: pattern and example checks passed; "
+              "corpus hierarchy checks SKIPPED")
+        return 0
+    print("chemistry SMARTS: all checks passed")
     return 0
 
 
