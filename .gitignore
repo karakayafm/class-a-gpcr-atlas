@@ -19,5 +19,11 @@ releases/
 reports/
 curation/packets/
 drafts/
-tests/
+# The Phase 5 suite stays out of the publication package, but the deploy guard must ship:
+# an untracked test is not a reproducible one, and this test protects the published branch.
+# Git cannot re-include a file whose parent directory is excluded, hence the step-by-step form.
+tests/*
+!tests/deploy/
+tests/deploy/*
+!tests/deploy/test_gh_pages_protection.py
 _checksums_*.sha256
