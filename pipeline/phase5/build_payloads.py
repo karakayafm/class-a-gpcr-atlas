@@ -172,6 +172,10 @@ CURATED_SITE_CLASSES={
   "8XXV:LE:np:A1D5Q":"bitopic_or_multi_region_site",
 }
 
+def panel_slug(panel:str)->str:
+    """URL-safe directory name for a transducer panel ("Gi/o" -> "gi-o")."""
+    return "".join(ch if ch.isalnum() else "-" for ch in panel.lower()).strip("-")
+
 def rd(p): return [json.loads(l) for l in Path(p).read_text(encoding="utf-8").splitlines() if l.strip()]
 def wj(p,obj):
     p.parent.mkdir(parents=True,exist_ok=True)
@@ -268,6 +272,7 @@ def main()->int:
     for m in MM: mm_by_fam[m["major_family_id"]].append(m)
 
     manifests={}; landing_rows=[]; search_rows=[]; panel_structure_rows=[]; total_prev=0
+    panel_full_rows=defaultdict(list)
     for node in famnodes:
         fid=node["source_id"]; slug=node["project_slug"]
         fam_s=[s for s in S.values() if s["major_family_id"]==fid]
@@ -371,6 +376,12 @@ def main()->int:
               "family_name":node["name"], "receptor_name":structure["receptor_name"],
               "receptor_entry_name":structure["receptor_entry_name"],
               "panels":structure["transducer_panels"]})
+            # Full record per panel so the panel explorer can reuse the family explorer's
+            # filters and detail rendering. family_slug travels with it because pocket detail
+            # stays in the family files and is fetched only for the selected structure.
+            full=dict(structure); full["family_slug"]=slug; full["family_name"]=node["name"]
+            for panel in structure["transducer_panels"]:
+                panel_full_rows[panel].append(full)
         search_rows.extend({
           "pdb_id":s["pdb_id"],"family_slug":slug,"family_name":node["name"],
           "receptor_name":s["receptor_name"],
@@ -637,6 +648,19 @@ def main()->int:
     # ------------------------------------------------------------------ global payloads
     G=WEB/"global"
     gfiles={}
+    # ---- per-panel structure payloads -----------------------------------------------------
+    # One file per transducer panel, carrying the same record shape as the family payloads so a
+    # reader can browse "every Gs structure" without loading all eleven families.
+    panel_files={}
+    for panel,rows_ in sorted(panel_full_rows.items()):
+        pslug=panel_slug(panel)
+        ordered=sorted(rows_,key=lambda r:(r["family_name"],r["pdb_id"]))
+        panel_files[pslug]=wj(WEB/"panels"/pslug/"structures.json",
+          {"schema":"structure_index.schema.json","schema_version":SCHEMA_VERSION,
+           "panel":panel,"panel_slug":pslug,"count":len(ordered),
+           "families":sorted({r["family_slug"] for r in ordered}),
+           "structures":ordered})
+
     gfiles["panels.json"]=wj(G/"panels.json",
       {"schema":"panels.schema.json","schema_version":SCHEMA_VERSION,
        "source_freeze":"enrichment-1.0.0",
@@ -731,6 +755,9 @@ def main()->int:
       "family_count":len(landing_rows),
       "structure_bundle_base":"structures/",
       "global_files":{k:v for k,v in gfiles.items()},
+      # Panel payloads are listed so the loader can resolve them and the integrity check
+      # covers them like every other payload.
+      "panel_files":panel_files,
       "source_versions":srcv["sources"],
       "review_warning_count":total_hr,
       "review_warning_unit":"canonical_review_item",

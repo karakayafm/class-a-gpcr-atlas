@@ -53,6 +53,20 @@ export function loadSearchIndex() {
 
 // Deliberately separate from boot/landing: the 2.8 MB panel payload is requested only when the
 // user opens the panel workspace.
+/* Per-panel structure list: every structure in one transducer panel, across families.
+   Keyed on the manifest checksum like the family payloads, so a rebuilt payload is never
+   served from a stale cache entry. */
+export async function loadPanelStructures(panelSlug) {
+  const entry = (getManifest().panel_files || {})[panelSlug];
+  if (!entry) throw new LoadError("schema", "panels/" + panelSlug);
+  const key = "panel:" + panelSlug + ":" + entry.sha256;
+  if (famCache.has(key)) { const v = famCache.get(key); touch(famCache, key, v); return v; }
+  const d = await getJSON(base() + entry.url);
+  checkSchema(d, "panels/" + panelSlug);
+  touch(famCache, key, d);
+  lru(famCache, MAX_FAMILY_ENTRIES * 4);
+  return d;
+}
 export function loadPanels() {
   if (panelsPromise) return panelsPromise;
   panelsPromise = loadGlobal("panels.json").catch(e => { panelsPromise=null; throw e; });

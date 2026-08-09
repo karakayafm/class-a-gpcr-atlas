@@ -392,6 +392,11 @@ function missingCoreRow(record, core) {
 
 /* Counts sit in their own boxed, right-aligned badge. Run together with the label they read as
    part of the protein name — "G12 / G13 5" looks like a subunit, not a tally of five structures. */
+/* Mirrors pipeline/phase5/build_payloads.py:panel_slug so URLs and payload paths agree. */
+function panelSlugOf(panel) {
+  return String(panel).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
 function countBadge(value) {
   return el("span", { class:"tab-count", text:String(value == null ? "" : value),
     "aria-label":t("structure_count") });
@@ -495,8 +500,14 @@ export async function overview(root, slug) {
 }
 
 /* ---------------------------------------------------------------- structures */
-export async function structures(root, slug, onOpen3D, initialSite, initialPdb) {
-  const d = await L.loadFamilyFile(slug, "structures.json");
+/* One explorer, two sources. With `panelSlug` it lists every structure in a transducer panel
+   across all families; otherwise it lists one family. Panel rows carry their own family_slug,
+   so anything family-scoped (pocket detail, evidence, sources) is resolved per row. */
+export async function structures(root, slug, onOpen3D, initialSite, initialPdb, panelSlug) {
+  const panelMode = !!panelSlug;
+  const d = panelMode ? await L.loadPanelStructures(panelSlug)
+                      : await L.loadFamilyFile(slug, "structures.json");
+  const famOf = row => row.family_slug || slug;
   const wrap = el("section", { class: "view" });
   const family = (L.getManifest().families || []).find(f => f.slug === slug);
   const availableSites = new Set(d.structures.flatMap(x => x.observations.map(o => o.binding_site_class).filter(Boolean)));
@@ -514,7 +525,8 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb) 
   const median = contactCounts.slice().sort((a,b) => a-b)[Math.floor(contactCounts.length / 2)] || 0;
 
   wrap.appendChild(el("section", { class: "atlas-intro" }, [
-    el("div", {}, [el("h2", { text: familyDisplayName(family ? family.name : slug) })]),
+    el("div", {}, [el("h2", { text: panelMode ? transducerLabel(d.panel)
+      : familyDisplayName(family ? family.name : slug) })]),
     el("div", { class: "summary-strip" }, [
       summaryMetric(d.count, t("structures")), summaryMetric(receptorNames.size, t("receptors")),
       summaryMetric(ligandNames.size, t("different_ligands")), summaryMetric(median, t("median_contacts"))
@@ -542,13 +554,24 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb) 
   }
   wrap.appendChild(quick);
 
-  const transducerPanels=["Gs","Gi/o","Gq/11","G12/13","arrestin","transducer_free"];
+  const ALL_PANELS=["Gs","Gi/o","Gq/11","G12/13","arrestin","transducer_free"];
+  // A single-family offline export only carries the panels that family appears in, so the strip
+  // must not offer a panel whose payload was never bundled.
+  const availablePanels=L.getManifest().panel_files || {};
+  const transducerPanels=panelMode
+    ? ALL_PANELS.filter(x => availablePanels[panelSlugOf(x)])
+    : ALL_PANELS;
   const panelStrip=el("div", { class:"family-panel-strip", "aria-label":t("transducer") });
   for (const panel of transducerPanels) {
-    const count=d.structures.filter(x=>(x.transducer_panels||[]).includes(panel)).length;
-    if (!count) continue;
+    // In panel mode the strip switches between panels instead of filtering within one family,
+    // so every panel is offered even though the current payload only holds one of them.
+    const count=panelMode ? null
+      : d.structures.filter(x=>(x.transducer_panels||[]).includes(panel)).length;
+    if (!panelMode && !count) continue;
     const button=el("button", { class:"panel-tab family-panel-tab", "data-panel":panel,
-      "aria-pressed":"false", onclick:()=>{
+      "aria-pressed":panelMode && panel===d.panel ? "true" : "false",
+      onclick:()=>{
+        if (panelMode) { navigate({ view:"panels", panel:panelSlugOf(panel) }); return; }
         filters.transducer=filters.transducer===panel?"":panel;
         if (filterControls.transducer) filterControls.transducer.value=filters.transducer;
         for (const node of panelStrip.querySelectorAll("button")) {
@@ -558,8 +581,9 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb) 
         drawList(); drawDetail();
       } }, [
         el("span", { class:"tab-label", text:transducerLabel(panel) }),
-        countBadge(count)
+        count === null ? el("span") : countBadge(count)
       ]);
+    if (panelMode && panel===d.panel) button.classList.add("active");
     panelStrip.appendChild(button);
   }
   wrap.appendChild(panelStrip);
@@ -609,6 +633,7 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb) 
      generated from an identical row set. */
   /* The buttons read only "CSV"/"XLSX", so each carries an accessible name describing the
      dataset it downloads — otherwise a screen reader announces six identical controls. */
+  const exportName = panelMode ? "panel-" + panelSlug : slug;
   function exportRow(labelKey, csvName, xlsxName, onCsv, onXlsx) {
     return el("div", { class: "export-row" }, [
       el("span", { class: "export-label" }, [
@@ -619,9 +644,14 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb) 
       ])
     ]);
   }
+  /* Exports can span families in panel mode, so gather every family the current filter
+     touches. In family mode this resolves to the single family file already cached. */
   async function withPocket(action) {
-    try { action(await L.loadPocketDetail(slug)); }
-    catch (error) { window.alert(L.errorMessage(error)); }
+    try {
+      const slugs = Array.from(new Set(filtered().map(famOf)));
+      const parts = await Promise.all(slugs.map(s => L.loadPocketDetail(s)));
+      action({ structures: parts.flatMap(part => part.structures || []) });
+    } catch (error) { window.alert(L.errorMessage(error)); }
   }
   /* Contact-frequency threshold. It hides pocket positions the panel rarely touches, which is a
      different question from the ≥75% markers: the markers annotate, this filters. */
@@ -650,16 +680,16 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb) 
     exportRow("export_filtered_set",
       t("export_structures") + " (CSV)",
       t("export_structures") + " / " + t("export_observations") + " (XLSX)",
-      () => exportStructures(filtered(), slug),
-      () => exportStructuresXLSX(filtered(), slug)),
+      () => exportStructures(filtered(), exportName),
+      () => exportStructuresXLSX(filtered(), exportName)),
     exportRow("export_contact_list",
       t("export_contacts") + " (CSV)", t("export_contacts") + " (XLSX)",
-      () => withPocket(p => exportContactList(filtered(), p, slug, false)),
-      () => withPocket(p => exportContactList(filtered(), p, slug, true))),
+      () => withPocket(p => exportContactList(filtered(), p, exportName, false)),
+      () => withPocket(p => exportContactList(filtered(), p, exportName, true))),
     exportRow("export_matrix",
       t("export_matrix") + " (CSV)", t("export_matrix") + " (XLSX)",
-      () => withPocket(p => exportMatrix(filtered(), p, slug, false)),
-      () => withPocket(p => exportMatrix(filtered(), p, slug, true)))
+      () => withPocket(p => exportMatrix(filtered(), p, exportName, false)),
+      () => withPocket(p => exportMatrix(filtered(), p, exportName, true)))
   ]));
 
   function filtered() {
@@ -768,7 +798,7 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb) 
     ]));
     const sourcesSection = el("section", { class: "detail-section sources" }, [
       el("h3", { text: t("source_links") }),
-      SOURCES.linkRow(slug,x)
+      SOURCES.linkRow(famOf(x),x)
     ]);
     // Both sections load asynchronously; the placeholders are appended now so the order on
     // screen is stable no matter which payload resolves first.
@@ -786,7 +816,7 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb) 
     section.appendChild(el("p", { class: "muted", text: t("loading") }));
     let rows;
     try {
-      const payload = await L.loadFamilyEvidence(slug);
+      const payload = await L.loadFamilyEvidence(famOf(x));
       rows = (payload.records || []).filter(row => row.pdb_id === x.pdb_id);
     } catch (error) {
       if (seq !== detailSeq) return;
@@ -843,7 +873,7 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb) 
       el("p", { class: "muted", text: t("loading") }));
     let record = null, core = null, positions = null;
     try {
-      const payload = await L.loadPocketDetail(slug);
+      const payload = await L.loadPocketDetail(famOf(x));
       record = (payload.structures || []).find(s => s.pdb_id === x.pdb_id) || null;
       // Compare against the panel the user is currently filtering by; with no filter, fall back
       // to the panel the structure was actually solved in.
@@ -1466,9 +1496,27 @@ export async function references(root, slug) {
   const g = await L.loadGlobal("references.json");
   const wrap = el("section", { class: "view prose" });
   wrap.appendChild(el("h2", { text: t("nav_references") }));
-  wrap.appendChild(el("ul", {}, (g.databases || []).map(db => el("li", {}, [
-    el("a", { href: db.url, target: "_blank", rel: "noopener", text: db.name }),
-    el("span", { class: "muted small", text: " — " + db.licence })]))));
+  // The payload carries full bibliographic records (database_citations); the old `databases`
+  // array it replaced is gone, which is why this page rendered empty.
+  const cites = g.database_citations || {};
+  const keys = Object.keys(cites).sort();
+  if (keys.length) {
+    wrap.appendChild(el("h3", { text: t("ref_databases") }));
+    const list = el("ol", { class: "reference-list" });
+    for (const key of keys) {
+      const c = cites[key];
+      const item = el("li", {}, [ el("span", { text: plainCitation(c) }) ]);
+      if (c.pubmed_url) item.appendChild(el("a", { href: c.pubmed_url, target: "_blank",
+        rel: "noopener", text: " PubMed" }));
+      list.appendChild(item);
+    }
+    wrap.appendChild(list);
+    wrap.appendChild(el("p", { class: "muted small", text: t("cite_db_note") }));
+  }
+  if (g.atlas) wrap.appendChild(el("p", { class: "muted small",
+    text: g.atlas.title + " " + (g.atlas.version || "") + " — " +
+      (g["atlas"]["doi_note_" + getLang()] || g.atlas.doi_note_en || "") }));
+  if (!slug) wrap.appendChild(el("p", { class: "muted", text: t("ref_pick_family") }));
   if (slug) {
     const r = await L.loadFamilyFile(slug, "references.json");
     wrap.appendChild(el("h3", { text: "PDB" }));

@@ -485,7 +485,16 @@ async function render(r) {
       case "landing": node = await V.landing(main); break;
       case "overview": navigate({ family: r.family, view: "structures" }, true); return;
       case "structures": node = await V.structures(main, r.family, openModal, r.site, r.pdb); break;
-      case "panels": node = await V.panels(r.panel, openModal); break;
+      // The panel view is the same explorer as Yapılar, sourced from a panel payload.
+      case "panels": {
+        // Fall back to whatever panel this build actually carries; an offline single-family
+        // export may not include Gs at all.
+        const available = Object.keys(L.getManifest().panel_files || {});
+        const panel = available.includes(r.panel) ? r.panel
+          : (available.includes("gs") ? "gs" : available[0]);
+        if (!panel) { fatal(t("err_route")); return; }
+        node = await V.structures(main, null, openModal, null, r.pdb, panel); break;
+      }
       case "evidence": node = await V.evidence(main, r.family, r.open === "1"); break;
       case "contacts": case "interfaces": case "motifs": case "compare":
         navigate(r.family ? { family: r.family, view: "structures" } : { view: "landing" }, true); return;

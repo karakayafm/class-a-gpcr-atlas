@@ -21,13 +21,58 @@ APP=ROOT/"app"; WEB=ROOT/"data/web"; REL=ROOT/"releases/phase5"
 def rd(p): return [json.loads(l) for l in Path(p).read_text(encoding="utf-8").splitlines() if l.strip()]
 def sha(p): return hashlib.sha256(Path(p).read_bytes()).hexdigest()
 
+# Licence documents that must travel with any published copy of the site. They used to exist
+# only in the deployed checkout, which meant a mirroring deploy could delete them; emitting them
+# from the build makes the built site a complete, self-describing artefact.
+LICENCE_FILES = ("LICENSE", "LICENSE-DATA", "LICENSE-NOTICE.md", "LICENSE-SCOPE.json")
+THIRD_PARTY_NOTICES = "THIRD_PARTY_NOTICES.md"
+LICENCE_DIR = "data/licences/third_party"
+
+
+def copy_licences(dst: Path):
+    for name in LICENCE_FILES:
+        src = ROOT/name
+        if src.exists(): shutil.copy2(src, dst/name)
+    notices = APP/THIRD_PARTY_NOTICES
+    if notices.exists(): shutil.copy2(notices, dst/THIRD_PARTY_NOTICES)
+    third_party = ROOT/LICENCE_DIR
+    if third_party.exists():
+        target = dst/"licences"
+        if target.exists(): shutil.rmtree(target)
+        shutil.copytree(third_party, target)
+
+
+def offline_panels(dst: Path, slug: str, panel_files: dict) -> dict:
+    """Rewrite each panel payload with only this family's structures, returning new manifest
+    entries. Panels with nothing left for the family are dropped entirely."""
+    out={}
+    for pslug, entry in panel_files.items():
+        src=WEB/entry["url"]
+        if not src.exists(): continue
+        payload=json.loads(src.read_text(encoding="utf-8"))
+        rows=[r for r in payload.get("structures",[]) if r.get("family_slug")==slug]
+        if not rows: continue
+        payload["structures"]=rows; payload["count"]=len(rows); payload["families"]=[slug]
+        target=dst/"data/web"/entry["url"]
+        target.parent.mkdir(parents=True,exist_ok=True)
+        txt=json.dumps(payload,sort_keys=True,separators=(",",":"),ensure_ascii=False)
+        target.write_text(txt,encoding="utf-8")
+        b=txt.encode("utf-8")
+        out[pslug]={"url":entry["url"],"bytes":len(b),
+                    "sha256":hashlib.sha256(b).hexdigest()}
+    return out
+
+
 def copy_app(dst: Path, payload_base: str, offline_family: str | None = None):
     dst.mkdir(parents=True, exist_ok=True)
     for sub in ("css","js","vendor","assets"):
         s=APP/sub
         if s.exists():
             if (dst/sub).exists(): shutil.rmtree(dst/sub)
-            shutil.copytree(s,dst/sub)
+            # Editing backups are a local safety net, never part of a published site.
+            shutil.copytree(s,dst/sub,ignore=shutil.ignore_patterns("*.orig-*","*.orig2-*",
+                                                                   "*.orig3-*","__pycache__"))
+    copy_licences(dst)
     html=(APP/"index.html").read_text(encoding="utf-8")
     html=html.replace('data-payload-base="../data/web/"', f'data-payload-base="{payload_base}"')
     if offline_family:
@@ -62,6 +107,10 @@ def main()->int:
         gm=json.loads(json.dumps(m))
         gm["families"]=[f]; gm["family_count"]=1
         gm["offline_export"]=True; gm["offline_family"]=slug
+        # Panel payloads span every family, so a single-family export gets its own copies
+        # filtered to this family. Advertising the full-atlas files here would list structures
+        # the bundle does not carry and 404 on the first click.
+        gm["panel_files"]=offline_panels(d,slug,m.get("panel_files") or {})
         gm["cross_family_comparison_available"]=False
         gm["offline_note_en"]=("Cross-family comparison is disabled in a single-family offline "
                                "export, because only one family's data is bundled.")
