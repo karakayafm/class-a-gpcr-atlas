@@ -30,9 +30,9 @@ function buildChrome(manifest) {
   clear(nav);
   const r = parseRoute();
   const items = r.family
-    ? [["structures", "nav_structures"], ["methods", "nav_methods"], ["sources", "nav_sources"],
+    ? [["structures", "nav_structures"], ["panels", "nav_panels"], ["methods", "nav_methods"], ["sources", "nav_sources"],
        ["references", "nav_references"], ["cite", "nav_cite"]]
-    : [["landing", "families"], ["methods", "nav_methods"],
+    : [["landing", "families"], ["panels", "nav_panels"], ["methods", "nav_methods"],
        ["sources", "nav_sources"], ["references", "nav_references"], ["cite", "nav_cite"]];
   for (const [view, key] of items) {
     const on = r.view === view;
@@ -169,7 +169,7 @@ function setBackgroundInert(on) {
   }
 }
 
-async function openModal(pdb, observationId) {
+async function openModal(pdb, observationId, focusResidue) {
   const m = ensureModal();
   modalOpener = document.activeElement;
   m.hidden = false;
@@ -185,6 +185,8 @@ async function openModal(pdb, observationId) {
     msg => { st.textContent = msg; st.hidden = !msg; });
   if (!meta) return;
   updateModalTitle(meta);
+  if (focusResidue && !VIEW.isResidueSelected(focusResidue.chain, focusResidue.seq))
+    VIEW.toggleResidue(focusResidue.chain, focusResidue.seq);
   buildViewerSide(meta);
   const note = VIEW.statusMessage();
   st.textContent = note; st.hidden = !note;
@@ -432,7 +434,9 @@ function buildViewerSide(meta) {
     side.appendChild(el("p", { class: "muted small", text: t("v_click_hint") }));
     const list = el("div", { class: "residue-picker" });
     for (const r of contacts) {
-      const b = el("button", { class: "residue-button", "aria-pressed": "false", onclick: () => {
+      const initiallySelected = VIEW.isResidueSelected(r.chain, r.seq);
+      const b = el("button", { class: "residue-button" + (initiallySelected ? " selected" : ""),
+        "aria-pressed": initiallySelected ? "true" : "false", onclick: () => {
           const selected = VIEW.toggleResidue(r.chain, r.seq);
           b.classList.toggle("selected", selected);
           b.setAttribute("aria-pressed", selected ? "true" : "false");
@@ -481,13 +485,14 @@ async function render(r) {
       case "landing": node = await V.landing(main); break;
       case "overview": navigate({ family: r.family, view: "structures" }, true); return;
       case "structures": node = await V.structures(main, r.family, openModal, r.site, r.pdb); break;
+      case "panels": node = await V.panels(r.panel, openModal); break;
       case "evidence": node = await V.evidence(main, r.family, r.open === "1"); break;
       case "contacts": case "interfaces": case "motifs": case "compare":
         navigate(r.family ? { family: r.family, view: "structures" } : { view: "landing" }, true); return;
       case "methods": node = await V.methods(); break;
       case "sources": node = await V.sources(); break;
       case "references": node = await V.references(main, r.family); break;
-      case "cite": node = await V.cite(main, r.pdb); break;
+      case "cite": node = await V.cite(main, r.pdb, r.family); break;
       case "3d":
         // A deep link may name a structure without naming a family. The modal is the point of
         // the route, so render whatever context we can behind it rather than failing.

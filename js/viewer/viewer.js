@@ -456,6 +456,10 @@ export function toggleResidue(chain, seq) {
   return selectedResidues.has(key);
 }
 
+export function isResidueSelected(chain, seq) {
+  return selectedResidues.has(residueKey(chain, seq));
+}
+
 export function toggleMotif(id) {
   selectedMotifs.has(id) ? selectedMotifs.delete(id) : selectedMotifs.add(id);
   redrawSelections();
