@@ -30,10 +30,12 @@ function buildChrome(manifest) {
   clear(nav);
   const r = parseRoute();
   const items = r.family
-    ? [["structures", "nav_structures"], ["panels", "nav_panels"], ["methods", "nav_methods"], ["sources", "nav_sources"],
+    ? [["structures", "nav_structures"], ["panels", "nav_panels"], ["ligands", "nav_ligands"],
+       ["methods", "nav_methods"], ["sources", "nav_sources"],
        ["references", "nav_references"], ["cite", "nav_cite"]]
-    : [["landing", "families"], ["panels", "nav_panels"], ["methods", "nav_methods"],
-       ["sources", "nav_sources"], ["references", "nav_references"], ["cite", "nav_cite"]];
+    : [["landing", "families"], ["panels", "nav_panels"], ["ligands", "nav_ligands"],
+       ["methods", "nav_methods"], ["sources", "nav_sources"],
+       ["references", "nav_references"], ["cite", "nav_cite"]];
   for (const [view, key] of items) {
     const on = r.view === view;
     nav.appendChild(el("a", { class: "navlink" + (on ? " active" : ""),
@@ -493,7 +495,14 @@ async function render(r) {
         const panel = available.includes(r.panel) ? r.panel
           : (available.includes("gs") ? "gs" : available[0]);
         if (!panel) { fatal(t("err_route")); return; }
-        node = await V.structures(main, null, openModal, null, r.pdb, panel); break;
+        node = await V.structures(main, null, openModal, null, r.pdb, { panelSlug: panel }); break;
+      }
+      case "ligands": {
+        const available = Object.keys(L.getManifest().ligand_files || {});
+        const cls = available.includes(r.ligand) ? r.ligand
+          : (available.includes("agonist") ? "agonist" : available[0]);
+        if (!cls) { fatal(t("err_route")); return; }
+        node = await V.structures(main, null, openModal, null, r.pdb, { ligandSlug: cls }); break;
       }
       case "evidence": node = await V.evidence(main, r.family, r.open === "1"); break;
       case "contacts": case "interfaces": case "motifs": case "compare":

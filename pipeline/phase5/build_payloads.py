@@ -272,7 +272,7 @@ def main()->int:
     for m in MM: mm_by_fam[m["major_family_id"]].append(m)
 
     manifests={}; landing_rows=[]; search_rows=[]; panel_structure_rows=[]; total_prev=0
-    panel_full_rows=defaultdict(list)
+    panel_full_rows=defaultdict(list); ligand_full_rows=defaultdict(list)
     for node in famnodes:
         fid=node["source_id"]; slug=node["project_slug"]
         fam_s=[s for s in S.values() if s["major_family_id"]==fid]
@@ -382,6 +382,11 @@ def main()->int:
             full=dict(structure); full["family_slug"]=slug; full["family_name"]=node["name"]
             for panel in structure["transducer_panels"]:
                 panel_full_rows[panel].append(full)
+            # Same treatment along the pharmacology axis, so a reader can browse "every
+            # antagonist structure" without loading all eleven families.
+            for mode in sorted({o.get("binding_mode") for o in structure["observations"]
+                                if o.get("binding_mode")}):
+                ligand_full_rows[mode].append(full)
         search_rows.extend({
           "pdb_id":s["pdb_id"],"family_slug":slug,"family_name":node["name"],
           "receptor_name":s["receptor_name"],
@@ -661,6 +666,22 @@ def main()->int:
            "families":sorted({r["family_slug"] for r in ordered}),
            "structures":ordered})
 
+    # ---- per-pharmacology-class structure payloads ----------------------------------------
+    ligand_files={}; ligand_index=[]
+    for mode,rows_ in sorted(ligand_full_rows.items()):
+        lslug=panel_slug(mode)
+        ordered=sorted(rows_,key=lambda r:(r["family_name"],r["pdb_id"]))
+        ligand_files[lslug]=wj(WEB/"ligands"/lslug/"structures.json",
+          {"schema":"structure_index.schema.json","schema_version":SCHEMA_VERSION,
+           "ligand_class":mode,"ligand_class_slug":lslug,"count":len(ordered),
+           "families":sorted({r["family_slug"] for r in ordered}),
+           "structures":ordered})
+        ligand_index.append({"slug":lslug,"label":mode,"structures":len(ordered)})
+
+    gfiles["ligand_classes.json"]=wj(G/"ligand_classes.json",
+      {"schema":"ligand_classes","schema_version":SCHEMA_VERSION,
+       "classes":sorted(ligand_index,key=lambda r:(-r["structures"],r["label"]))})
+
     gfiles["panels.json"]=wj(G/"panels.json",
       {"schema":"panels.schema.json","schema_version":SCHEMA_VERSION,
        "source_freeze":"enrichment-1.0.0",
@@ -767,6 +788,7 @@ def main()->int:
       # Panel payloads are listed so the loader can resolve them and the integrity check
       # covers them like every other payload.
       "panel_files":panel_files,
+      "ligand_files":ligand_files,
       "source_versions":srcv["sources"],
       "review_warning_count":total_hr,
       "review_warning_unit":"canonical_review_item",

@@ -304,8 +304,21 @@ listesi — desen doğru çalışıyor.
 
 ## 6. Arayüz facet tasarımı
 
-Mevcut gezgin (`structures()`) korunur; ligand filtreleri **mevcut filtre ızgarasına**
-eklenir, yeni bir sayfa açılmaz. Panel gezgininde de aynı kod çalışır.
+> **Uygulamada revize edildi.** İlk tasarım kimya filtrelerini mevcut filtre ızgarasına
+> ekliyordu. Uygulandığında aile gezgininin reseptör odaklı kenar çubuğunu kalabalıklaştırdığı
+> görüldü ve ligand ekseni gezinme düzeyinde temsil edilmiyordu. Nihai hâl:
+>
+> `Aileler | İletici panelleri | **Ligand panelleri** | ...`
+>
+> Ligand panelleri, iletici panellerinin kardeşidir: üstte farmakoloji sınıfı şeridi
+> (12 sınıf, kaynak anotasyonundan; `unknown` ve `Not specified` birleştirilmez), solda aile
+> fark etmeksizin yapı listesi, sağda mevcut detay paneli. **Kimya filtreleri yalnız bu
+> bölümdedir**; aile ve iletici gezginleri reseptör odaklı kalır.
+>
+> Sınıf başına payload: `data/web/ligands/<sınıf>/structures.json` (en büyüğü Agonist 1,5 MB,
+> tembel yüklenir).
+
+Mevcut gezgin (`structures()`) üç kaynağı da besler: aile, iletici paneli, ligand sınıfı.
 
 ### 6.1 Varsayılan görünür
 

@@ -587,10 +587,16 @@ export async function overview(root, slug) {
 /* One explorer, two sources. With `panelSlug` it lists every structure in a transducer panel
    across all families; otherwise it lists one family. Panel rows carry their own family_slug,
    so anything family-scoped (pocket detail, evidence, sources) is resolved per row. */
-export async function structures(root, slug, onOpen3D, initialSite, initialPdb, panelSlug) {
-  const panelMode = !!panelSlug;
-  const d = panelMode ? await L.loadPanelStructures(panelSlug)
-                      : await L.loadFamilyFile(slug, "structures.json");
+export async function structures(root, slug, onOpen3D, initialSite, initialPdb, opts) {
+  const { panelSlug = null, ligandSlug = null } = opts || {};
+  const panelMode = !!panelSlug, ligandMode = !!ligandSlug;
+  // Chemistry filters belong to the ligand view. In the family and transducer explorers the
+  // question is which receptors and complexes exist, and a chemistry sidebar there only
+  // crowded the receptor-oriented filters it sat among.
+  const chemMode = ligandMode;
+  const d = ligandMode ? await L.loadLigandStructures(ligandSlug)
+          : panelMode ? await L.loadPanelStructures(panelSlug)
+          : await L.loadFamilyFile(slug, "structures.json");
   const famOf = row => row.family_slug || slug;
   const wrap = el("section", { class: "view" });
   const family = (L.getManifest().families || []).find(f => f.slug === slug);
@@ -621,7 +627,8 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
   const median = contactCounts.slice().sort((a,b) => a-b)[Math.floor(contactCounts.length / 2)] || 0;
 
   wrap.appendChild(el("section", { class: "atlas-intro" }, [
-    el("div", {}, [el("h2", { text: panelMode ? transducerLabel(d.panel)
+    el("div", {}, [el("h2", { text: ligandMode ? d.ligand_class
+      : panelMode ? transducerLabel(d.panel)
       : familyDisplayName(family ? family.name : slug) })]),
     el("div", { class: "summary-strip" }, [
       summaryMetric(d.count, t("structures")), summaryMetric(receptorNames.size, t("receptors")),
@@ -650,12 +657,36 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
   }
   wrap.appendChild(quick);
 
+  /* Ligand mode gets its own strip along the pharmacology axis, mirroring how the transducer
+     strip works: pick a class, browse every structure in it regardless of family. */
+  if (ligandMode) {
+    const strip=el("div", { class:"family-panel-strip", "aria-label":t("nav_ligands") });
+    const classes=(L.getManifest().ligand_files) || {};
+    (async () => {
+      let index;
+      try { index=await L.loadGlobal("ligand_classes.json"); }
+      catch (error) { return; }
+      for (const entry of index.classes || []) {
+        if (!classes[entry.slug]) continue;
+        const active=entry.slug===ligandSlug;
+        const button=el("button", { class:"panel-tab family-panel-tab"+(active?" active":""),
+          "data-panel":entry.slug, "aria-pressed":active?"true":"false",
+          onclick:()=>navigate({ view:"ligands", ligand:entry.slug }) }, [
+            el("span", { class:"tab-label", text:entry.label }),
+            countBadge(entry.structures)
+          ]);
+        strip.appendChild(button);
+      }
+    })();
+    wrap.appendChild(strip);
+  }
+
   const ALL_PANELS=["Gs","Gi/o","Gq/11","G12/13","arrestin","transducer_free"];
   // A single-family offline export only carries the panels that family appears in, so the strip
   // must not offer a panel whose payload was never bundled.
   const availablePanels=L.getManifest().panel_files || {};
-  const transducerPanels=panelMode
-    ? ALL_PANELS.filter(x => availablePanels[panelSlugOf(x)])
+  const transducerPanels=ligandMode ? []
+    : panelMode ? ALL_PANELS.filter(x => availablePanels[panelSlugOf(x)])
     : ALL_PANELS;
   const panelStrip=el("div", { class:"family-panel-strip", "aria-label":t("transducer") });
   for (const panel of transducerPanels) {
@@ -727,7 +758,7 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
   // Chemistry is a filter, so it belongs with the other filters rather than under the
   // result list. The element is created later; insert it here to keep that order.
   const chemSlot = el("div", { class: "chem-slot" });
-  rail.appendChild(chemSlot);
+  if (chemMode) rail.appendChild(chemSlot);
   rail.appendChild(listHead); rail.appendChild(resultList); rail.appendChild(unknownBox);
 
   /* Ligands a chemistry filter could not judge. Collapsed by default so it does not compete
@@ -772,7 +803,8 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
      generated from an identical row set. */
   /* The buttons read only "CSV"/"XLSX", so each carries an accessible name describing the
      dataset it downloads — otherwise a screen reader announces six identical controls. */
-  const exportName = panelMode ? "panel-" + panelSlug : slug;
+  const exportName = ligandMode ? "ligand-" + ligandSlug
+    : panelMode ? "panel-" + panelSlug : slug;
   function exportRow(labelKey, csvName, xlsxName, onCsv, onXlsx) {
     return el("div", { class: "export-row" }, [
       el("span", { class: "export-label" }, [
@@ -880,18 +912,31 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
         .filter(r => r.descriptors[field] != null)
         .reduce((n, r) => n + r.pharmacological_instances, 0);
       const lo = Math.min(...values), hi = Math.max(...values);
-      const min = el("input", { type: "number", step: String(step), placeholder: String(Math.floor(lo)) });
-      const max = el("input", { type: "number", step: String(step), placeholder: String(Math.ceil(hi)) });
+      /* Two sliders rather than typed numbers: dragging shows the result count moving, which
+         is how a reader finds where a property actually separates the set. The pair is kept
+         ordered so the low handle can never pass the high one. */
+      const low = Math.floor(lo), high = Math.ceil(hi);
+      const decimals = step < 1 ? 2 : 0;
+      const minInput = el("input", { type: "range", min: String(low), max: String(high),
+        step: String(step), value: String(low), "aria-label": t(labelKey) + " min" });
+      const maxInput = el("input", { type: "range", min: String(low), max: String(high),
+        step: String(step), value: String(high), "aria-label": t(labelKey) + " max" });
+      const readout = el("span", { class: "chem-range-value" });
       const apply = () => {
-        const low = min.value === "" ? null : Number(min.value);
-        const high = max.value === "" ? null : Number(max.value);
-        filters.ranges[field] = (low == null && high == null) ? null : [low, high];
+        let a = Number(minInput.value), b = Number(maxInput.value);
+        if (a > b) { [a, b] = [b, a]; minInput.value = String(a); maxInput.value = String(b); }
+        readout.textContent = a.toFixed(decimals) + " – " + b.toFixed(decimals);
+        // A range spanning the whole observed span is not a filter; leaving it null keeps
+        // ligands whose descriptor is missing from being judged against it.
+        filters.ranges[field] = (a <= low && b >= high) ? null : [a, b];
         drawList(); drawDetail();
       };
-      min.addEventListener("change", apply); max.addEventListener("change", apply);
+      const live = debounce(apply, 90);
+      minInput.addEventListener("input", live); maxInput.addEventListener("input", live);
+      readout.textContent = low.toFixed(decimals) + " – " + high.toFixed(decimals);
       rangeBox.appendChild(el("div", { class: "chem-range" }, [
-        el("span", { class: "chem-range-label", text: t(labelKey) }),
-        min, el("span", { text: "–" }), max,
+        el("span", { class: "chem-range-label", text: t(labelKey) }), readout,
+        el("div", { class: "chem-sliders" }, [minInput, maxInput]),
         el("span", { class: "chem-coverage",
           text: t("chem_coverage", { covered, total: totalInstances }) })
       ]));

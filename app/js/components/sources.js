@@ -40,6 +40,12 @@ export function linkRow(slug,structure) {
           (row.pubchem.approximate?" ≈":""):null]])]
     ];
     clear(box);
+    // Polymer ligands (peptides, proteins) are entities inside the structure, not chemical
+    // components, so the PDB has no ligand page for them. Saying so is more useful than
+    // leaving the chemical-identity group silently empty.
+    const polymerLigands=(structure.observations||[])
+      .filter(row=>row.entity_form==="polymer_chain"&&row.ligand_name)
+      .map(row=>row.ligand_name);
     for (const [label,entries] of groups) {
       const live=entries.filter(([href,text])=>href&&text);
       if (!live.length) continue;
@@ -49,6 +55,8 @@ export function linkRow(slug,structure) {
           live.map(([href,text])=>el("a", { class:"source-chip",href,target:"_blank",rel:"noopener",text })))
       ]));
     }
+    if (polymerLigands.length) box.appendChild(el("p", { class:"source-polymer-note",
+      text:t("source_polymer_note", { ligands:Array.from(new Set(polymerLigands)).join(", ") }) }));
     box.appendChild(button(slug,structure));
   })();
   return box;
