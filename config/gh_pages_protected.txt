@@ -1,0 +1,12 @@
+# Files that live only on the gh-pages branch and are never produced by the site build.
+# `sync_gh_pages.sh` excludes them from the mirroring delete and refuses to deploy if any of
+# them would disappear. One path per line, relative to the branch root. Blank lines and lines
+# starting with '#' are ignored.
+#
+# .nojekyll is the critical one: without it GitHub Pages runs Jekyll, which ignores paths
+# beginning with an underscore and can break asset serving.
+.nojekyll
+404.html
+CITATION.cff
+DATA_LICENSE.md
+SOURCE_DATA_LICENSES.md
