@@ -67,6 +67,22 @@ export async function loadPanelStructures(panelSlug) {
   lru(famCache, MAX_FAMILY_ENTRIES * 4);
   return d;
 }
+/* Ligand chemistry and its pattern catalogue. Keyed on the manifest checksum like the other
+   payloads, and fetched only when a chemistry filter is first opened, so the landing payload
+   is unaffected. */
+async function loadGlobalChecked(name) {
+  const entry = (getManifest().global_files || {})[name];
+  if (!entry) throw new LoadError("schema", "global/" + name);
+  const key = "gf:" + name + ":" + entry.sha256;
+  if (famCache.has(key)) { const v = famCache.get(key); touch(famCache, key, v); return v; }
+  const d = await getJSON(base() + "global/" + name);
+  touch(famCache, key, d);
+  lru(famCache, MAX_FAMILY_ENTRIES * 4);
+  return d;
+}
+export function loadLigandChemistry() { return loadGlobalChecked("ligand_chemistry.json"); }
+export function loadChemistryCatalog() { return loadGlobalChecked("chemistry_catalog.json"); }
+
 export function loadPanels() {
   if (panelsPromise) return panelsPromise;
   panelsPromise = loadGlobal("panels.json").catch(e => { panelsPromise=null; throw e; });

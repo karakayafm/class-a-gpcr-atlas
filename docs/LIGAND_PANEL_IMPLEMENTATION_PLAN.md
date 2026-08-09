@@ -322,6 +322,42 @@ eklenir, yeni bir sayfa açılmaz. Panel gezgininde de aynı kod çalışır.
 
 TPSA, HBD, HBA, döndürülebilir bağ, ağır atom, formal yük, aromatik halka, Fsp³.
 
+### 6.2b Uygulanan üç durumlu mantık *(Aşama 2)*
+
+Kimya filtresi boolean değil, üç durumlu:
+
+| Durum | Anlamı | Arayüzde |
+|---|---|---|
+| `MATCH` | Kimya verisi var **ve** aktif filtrelerin hepsini karşılıyor | Ana listede ve ana sayaçta |
+| `NO_MATCH` | Kimya verisi var, en az bir filtreyi karşılamıyor | Gösterilmiyor |
+| `UNKNOWN` | Kimya verisi yok — filtre uygulanamıyor | Ayrı, başlangıçta kapalı bölümde |
+
+Yapı düzeyine yuvarlama: en az bir ligand karşılıyorsa yapı `MATCH`; hiçbiri karşılamıyor
+ama en az biri değerlendirilemiyorsa `UNKNOWN`; hepsi değerlendirildi ve hiçbiri
+karşılamıyorsa `NO_MATCH`.
+
+**Biyolojik tip ekseni ayrı çalışır.** Peptitlerin `biological_type` alanı vardır, bu yüzden
+`Biyolojik tip = peptide` seçildiğinde peptitler gerçek `MATCH` olur. Aynı peptitler bir
+fonksiyonel grup veya descriptor filtresi eklendiğinde `UNKNOWN`'a düşer.
+
+Doğrulanmış örnek (peptit reseptörleri ailesi, 356 yapı, `tersiyer amin` filtresi):
+
+```
+MATCH      54 yapı  ·  54 doğrulanmış ligand eşleşmesi
+UNKNOWN   228 yapı  ·  229 ligand örneği
+             227 peptit / polimer — kimyasal bileşen kodu yok
+               2 kimyasal gösterim bulunamadı
+NO_MATCH   74 yapı  (gösterilmiyor)
+────────────────────────────────────
+toplam    356 = ailenin tamamı
+```
+
+Sayaçlar yapı ile ligand örneğini karıştırmaz: `Biyolojik tip = peptide` filtresinde
+"191 sonuç · 192 doğrulanmış ligand eşleşmesi" çıkar — bir yapıda iki eşleşen peptit vardır.
+
+Her descriptor kendi gerçek kapsamını gösterir (`{covered}/{total} ligand örneğinde var`);
+genel %76,9 oranı hiçbir descriptor'a otomatik uygulanmaz.
+
 ### 6.3 Zorunlu dürüstlük kuralları
 
 1. **Kimyası olmayan instance sayacı her zaman görünür.** Örnek: *"412 sonuç · 118 yapı–ligand
