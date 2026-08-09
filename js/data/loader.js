@@ -83,6 +83,19 @@ async function loadGlobalChecked(name) {
 export function loadLigandChemistry() { return loadGlobalChecked("ligand_chemistry.json"); }
 export function loadChemistryCatalog() { return loadGlobalChecked("chemistry_catalog.json"); }
 
+/* Per-pharmacology-class structure list: every structure carrying a ligand of that class,
+   across families. */
+export async function loadLigandStructures(classSlug) {
+  const entry = (getManifest().ligand_files || {})[classSlug];
+  if (!entry) throw new LoadError("schema", "ligands/" + classSlug);
+  const key = "ligand:" + classSlug + ":" + entry.sha256;
+  if (famCache.has(key)) { const v = famCache.get(key); touch(famCache, key, v); return v; }
+  const d = await getJSON(base() + entry.url);
+  checkSchema(d, "ligands/" + classSlug);
+  touch(famCache, key, d);
+  lru(famCache, MAX_FAMILY_ENTRIES * 4);
+  return d;
+}
 export function loadPanels() {
   if (panelsPromise) return panelsPromise;
   panelsPromise = loadGlobal("panels.json").catch(e => { panelsPromise=null; throw e; });
