@@ -18,6 +18,8 @@ FILES = [
     "structure_references.json",
     "database_citations.json",
     "panel_statistics.json",
+    "ligand_chemistry.json",
+    "ligand_chemistry_audit.json",
 ]
 
 

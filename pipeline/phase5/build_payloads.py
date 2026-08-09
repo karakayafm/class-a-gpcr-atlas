@@ -716,6 +716,15 @@ def main()->int:
        # Per-source role, fields used, licence and what this project did with the data.
        "source_roles":json.loads((ROOT/"config/enrichment/source_roles.json")
                                  .read_text(encoding="utf-8"))["sources"]})
+    # Chemistry is keyed on the chemical component and loaded only when a ligand filter is
+    # first used, so the landing payload is unchanged.
+    chem=json.loads((ENRICH/"ligand_chemistry.json").read_text(encoding="utf-8"))
+    gfiles["ligand_chemistry.json"]=wj(G/"ligand_chemistry.json",chem)
+    gfiles["chemistry_catalog.json"]=wj(G/"chemistry_catalog.json",
+      json.loads((ROOT/"config/enrichment/chemistry_catalog.json").read_text(encoding="utf-8")))
+    gfiles["ligand_chemistry_audit.json"]=wj(G/"ligand_chemistry_audit.json",
+      json.loads((ENRICH/"ligand_chemistry_audit.json").read_text(encoding="utf-8")))
+
     gfiles["references.json"]=wj(G/"references.json",
       {"schema":"reference_payload.schema.json","schema_version":SCHEMA_VERSION,
        "atlas":{"title":"Class A GPCR Atlas","version":"5.0.0-pre",

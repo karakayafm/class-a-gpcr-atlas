@@ -344,19 +344,24 @@ Yöntemler ve ligand paneli başlığında sabit metin:
 
 ### 7.1 Ölçülmüş boyutlar (prototip üretildi)
 
-| Dosya | Boyut | Ne zaman yüklenir |
-|---|---|---|
-| `ligand_chemistry.json` | **255,8 KB** (580 kayıt, ort. 452 B) | ligand filtresi ilk kullanıldığında |
-| `chemistry_catalog.json` | **6,3 KB** | ligand filtresiyle birlikte |
-| `ligand_chemistry_audit.json` | ~30 KB (tahmin) | yalnız Yöntemler sayfasında |
+| Dosya | Prototip tahmini | **Gerçekleşen** | Ne zaman yüklenir |
+|---|---|---|---|
+| `ligand_chemistry.json` | 255,8 KB | **381,6 KB** | ligand filtresi ilk kullanıldığında |
+| `chemistry_catalog.json` | 6,3 KB | **9,1 KB** | ligand filtresiyle birlikte |
+| `ligand_chemistry_audit.json` | ~30 KB | **1,5 KB** | yalnız Yöntemler sayfasında |
 
-**Toplam artış ≈ 292 KB.** Mevcut site 501 MB → **%0,06 büyüme.**
+**Toplam artış 392,2 KB** (tahmin 292 KB). Mevcut site 501 MB → **%0,08 büyüme.**
 
-### 7.2 İlk açılış etkisi: sıfır
+Prototipten büyük olmasının sebebi, üretim kaydına eklenen alanlar: `raw_smiles` (parse
+başarısızlığında da korunuyor), `name`, `component_type`, `free_form_status` ve
+`pharmacological_instances`. Bunların hepsi provenans veya dürüstlük gereği; boyut karşılığında
+alınmış bilinçli bir karar.
 
-Landing ilk yükü şu an **13.539 bayt** (`landing.json` + `manifest.json`). Kimya dosyaları
-landing'de yüklenmez; ligand filtresi ilk kez açıldığında çekilir. Global arama
-optimizasyonuyla kazanılan performans korunur.
+### 7.2 İlk açılış etkisi: +472 bayt
+
+Landing ilk yükü 13.539 → **14.011 bayt**. `landing.json` **değişmedi** (6.855 bayt);
+artışın tamamı `manifest.json`'da, çünkü bütünlük denetimi için üç yeni dosyanın
+checksum'ı listeleniyor. Kimya dosyalarının kendisi landing'de yüklenmiyor.
 
 ### 7.3 Build süresi
 

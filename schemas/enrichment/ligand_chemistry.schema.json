@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ligand_chemistry.schema.json",
+  "title": "Ligand chemistry per chemical component",
+  "description": "Chemistry is keyed on the chemical component, never on the structure-ligand instance: one component can appear in dozens of structures, and duplicating its descriptors would let the copies drift apart. `pharmacological_instances` carries the weight a component has in the corpus so that coverage can be reported against instances rather than component counts.",
+  "type": "object",
+  "required": ["schema", "schema_version", "catalog_version", "rdkit_version", "smiles_source", "network_access", "count", "records"],
+  "additionalProperties": true,
+  "properties": {
+    "schema": { "const": "ligand_chemistry" },
+    "schema_version": { "type": "string" },
+    "catalog_version": { "type": "string" },
+    "rdkit_version": { "type": "string", "minLength": 1 },
+    "smiles_source": { "type": "string", "minLength": 1 },
+    "network_access": { "const": false },
+    "descriptor_note": { "type": "string" },
+    "count": { "type": "integer", "minimum": 0 },
+    "records": { "type": "array", "items": { "$ref": "#/$defs/record" } }
+  },
+  "$defs": {
+    "record": {
+      "type": "object",
+      "required": ["ccd", "parse_status", "component_type", "free_form_status", "pharmacological_instances", "descriptors", "facets"],
+      "additionalProperties": true,
+      "properties": {
+        "ccd": { "type": "string", "minLength": 1 },
+        "name": { "type": ["string", "null"] },
+        "component_type": { "type": ["string", "null"] },
+        "parse_status": { "enum": ["ok", "failed"] },
+        "parse_error": { "type": ["string", "null"] },
+        "raw_smiles": {
+          "type": ["string", "null"],
+          "description": "Preserved verbatim, including for parse failures, so a later attempt starts from the deposited string rather than a corrected one."
+        },
+        "inchikey": { "type": ["string", "null"] },
+        "concept_key": {
+          "type": ["string", "null"],
+          "description": "Connectivity block of the InChIKey. Equal concept keys mean the same skeleton, not the same stereochemistry."
+        },
+        "free_form_status": {
+          "enum": ["free_form_available", "bound_form_only", "ambiguous"],
+          "description": "Whether bulk descriptors would describe a free molecule. A component that only exists inside a polymer gets none rather than an invented value."
+        },
+        "pharmacological_instances": { "type": "integer", "minimum": 0 },
+        "descriptors_omitted_reason": { "type": ["string", "null"] },
+        "descriptors": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "required": ["mw", "exact_mass", "mollogp", "tpsa", "hbd", "hba", "rotatable_bonds", "heavy_atoms", "formal_charge", "aromatic_rings", "fraction_csp3"],
+              "additionalProperties": false,
+              "properties": {
+                "mw": { "type": "number" },
+                "exact_mass": { "type": "number" },
+                "mollogp": { "type": "number" },
+                "tpsa": { "type": "number", "minimum": 0 },
+                "hbd": { "type": "integer", "minimum": 0 },
+                "hba": { "type": "integer", "minimum": 0 },
+                "rotatable_bonds": { "type": "integer", "minimum": 0 },
+                "heavy_atoms": { "type": "integer", "minimum": 0 },
+                "formal_charge": { "type": "integer" },
+                "aromatic_rings": { "type": "integer", "minimum": 0 },
+                "fraction_csp3": { "type": "number", "minimum": 0, "maximum": 1 }
+              }
+            }
+          ]
+        },
+        "facets": {
+          "type": "object",
+          "required": ["functional_groups", "ring_systems"],
+          "additionalProperties": false,
+          "properties": {
+            "functional_groups": { "type": "array", "items": { "type": "string", "pattern": "^fg_" } },
+            "ring_systems": { "type": "array", "items": { "type": "string", "pattern": "^rs_" } }
+          }
+        }
+      }
+    }
+  }
+}

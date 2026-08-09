@@ -26,4 +26,7 @@ tests/*
 !tests/deploy/
 tests/deploy/*
 !tests/deploy/test_gh_pages_protection.py
+!tests/enrichment/
+tests/enrichment/*
+!tests/enrichment/test_chemistry_smarts.py
 _checksums_*.sha256
