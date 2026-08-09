@@ -8,6 +8,7 @@ const famCache = new Map();
 const bundleCache = new Map();
 let manifest = null;
 let searchIndexPromise = null;
+let panelsPromise = null;
 export let isFileProtocol = location.protocol === "file:";
 
 function lru(map, max) {
@@ -49,6 +50,20 @@ export function loadSearchIndex() {
     .catch(e => { searchIndexPromise=null; throw e; });
   return searchIndexPromise;
 }
+
+// Deliberately separate from boot/landing: the 2.8 MB panel payload is requested only when the
+// user opens the panel workspace.
+export function loadPanels() {
+  if (panelsPromise) return panelsPromise;
+  panelsPromise = loadGlobal("panels.json").catch(e => { panelsPromise=null; throw e; });
+  return panelsPromise;
+}
+
+// Family residue detail is likewise opt-in; loading a family structure index does not fetch it.
+export function loadPocketDetail(slug) { return loadFamilyFile(slug, "pocket_detail.json"); }
+export function loadFamilyReferences(slug) { return loadFamilyFile(slug, "references.json"); }
+export function loadFamilyEvidence(slug) { return loadFamilyFile(slug, "evidence.json"); }
+export function loadLigandXrefs(slug) { return loadFamilyFile(slug, "ligand_xrefs.json"); }
 
 export async function loadGlobal(name) {
   const m = await loadManifest();

@@ -27,14 +27,14 @@ def main()->int:
     hr=sum(1 for u in UNIV if u["human_review_requirement"]=="required")
     checks={
       "structures":(len(S),1358),"major_families":(len({s['major_family_id'] for s in S}),11),
-      "canonical_review_records":(len(UNIV),737),"human_review_required":(hr,189),
+      "canonical_review_records":(len(UNIV),726),"human_review_required":(hr,178),
       "aggregation_units":(len(U),727),
       "small_molecule_core_pocket_units":(site["canonical_7tm_pocket"],560),
       "polymer_interface_units":(site["extracellular_polymer_interface"],152),
       "covalent_units":(site["covalent_core_site"],15),
       "active_units":(state["active"],490),"inactive_units":(state["inactive"],220),
       "intermediate_units":(state["intermediate"],16),"unknown_state_units":(state["unknown"],1),
-      "aggregate_records":(len(PREV),182169),
+      "aggregate_records":(len(PREV),183984),
       "unresolved_site_class_observations":(sum(1 for s in SUM if s["binding_site_class"]=="unresolved"),51),
       "motif_count":(len(core["motifs"]),8),"motif_generic_positions":(len(core["all_positions"]),21),
     }

@@ -1,12 +1,14 @@
 // All views. Each returns a DOM node; none recomputes science — every number is read from a
 // Phase 4-derived payload field.
-import { t, siteClassLabel, siteClassDefinition, stateLabel, warnLabel, getLang } from "../core/i18n.js";
+import { t, siteClassLabel, siteClassDefinition, stateLabel, warnLabel, transducerLabel, getLang } from "../core/i18n.js";
 import { el, clear, fmt, pct, paginate, debounce } from "../components/dom.js";
 import { toCSV, download } from "../components/csv.js";
+import { downloadXLSX } from "../components/xlsx.js";
 import * as L from "../data/loader.js";
 import * as ST from "../core/state.js";
-import { buildHash, navigate } from "../core/router.js";
+import { buildHash, navigate, parseRoute } from "../core/router.js";
 import * as RG from "./reviewgate.js";
+import * as SOURCES from "../components/sources.js";
 
 const POLYMER = { extracellular_polymer_interface: 1, tethered_ligand_interface: 1 };
 
@@ -158,6 +160,289 @@ export async function landing(root) {
   return wrap;
 }
 
+/* ---------------------------------------------------------------- transducer panels */
+export async function panels(initialPanel, open3D) {
+  const data = await L.loadPanels();
+  const wrap = el("section", { class:"view panel-workspace" });
+  wrap.appendChild(el("h2", { text:t("panel_heading") }));
+  wrap.appendChild(el("p", { class:"muted", text:t("panel_intro") }));
+  const strip = el("div", { class:"panel-strip", role:"tablist", "aria-label":t("panel_heading") });
+  const detail = el("section", { class:"panel-detail", "aria-live":"polite" });
+  let selected = data.panels.find(p => p.id === initialPanel) || data.panels[0];
+
+  const draw = () => {
+    for (const button of strip.querySelectorAll("button")) {
+      const on = button.dataset.panel === selected.id;
+      button.classList.toggle("active", on);
+      button.setAttribute("aria-selected", on ? "true" : "false");
+      button.tabIndex = on ? 0 : -1;
+    }
+    clear(detail);
+    detail.appendChild(el("h3", { text:selected.id }));
+    const facts = el("div", { class:"panel-facts" }, [
+      panelFact(selected.n_structures, t("structures")),
+      panelFact(selected.n_units, t("panel_total_units")),
+      panelFact(selected.n_prevalence_estimable, t("panel_estimable_units")),
+      panelFact(selected.n_not_estimable, t("panel_not_estimable_units"))
+    ]);
+    detail.appendChild(facts);
+    detail.appendChild(el("p", { class:"notice denominator-note", text:t("panel_denominator_note", {
+      total:selected.n_units, estimable:selected.n_prevalence_estimable,
+      canonical:selected.denominators.all
+    }) }));
+    const table = el("table", { class:"data panel-sites" });
+    table.appendChild(el("thead", {}, el("tr", {}, [
+      t("site_class"), t("panel_total_units"), t("panel_estimable_units"),
+      t("panel_not_estimable_units"), t("denominator")
+    ].map(label => el("th", { scope:"col", text:label })))));
+    const body = el("tbody");
+    for (const site of selected.site_classes) body.appendChild(el("tr", {}, [
+      el("th", { scope:"row", text:siteClassLabel(site.binding_site_class) }),
+      el("td", { class:"num", text:String(site.n_units) }),
+      el("td", { class:"num", text:String(site.n_prevalence_estimable) }),
+      el("td", { class:"num", text:String(site.n_not_estimable) }),
+      el("td", { class:"num", text:String(site.denominators.all) })
+    ]));
+    table.appendChild(body); detail.appendChild(table);
+    detail.appendChild(el("p", { class:"muted small", text:t("panel_metric_note") }));
+
+    const explorer = el("section", { class:"panel-pocket-explorer" });
+    explorer.appendChild(el("h3", { text:t("panel_pocket_heading") }));
+    explorer.appendChild(el("p", { class:"muted", text:t("panel_pocket_intro") }));
+    const rows = (data.structure_index || []).filter(row => (row.panels || []).includes(selected.id));
+    const families = Array.from(new Map(rows.map(row => [row.family_slug, {
+      slug:row.family_slug, name:row.family_name
+    }])).values()).sort((a,b) => familyDisplayName(a.name).localeCompare(familyDisplayName(b.name), getLang()));
+    const controls = el("div", { class:"panel-pocket-controls" });
+    const familySelect = el("select", { "aria-label":t("panel_choose_family") }, [
+      el("option", { value:"", text:t("panel_choose_family") }),
+      ...families.map(f => el("option", { value:f.slug, text:familyDisplayName(f.name) }))
+    ]);
+    const structureSelect = el("select", { disabled:true, "aria-label":t("panel_choose_structure") }, [
+      el("option", { value:"", text:t("panel_choose_structure") })
+    ]);
+    const pocket = el("div", { class:"panel-pocket-detail", "aria-live":"polite" });
+    const resetPocket = () => {
+      clear(pocket);
+      pocket.appendChild(el("p", { class:"panel-pocket-prompt muted", text:t("panel_pocket_prompt") }));
+    };
+    familySelect.addEventListener("change", () => {
+      clear(structureSelect);
+      structureSelect.appendChild(el("option", { value:"", text:t("panel_choose_structure") }));
+      const familyRows = rows.filter(row => row.family_slug === familySelect.value)
+        .sort((a,b) => a.pdb_id.localeCompare(b.pdb_id));
+      for (const row of familyRows) structureSelect.appendChild(el("option", {
+        value:row.pdb_id, text:row.pdb_id + " — " + plainName(row.receptor_name)
+      }));
+      structureSelect.disabled = !familySelect.value;
+      resetPocket();
+    });
+    structureSelect.addEventListener("change", async () => {
+      resetPocket();
+      if (!structureSelect.value) return;
+      clear(pocket); pocket.appendChild(el("p", { class:"muted", text:t("loading") }));
+      try {
+        const payload = await L.loadPocketDetail(familySelect.value);
+        const record = (payload.structures || []).find(s => s.pdb_id === structureSelect.value);
+        clear(pocket);
+        if (!record) {
+          pocket.appendChild(el("p", { class:"notice", text:t("panel_pocket_missing") })); return;
+        }
+        pocket.appendChild(el("div", { class:"panel-pocket-summary" }, [
+          panelFact(record.n_contacts, t("contacts_short")),
+          panelFact(record.n_mapped, t("panel_mapped_contacts")),
+          panelFact(record.pharmacological_ligand_count, t("panel_ligand_count"))
+        ]));
+        if (record.empty_reason) {
+          pocket.appendChild(el("div", { class:"panel-empty-state " + record.empty_reason }, [
+            el("strong", { text:t("panel_empty_" + record.empty_reason + "_title") }),
+            el("span", { text:t("panel_empty_" + record.empty_reason + "_body") })
+          ]));
+          return;
+        }
+        const core = corePositions(panelPositions(data, selected && selected.id,
+          (record.segments || []).flatMap(s => s.residues || [])
+            .map(r => r.binding_site_class).find(Boolean)));
+        pocket.appendChild(bandLegend(core.size > 0));
+        pocket.appendChild(pocketSegments(record, open3D, core));
+        const missing = missingCoreRow(record, core);
+        if (missing) pocket.appendChild(missing);
+      } catch (error) {
+        clear(pocket); pocket.appendChild(el("p", { class:"notice", text:t("err_family") }));
+      }
+    });
+    controls.append(familySelect, structureSelect);
+    explorer.append(controls, pocket); resetPocket(); detail.appendChild(explorer);
+  };
+  for (const panel of data.panels) {
+    const button = el("button", { class:"panel-tab", role:"tab", "data-panel":panel.id,
+      text:transducerLabel(panel.id), onclick:() => { selected=panel; draw(); } });
+    strip.appendChild(button);
+  }
+  wrap.append(strip, detail); draw();
+  return wrap;
+}
+
+/* Distance bands follow the enrichment pipeline definition: <=3.5, 3.5-4.3, 4.3-5.0 A.
+   Derived from the numeric distance, not the display string, so the token stays stable
+   across locales and dash characters. */
+function bandToken(distance) {
+  const d = Number(distance);
+  if (!isFinite(d)) return "unknown";
+  if (d <= 3.5) return "near";
+  if (d <= 4.3) return "mid";
+  return "far";
+}
+
+/* A position is "core" for a panel when at least this share of the panel's units contact it.
+   Kept as one constant so the cards, the missing-contact row and the legend cannot drift apart. */
+const CORE_PREVALENCE = 0.75;
+
+/* Positions that most of the panel contacts, keyed by generic number. Purely a comparison aid:
+   it marks conserved pocket positions and, conversely, lets the caller list core positions this
+   particular structure does not reach. It never hides anything — that is the threshold filter's job. */
+/* Every mapped position in the panel with its prevalence, so both the ≥75% markers and the
+   contact-frequency slider read from one table instead of two slightly different ones. */
+function panelPositions(panelStats, panelId, siteClass) {
+  const out = new Map();
+  if (!panelStats || !panelId) return out;
+  const panels = panelStats.panels || panelStats;
+  const list = Array.isArray(panels) ? panels : Object.values(panels);
+  const panel = list.find(p => p.id === panelId);
+  if (!panel) return out;
+  // Exactly one binding-site class, never a merge. Site classes carry very different
+  // denominators — a covalent-core panel may hold two units, so a position contacted in both
+  // reads 100% and would swamp the canonical pocket if the classes were pooled.
+  const wanted = siteClass || "canonical_7tm_pocket";
+  const site = (panel.site_classes || []).find(s => s.binding_site_class === wanted);
+  if (!site) return out;
+  for (const position of site.positions || []) {
+    const prevalence = Number(position.prevalence);
+    if (!isFinite(prevalence)) continue;
+    out.set(position.gn, { prevalence, segment: position.segment, topAa: position.top_aa });
+  }
+  return out;
+}
+
+function corePositions(positions) {
+  const out = new Map();
+  for (const [gn, info] of positions || [])
+    if (info.prevalence >= CORE_PREVALENCE) out.set(gn, info);
+  return out;
+}
+
+/* Shared by the panels explorer and the family structure detail, so both stay in step. */
+function pocketSegments(record, open3D, core, keep) {
+  const segments = el("div", { class:"panel-pocket-segments" });
+  for (const segment of record.segments || []) {
+    const visible = (segment.residues || []).filter(r => !keep || keep(r));
+    if (!visible.length) continue;
+    const group = el("section", { class:"panel-pocket-segment" });
+    group.appendChild(el("h4", { text:segment.segment }));
+    const cards = el("div", { class:"panel-residue-cards" });
+    for (const residue of visible) {
+      const label = (residue.aa || "") + " " + (residue.generic_number || residue.auth_seq_id);
+      const hit = core && core.get(residue.generic_number);
+      const card = el("button", { class:"panel-residue-card band-" +
+        String(residue.distance_band || "").replace(/[^0-9]+/g,"-"),
+        "data-band":bandToken(residue.distance_angstrom),
+        title:t("panel_open_residue_3d"), onclick:() => open3D(record.pdb_id, null, {
+          chain:residue.chain, seq:residue.auth_seq_id
+        }) }, [
+          el("strong", { text:label }),
+          el("span", { class:"residue-sub", text:residue.residue_name + residue.auth_seq_id +
+            " · " + fmt(residue.distance_angstrom, 1) + " Å" })
+        ]);
+      if (hit) {
+        card.classList.add("is-core");
+        card.appendChild(el("i", { class:"core-dot", "aria-hidden":"true" }));
+        card.title = t("core_position_hint", { percent: Math.round(hit.prevalence * 100) });
+      }
+      cards.appendChild(card);
+    }
+    group.appendChild(cards); segments.appendChild(group);
+  }
+  return segments;
+}
+
+/* Core positions the panel reaches but this structure does not. "Expected here, absent" is a
+   finding in its own right, so it is shown rather than silently left out of the segment list. */
+function missingCoreRow(record, core) {
+  if (!core || !core.size) return null;
+  const contacted = new Set();
+  for (const segment of record.segments || [])
+    for (const residue of segment.residues || []) contacted.add(residue.generic_number);
+  const missing = [...core.entries()].filter(([gn]) => !contacted.has(gn))
+    .sort((a, b) => b[1].prevalence - a[1].prevalence);
+  if (!missing.length) return null;
+  const row = el("section", { class:"panel-pocket-segment missing-core" });
+  row.appendChild(el("h4", { text:t("no_contact_here") }));
+  const cards = el("div", { class:"panel-residue-cards" });
+  for (const [gn, info] of missing) {
+    cards.appendChild(el("span", { class:"panel-residue-card is-missing",
+      title:t("core_position_hint", { percent: Math.round(info.prevalence * 100) }) }, [
+        el("strong", { text:(info.topAa || "") + " " + gn }),
+        el("span", { class:"residue-sub", text:(info.segment || "—") + " · " +
+          Math.round(info.prevalence * 100) + "%" })
+      ]));
+  }
+  row.appendChild(cards);
+  return row;
+}
+
+/* Counts sit in their own boxed, right-aligned badge. Run together with the label they read as
+   part of the protein name — "G12 / G13 5" looks like a subunit, not a tally of five structures. */
+function countBadge(value) {
+  return el("span", { class:"tab-count", text:String(value == null ? "" : value),
+    "aria-label":t("structure_count") });
+}
+
+/* Flat table reading of the same pocket rows: sortable by eye, easier to scan for a single
+   distance, and it exposes the panel prevalence that the cards only hint at with a dot. */
+function pocketTable(record, open3D, core, positions, keep) {
+  const table = el("table", { class:"data compact pocket-table" });
+  table.appendChild(el("thead", {}, el("tr", {}, [t("pt_segment"), t("pt_position"),
+    t("pt_residue"), t("pt_distance"), t("pt_prevalence")].map(h => el("th", { text:h })))));
+  const body = el("tbody");
+  for (const segment of record.segments || []) {
+    for (const residue of (segment.residues || []).filter(r => !keep || keep(r))) {
+      const info = positions && positions.get(residue.generic_number);
+      const row = el("tr", { class: core && core.has(residue.generic_number) ? "is-core-row" : "" }, [
+        el("td", { text:segment.segment }),
+        el("td", {}, el("button", { class:"link-button", title:t("panel_open_residue_3d"),
+          text:(residue.aa || "") + " " + (residue.generic_number || "—"),
+          onclick:() => open3D(record.pdb_id, null, { chain:residue.chain, seq:residue.auth_seq_id }) })),
+        el("td", { text:residue.residue_name + residue.auth_seq_id }),
+        el("td", { "data-band":bandToken(residue.distance_angstrom),
+          text:fmt(residue.distance_angstrom, 1) + " Å" }),
+        el("td", { text:info ? Math.round(info.prevalence * 100) + "%" : "—" })
+      ]);
+      body.appendChild(row);
+    }
+  }
+  table.appendChild(body);
+  return table;
+}
+
+function bandLegend(withCore) {
+  const box = el("div", { class:"band-legend", "aria-label":t("band_legend") });
+  for (const token of ["near", "mid", "far"]) {
+    box.appendChild(el("span", { class:"band-key", "data-band":token }, [
+      el("i", { class:"band-swatch" }), el("span", { text:t("band_" + token) })
+    ]));
+  }
+  if (withCore) box.appendChild(el("span", { class:"band-key" }, [
+    el("i", { class:"core-dot static" }), el("span", { text:t("core_legend") })
+  ]));
+  return box;
+}
+
+function panelFact(value, label) {
+  return el("div", { class:"panel-fact" }, [
+    el("strong", { text:String(value) }), el("span", { text:label })
+  ]);
+}
+
 /* ---------------------------------------------------------------- overview */
 export async function overview(root, slug) {
   const s = await L.loadFamilyFile(slug, "summary.json");
@@ -215,8 +500,9 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb) 
   const wrap = el("section", { class: "view" });
   const family = (L.getManifest().families || []).find(f => f.slug === slug);
   const availableSites = new Set(d.structures.flatMap(x => x.observations.map(o => o.binding_site_class).filter(Boolean)));
-  const filters = { family: "", receptor: "", mode: "", state: "",
-    site: availableSites.has(initialSite) ? initialSite : "", search: "", sort: "resolution" };
+  const filters = { family: "", receptor: "", mode: "", state: "", transducer:"", evidenceTier:"",
+    site: availableSites.has(initialSite) ? initialSite : "", search: "", sort: "resolution",
+    contactThreshold: 0 };
   let selected = d.structures.find(x => x.pdb_id === String(initialPdb || "").toUpperCase()) ||
     d.structures.find(x => x.pdb_id === "9IJE") || d.structures[0];
   let revealInitialSelection = !!initialPdb;
@@ -244,14 +530,39 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb) 
     "Allosteric agonist", "Allosteric antagonist", "PAM", "NAM"];
   for (const mode of quickModes) if (!mode || modeCounts.has(mode)) {
     const b = el("button", { class: "quick-filter" + modeClass(mode) + (!mode ? " active" : ""), "data-mode": mode,
-      text: (mode || t("all")) + "  " + (mode ? modeCounts.get(mode) : d.count), onclick: () => {
+      onclick: () => {
         filters.mode = mode; if (filterControls.mode) filterControls.mode.value = mode;
         for (const n of quick.querySelectorAll("button")) n.classList.toggle("active", n === b);
         drawList(); drawDetail();
-      } });
+      } }, [
+        el("span", { class: "tab-label", text: mode || t("all") }),
+        countBadge(mode ? modeCounts.get(mode) : d.count)
+      ]);
     quick.appendChild(b);
   }
   wrap.appendChild(quick);
+
+  const transducerPanels=["Gs","Gi/o","Gq/11","G12/13","arrestin","transducer_free"];
+  const panelStrip=el("div", { class:"family-panel-strip", "aria-label":t("transducer") });
+  for (const panel of transducerPanels) {
+    const count=d.structures.filter(x=>(x.transducer_panels||[]).includes(panel)).length;
+    if (!count) continue;
+    const button=el("button", { class:"panel-tab family-panel-tab", "data-panel":panel,
+      "aria-pressed":"false", onclick:()=>{
+        filters.transducer=filters.transducer===panel?"":panel;
+        if (filterControls.transducer) filterControls.transducer.value=filters.transducer;
+        for (const node of panelStrip.querySelectorAll("button")) {
+          const active=node.dataset.panel===filters.transducer;
+          node.classList.toggle("active",active); node.setAttribute("aria-pressed",active?"true":"false");
+        }
+        drawList(); drawDetail();
+      } }, [
+        el("span", { class:"tab-label", text:transducerLabel(panel) }),
+        countBadge(count)
+      ]);
+    panelStrip.appendChild(button);
+  }
+  wrap.appendChild(panelStrip);
 
   const layout = el("div", { class: "explorer-layout" });
   const rail = el("aside", { class: "explorer-rail" });
@@ -264,6 +575,10 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb) 
     const s = el("select", { onchange: e => { filters[key] = e.target.value;
       if (key === "mode") for (const n of quick.querySelectorAll("button"))
         n.classList.toggle("active", n.getAttribute("data-mode") === e.target.value);
+      if (key === "transducer") for (const n of panelStrip.querySelectorAll("button")) {
+        const active=n.dataset.panel===e.target.value;
+        n.classList.toggle("active",active); n.setAttribute("aria-pressed",active?"true":"false");
+      }
       drawList(); drawDetail(); } });
     filterControls[key] = s;
     s.appendChild(el("option", { value: "", text: t("all") }));
@@ -277,6 +592,10 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb) 
   filterGrid.appendChild(selectFilter("site", t("site_class"),
     uniq(x => x.observations.map(o => o.binding_site_class)), siteClassLabel));
   filterGrid.appendChild(selectFilter("state", t("state"), uniq(x => [x.structural_state])));
+  filterGrid.appendChild(selectFilter("transducer", t("transducer"),
+    uniq(x => x.transducer_panels || []), value => transducerLabel(value)));
+  filterGrid.appendChild(selectFilter("evidenceTier", t("evidence_tier"),
+    uniq(x => x.pathway_evidence_tiers || []), value=>t("evidence_tier_"+value)));
   rail.appendChild(filterGrid);
   rail.appendChild(el("label", { class: "filter-field search-field" }, [
     el("span", { text: t("search") }), el("input", { type: "search", placeholder: t("search_placeholder"),
@@ -285,20 +604,74 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb) 
   const listHead = el("div", { class: "result-head" });
   const resultList = el("div", { class: "result-list" });
   rail.appendChild(listHead); rail.appendChild(resultList);
+  /* One row per dataset, each offering both formats. CSV holds a single table; the XLSX
+     variant can carry the related tables as extra sheets, which is why the two are not
+     generated from an identical row set. */
+  /* The buttons read only "CSV"/"XLSX", so each carries an accessible name describing the
+     dataset it downloads — otherwise a screen reader announces six identical controls. */
+  function exportRow(labelKey, csvName, xlsxName, onCsv, onXlsx) {
+    return el("div", { class: "export-row" }, [
+      el("span", { class: "export-label" }, [
+        el("span", { text: t(labelKey) }), metricHelp(t(labelKey + "_help")) ]),
+      el("span", { class: "export-buttons" }, [
+        el("button", { class: "btn small", text: "CSV", "aria-label": csvName, onclick: onCsv }),
+        el("button", { class: "btn small", text: "XLSX", "aria-label": xlsxName, onclick: onXlsx })
+      ])
+    ]);
+  }
+  async function withPocket(action) {
+    try { action(await L.loadPocketDetail(slug)); }
+    catch (error) { window.alert(L.errorMessage(error)); }
+  }
+  /* Contact-frequency threshold. It hides pocket positions the panel rarely touches, which is a
+     different question from the ≥75% markers: the markers annotate, this filters. */
+  const thresholdValue = el("span", { class: "threshold-value", text: "0%" });
+  const thresholdCaption = el("span", { class: "threshold-caption", text: t("threshold_all") });
+  const thresholdInput = el("input", { type: "range", min: "0", max: "100", step: "5", value: "0",
+    "aria-label": t("threshold_contacts") });
+  thresholdInput.addEventListener("input", debounce(event => {
+    const percent = Number(event.target.value);
+    filters.contactThreshold = percent / 100;
+    thresholdValue.textContent = percent + "%";
+    thresholdCaption.textContent = percent
+      ? t("threshold_min", { percent }) : t("threshold_all");
+    drawDetail();
+  }, 120));
+  rail.appendChild(el("div", { class: "rail-threshold" }, [
+    el("div", { class: "threshold-head" }, [
+      el("span", { class: "threshold-label", text: t("threshold_contacts") }),
+      metricHelp(t("threshold_help")), thresholdValue
+    ]),
+    thresholdInput, thresholdCaption
+  ]));
+
   rail.appendChild(el("div", { class: "rail-actions" }, [
-    el("button", { class: "btn", text: t("export_csv"),
-      "aria-label": t("export_structures") + " / " + t("export_observations"),
-      onclick: () => exportStructures(filtered(), slug) })
+    el("h4", { class: "rail-actions-head", text: t("export_heading") }),
+    exportRow("export_filtered_set",
+      t("export_structures") + " (CSV)",
+      t("export_structures") + " / " + t("export_observations") + " (XLSX)",
+      () => exportStructures(filtered(), slug),
+      () => exportStructuresXLSX(filtered(), slug)),
+    exportRow("export_contact_list",
+      t("export_contacts") + " (CSV)", t("export_contacts") + " (XLSX)",
+      () => withPocket(p => exportContactList(filtered(), p, slug, false)),
+      () => withPocket(p => exportContactList(filtered(), p, slug, true))),
+    exportRow("export_matrix",
+      t("export_matrix") + " (CSV)", t("export_matrix") + " (XLSX)",
+      () => withPocket(p => exportMatrix(filtered(), p, slug, false)),
+      () => withPocket(p => exportMatrix(filtered(), p, slug, true)))
   ]));
 
   function filtered() {
     const q = filters.search.trim().toLowerCase();
-    const rows = d.structures.filter(x => !x.superseded_by &&
+    const rows = d.structures.filter(x =>
       (!filters.family || x.receptor_family_name === filters.family) &&
       (!filters.receptor || x.receptor_name === filters.receptor) &&
       (!filters.mode || x.observations.some(o => o.binding_mode === filters.mode)) &&
       (!filters.site || x.observations.some(o => o.binding_site_class === filters.site)) &&
       (!filters.state || x.structural_state === filters.state) &&
+      (!filters.transducer || (x.transducer_panels||[]).includes(filters.transducer)) &&
+      (!filters.evidenceTier || (x.pathway_evidence_tiers||[]).includes(filters.evidenceTier)) &&
       (!q || [x.pdb_id, plainName(x.receptor_name), x.receptor_entry_name,
         ...x.observations.map(o => o.ligand_name || "")].join(" ").toLowerCase().includes(q)));
     return rows.sort((a,b) => (a.resolution == null) - (b.resolution == null) ||
@@ -364,37 +737,202 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb) 
       el("button", { class: "btn btn-primary", text: t("open_binding_site"),
         onclick: () => onOpen3D(x.pdb_id, o.observation_id) })
     ]));
+    if (x.superseded) detail.appendChild(supersededNotice(x));
     detail.appendChild(el("div", { class: "detail-tags" }, [
       el("span", { class: "chip", text: plainName(x.receptor_family_name || "—") }),
       el("span", { class: "chip", text: stateLabel(x.structural_state || "unknown") }),
       ...modes.map(mode => el("span", { class: "chip mode-pill" + modeClass(mode), text: mode })),
-      el("span", { class: "chip", text: siteClassLabel(o.binding_site_class || "unresolved") })
+      el("span", { class: "chip", text: siteClassLabel(o.binding_site_class || "unresolved") }),
+      ...(x.transducer_class ? [el("span", { class: "chip chip-transducer",
+        text: t("transducer") + ": " + transducerLabel(x.transducer_class) })] : []),
+      // A structure can sit in more than one panel; show the extra memberships explicitly
+      // rather than letting the primary class imply exclusivity.
+      ...(x.transducer_panels || []).filter(p => p !== x.transducer_class).map(p =>
+        el("span", { class: "chip chip-panel-extra",
+          text: t("also_in_panel", { panel: transducerLabel(p) }) }))
     ]));
     detail.appendChild(el("div", { class: "detail-facts" }, [
       fact(t("receptors"), plainName(x.receptor_name || "—")), fact(t("resolution"), fmt(x.resolution,2) + " Å"),
       fact(t("method"), x.experimental_method || "—"), fact(t("species"), x.species || "—"),
-      fact(t("ligand_class"), modes.join(" + ") || "—"), fact(t("contact_shell"),
-        (o.receptor_residues_5A || 0) + " " + t("residues"))
+      fact(t("ligand_class"), modes.join(" + ") || "—"),
+      fact(t("transducer"), transducerLabel(x.transducer_class))
     ]));
-    detail.appendChild(el("section", { class: "detail-section" }, [
-      el("h3", { text: t("binding_site_summary") }),
-      el("p", { text: t("binding_site_explain") }),
-      el("div", { class: "contact-levels" }, [
-        contactLevel("≤ 4.0 Å", o.receptor_residues_4A || 0),
-        contactLevel("≤ 4.5 Å", o.receptor_residues_4_5A || 0),
-        contactLevel("≤ 5.0 Å", o.receptor_residues_5A || 0)
-      ])
+    // One compact line instead of three large tiles: the shell counts are reference numbers,
+    // not the headline of the page, and the tiles pushed the evidence table below the fold.
+    detail.appendChild(el("div", { class: "detail-shell" }, [
+      el("span", { class: "shell-label", text: t("contact_shell") }),
+      el("strong", { text: (o.receptor_residues_5A || 0) + " " + t("residues") }),
+      el("span", { class: "shell-extra", title: t("binding_site_explain"),
+        text: "≤ 4.5 Å: " + (o.receptor_residues_4_5A || 0) +
+          " · ≤ 4.0 Å: " + (o.receptor_residues_4A || 0) })
     ]));
-    detail.appendChild(el("section", { class: "detail-section sources" }, [
+    const sourcesSection = el("section", { class: "detail-section sources" }, [
       el("h3", { text: t("source_links") }),
-      el("a", { class: "btn", href: "https://www.rcsb.org/structure/" + x.pdb_id,
-        target: "_blank", rel: "noopener", text: "RCSB " + x.pdb_id }),
-      el("a", { class: "btn", href: "https://gpcrdb.org/structure/" + x.pdb_id,
-        target: "_blank", rel: "noopener", text: "GPCRdb " + x.pdb_id })
-    ]));
+      SOURCES.linkRow(slug,x)
+    ]);
+    // Both sections load asynchronously; the placeholders are appended now so the order on
+    // screen is stable no matter which payload resolves first.
+    const evidenceSection = el("section", { class: "detail-section evidence-table" });
+    const pocketSection = el("section", { class: "detail-section pocket-detail" });
+    // Reference layout: the compact facts block ends with its sources, then the evidence table
+    // gets a full-width block of its own, then the pocket.
+    detail.append(sourcesSection, evidenceSection, pocketSection);
+    const seq = ++detailSeq;
+    drawEvidence(x, evidenceSection, seq);
+    drawPocket(x, o.binding_site_class, pocketSection, seq, sourcesSection);
+  }
+
+  async function drawEvidence(x, section, seq) {
+    section.appendChild(el("p", { class: "muted", text: t("loading") }));
+    let rows;
+    try {
+      const payload = await L.loadFamilyEvidence(slug);
+      rows = (payload.records || []).filter(row => row.pdb_id === x.pdb_id);
+    } catch (error) {
+      if (seq !== detailSeq) return;
+      clear(section); section.appendChild(el("p", { class: "notice", text: t("err_family") })); return;
+    }
+    if (seq !== detailSeq) return;
+    clear(section);
+    if (!rows.length) return;
+    // Structural evidence first, then functional, so the row order matches how the claim is built.
+    rows.sort((a, b) => (a.tier || "").localeCompare(b.tier || ""));
+    const table = el("table", { class: "data compact evidence" });
+    table.appendChild(el("thead", {}, el("tr", {}, [t("ev_col_pathway"), t("ev_col_evidence"),
+      t("ev_col_assay"), t("ev_col_source"), t("ev_col_membership")].map(h => el("th", { text: h })))));
+    const body = el("tbody");
+    for (const row of rows) {
+      const fe = row.functional_evidence || {};
+      const source = row.source || {};
+      const resultLabel = t("ev_result_" + row.result);
+      const rationale = row["rationale_" + getLang()] || row.rationale_en || "";
+      // Tier A rationales already open with the result phrase, and tier B rationales repeat the
+      // assay name — so pick one source of words per tier instead of concatenating all three.
+      const detailText = row.tier === "A"
+        ? (rationale.startsWith(resultLabel)
+            ? rationale.slice(resultLabel.length).replace(/^\s*[—–-]\s*/, "") : rationale)
+        : [fe.assay_or_evidence, fe.curator_note].filter(Boolean).join(" — ");
+      const sourceLabel = (source.reference_id || "").replace(/^PMCID:/, "") ||
+        (/rcsb\.org/.test(source.url || "") ? "RCSB " + row.pdb_id : t("source_open"));
+      body.appendChild(el("tr", {}, [
+        el("td", {}, el("strong", { text: transducerLabel(row.panel) })),
+        el("td", {}, el("span", { class: "tier-badge tier-" + (row.tier || "").toLowerCase(),
+          text: row["tier_label_" + getLang()] || row.tier_label_en || row.tier })),
+        el("td", {}, [el("strong", { text: resultLabel }),
+          el("span", { text: detailText ? " — " + detailText : "" })]),
+        el("td", {}, source.url
+          ? el("a", { href: source.url, target: "_blank", rel: "noopener", text: sourceLabel })
+          : el("span", { class: "muted", text: "—" })),
+        el("td", {}, el("span", { class: row.panel_membership ? "member-yes" : "member-no",
+          text: (row.panel_membership ? "✓ " : "✗ ") +
+            t(row.panel_membership ? "ev_member_yes" : "ev_member_no") }))
+      ]));
+    }
+    table.appendChild(body);
+    section.appendChild(table);
+    section.appendChild(el("p", { class: "muted small", text: t("ev_table_note") }));
+  }
+
+  // Pocket detail is a per-family file of a few MB, so it is fetched only once a structure is
+  // actually selected. `detailSeq` guards against a slow response landing after the user has
+  // already clicked a different structure.
+  let detailSeq = 0;
+  let pocketAsTable = false;
+  async function drawPocket(x, siteClass, section, seq, overlapTarget) {
+    section.append(el("h3", { text: t("pocket_by_segment") }),
+      el("p", { class: "muted", text: t("loading") }));
+    let record = null, core = null, positions = null;
+    try {
+      const payload = await L.loadPocketDetail(slug);
+      record = (payload.structures || []).find(s => s.pdb_id === x.pdb_id) || null;
+      // Compare against the panel the user is currently filtering by; with no filter, fall back
+      // to the panel the structure was actually solved in.
+      const panelId = filters.transducer ||
+        (x.transducer_panels_structural || x.transducer_panels || [])[0];
+      positions = panelPositions(await L.loadPanels(), panelId, siteClass);
+      core = corePositions(positions);
+    } catch (error) {
+      if (seq !== detailSeq) return;
+      clear(section); section.appendChild(el("h3", { text: t("pocket_by_segment") }));
+      section.appendChild(el("p", { class: "notice", text: t("err_family") }));
+      return;
+    }
+    if (seq !== detailSeq) return;
+    clear(section);
+    section.appendChild(el("h3", { text: t("pocket_by_segment") }));
+    if (!record) {
+      section.appendChild(el("p", { class: "notice", text: t("panel_pocket_missing") })); return;
+    }
+    if (record.empty_reason) {
+      section.appendChild(el("div", { class: "panel-empty-state " + record.empty_reason }, [
+        el("strong", { text: t("panel_empty_" + record.empty_reason + "_title") }),
+        el("span", { text: t("panel_empty_" + record.empty_reason + "_body") })
+      ]));
+      return;
+    }
+    section.appendChild(el("p", { class: "muted small", text:
+      record.n_contacts + " " + t("contacts_short") + " · " +
+      record.n_mapped + " " + t("panel_mapped_contacts") }));
+    if (core && core.size) {
+      const mapped = (record.segments || []).flatMap(s => s.residues || [])
+        .filter(r => r.generic_number);
+      const shared = mapped.filter(r => core.has(r.generic_number)).length;
+      // Belongs with the sources block in the reference layout, not above the residue cards.
+      (overlapTarget || section).appendChild(el("p", { class: "panel-overlap" }, [
+        el("span", { class: "panel-overlap-label", text: t("panel_overlap_label") }),
+        el("strong", { text: t("panel_overlap_value",
+          { shared, total: mapped.length, percent: Math.round(CORE_PREVALENCE * 100) }) })
+      ]));
+    }
+    // The threshold hides positions the panel rarely touches. Residues with no generic mapping
+    // have no panel prevalence to judge, so they are never hidden — we cannot claim they are rare.
+    const minPrevalence = filters.contactThreshold || 0;
+    const keep = residue => {
+      if (!minPrevalence) return true;
+      const info = positions && positions.get(residue.generic_number);
+      return !info || info.prevalence >= minPrevalence;
+    };
+    const all = (record.segments || []).flatMap(s => s.residues || []);
+    const shown = all.filter(keep).length;
+    if (minPrevalence && shown < all.length) section.appendChild(el("p", { class: "muted small",
+      text: t("threshold_hidden", { hidden: all.length - shown, total: all.length }) }));
+
+    // Cards and table are two readings of the same rows; the toggle only swaps this body,
+    // so switching costs no fetch and keeps the surrounding blocks in place.
+    const body = el("div", { class: "pocket-body" });
+    const toggle = el("button", { class: "btn small", type: "button" });
+    const renderBody = () => {
+      clear(body);
+      toggle.textContent = pocketAsTable ? t("pocket_view_cards") : t("pocket_view_table");
+      toggle.setAttribute("aria-pressed", pocketAsTable ? "true" : "false");
+      if (pocketAsTable) { body.appendChild(pocketTable(record, onOpen3D, core, positions, keep)); }
+      else {
+        body.appendChild(bandLegend(core && core.size > 0));
+        body.appendChild(pocketSegments(record, onOpen3D, core, keep));
+      }
+      const missing = missingCoreRow(record, core);
+      if (missing) body.appendChild(missing);
+    };
+    toggle.addEventListener("click", () => { pocketAsTable = !pocketAsTable; renderBody(); });
+    section.querySelector("h3").appendChild(toggle);
+    section.appendChild(body);
+    renderBody();
   }
   drawList(); drawDetail();
   return wrap;
+}
+function supersededNotice(structure) {
+  const info=structure.superseded;
+  const replacement=(info.replaced_by||[structure.superseded_by]).filter(Boolean).join(", ");
+  const status=info.replacement_in_atlas?t("superseded_replacement_in_atlas"):
+    t("superseded_replacement_not_in_atlas");
+  return el("aside", { class:"notice superseded-notice", role:"note" }, [
+    el("strong", { text:t("superseded_title") }),
+    el("p", { text:t("superseded_body", { pdb:structure.pdb_id,replacement,date:info.remove_date||"—" }) }),
+    info.details?el("p", { text:info.details }):null,
+    el("p", { class:"muted small", text:status }),
+    el("a", { href:info.source,target:"_blank",rel:"noopener",text:t("superseded_rcsb_record") })
+  ]);
 }
 
 function summaryMetric(value, label) { return el("div", { class: "summary-metric" }, [
@@ -420,6 +958,88 @@ function exportStructures(rows, slug) {
     { key: "human_review_required" }];
   download("structures_" + slug + ".csv", toCSV(cols, rows, meta(slug, { table: "structures", rows: rows.length })));
 }
+const STRUCTURE_COLS = [{ key: "pdb_id" }, { key: "receptor_name" }, { key: "receptor_entry_name" },
+  { key: "species" }, { key: "experimental_method" }, { key: "resolution" },
+  { key: "release_date" }, { key: "structural_state" }, { key: "transducer_class" },
+  { key: "transducer_panels" }, { key: "apo_status" }, { key: "ligand_status" },
+  { key: "observation_count" }];
+const OBSERVATION_COLS = [{ key: "pdb_id" }, { key: "receptor_name" }, { key: "observation_id" },
+  { key: "ligand_name" }, { key: "ligand_components" }, { key: "binding_mode" },
+  { key: "binding_site_class" }, { key: "receptor_residues_5A" }, { key: "receptor_residues_4_5A" },
+  { key: "receptor_residues_4A" }];
+
+/* The workbook carries structures and their observations as two sheets, which a flat CSV
+   cannot express without either duplicating structure rows or losing the observations. */
+function exportStructuresXLSX(rows, slug) {
+  const flat = [];
+  for (const s of rows) for (const o of s.observations)
+    flat.push(Object.assign({ pdb_id: s.pdb_id, receptor_name: s.receptor_name }, o));
+  downloadXLSX("structures_" + slug + ".xlsx", [
+    { name: "Structures", columns: STRUCTURE_COLS, rows },
+    { name: "Observations", columns: OBSERVATION_COLS, rows: flat }
+  ]);
+}
+
+function pocketRows(rows, pocket) {
+  const byPdb = new Map((pocket.structures || []).map(r => [r.pdb_id, r]));
+  const out = [];
+  for (const s of rows) {
+    const record = byPdb.get(s.pdb_id);
+    if (!record) continue;
+    for (const segment of record.segments || [])
+      for (const residue of segment.residues || [])
+        out.push({ pdb_id: s.pdb_id, receptor_name: s.receptor_name,
+          transducer_class: s.transducer_class, segment: segment.segment,
+          generic_number: residue.generic_number, residue_name: residue.residue_name,
+          aa: residue.aa, auth_seq_id: residue.auth_seq_id, chain: residue.chain,
+          distance_angstrom: residue.distance_angstrom, distance_band: residue.distance_band,
+          binding_site_class: residue.binding_site_class, ligand_residue_name: residue.ligand_residue_name });
+  }
+  return out;
+}
+const CONTACT_COLS = [{ key: "pdb_id" }, { key: "receptor_name" }, { key: "transducer_class" },
+  { key: "segment" }, { key: "generic_number" }, { key: "aa" }, { key: "residue_name" },
+  { key: "auth_seq_id" }, { key: "chain" }, { key: "distance_angstrom" },
+  { key: "distance_band" }, { key: "binding_site_class" }, { key: "ligand_residue_name" }];
+
+function exportContactList(rows, pocket, slug, xlsx) {
+  const list = pocketRows(rows, pocket);
+  const info = meta(slug, { table: "contact_list", structures: rows.length, rows: list.length });
+  if (xlsx) downloadXLSX("contacts_" + slug + ".xlsx",
+    [{ name: "Contacts", columns: CONTACT_COLS, rows: list }]);
+  else download("contacts_" + slug + ".csv", toCSV(CONTACT_COLS, list, info));
+}
+
+/* Generic positions down the rows, structures across the columns, closest heavy-atom distance
+   in the cells. Blank means the position was not within the 5 Å shell for that structure —
+   distinct from a position that is absent from the numbering, which never gets a row at all. */
+function exportMatrix(rows, pocket, slug, xlsx) {
+  const list = pocketRows(rows, pocket);
+  const pdbs = Array.from(new Set(list.map(r => r.pdb_id))).sort();
+  const positions = new Map();
+  for (const r of list) {
+    if (!r.generic_number) continue;
+    if (!positions.has(r.generic_number))
+      positions.set(r.generic_number, { generic_number: r.generic_number, segment: r.segment });
+    const cell = positions.get(r.generic_number);
+    const previous = cell[r.pdb_id];
+    if (previous === undefined || r.distance_angstrom < previous) cell[r.pdb_id] = r.distance_angstrom;
+  }
+  const sortKey = gn => {
+    const m = /^(\d+)x(\d+)/.exec(gn || "");
+    return m ? Number(m[1]) * 1000 + Number(m[2]) : 1e9;
+  };
+  const matrix = Array.from(positions.values()).sort((a, b) =>
+    sortKey(a.generic_number) - sortKey(b.generic_number));
+  const cols = [{ key: "generic_number" }, { key: "segment" },
+    ...pdbs.map(pdb => ({ key: pdb, label: pdb }))];
+  const info = meta(slug, { table: "comparison_matrix", cell: "closest heavy-atom distance (A)",
+    structures: pdbs.length, positions: matrix.length });
+  if (xlsx) downloadXLSX("matrix_" + slug + ".xlsx",
+    [{ name: "Matrix", columns: cols, rows: matrix }]);
+  else download("matrix_" + slug + ".csv", toCSV(cols, matrix, info));
+}
+
 function exportObservations(rows, slug) {
   const flat = [];
   for (const s of rows) for (const o of s.observations)
@@ -790,17 +1410,56 @@ export async function sources() {
   const d = await L.loadGlobal("sources.json");
   const wrap = el("section", { class: "view prose" });
   wrap.appendChild(el("h2", { text: t("nav_sources") }));
-  const tbl = el("table", { class: "data" });
-  tbl.appendChild(el("thead", {}, el("tr", {}, ["Source", "Licence", "Verification"].map(h => el("th", { text: h })))));
-  const tb = el("tbody");
-  for (const s of d.licences || []) tb.appendChild(el("tr", {}, [
+  const lang = getLang();
+  const roles = d.source_roles || {};
+  const roleTable = el("table", { class: "data source-roles" });
+  roleTable.appendChild(el("thead", {}, el("tr", {}, [t("sr_source"), t("sr_role"),
+    t("sr_fields"), t("sr_licence"), t("sr_transform")].map(h => el("th", { text: h })))));
+  const roleBody = el("tbody");
+  // Coordinates first, then annotation, pharmacology, chemistry, and the bundled viewer last —
+  // the order the data actually flows through the pipeline. Unlisted sources fall in alphabetically.
+  const ORDER = ["rcsb", "gpcrdb", "gtopdb", "chembl", "pubchem", "unichem", "uniprot", "ngl"];
+  const rank = key => { const i = ORDER.indexOf(key); return i < 0 ? ORDER.length : i; };
+  for (const key of Object.keys(roles).sort((a, b) => rank(a) - rank(b) || a.localeCompare(b))) {
+    const s = roles[key];
+    roleBody.appendChild(el("tr", {}, [
+      el("th", { scope: "row" }, [
+        el("strong", { text: s["label_" + lang] || s.label_en || key }),
+        s.license_page ? el("a", { class: "source-home", href: s.license_page,
+          target: "_blank", rel: "noopener", text: s.license_page }) : el("span")
+      ]),
+      el("td", { class: "small", text: s["role_" + lang] || s.role_en || "—" }),
+      el("td", { class: "small" }, el("ul", { class: "field-list" },
+        (s.fields_used || []).map(f => el("li", { text: f })))),
+      el("td", { class: "small" }, [
+        el("span", { text: s.licence || "—" }),
+        s.attribution_text ? el("p", { class: "muted", text: s.attribution_text }) : el("span")
+      ]),
+      el("td", { class: "small", text: s["transform_" + lang] || s.transform_en || "—" })
+    ]));
+  }
+  roleTable.appendChild(roleBody); wrap.appendChild(roleTable);
+
+  // Licence verification is a separate claim from the licence itself: it records whether this
+  // project confirmed the terms first-hand or is repeating what the owner supplied.
+  wrap.appendChild(el("h3", { text: t("sr_verification") }));
+  const verify = el("table", { class: "data" });
+  verify.appendChild(el("thead", {}, el("tr", {}, [t("sr_source"), t("sr_licence"),
+    t("sr_verification_method")].map(h => el("th", { text: h })))));
+  const vb = el("tbody");
+  for (const s of d.licences || []) vb.appendChild(el("tr", {}, [
     el("th", { scope: "row", text: s.provider }),
-    el("td", { text: typeof s.licence === "string" ? s.licence : JSON.stringify(s.licence) }),
+    // Some records carry the owner's structured values rather than a single sentence.
+    el("td", {}, typeof s.licence === "string" ? el("span", { text: s.licence })
+      : el("ul", { class: "field-list" }, Object.entries(s.licence || {}).map(([k, v]) =>
+          el("li", { text: k.replace(/_/g, " ") + ": " + v })))),
     el("td", { class: "small", text: s.verification_method })]));
-  tbl.appendChild(tb); wrap.appendChild(tbl);
-  wrap.appendChild(el("h3", { text: "Release gates" }));
+  verify.appendChild(vb); wrap.appendChild(verify);
+
+  wrap.appendChild(el("h3", { text: t("sr_release_gates") }));
   wrap.appendChild(el("ul", {}, (d.release_gates || []).map(g =>
-    el("li", { text: g.gate + " — " + g.status + ": " + g.note }))));
+    el("li", {}, [el("strong", { text: g.gate + " — " + g.status }),
+      el("span", { text: ": " + g.note })]))));
   return wrap;
 }
 export async function references(root, slug) {
@@ -824,21 +1483,143 @@ export async function references(root, slug) {
   }
   return wrap;
 }
-export async function cite(root, pdb) {
+/* Copyable block: the text people actually paste into a manuscript, with the button beside it
+   rather than a bare <pre> they have to select by hand. */
+function citationBlock(text, labelKey) {
+  const box = el("div", { class: "cite-block" }, [ el("pre", { text }) ]);
+  const button = el("button", { class: "btn small", type: "button", text: t(labelKey) });
+  button.addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(text); button.textContent = t("cite_copied"); }
+    catch (error) { button.textContent = t("cite_copy_failed"); }
+    setTimeout(() => { button.textContent = t(labelKey); }, 1800);
+  });
+  box.appendChild(button);
+  return box;
+}
+
+function bibtex(pdb, citation) {
+  const first = (citation.authors || [])[0] || "Unknown";
+  const key = String(first).split(",")[0].replace(/[^A-Za-z]/g, "") + (citation.year || "");
+  const lines = ["@article{" + (key || pdb) + ","];
+  const field = (name, value) => { if (value) lines.push("  " + name + " = {" + value + "},"); };
+  field("author", (citation.authors || []).join(" and "));
+  field("title", citation.title);
+  field("journal", citation.journal);
+  field("year", citation.year);
+  field("volume", citation.volume);
+  field("pages", [citation.pages, citation.page_last].filter(Boolean).join("--"));
+  field("doi", citation.doi);
+  lines.push("}");
+  return lines.join("\n");
+}
+
+function plainCitation(citation) {
+  const authors = (citation.authors || []).join(", ");
+  const where = [citation.journal, citation.year].filter(Boolean).join(" ");
+  const detail = [citation.volume, [citation.pages, citation.page_last].filter(Boolean).join("-")]
+    .filter(Boolean).join(":");
+  return [authors, citation.title, [where, detail].filter(Boolean).join(";"),
+    citation.doi ? "doi:" + citation.doi : ""].filter(Boolean).join(". ");
+}
+
+export async function cite(root, pdb, slug) {
   const g = await L.loadGlobal("references.json");
   const rm = await L.loadGlobal("release_metadata.json");
   const m = L.getManifest();
+  const lang = getLang();
   const wrap = el("section", { class: "view prose" });
   wrap.appendChild(el("h2", { text: t("nav_cite") }));
-  wrap.appendChild(el("h3", { text: t("cite_atlas") }));
-  wrap.appendChild(el("pre", { text: "Class A GPCR Atlas, version " + m.version +
-    " (pre-release). Data freeze " + m.data_version + ". " + t("no_doi") }));
-  wrap.appendChild(el("p", { class: "notice", text: rm["code_licence_note_" + getLang()] || rm.code_licence_note_en }));
-  wrap.appendChild(el("h3", { text: t("cite_structure") }));
-  wrap.appendChild(el("pre", { text: pdb ? ("PDB " + pdb + " — https://doi.org/10.2210/pdb" + pdb + "/pdb")
-    : g.pdb_doi_pattern }));
-  wrap.appendChild(el("h3", { text: t("cite_db") }));
-  wrap.appendChild(el("ul", {}, (g.databases || []).map(db =>
-    el("li", { text: db.name + " — " + db.licence }))));
+
+  const tabs = el("div", { class: "cite-tabs", role: "tablist" });
+  const body = el("div", { class: "cite-body" });
+  wrap.append(tabs, body);
+
+  const panels = {
+    atlas: () => {
+      const text = "Class A GPCR Atlas, version " + m.version + " (pre-release). Data freeze " +
+        m.data_version + ".";
+      body.appendChild(el("p", { class: "muted", text: t("no_doi") }));
+      body.appendChild(citationBlock(text, "cite_copy"));
+      body.appendChild(el("p", { class: "notice",
+        text: rm["code_licence_note_" + lang] || rm.code_licence_note_en }));
+    },
+    structure: async () => {
+      // Without a family there is nothing to list, so send the reader somewhere they can pick one
+      // rather than leaving the tab asking for a selection it offers no way to make.
+      if (!slug) {
+        body.appendChild(el("p", { class: "muted", text: t("cite_pick_family") }));
+        body.appendChild(el("a", { class: "btn", href: "#view=landing", text: t("families") }));
+        return;
+      }
+      body.appendChild(el("p", { class: "muted", text: t("loading") }));
+      let structures = [], refs = null;
+      try {
+        const [list, references] = await Promise.all([
+          L.loadFamilyFile(slug, "structures.json"), L.loadFamilyReferences(slug)]);
+        structures = (list.structures || []).slice().sort((a, b) =>
+          a.pdb_id.localeCompare(b.pdb_id));
+        refs = references;
+      } catch (error) {
+        clear(body); body.appendChild(el("p", { class: "notice", text: L.errorMessage(error) })); return;
+      }
+      clear(body);
+      let current = structures.find(s => s.pdb_id === pdb) || structures[0];
+      if (!current) { body.appendChild(el("p", { class: "muted", text: t("no_results") })); return; }
+
+      const picker = el("select", { "aria-label": t("cite_choose_structure") });
+      for (const s of structures) picker.appendChild(el("option", { value: s.pdb_id,
+        text: s.pdb_id + " — " + plainName(s.receptor_name || s.receptor_entry_name || "") }));
+      picker.value = current.pdb_id;
+      const output = el("div");
+      body.append(el("label", { class: "filter-field cite-picker" }, [
+        el("span", { text: t("cite_choose_structure") }), picker ]), output);
+
+      const render = () => {
+        clear(output);
+        const id = current.pdb_id;
+        output.appendChild(el("h3", { text: t("cite_deposited") }));
+        output.appendChild(citationBlock("Protein Data Bank entry " + id +
+          ". https://doi.org/10.2210/pdb" + id + "/pdb", "cite_copy_structure"));
+        const reference = (refs.structure_sources || []).find(r => r.pdb_id === id);
+        const citation = reference && reference.primary_citation;
+        if (!citation) { output.appendChild(el("p", { class: "muted", text: t("cite_no_primary") })); return; }
+        output.appendChild(el("h3", { text: t("cite_primary") }));
+        output.appendChild(citationBlock(plainCitation(citation), "cite_copy_plain"));
+        output.appendChild(el("h3", { text: "BibTeX" }));
+        output.appendChild(citationBlock(bibtex(id, citation), "cite_copy_bibtex"));
+      };
+      picker.addEventListener("change", event => {
+        current = structures.find(s => s.pdb_id === event.target.value) || current;
+        pdb = current.pdb_id;
+        // Keep the address bar in step so the citation for this structure can be linked to.
+        navigate(Object.assign({}, parseRoute(), { pdb: current.pdb_id }), true);
+        render();
+      });
+      render();
+    },
+    databases: () => {
+      const cites = g.database_citations || {};
+      const keys = Object.keys(cites).sort();
+      if (!keys.length) { body.appendChild(el("p", { class: "muted", text: t("source_none") })); return; }
+      for (const key of keys) body.appendChild(citationBlock(plainCitation(cites[key]), "cite_copy"));
+      body.appendChild(el("p", { class: "muted small", text: t("cite_db_note") }));
+    }
+  };
+
+  let active = "atlas";
+  const draw = async () => {
+    clear(body);
+    for (const node of tabs.querySelectorAll("button"))
+      node.setAttribute("aria-selected", node.dataset.tab === active ? "true" : "false");
+    await panels[active]();
+  };
+  for (const [key, labelKey] of [["atlas", "cite_tab_atlas"], ["structure", "cite_tab_structure"],
+    ["databases", "cite_tab_databases"]]) {
+    const button = el("button", { class: "cite-tab", role: "tab", "data-tab": key,
+      "aria-selected": "false", text: t(labelKey) });
+    button.addEventListener("click", () => { active = key; draw(); });
+    tabs.appendChild(button);
+  }
+  await draw();
   return wrap;
 }

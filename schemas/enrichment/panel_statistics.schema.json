@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["methodology", "panels"],
+  "additionalProperties": false,
+  "properties": {
+    "methodology": {"type": "object"},
+    "panels": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "n_structures", "n_receptors", "n_ligands", "n_units", "n_prevalence_estimable", "n_not_estimable", "not_estimable_reasons", "structure_empty_reasons", "n_agonist", "n_antagonist", "median_contacts_5A", "n_core_positions", "denominators", "positions", "site_classes"],
+        "properties": {
+          "id": {"enum": ["Gs", "Gi/o", "Gq/11", "G12/13", "arrestin", "transducer_free"]},
+          "n_structures": {"type": "integer", "minimum": 0},
+          "n_receptors": {"type": "integer", "minimum": 0},
+          "n_ligands": {"type": "integer", "minimum": 0},
+          "n_units": {"type": "integer", "minimum": 0},
+          "n_prevalence_estimable": {"type": "integer", "minimum": 0},
+          "n_not_estimable": {"type": "integer", "minimum": 0},
+          "not_estimable_reasons": {"type": "object"},
+          "structure_empty_reasons": {"type": "object"},
+          "n_agonist": {"type": "integer", "minimum": 0},
+          "n_antagonist": {"type": "integer", "minimum": 0},
+          "median_contacts_5A": {"type": "number", "minimum": 0},
+          "n_core_positions": {"type": "integer", "minimum": 0},
+          "denominators": {"type": "object"},
+          "positions": {"type": "array"},
+          "site_classes": {"type": "array"}
+        }
+      }
+    }
+  }
+}

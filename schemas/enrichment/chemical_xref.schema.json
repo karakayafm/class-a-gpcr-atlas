@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/class-a-gpcr-atlas/schemas/enrichment/chemical_xref.schema.json",
+  "title": "CCD chemical cross-reference enrichment",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["ccd", "name", "formula", "inchi_key", "chembl", "pubchem", "gtopdb", "ambiguities", "retrieved"],
+  "properties": {
+    "ccd": {"type": "string", "minLength": 1},
+    "name": {"type": ["string", "null"]},
+    "formula": {"type": ["string", "null"]},
+    "inchi_key": {"type": ["string", "null"]},
+    "chembl": {"$ref": "#/$defs/xref_or_null"},
+    "pubchem": {"$ref": "#/$defs/xref_or_null"},
+    "gtopdb": {"$ref": "#/$defs/xref_or_null"},
+    "ambiguities": {"type": "array", "items": {"type": "object"}},
+    "retrieved": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"}
+  },
+  "$defs": {
+    "xref_or_null": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "label", "url", "approximate", "basis", "retrieved"],
+          "properties": {
+            "id": {"type": "string", "minLength": 1},
+            "label": {"type": ["string", "null"]},
+            "url": {"type": "string", "pattern": "^https?://"},
+            "approximate": {"type": "boolean"},
+            "basis": {"type": "string", "minLength": 1},
+            "retrieved": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"}
+          }
+        }
+      ]
+    }
+  }
+}

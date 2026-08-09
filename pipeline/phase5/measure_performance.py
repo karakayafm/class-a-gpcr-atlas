@@ -48,7 +48,7 @@ def main()->int:
     out["largest_structure_index_parse_ms"]=round((time.perf_counter()-t0)*1000,2)
     out["largest_structure_index"]={"slug":big["slug"],"bytes":big["structure_index_bytes"],
                                     "structures":d["count"]}
-    out["phase4_records_not_shipped_to_browser"]=182169
+    out["phase4_records_not_shipped_to_browser"]=183984
     out["page_size_rows"]={"structures":50,"contacts":40,"evidence":60}
     (ROOT/"reports/phase5").mkdir(parents=True,exist_ok=True)
     (ROOT/"reports/phase5/performance.json").write_text(json.dumps(out,indent=1,ensure_ascii=False),

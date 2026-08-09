@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Phase 5 build entry point. Transforms the Phase 4 freeze into web payloads; it never
-recomputes science."""
+"""Build web payloads from the Phase 4 and enrichment freezes without recomputing science."""
 from __future__ import annotations
 import subprocess, sys
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]
-STEPS=[("validate freezes and run preflight","pipeline/phase5/preflight.py"),
+STEPS=[("freeze validated enrichment artefacts","pipeline/enrichment/freeze_enrichment.py"),
+       ("validate freezes and run preflight","pipeline/phase5/preflight.py"),
        ("generate global and family payloads","pipeline/phase5/build_payloads.py"),
        ("generate structure viewer bundles","pipeline/phase5/build_bundles.py"),
        ("assemble static site and offline family exports","pipeline/phase5/build_site.py"),

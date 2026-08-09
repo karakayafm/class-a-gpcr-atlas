@@ -1,0 +1,17 @@
+{
+  "separation_rule": "Structural presence or absence and functional assay evidence are separate records and must never be merged.",
+  "no_functional_evidence_note_tr": "Bu reseptör–ligand çifti için kürasyonlu fonksiyonel deney kaydı yok; bu yüzden panel üyeliği tamamen yapıdaki sinyal ileticisinden geliyor.",
+  "no_functional_evidence_note_en": "No curated functional assay record is available for this receptor–ligand pair; panel membership therefore comes entirely from the transducer observed in the structure.",
+  "tiers": {
+    "A": {
+      "label_tr": "kanıt seviyesi A · yapısal",
+      "label_en": "evidence tier A · structural",
+      "description": "Evidence from the deposited polymer inventory or a structural annotation."
+    },
+    "B": {
+      "label_tr": "kanıt seviyesi B · fonksiyonel deney",
+      "label_en": "evidence tier B · functional assay",
+      "description": "Curated, source-linked functional assay evidence; never inferred from a structure."
+    }
+  }
+}

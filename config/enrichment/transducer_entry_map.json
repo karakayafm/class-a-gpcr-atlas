@@ -1,0 +1,264 @@
+{
+ "arrb1_human": {
+  "class": "arrestin",
+  "determines_panel": true,
+  "display": "β-arrestin-1",
+  "note": "UniProt: beta-arrestin-1 (ARRB1), human.",
+  "role": "arrestin",
+  "uniprot": "P49407",
+  "verified": "2026-08-08"
+ },
+ "arrb1_rat": {
+  "class": "arrestin",
+  "determines_panel": true,
+  "display": "β-arrestin-1",
+  "note": "UniProt: beta-arrestin-1 (Arrb1), rat.",
+  "role": "arrestin",
+  "uniprot": "P29066",
+  "verified": "2026-08-08"
+ },
+ "arrs_mouse": {
+  "class": "arrestin",
+  "determines_panel": true,
+  "display": null,
+  "note": "UniProt: S-arrestin/retinal S-antigen (Sag), mouse.",
+  "role": "arrestin",
+  "uniprot": "P20443",
+  "verified": "2026-08-08"
+ },
+ "display_policy": "Only the standard subunit names (Gs, Gi1-3, Go, Gq, G11, G12, G13, G15, beta-arrestin) are shown in evidence text. Entries with display=null - transducin, gustducin, Gz, Golf, visual arrestin - fall back to their family label so the wording stays readable without asserting a name the reader would not recognise.",
+ "f6vl43_macmu": {
+  "class": "Gi/o",
+  "determines_panel": true,
+  "display": "Gαi3",
+  "note": "UniProt: G protein subunit alpha i3 (GNAI3), Macaca mulatta; therefore Gi/o.",
+  "role": "g_alpha_subunit",
+  "uniprot": "F6VL43",
+  "verified": "2026-08-08"
+ },
+ "gbb1_bovin": {
+  "class": null,
+  "determines_panel": false,
+  "note": "UniProt: GNB1 beta-1, bovine; does not determine a panel.",
+  "role": "g_beta_gamma_subunit",
+  "uniprot": "P62871",
+  "verified": "2026-08-08"
+ },
+ "gbb1_human": {
+  "class": null,
+  "determines_panel": false,
+  "note": "UniProt: GNB1 beta-1, human; does not determine a panel.",
+  "role": "g_beta_gamma_subunit",
+  "uniprot": "P62873",
+  "verified": "2026-08-08"
+ },
+ "gbb1_mouse": {
+  "class": null,
+  "determines_panel": false,
+  "note": "UniProt: GNB1 beta-1, mouse; does not determine a panel.",
+  "role": "g_beta_gamma_subunit",
+  "uniprot": "P62874",
+  "verified": "2026-08-08"
+ },
+ "gbb1_rat": {
+  "class": null,
+  "determines_panel": false,
+  "note": "UniProt: GNB1 beta-1, rat; does not determine a panel.",
+  "role": "g_beta_gamma_subunit",
+  "uniprot": "P54311",
+  "verified": "2026-08-08"
+ },
+ "gbg1_bovin": {
+  "class": null,
+  "determines_panel": false,
+  "note": "UniProt: transducin gamma-T1 (GNGT1), bovine; does not determine a panel.",
+  "role": "g_beta_gamma_subunit",
+  "uniprot": "P02698",
+  "verified": "2026-08-08"
+ },
+ "gbg1_human": {
+  "class": null,
+  "determines_panel": false,
+  "note": "UniProt: transducin gamma-T1 (GNGT1), human; does not determine a panel.",
+  "role": "g_beta_gamma_subunit",
+  "uniprot": "P63211",
+  "verified": "2026-08-08"
+ },
+ "gbg2_bovin": {
+  "class": null,
+  "determines_panel": false,
+  "note": "UniProt: GNG2 gamma-2, bovine; does not determine a panel.",
+  "role": "g_beta_gamma_subunit",
+  "uniprot": "P63212",
+  "verified": "2026-08-08"
+ },
+ "gbg2_human": {
+  "class": null,
+  "determines_panel": false,
+  "note": "UniProt: GNG2 gamma-2, human; does not determine a panel.",
+  "role": "g_beta_gamma_subunit",
+  "uniprot": "P59768",
+  "verified": "2026-08-08"
+ },
+ "gbg2_mouse": {
+  "class": null,
+  "determines_panel": false,
+  "note": "UniProt: GNG2 gamma-2, mouse; does not determine a panel.",
+  "role": "g_beta_gamma_subunit",
+  "uniprot": "P63213",
+  "verified": "2026-08-08"
+ },
+ "gna11_human": {
+  "class": "Gq/11",
+  "determines_panel": true,
+  "display": "Gα11",
+  "note": "UniProt: G alpha-11 (GNA11), human.",
+  "role": "g_alpha_subunit",
+  "uniprot": "P29992",
+  "verified": "2026-08-08"
+ },
+ "gna13_human": {
+  "class": "G12/13",
+  "determines_panel": true,
+  "display": "Gα13",
+  "note": "UniProt: G alpha-13 (GNA13), human.",
+  "role": "g_alpha_subunit",
+  "uniprot": "Q14344",
+  "verified": "2026-08-08"
+ },
+ "gnai1_bovin": {
+  "class": "Gi/o",
+  "determines_panel": true,
+  "display": "Gαi1",
+  "note": "UniProt: G alpha-i1 (GNAI1), bovine.",
+  "role": "g_alpha_subunit",
+  "uniprot": "P63097",
+  "verified": "2026-08-08"
+ },
+ "gnai1_human": {
+  "class": "Gi/o",
+  "determines_panel": true,
+  "display": "Gαi1",
+  "note": "UniProt: G alpha-i1 (GNAI1), human.",
+  "role": "g_alpha_subunit",
+  "uniprot": "P63096",
+  "verified": "2026-08-08"
+ },
+ "gnai1_mouse": {
+  "class": "Gi/o",
+  "determines_panel": true,
+  "display": "Gαi1",
+  "note": "UniProt: G alpha-i1 (Gnai1), mouse.",
+  "role": "g_alpha_subunit",
+  "uniprot": "B2RSH2",
+  "verified": "2026-08-08"
+ },
+ "gnai2_human": {
+  "class": "Gi/o",
+  "determines_panel": true,
+  "display": "Gαi2",
+  "note": "UniProt: G alpha-i2 (GNAI2), human.",
+  "role": "g_alpha_subunit",
+  "uniprot": "P04899",
+  "verified": "2026-08-08"
+ },
+ "gnai3_human": {
+  "class": "Gi/o",
+  "determines_panel": true,
+  "display": "Gαi3",
+  "note": "UniProt: G alpha-i3 (GNAI3), human.",
+  "role": "g_alpha_subunit",
+  "uniprot": "P08754",
+  "verified": "2026-08-08"
+ },
+ "gnal_human": {
+  "class": "Gs",
+  "determines_panel": true,
+  "display": null,
+  "note": "UniProt: G alpha-olf (GNAL), human; Gs family.",
+  "role": "g_alpha_subunit",
+  "uniprot": "P38405",
+  "verified": "2026-08-08"
+ },
+ "gnao_human": {
+  "class": "Gi/o",
+  "determines_panel": true,
+  "display": "Gαo",
+  "note": "UniProt: G alpha-o (GNAO1), human.",
+  "role": "g_alpha_subunit",
+  "uniprot": "P09471",
+  "verified": "2026-08-08"
+ },
+ "gnaq_human": {
+  "class": "Gq/11",
+  "determines_panel": true,
+  "display": "Gαq",
+  "note": "UniProt: G alpha-q (GNAQ), human.",
+  "role": "g_alpha_subunit",
+  "uniprot": "P50148",
+  "verified": "2026-08-08"
+ },
+ "gnas2_bovin": {
+  "class": "Gs",
+  "determines_panel": true,
+  "display": "Gαs",
+  "note": "UniProt: G alpha-s short isoform (GNAS), bovine.",
+  "role": "g_alpha_subunit",
+  "uniprot": "P04896",
+  "verified": "2026-08-08"
+ },
+ "gnas2_human": {
+  "class": "Gs",
+  "determines_panel": true,
+  "display": "Gαs",
+  "note": "UniProt: G alpha-s short isoform (GNAS), human.",
+  "role": "g_alpha_subunit",
+  "uniprot": "P63092",
+  "verified": "2026-08-08"
+ },
+ "gnat1_bovin": {
+  "class": "Gi/o",
+  "determines_panel": true,
+  "display": null,
+  "note": "UniProt: transducin alpha-1 (GNAT1), bovine; Gi/o family.",
+  "role": "g_alpha_subunit",
+  "uniprot": "P04695",
+  "verified": "2026-08-08"
+ },
+ "gnat2_bovin": {
+  "class": "Gi/o",
+  "determines_panel": true,
+  "display": null,
+  "note": "UniProt: transducin alpha-2 (GNAT2), bovine; Gi/o family.",
+  "role": "g_alpha_subunit",
+  "uniprot": "P04696",
+  "verified": "2026-08-08"
+ },
+ "gnat3_bovin": {
+  "class": "Gi/o",
+  "determines_panel": true,
+  "display": null,
+  "note": "UniProt: gustducin alpha-3 (GNAT3), bovine; Gi/o family.",
+  "role": "g_alpha_subunit",
+  "uniprot": "P0C7Q4",
+  "verified": "2026-08-08"
+ },
+ "gnat3_human": {
+  "class": "Gi/o",
+  "determines_panel": true,
+  "display": null,
+  "note": "UniProt: gustducin alpha-3 (GNAT3), human; Gi/o family.",
+  "role": "g_alpha_subunit",
+  "uniprot": "A8MTJ3",
+  "verified": "2026-08-08"
+ },
+ "gnaz_human": {
+  "class": "Gi/o",
+  "determines_panel": true,
+  "display": null,
+  "note": "UniProt: G alpha-z (GNAZ), human; Gi/o family.",
+  "role": "g_alpha_subunit",
+  "uniprot": "P19086",
+  "verified": "2026-08-08"
+ }
+}

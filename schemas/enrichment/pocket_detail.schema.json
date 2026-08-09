@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["family_id", "structures"],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {"const": "pocket_detail.schema.json"},
+    "schema_version": {"const": "5.0.0"},
+    "family_id": {"type": "string", "pattern": "^001_[0-9]{3}$"},
+    "structures": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["pdb_id", "ligand_status", "pharmacological_ligand_count", "empty_reason", "n_contacts", "n_mapped", "segments"],
+        "additionalProperties": false,
+        "properties": {
+          "pdb_id": {"type": "string", "pattern": "^[0-9A-Z]{4}$"},
+          "ligand_status": {"type": "string"},
+          "pharmacological_ligand_count": {"type": "integer", "minimum": 0},
+          "empty_reason": {
+            "type": ["string", "null"],
+            "enum": [null, "confirmed_apo", "apo_status_unresolved", "ligand_present_no_contacts_upstream"]
+          },
+          "n_contacts": {"type": "integer", "minimum": 0},
+          "n_mapped": {"type": "integer", "minimum": 0},
+          "segments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["segment", "residues"],
+              "additionalProperties": false,
+              "properties": {
+                "segment": {"type": ["string", "null"]},
+                "residues": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["chain", "auth_seq_id", "insertion_code", "residue_name", "aa", "generic_number", "distance_angstrom", "distance_band", "binding_site_class", "ligand_residue_name", "closest_receptor_atom", "closest_ligand_atom"],
+                    "additionalProperties": false,
+                    "properties": {
+                      "chain": {"type": "string"},
+                      "auth_seq_id": {"type": "string"},
+                      "insertion_code": {"type": ["string", "null"]},
+                      "residue_name": {"type": "string"},
+                      "aa": {"type": ["string", "null"], "minLength": 1, "maxLength": 1},
+                      "generic_number": {"type": ["string", "null"]},
+                      "distance_angstrom": {"type": "number", "minimum": 0, "maximum": 5.0},
+                      "distance_band": {"enum": ["≤3.5", "3.5–4.3", "4.3–5.0"]},
+                      "binding_site_class": {"type": ["string", "null"]},
+                      "ligand_residue_name": {"type": ["string", "null"]},
+                      "closest_receptor_atom": {"type": ["string", "null"]},
+                      "closest_ligand_atom": {"type": ["string", "null"]}
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

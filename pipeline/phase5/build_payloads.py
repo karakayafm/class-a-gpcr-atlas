@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Phase 5A — web payload generation from the Phase 4 freeze.
+"""Phase 5A — web payload generation from the Phase 4 and enrichment freezes.
 
-No science is recomputed. Every number in a payload is copied or summed from a Phase 4 artefact,
-and the build records which artefact each payload came from.
+No science is recomputed. Payload values are copied from the two validated freezes (or existing
+Phase 4 aggregates), and their manifests record the exact provenance.
 
     python3 pipeline/phase5/build_payloads.py
 """
@@ -13,8 +13,9 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]; sys.path.insert(0,str(ROOT/"pipeline"))
 from common.canonical import canonical_dumps, content_sha256   # noqa: E402
 IN,P3,P4=ROOT/"data/intermediate",ROOT/"data/intermediate/phase3",ROOT/"data/intermediate/phase4"
+ENRICH=ROOT/"data/freezes/enrichment-1.0.0"
 AGG=ROOT/"data/aggregates"; WEB=ROOT/"data/web"
-SCHEMA_VERSION="5.0.0"; DATA_VERSION="phase4-freeze-1.0.0"
+SCHEMA_VERSION="5.0.0"; DATA_VERSION="phase4-freeze-1.0.0+enrichment-1.0.0"
 POLYMER={"extracellular_polymer_interface","tethered_ligand_interface"}
 SUPERSEDED_PDB={"7XOX":"8IA7"}
 CURATED_APO_STRUCTURES={"7VUY","7VUZ","7VV3","8IW1","8IW9",
@@ -182,6 +183,30 @@ def wj(p,obj):
 def f(x,n=6): return None if x is None else round(x,n)
 
 def main()->int:
+    if not (ENRICH/"freeze.json").is_file():
+        raise SystemExit("missing enrichment freeze; run pipeline/enrichment/freeze_enrichment.py")
+    TA={r["pdb_id"]:r for r in rd(ENRICH/"transducer_assignments.jsonl")}
+    PE=rd(ENRICH/"pathway_evidence.jsonl")
+    PE_by_pdb=defaultdict(list)
+    for row in PE: PE_by_pdb[row["pdb_id"]].append(row)
+
+    def panel_membership(pid,assignment):
+        """Panels a structure belongs to: the structurally observed transducer plus every panel
+        a positive tier-B functional assay puts it in. This mirrors the aminergic viewer, where
+        panel membership is the union of the two (build_pathway_pocket_data_v15.py:374). The
+        underlying fields stay separate — `transducer_class` remains structure-only and every
+        evidence row keeps its own tier — so the config separation rule still holds."""
+        panels=set(assignment["panels"])
+        panels.update(row["panel"] for row in PE_by_pdb[pid]
+                      if row["tier"]=="B" and row["panel_membership"])
+        return sorted(panels)
+    XREF={r["ccd"]:r for r in json.loads((ENRICH/"chemical_xrefs.json").read_text(encoding="utf-8"))}
+    SREF={r["pdb_id"]:r for r in json.loads((ENRICH/"structure_references.json").read_text(encoding="utf-8"))}
+    PANEL_STATS=json.loads((ENRICH/"panel_statistics.json").read_text(encoding="utf-8"))
+    DB_CITATIONS=json.loads((ENRICH/"database_citations.json").read_text(encoding="utf-8"))
+    SUPERSEDED=json.loads((ROOT/"config/enrichment/superseded_structures.json").read_text(encoding="utf-8"))
+    SUPERSEDED_BY={pdb_id:{"pdb_id":pdb_id,**record}
+                   for pdb_id,record in SUPERSEDED["structures"].items()}
     tax=json.loads((ROOT/"data/normalized/class_a_taxonomy.json").read_text(encoding="utf-8"))
     famnodes=[n for n in tax["nodes"] if n["level"]=="major_family"]
     rfam={n["source_id"]:n["name"] for n in tax["nodes"] if n["level"]=="receptor_family"}
@@ -242,7 +267,7 @@ def main()->int:
     mm_by_fam=defaultdict(list)
     for m in MM: mm_by_fam[m["major_family_id"]].append(m)
 
-    manifests={}; landing_rows=[]; search_rows=[]; total_prev=0
+    manifests={}; landing_rows=[]; search_rows=[]; panel_structure_rows=[]; total_prev=0
     for node in famnodes:
         fid=node["source_id"]; slug=node["project_slug"]
         fam_s=[s for s in S.values() if s["major_family_id"]==fid]
@@ -301,6 +326,7 @@ def main()->int:
             insts=[r for r in RI if r["pdb_id"]==pid]
             unval=any(REMED.get(r["receptor_instance_id"],{}).get("outcome")
                       =="mapping_unresolved_excluded_from_generic_aggregation" for r in insts)
+            assignment=TA[pid]
             srows.append({"pdb_id":pid,"receptor_name":s["receptor_name"],
               "receptor_entry_name":s["receptor_entry_name"],
               "receptor_family_id":s["receptor_family_id"],
@@ -326,12 +352,25 @@ def main()->int:
               "human_review_required":sum(1 for u in UNIV_by_pdb.get(pid,[])
                                           if u["human_review_requirement"]=="required" and
                                           u["review_item_id"] not in resolved_reviews),
-              "superseded_by":SUPERSEDED_PDB.get(pid),
+              "transducer_class":assignment["transducer_class"],
+              "transducer_panels":panel_membership(pid,assignment),
+              "transducer_panels_structural":assignment["panels"],
+              "transducer_assignment_evidence":assignment["assignment_evidence"],
+              "pathway_evidence_count":len(PE_by_pdb[pid]),
+              "pathway_evidence_tiers":sorted({row["tier"] for row in PE_by_pdb[pid]}),
+              "superseded":SUPERSEDED_BY.get(pid),
+              "superseded_by":(SUPERSEDED_BY.get(pid,{}).get("replaced_by") or [None])[0],
               "observations":obs,"observation_count":len(obs),
               "has_viewer_bundle":True})
         files["structures.json"]=wj(d/"structures.json",
             {"schema":"structure_index.schema.json","schema_version":SCHEMA_VERSION,
              "family_id":fid,"family_slug":slug,"count":len(srows),"structures":srows})
+        for structure in srows:
+            panel_structure_rows.append({
+              "pdb_id":structure["pdb_id"], "family_id":fid, "family_slug":slug,
+              "family_name":node["name"], "receptor_name":structure["receptor_name"],
+              "receptor_entry_name":structure["receptor_entry_name"],
+              "panels":structure["transducer_panels"]})
         search_rows.extend({
           "pdb_id":s["pdb_id"],"family_slug":slug,"family_name":node["name"],
           "receptor_name":s["receptor_name"],
@@ -512,13 +551,27 @@ def main()->int:
              "label_en":"Human-review-required evidence items",
              "label_tr":"İnsan incelemesi gereken kanıt kayıtları",
              "adjudication_is_not_human_curation":True,"items":revs})
+        family_ccds=sorted({ccd for row in srows for obs in row["observations"]
+                            for ccd in obs.get("ligand_components",[]) if ccd in XREF})
+        files["evidence.json"]=wj(d/"evidence.json",
+            {"schema":"pathway_evidence_collection","schema_version":SCHEMA_VERSION,
+             "family_id":fid,"count":sum(len(PE_by_pdb[p]) for p in fam_pdbs),
+             "records":[row for p in sorted(fam_pdbs) for row in PE_by_pdb[p]]})
+        files["ligand_xrefs.json"]=wj(d/"ligand_xrefs.json",
+            {"schema":"ligand_xref_collection","schema_version":SCHEMA_VERSION,
+             "family_id":fid,"count":len(family_ccds),
+             "records":[XREF[ccd] for ccd in family_ccds]})
+        pocket=json.loads((ENRICH/"pocket_detail"/f"{fid}.json").read_text(encoding="utf-8"))
+        files["pocket_detail.json"]=wj(d/"pocket_detail.json",
+          {"schema":"pocket_detail.schema.json","schema_version":SCHEMA_VERSION,**pocket})
         files["references.json"]=wj(d/"references.json",
             {"schema":"reference_payload.schema.json","schema_version":SCHEMA_VERSION,
              "family_id":fid,
-             "structure_sources":[{"pdb_id":p,
+             "structure_sources":[{**SREF[p],
                "rcsb_entry":f"https://www.rcsb.org/structure/{p}",
                "pdb_doi":f"https://doi.org/10.2210/pdb{p}/pdb",
-               "gpcrdb_structure":f"https://gpcrdb.org/structure/{p}"} for p in sorted(fam_pdbs)]})
+               "gpcrdb_structure":f"https://gpcrdb.org/structure/{p}",
+               "superseded":SUPERSEDED_BY.get(p)} for p in sorted(fam_pdbs)]})
 
         # ---- family summary ---------------------------------------------------------------
         sc=Counter(u["binding_site_class"] for u in fam_units)
@@ -559,7 +612,9 @@ def main()->int:
                                         "polymer interface aggregate" if k.startswith("interfaces/") else
                                         "core motif summary" if k=="motifs.json" else
                                         "coverage and warnings" if k=="coverage.json" else
-                                        "evidence and review items" if k=="reviews.json" else
+                                        "evidence and review items" if k in ("reviews.json","evidence.json") else
+                                        "ligand database cross-references" if k=="ligand_xrefs.json" else
+                                        "residue-level pocket detail" if k=="pocket_detail.json" else
                                         "source links")}
                       for k,v in sorted(files.items())]}
         mm_=wj(d/"manifest.json",man)
@@ -582,6 +637,11 @@ def main()->int:
     # ------------------------------------------------------------------ global payloads
     G=WEB/"global"
     gfiles={}
+    gfiles["panels.json"]=wj(G/"panels.json",
+      {"schema":"panels.schema.json","schema_version":SCHEMA_VERSION,
+       "source_freeze":"enrichment-1.0.0",
+       "structure_index":sorted(panel_structure_rows,key=lambda r:(r["family_name"],r["pdb_id"])),
+       **PANEL_STATS})
     gfiles["landing.json"]=wj(G/"landing.json",
       {"schema":"landing.schema.json","schema_version":SCHEMA_VERSION,
        "families":sorted(landing_rows,key=lambda r:-r["structure_count"]),
@@ -628,20 +688,16 @@ def main()->int:
                     "verification_method":s["verification_method"],
                     "blocks_phase_2":s["blocks_blocks"] if False else s["blocks_phase_2"]}
                    for s in lic["sources"]],
-       "release_gates":lic["release_gates_still_open"]})
+       "release_gates":lic["release_gates_still_open"],
+       # Per-source role, fields used, licence and what this project did with the data.
+       "source_roles":json.loads((ROOT/"config/enrichment/source_roles.json")
+                                 .read_text(encoding="utf-8"))["sources"]})
     gfiles["references.json"]=wj(G/"references.json",
       {"schema":"reference_payload.schema.json","schema_version":SCHEMA_VERSION,
        "atlas":{"title":"Class A GPCR Atlas","version":"5.0.0-pre",
                 "doi":None,"doi_note_en":"No DOI has been minted for this pre-release build.",
                 "doi_note_tr":"Bu ön-sürüm derlemesi için DOI oluşturulmamıştır."},
-       "databases":[{"name":"RCSB PDB","url":"https://www.rcsb.org/",
-                     "licence":"PDB archive files: CC0 1.0"},
-                    {"name":"GPCRdb","url":"https://gpcrdb.org/",
-                     "licence":"Data CC BY 4.0; code Apache 2.0"},
-                    {"name":"UniProt","url":"https://www.uniprot.org/",
-                     "licence":"CC BY 4.0 (verified 2026-08-04)"},
-                    {"name":"PDB Chemical Component Dictionary",
-                     "url":"https://www.wwpdb.org/data/ccd","licence":"part of the PDB archive"}],
+       "database_citations":DB_CITATIONS,
        "pdb_doi_pattern":"https://doi.org/10.2210/pdb{PDB_ID}/pdb"})
     gfiles["release_metadata.json"]=wj(G/"release_metadata.json",
       {"schema":"release_metadata","schema_version":SCHEMA_VERSION,
@@ -656,14 +712,15 @@ def main()->int:
        "code_licence_note_en":"Code licence pending project-owner and institutional decision",
        "code_licence_note_tr":"Kod lisansı proje sahibi ve kurumsal karara kadar belirsizdir",
        "release_gates":lic["release_gates_still_open"],
-       "data_freeze":"phase4","data_version":DATA_VERSION})
+       "data_freeze":"phase4+enrichment","data_version":DATA_VERSION})
     total_hr=sum(1 for u in UNIV if u["human_review_requirement"]=="required" and
                  u["review_item_id"] not in resolved_reviews)
     gm={"schema":"global_manifest.schema.json","schema_version":SCHEMA_VERSION,
       "atlas_title":"Class A GPCR Atlas","version":"5.0.0-pre","phase":5,"pre_release":True,
-      "data_version":DATA_VERSION,"data_freeze_phase":"phase4",
+      "data_version":DATA_VERSION,"data_freeze_phase":"phase4+enrichment",
       "phase4_manifest_hash":content_sha256(json.loads(
         (ROOT/"releases/phase4/OUTPUT_MANIFEST.json").read_text(encoding="utf-8"))),
+      "enrichment_freeze_hash":hashlib.sha256((ENRICH/"freeze.json").read_bytes()).hexdigest(),
       "schema_versions":{"payloads":SCHEMA_VERSION},
       "families":[{"family_id":r["major_family_id"],"slug":r["family_slug"],
                    "name":r["family_name"],"manifest_url":r["family_payload_url"],

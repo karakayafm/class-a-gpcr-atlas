@@ -1,0 +1,29 @@
+{
+  "atlas_structure_count": 1358,
+  "checked": "2026-08-08",
+  "intersection_count": 2,
+  "removed_list_count": 6114,
+  "removed_list_source": "https://data.rcsb.org/rest/v1/holdings/removed/entry_ids",
+  "structures": {
+    "7XOX": {
+      "details": null,
+      "remove_date": "2023-12-06",
+      "replaced_by": [
+        "8IA7"
+      ],
+      "replacement_in_atlas": true,
+      "source": "https://data.rcsb.org/rest/v1/holdings/removed/7xox",
+      "title": "Structural insights into human brain gut peptide cholecystokinin receptors"
+    },
+    "8ZFJ": {
+      "details": "per author's request, superseded by 9J31/EMD-61104",
+      "remove_date": "2025-02-19",
+      "replaced_by": [
+        "9J31"
+      ],
+      "replacement_in_atlas": false,
+      "source": "https://data.rcsb.org/rest/v1/holdings/removed/8zfj",
+      "title": "cryo-EM structure of GPR4-Gs complex at pH 8.5"
+    }
+  }
+}

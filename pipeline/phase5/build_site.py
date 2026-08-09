@@ -75,6 +75,7 @@ def main()->int:
         (d/"data/web/global/landing.json").write_text(
             json.dumps(land,sort_keys=True,separators=(",",":"),ensure_ascii=False),encoding="utf-8")
         for g in ("motif_catalogue.json","sources.json","references.json","release_metadata.json",
+                  "panels.json",
                   "cross_family_summary.json"):
             shutil.copy2(WEB/"global"/g, d/"data/web/global"/g)
         shutil.copytree(WEB/"families"/slug, d/"data/web/families"/slug)

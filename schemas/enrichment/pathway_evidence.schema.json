@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/class-a-gpcr-atlas/schemas/enrichment/pathway_evidence.schema.json",
+  "title": "Structural or functional pathway evidence record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "evidence_id", "pdb_id", "receptor", "canonical_ligand_id", "pathway",
+    "panel", "tier", "tier_label_tr", "tier_label_en", "result",
+    "rationale_tr", "rationale_en", "source", "panel_membership",
+    "assignment_evidence", "functional_evidence"
+  ],
+  "properties": {
+    "evidence_id": {"type": "string", "minLength": 1},
+    "pdb_id": {"type": "string", "pattern": "^[0-9A-Z]{4}$"},
+    "receptor": {"type": "string", "minLength": 1},
+    "canonical_ligand_id": {"type": ["string", "null"]},
+    "pathway": {"enum": ["Gs", "Gi/o", "Gq/11", "G12/13", "arrestin", "no_transducer"]},
+    "panel": {"enum": ["Gs", "Gi/o", "Gq/11", "G12/13", "arrestin", "transducer_free"]},
+    "tier": {"enum": ["A", "B"]},
+    "tier_label_tr": {"type": "string", "minLength": 1},
+    "tier_label_en": {"type": "string", "minLength": 1},
+    "result": {
+      "enum": ["structural_presence", "structural_absence", "positive_full", "positive_partial", "positive_weak", "negative"]
+    },
+    "rationale_tr": {"type": "string", "minLength": 1},
+    "rationale_en": {"type": "string", "minLength": 1},
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider", "url", "reference_id"],
+      "properties": {
+        "provider": {"type": "string", "minLength": 1},
+        "url": {"type": "string", "pattern": "^https?://"},
+        "reference_id": {"type": ["string", "null"]}
+      }
+    },
+    "panel_membership": {"type": "boolean"},
+    "assignment_evidence": {"type": ["string", "null"]},
+    "functional_evidence": {"type": ["object", "null"]}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"tier": {"const": "A"}}},
+      "then": {
+        "properties": {
+          "functional_evidence": {"type": "null"},
+          "assignment_evidence": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"tier": {"const": "B"}}},
+      "then": {
+        "properties": {
+          "functional_evidence": {"type": "object"},
+          "assignment_evidence": {"type": "null"}
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "curation_row": {
+      "type": "object",
+      "required": [
+        "receptor", "canonical_ligand_id", "ligand_name", "pdb_id", "pathway",
+        "result", "evidence_tier", "assay_or_evidence", "source_url", "species",
+        "assay_system", "efficacy_relative_to", "emax_percent", "pec50",
+        "reference_id", "figure_or_table", "curator_note"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "receptor": {"type": "string", "minLength": 1},
+        "canonical_ligand_id": {"type": "string", "minLength": 1},
+        "ligand_name": {"type": "string", "minLength": 1},
+        "pdb_id": {"type": "string", "pattern": "^$|^[0-9A-Z]{4}$"},
+        "pathway": {"enum": ["Gs", "Gi", "Gi/o", "Gq/11", "G12/13", "beta_arrestin", "arrestin"]},
+        "result": {"enum": ["positive_full", "positive_partial", "positive_weak", "negative"]},
+        "evidence_tier": {"const": "B"},
+        "assay_or_evidence": {"type": "string", "minLength": 1},
+        "source_url": {"type": "string", "pattern": "^https?://"},
+        "species": {"type": "string"},
+        "assay_system": {"type": "string"},
+        "efficacy_relative_to": {"type": "string"},
+        "emax_percent": {"type": "string"},
+        "pec50": {"type": "string"},
+        "reference_id": {"type": "string", "minLength": 1},
+        "figure_or_table": {"type": "string"},
+        "curator_note": {"type": "string"}
+      }
+    }
+  }
+}
