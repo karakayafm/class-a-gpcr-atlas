@@ -397,6 +397,90 @@ function panelSlugOf(panel) {
   return String(panel).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
+/* Chemistry filtering is three-state, not boolean.
+   MATCH            the ligand carries chemistry and satisfies every active chemistry filter
+   NO_MATCH         it carries chemistry and fails at least one
+   NOT_ASSESSABLE   it carries none, so the filter cannot be applied to it at all
+
+   Roughly a quarter of the pharmacologically relevant ligands in this atlas are peptides or
+   polymers with no chemical component, so folding them into NO_MATCH would quietly assert they
+   fail a test that was never run on them. They are counted separately instead.
+
+   The biological-type filter is different in kind: it reads a field peptides do have, so a
+   peptide can be a genuine MATCH there. */
+const CHEM_MATCH = "match", CHEM_NO_MATCH = "no_match", CHEM_UNKNOWN = "unknown";
+
+function chemistryReason(record) {
+  if (!record) return "missing_representation";
+  if (record.parse_status === "failed") return "parse_failed";
+  return "missing_representation";
+}
+
+/* Reasons a ligand cannot be assessed, in the order the interface reports them. */
+function unassessableReason(observation, record) {
+  const form = observation.entity_form || "";
+  const type = observation.biological_type || "";
+  if (form === "polymer_chain" || type === "peptide" || type === "protein") return "peptide_polymer";
+  return chemistryReason(record);
+}
+
+function componentOf(observation) {
+  const components = observation.ligand_components || [];
+  return components.length ? components[0] : null;
+}
+
+/* Numeric range filters are stored as [min, max] with null meaning "open". */
+function withinRange(value, range) {
+  if (!range) return true;
+  if (value == null) return false;
+  const [low, high] = range;
+  return (low == null || value >= low) && (high == null || value <= high);
+}
+
+function evaluateChemistry(observation, chemistry, active) {
+  if (!active.any) return CHEM_MATCH;
+  const code = componentOf(observation);
+  const record = code && chemistry ? chemistry.get(code) : null;
+
+  // The biological-type axis is answerable for every ligand, chemistry or not.
+  if (active.biologicalType && (observation.biological_type || "") !== active.biologicalType) {
+    return CHEM_NO_MATCH;
+  }
+  if (!active.needsChemistry) return CHEM_MATCH;
+
+  if (!record || record.parse_status === "failed") return CHEM_UNKNOWN;
+  for (const group of active.functionalGroups) {
+    if (!(record.facets.functional_groups || []).includes(group)) return CHEM_NO_MATCH;
+  }
+  for (const ring of active.ringSystems) {
+    if (!(record.facets.ring_systems || []).includes(ring)) return CHEM_NO_MATCH;
+  }
+  if (active.ranges.length) {
+    // Descriptors are absent for components that only exist bound; that is unassessable,
+    // not a failure.
+    if (!record.descriptors) return CHEM_UNKNOWN;
+    for (const [field, range] of active.ranges) {
+      if (!withinRange(record.descriptors[field], range)) return CHEM_NO_MATCH;
+    }
+  }
+  return CHEM_MATCH;
+}
+
+/* A structure matches when any one of its ligands does. It is unassessable only when nothing
+   matched and something could not be judged; otherwise every ligand was judged and failed. */
+function structureChemistryState(structure, chemistry, active) {
+  if (!active.any) return { state: CHEM_MATCH, matches: [], unknown: [] };
+  const matches = [], unknown = [];
+  for (const observation of structure.observations || []) {
+    const verdict = evaluateChemistry(observation, chemistry, active);
+    if (verdict === CHEM_MATCH) matches.push(observation);
+    else if (verdict === CHEM_UNKNOWN) unknown.push(observation);
+  }
+  if (matches.length) return { state: CHEM_MATCH, matches, unknown };
+  if (unknown.length) return { state: CHEM_UNKNOWN, matches, unknown };
+  return { state: CHEM_NO_MATCH, matches, unknown };
+}
+
 function countBadge(value) {
   return el("span", { class:"tab-count", text:String(value == null ? "" : value),
     "aria-label":t("structure_count") });
@@ -513,7 +597,19 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
   const availableSites = new Set(d.structures.flatMap(x => x.observations.map(o => o.binding_site_class).filter(Boolean)));
   const filters = { family: "", receptor: "", mode: "", state: "", transducer:"", evidenceTier:"",
     site: availableSites.has(initialSite) ? initialSite : "", search: "", sort: "resolution",
-    contactThreshold: 0 };
+    contactThreshold: 0,
+    biologicalType: "", functionalGroups: [], ringSystems: [], ranges: {} };
+  // Chemistry payloads are fetched on first use; until then no chemistry filter can be active.
+  let chemistry = null, chemistryCatalog = null;
+  function activeChemistry() {
+    const ranges = Object.entries(filters.ranges).filter(([, r]) => r && (r[0] != null || r[1] != null));
+    const needsChemistry = filters.functionalGroups.length > 0 || filters.ringSystems.length > 0
+      || ranges.length > 0;
+    return { biologicalType: filters.biologicalType,
+             functionalGroups: filters.functionalGroups, ringSystems: filters.ringSystems,
+             ranges, needsChemistry,
+             any: needsChemistry || !!filters.biologicalType };
+  }
   let selected = d.structures.find(x => x.pdb_id === String(initialPdb || "").toUpperCase()) ||
     d.structures.find(x => x.pdb_id === "9IJE") || d.structures[0];
   let revealInitialSelection = !!initialPdb;
@@ -627,7 +723,50 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
   ]));
   const listHead = el("div", { class: "result-head" });
   const resultList = el("div", { class: "result-list" });
-  rail.appendChild(listHead); rail.appendChild(resultList);
+  const unknownBox = el("div", { class: "unassessable" });
+  // Chemistry is a filter, so it belongs with the other filters rather than under the
+  // result list. The element is created later; insert it here to keep that order.
+  const chemSlot = el("div", { class: "chem-slot" });
+  rail.appendChild(chemSlot);
+  rail.appendChild(listHead); rail.appendChild(resultList); rail.appendChild(unknownBox);
+
+  /* Ligands a chemistry filter could not judge. Collapsed by default so it does not compete
+     with the results, but always present when non-empty: a filter that silently drops a
+     quarter of the corpus would make the visible subset look like the whole. */
+  function drawUnknown(split) {
+    if (!split.ligandUnknown.length) return;
+    const byReason = new Map();
+    for (const item of split.ligandUnknown) {
+      byReason.set(item.reason, (byReason.get(item.reason) || 0) + 1);
+    }
+    const details = el("details", { class: "unassessable-box" });
+    details.appendChild(el("summary", { text:
+      t("unassessable_summary", { count: split.ligandUnknown.length }) }));
+    const list = el("ul", { class: "unassessable-reasons" });
+    for (const [reason, count] of [...byReason.entries()].sort((a, b) => b[1] - a[1])) {
+      list.appendChild(el("li", {}, [
+        el("strong", { text: String(count) }),
+        el("span", { text: " " + t("unassessable_reason_" + reason) })
+      ]));
+    }
+    details.appendChild(list);
+    const items = el("ul", { class: "unassessable-items" });
+    for (const item of split.ligandUnknown.slice(0, 40)) {
+      const label = plainName(item.observation.ligand_name || t("apo"));
+      const code = componentOf(item.observation);
+      const record = code && chemistry ? chemistry.get(code) : null;
+      const note = record && record.parse_status === "failed" && record.parse_error
+        ? " — " + record.parse_error : "";
+      items.appendChild(el("li", {}, [
+        el("strong", { text: item.structure.pdb_id }),
+        el("span", { text: " " + label + (code ? " (" + code + ")" : "") + note })
+      ]));
+    }
+    details.appendChild(items);
+    if (split.ligandUnknown.length > 40) details.appendChild(el("p", { class: "muted small",
+      text: t("unassessable_truncated", { shown: 40, total: split.ligandUnknown.length }) }));
+    unknownBox.appendChild(details);
+  }
   /* One row per dataset, each offering both formats. CSV holds a single table; the XLSX
      variant can carry the related tables as extra sheets, which is why the two are not
      generated from an identical row set. */
@@ -653,6 +792,125 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
       action({ structures: parts.flatMap(part => part.structures || []) });
     } catch (error) { window.alert(L.errorMessage(error)); }
   }
+  /* Chemistry filters. The payload is fetched the first time this section is opened; before
+     that no chemistry filter can be active, so the landing path never pays for it. */
+  const chemBox = el("div", { class: "rail-chemistry" });
+  const chemDetails = el("details", { class: "chem-details" });
+  chemDetails.appendChild(el("summary", { text: t("chem_heading") }));
+  const chemBody = el("div", { class: "chem-body" }, [el("p", { class: "muted small", text: t("chem_prompt") })]);
+  chemDetails.appendChild(chemBody);
+  chemBox.appendChild(chemDetails);
+  chemSlot.appendChild(chemBox);
+
+  let chemLoaded = false;
+  chemDetails.addEventListener("toggle", async () => {
+    if (!chemDetails.open || chemLoaded) return;
+    chemLoaded = true;
+    clear(chemBody); chemBody.appendChild(el("p", { class: "muted small", text: t("loading") }));
+    try {
+      const [payload, catalog] = await Promise.all([L.loadLigandChemistry(), L.loadChemistryCatalog()]);
+      chemistry = new Map((payload.records || []).map(r => [r.ccd, r]));
+      chemistryCatalog = catalog;
+      buildChemistryControls(payload, catalog);
+    } catch (error) {
+      clear(chemBody); chemBody.appendChild(el("p", { class: "notice", text: L.errorMessage(error) }));
+    }
+  });
+
+  function buildChemistryControls(payload, catalog) {
+    clear(chemBody);
+    chemBody.appendChild(el("p", { class: "muted small", text:
+      t("chem_provenance", { rdkit: payload.rdkit_version, catalog: payload.catalog_version }) }));
+
+    // Biological type reads a field every ligand has, so peptides are answerable here.
+    const types = Array.from(new Set(d.structures.flatMap(x =>
+      (x.observations || []).map(o => o.biological_type).filter(Boolean)))).sort();
+    const typeSelect = el("select", { onchange: e => {
+      filters.biologicalType = e.target.value; drawList(); drawDetail(); } });
+    typeSelect.appendChild(el("option", { value: "", text: t("all") }));
+    for (const value of types) typeSelect.appendChild(el("option", { value, text: value }));
+    chemBody.appendChild(el("label", { class: "filter-field" }, [
+      el("span", { text: t("chem_biological_type") }), typeSelect ]));
+
+    // Each facet lists only patterns that actually occur, with their real coverage.
+    const present = { functional_groups: new Map(), ring_systems: new Map() };
+    for (const record of payload.records || []) {
+      if (!record.pharmacological_instances) continue;
+      for (const facet of ["functional_groups", "ring_systems"]) {
+        for (const name of record.facets[facet] || []) {
+          present[facet].set(name, (present[facet].get(name) || 0) + record.pharmacological_instances);
+        }
+      }
+    }
+    const facetBox = (facet, key, labelKey) => {
+      const entries = [...present[facet].entries()].sort((a, b) => b[1] - a[1]);
+      if (!entries.length) return;
+      const box = el("details", { class: "chem-facet" });
+      box.appendChild(el("summary", { text: t(labelKey) + " (" + entries.length + ")" }));
+      const list = el("div", { class: "chem-checks" });
+      for (const [name, count] of entries) {
+        const spec = (catalog.patterns || {})[name] || {};
+        const input = el("input", { type: "checkbox", value: name, onchange: e => {
+          const set = new Set(filters[key]);
+          if (e.target.checked) set.add(name); else set.delete(name);
+          filters[key] = [...set]; drawList(); drawDetail(); } });
+        list.appendChild(el("label", { class: "chem-check" }, [ input,
+          el("span", { text: spec["label_" + getLang()] || spec.label_en || name }),
+          el("span", { class: "chem-count", text: String(count) }) ]));
+      }
+      box.appendChild(list); chemBody.appendChild(box);
+    };
+    facetBox("functional_groups", "functionalGroups", "chem_functional_groups");
+    facetBox("ring_systems", "ringSystems", "chem_ring_systems");
+
+    /* Every descriptor carries its own coverage: how many ligand instances actually have that
+       value. Applying one global percentage to all of them would misstate each one. */
+    const withDescriptors = (payload.records || []).filter(r => r.descriptors && r.pharmacological_instances);
+    const totalInstances = (payload.records || [])
+      .reduce((n, r) => n + (r.pharmacological_instances || 0), 0);
+    const rangeBox = el("details", { class: "chem-facet" });
+    rangeBox.appendChild(el("summary", { text: t("chem_descriptors") }));
+    for (const [field, labelKey, step] of [["mw", "chem_mw", 10], ["mollogp", "chem_logp", 0.5],
+      ["tpsa", "chem_tpsa", 5], ["hbd", "chem_hbd", 1], ["hba", "chem_hba", 1],
+      ["rotatable_bonds", "chem_rotb", 1], ["heavy_atoms", "chem_heavy", 1],
+      ["aromatic_rings", "chem_arom", 1], ["fraction_csp3", "chem_fsp3", 0.05]]) {
+      const values = withDescriptors.map(r => r.descriptors[field]).filter(v => v != null);
+      if (!values.length) continue;
+      const covered = withDescriptors
+        .filter(r => r.descriptors[field] != null)
+        .reduce((n, r) => n + r.pharmacological_instances, 0);
+      const lo = Math.min(...values), hi = Math.max(...values);
+      const min = el("input", { type: "number", step: String(step), placeholder: String(Math.floor(lo)) });
+      const max = el("input", { type: "number", step: String(step), placeholder: String(Math.ceil(hi)) });
+      const apply = () => {
+        const low = min.value === "" ? null : Number(min.value);
+        const high = max.value === "" ? null : Number(max.value);
+        filters.ranges[field] = (low == null && high == null) ? null : [low, high];
+        drawList(); drawDetail();
+      };
+      min.addEventListener("change", apply); max.addEventListener("change", apply);
+      rangeBox.appendChild(el("div", { class: "chem-range" }, [
+        el("span", { class: "chem-range-label", text: t(labelKey) }),
+        min, el("span", { text: "–" }), max,
+        el("span", { class: "chem-coverage",
+          text: t("chem_coverage", { covered, total: totalInstances }) })
+      ]));
+    }
+    chemBody.appendChild(rangeBox);
+
+    const reset = el("button", { class: "btn small", type: "button", text: t("chem_reset"),
+      onclick: () => {
+        filters.biologicalType = ""; filters.functionalGroups = []; filters.ringSystems = [];
+        filters.ranges = {};
+        for (const input of chemBody.querySelectorAll("input")) {
+          if (input.type === "checkbox") input.checked = false; else input.value = "";
+        }
+        typeSelect.value = "";
+        drawList(); drawDetail();
+      } });
+    chemBody.appendChild(reset);
+  }
+
   /* Contact-frequency threshold. It hides pocket positions the panel rarely touches, which is a
      different question from the ≥75% markers: the markers annotate, this filters. */
   const thresholdValue = el("span", { class: "threshold-value", text: "0%" });
@@ -692,7 +950,9 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
       () => withPocket(p => exportMatrix(filtered(), p, exportName, true)))
   ]));
 
-  function filtered() {
+  /* Structures passing every non-chemistry filter. Chemistry is applied afterwards so the
+     three-state split can be counted rather than silently folded into the result list. */
+  function baseFiltered() {
     const q = filters.search.trim().toLowerCase();
     const rows = d.structures.filter(x =>
       (!filters.family || x.receptor_family_name === filters.family) &&
@@ -707,11 +967,42 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
     return rows.sort((a,b) => (a.resolution == null) - (b.resolution == null) ||
       (a.resolution || 99) - (b.resolution || 99) || a.pdb_id.localeCompare(b.pdb_id));
   }
+
+  /* Split the base set three ways. `matches` feeds the result list and the headline count;
+     `unknown` is surfaced separately so nothing disappears without being accounted for. */
+  function partition() {
+    const active = activeChemistry();
+    const base = baseFiltered();
+    if (!active.any) return { match: base, unknown: [], ligandMatches: 0, ligandUnknown: [] };
+    const match = [], unknown = [], ligandUnknown = [];
+    let ligandMatches = 0;
+    for (const structure of base) {
+      const verdict = structureChemistryState(structure, chemistry, active);
+      if (verdict.state === CHEM_MATCH) { match.push(structure); ligandMatches += verdict.matches.length; }
+      else if (verdict.state === CHEM_UNKNOWN) {
+        unknown.push(structure);
+        for (const observation of verdict.unknown) {
+          const code = componentOf(observation);
+          ligandUnknown.push({ structure, observation,
+            reason: unassessableReason(observation, code && chemistry ? chemistry.get(code) : null) });
+        }
+      }
+    }
+    return { match, unknown, ligandMatches, ligandUnknown };
+  }
+
+  function filtered() { return partition().match; }
   function drawList() {
-    const rows = filtered(); clear(resultList); clear(listHead);
+    const split = partition();
+    const rows = split.match;
+    clear(resultList); clear(listHead); clear(unknownBox);
     if (rows.length && !rows.includes(selected)) selected = rows[0];
+    // Structures and ligand instances are different units and are never added together.
     listHead.appendChild(el("strong", { text: rows.length + " " + t("results") }));
+    if (split.ligandMatches) listHead.appendChild(el("span", { class: "muted small",
+      text: " · " + split.ligandMatches + " " + t("ligand_matches") }));
     listHead.appendChild(el("span", { class: "muted small", text: t("sorted_resolution") }));
+    drawUnknown(split);
     let selectedItem = null;
     for (const x of rows) {
       const o = observationFor(x);
