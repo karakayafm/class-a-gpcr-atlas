@@ -182,6 +182,12 @@ body.modal-open { overflow:hidden; }
 .filter-field > span { color:var(--muted); font-size:10px; text-transform:uppercase; letter-spacing:.07em; }
 .filter-field select,.filter-field input { width:100%; min-width:0; }
 .search-field { padding:0 12px 10px; }
+.rep-filter { display:flex; align-items:center; gap:8px; padding:2px 12px 10px; cursor:pointer;
+  font-size:12px; }
+.rep-filter input { flex:none; margin:0; cursor:pointer; }
+.rep-filter-text { display:flex; align-items:baseline; gap:7px; min-width:0; }
+.rep-count { padding:1px 7px; border-radius:999px; background:var(--chip); color:var(--muted);
+  font-variant-numeric:tabular-nums; font-size:11px; }
 .result-head { display:flex; align-items:center; justify-content:space-between; padding:9px 12px;
   border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
 .result-list { height:min(55vh,570px); min-height:360px; overflow:auto; scrollbar-gutter:stable; }

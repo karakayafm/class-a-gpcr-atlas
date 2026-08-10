@@ -149,6 +149,10 @@
                 }
               }
             }
+          },
+          "analysis_unit_representative": {
+            "type": "boolean",
+            "description": "True for the structure chosen to stand for its phase 4 aggregation unit: the highest-resolution member, ties settled on PDB identifier. False for repeats and for structures belonging to no unit."
           }
         }
       }

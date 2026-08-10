@@ -240,6 +240,17 @@ def main()->int:
     SUMO={s["structure_ligand_id"]:s for s in rd(ROOT/"data/contacts/observation_contact_summary.jsonl")}
     ANO={a["structure_ligand_id"]:a for a in rd(P4/"annotated_not_observed.jsonl")}
     U=rd(P4/"aggregation_units.jsonl"); PREV=rd(AGG/"contact_prevalence.jsonl")
+    # One structure stands for each aggregation unit, so a reader can browse distinct
+    # receptor-ligand contexts instead of every repeat deposition: beta2 with G1I in the active
+    # state alone accounts for 81 entries. The pick is the sharpest structure in the unit,
+    # tie-broken on PDB id so the choice does not move between builds. Structures with no unit
+    # (apo, and ligands not eligible for aggregation) are not representatives of anything.
+    def _unit_rank(pdb_id):
+        res=(S.get(pdb_id) or {}).get("resolution")
+        return (1,0.0,pdb_id) if res is None else (0,float(res),pdb_id)
+    UNIT_REPS={min((x for x in (u.get("structures") or []) if x in S), key=_unit_rank, default=None)
+               for u in U}
+    UNIT_REPS.discard(None)
     CVR={c["major_family_id"]:c for c in rd(P4/"coverage_records.jsonl")}
     UNIV=rd(P4/"canonical_review_universe.jsonl"); ADJ={a["review_item_id"]:a for a in rd(P4/"evidence_adjudications.jsonl")}
     resolved_reviews=set(json.loads((ROOT/"config/phase5/resolved_review_items.json").read_text(
@@ -365,6 +376,7 @@ def main()->int:
               "pathway_evidence_tiers":sorted({row["tier"] for row in PE_by_pdb[pid]}),
               "superseded":SUPERSEDED_BY.get(pid),
               "superseded_by":(SUPERSEDED_BY.get(pid,{}).get("replaced_by") or [None])[0],
+              "analysis_unit_representative":pid in UNIT_REPS,
               "observations":obs,"observation_count":len(obs),
               "has_viewer_bundle":True})
         files["structures.json"]=wj(d/"structures.json",

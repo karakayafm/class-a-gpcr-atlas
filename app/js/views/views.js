@@ -607,6 +607,7 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
   const family = (L.getManifest().families || []).find(f => f.slug === slug);
   const availableSites = new Set(d.structures.flatMap(x => x.observations.map(o => o.binding_site_class).filter(Boolean)));
   const filters = { family: "", receptor: "", mode: "", state: "", transducer:"", evidenceTier:"",
+    representativeOnly: false,
     site: availableSites.has(initialSite) ? initialSite : "", search: "", sort: "resolution",
     contactThreshold: 0,
     biologicalType: "", functionalGroups: [], ringSystems: [], ranges: {} };
@@ -760,6 +761,18 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
   filterGrid.appendChild(selectFilter("evidenceTier", t("evidence_tier"),
     uniq(x => x.pathway_evidence_tiers || []), value=>t("evidence_tier_"+value)));
   rail.appendChild(filterGrid);
+  // Repeat depositions of one receptor-ligand context dominate the larger families, so this
+  // reduces each to its sharpest structure. A count is offered next to it because the
+  // reduction is large and worth seeing before it is applied.
+  const repToggle = el("input", { type:"checkbox",
+    onchange: e => { filters.representativeOnly = e.target.checked; drawList(); drawDetail(); } });
+  const repCount = el("span", { class:"rep-count" });
+  rail.appendChild(el("label", { class:"rep-filter" }, [
+    repToggle,
+    el("span", { class:"rep-filter-text" }, [
+      el("span", { text:t("representative_only") }), repCount ]),
+    metricHelp(t("representative_only_help"))
+  ]));
   rail.appendChild(el("label", { class: "filter-field search-field" }, [
     el("span", { text: t("search") }), el("input", { type: "search", placeholder: t("search_placeholder"),
       oninput: debounce(e => { filters.search = e.target.value; drawList(); drawDetail(); }, 120) })
@@ -1081,6 +1094,7 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
       (!filters.state || x.structural_state === filters.state) &&
       (!filters.transducer || (x.transducer_panels||[]).includes(filters.transducer)) &&
       (!filters.evidenceTier || (x.pathway_evidence_tiers||[]).includes(filters.evidenceTier)) &&
+      (!filters.representativeOnly || x.analysis_unit_representative === true) &&
       (!q || [x.pdb_id, plainName(x.receptor_name), x.receptor_entry_name,
         ...x.observations.map(o => o.ligand_name || "")].join(" ").toLowerCase().includes(q)));
     return rows.sort((a,b) => (a.resolution == null) - (b.resolution == null) ||
@@ -1122,6 +1136,13 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
       text: " · " + split.ligandMatches + " " + t("ligand_matches") }));
     listHead.appendChild(el("span", { class: "muted small", text: t("sorted_resolution") }));
     drawUnknown(split);
+    // What the toggle would leave, counted against the other filters as they currently stand,
+    // so the number answers "how many if I tick this" rather than quoting an atlas-wide total.
+    const was = filters.representativeOnly;
+    filters.representativeOnly = true;
+    const representatives = was ? rows.length : partition().match.length;
+    filters.representativeOnly = was;
+    repCount.textContent = String(representatives);
     refreshFacetCounts(rows);
     let selectedItem = null;
     for (const x of rows) {
