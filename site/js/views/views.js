@@ -1169,9 +1169,11 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
           drawDetail();
         } }, [
         el("div", { class: "result-line" }, [el("strong", { text: x.pdb_id }),
-          el("span", { text: plainName(x.receptor_name || "—") }),
+          el("span", { title: plainName(x.receptor_name || "—"), text: plainName(x.receptor_name || "—") }),
           el("small", { text: fmt(x.resolution, 2) + " Å · " + (o.receptor_residues_5A || 0) + " " + t("contacts_short") })]),
-        el("div", { class: "result-ligand", text: ligandText }),
+        // Clipped to the card width; the full name is only available on hover, so it is
+        // carried on the element rather than lost.
+        el("div", { class: "result-ligand", title: ligandText, text: ligandText }),
         el("div", { class: "result-modes" }, Array.from(new Set(shown.map(v => v.binding_mode).filter(Boolean)))
           .map(mode => el("span", { class: "mode-pill" + modeClass(mode),
             text: ligandClassLabel(mode) })))
