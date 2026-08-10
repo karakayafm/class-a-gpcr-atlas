@@ -352,9 +352,12 @@ body.modal-open { overflow:hidden; }
   .chemistry-rail { grid-column:1 / -1; position:static; max-height:none; } }
 /* .with-chemistry is named again here: it is two classes, so it outranks a bare
    .explorer-layout rule no matter which media query wins. */
+/* minmax(0,…) rather than a bare 1fr: a grid item's automatic minimum is its min-content
+   width, so a single 1fr track cannot shrink past the widest select in the rail and the whole
+   page picked up a horizontal scrollbar below this width. */
 @media (max-width:900px) { .explorer-layout, .explorer-layout.with-chemistry {
-    grid-template-columns:1fr; }
-  .explorer-rail { position:static; }
+    grid-template-columns:minmax(0,1fr); }
+  .explorer-rail { position:static; min-width:0; }
   .result-list { height:360px; } }
 @media (max-width:700px) { .global-search { order:4; width:100%; margin-left:0; }.global-search-results { max-height:55vh; } }
 @media (max-width:700px) { .structures-heading { align-items:flex-start; }.structure-grid { grid-template-columns:1fr; }
