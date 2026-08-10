@@ -715,10 +715,15 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
   }
   wrap.appendChild(panelStrip);
 
-  const layout = el("div", { class: "explorer-layout" });
+  /* In ligand mode the chemistry filters get their own column on the far right, so the left
+     rail keeps its role as the result list and the detail panel stays in the middle. */
+  const layout = el("div", { class: "explorer-layout" + (chemMode ? " with-chemistry" : "") });
   const rail = el("aside", { class: "explorer-rail" });
   const detail = el("section", { class: "structure-detail", "aria-live": "polite" });
-  layout.appendChild(rail); layout.appendChild(detail); wrap.appendChild(layout);
+  const chemRail = el("aside", { class: "chemistry-rail" });
+  layout.appendChild(rail); layout.appendChild(detail);
+  if (chemMode) layout.appendChild(chemRail);
+  wrap.appendChild(layout);
 
   const filterGrid = el("div", { class: "filter-grid" });
   function selectFilter(key, label, values, display) {
@@ -758,7 +763,7 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
   // Chemistry is a filter, so it belongs with the other filters rather than under the
   // result list. The element is created later; insert it here to keep that order.
   const chemSlot = el("div", { class: "chem-slot" });
-  if (chemMode) rail.appendChild(chemSlot);
+  if (chemMode) chemRail.appendChild(chemSlot);
   rail.appendChild(listHead); rail.appendChild(resultList); rail.appendChild(unknownBox);
 
   /* Ligands a chemistry filter could not judge. Collapsed by default so it does not compete
