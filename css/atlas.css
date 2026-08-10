@@ -226,7 +226,7 @@ body.modal-open { overflow:hidden; }
 .detail-tags { padding:10px 20px; border-bottom:1px solid var(--line); }
 /* One compact row of label/value pairs. The old 3x2 grid of padded, bordered cells pushed the
    evidence table below the fold, which is what the detail panel is actually there to show. */
-.detail-facts { display:flex; flex-wrap:wrap; gap:4px 30px; padding:12px 20px 10px; }
+.detail-facts { display:flex; flex-wrap:wrap; gap:4px 30px; padding:26px 20px 10px; }
 .detail-fact { padding:0; }
 .detail-fact span { display:block; color:var(--muted); font-size:10px; text-transform:uppercase;
   letter-spacing:.06em; margin-bottom:2px; }
@@ -238,6 +238,9 @@ body.modal-open { overflow:hidden; }
 .detail-shell strong { font-size:13px; }
 .detail-shell .shell-extra { color:var(--muted); font-size:12px; cursor:help; }
 .detail-section { padding:14px 20px; border-bottom:1px solid var(--line); }
+/* The label rows in this panel are small and set tight; without a clear break above them the
+   fact row, the source links and the overlap line read as one continuous block. */
+.detail-section.sources { padding-top:28px; }
 .detail-section h3 { margin:0 0 6px; font-size:10px; color:var(--muted);
   text-transform:uppercase; letter-spacing:.06em; font-weight:600; }.detail-section p { color:var(--muted); margin:0 0 12px; }
 .contact-levels { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
@@ -473,7 +476,7 @@ td.eff-warning_only { color:var(--muted); }
 .source-chip::before { content:"["; color:var(--muted); }
 .source-chip::after { content:"]"; color:var(--muted); }
 .source-chip:hover,.source-chip:focus-visible { border-color:var(--accent); background:var(--chip); }
-.panel-overlap { display:grid; gap:2px; margin:8px 0 2px; }
+.panel-overlap { display:grid; gap:2px; margin:22px 0 2px; }
 .panel-overlap-label { font-size:10.5px; letter-spacing:.4px; color:var(--muted); text-transform:uppercase; }
 .panel-overlap strong { font-size:14px; }
 
