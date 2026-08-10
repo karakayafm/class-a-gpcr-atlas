@@ -6,6 +6,7 @@
   --band-mid-bg:#e8eef2; --band-mid-line:#7fa3b8;
   --band-far-bg:#f2f3f4; --band-far-line:#c2c8cd;
   --missing-bg:#fbeeee; --missing-line:#d9a3a3; --missing-ink:#8a3f3f;
+  --chem-panel:#fbfaff; --chem-line:#e2dced;
 }
 :root[data-theme="dark"] {
   --bg:#15171a; --panel:#1d2024; --ink:#e6e8ea; --muted:#9aa2aa; --line:#2c3138;
@@ -14,6 +15,7 @@
   --band-mid-bg:#232b31; --band-mid-line:#4d6b7d;
   --band-far-bg:#1f2327; --band-far-line:#39424a;
   --missing-bg:#332323; --missing-line:#6d4444; --missing-ink:#e0a3a3;
+  --chem-panel:#1f1d26; --chem-line:#332e3d;
 }
 * { box-sizing:border-box; }
 html,body { margin:0; padding:0; }
@@ -144,7 +146,9 @@ body.modal-open { overflow:hidden; }
 .explorer-layout { display:grid; grid-template-columns:360px minmax(0,1fr); gap:16px; align-items:start; }
 /* Ligand mode adds a third column for the chemistry filters, on the far right. */
 .explorer-layout.with-chemistry { grid-template-columns:340px minmax(0,1fr) 320px; }
-.chemistry-rail { background:var(--panel); border:1px solid var(--line); border-radius:12px;
+/* A barely-there violet so the filter column reads as a distinct surface without competing
+   with the result list or the detail panel beside it. */
+.chemistry-rail { background:var(--chem-panel); border:1px solid var(--chem-line); border-radius:12px;
   position:sticky; top:112px; padding:10px 14px; max-height:calc(100vh - 130px); overflow-y:auto;
   scrollbar-gutter:stable; }
 .chemistry-rail .rail-chemistry { margin:0; }
@@ -502,8 +506,23 @@ td.eff-warning_only { color:var(--muted); }
 
 /* Ligand chemistry filters and the unassessable panel. */
 .rail-chemistry { margin:10px 0; }
+/* The column scrolls internally, so the top-level heading is pinned: without it the reader
+   scrolls past the only control that closes the panel and has to scroll back up to find it. */
+.chemistry-rail .chem-details > summary { position:sticky; top:0; z-index:2;
+  background:var(--chem-panel); margin:-10px -14px 0; padding:10px 14px;
+  border-bottom:1px solid var(--line); box-shadow:0 4px 8px -6px rgba(0,0,0,.35); }
 .chem-details > summary, .chem-facet > summary { cursor:pointer; font-size:12px;
-  letter-spacing:.3px; color:var(--muted); text-transform:uppercase; padding:4px 0; }
+  letter-spacing:.3px; color:var(--muted); text-transform:uppercase; padding:4px 0;
+  display:flex; align-items:center; gap:6px; }
+/* A visible affordance instead of the default marker, which was easy to miss. */
+.chem-details > summary::before, .chem-facet > summary::before { content:"▸"; font-size:10px;
+  transition:transform .12s ease; }
+.chem-details[open] > summary::before, .chem-facet[open] > summary::before { transform:rotate(90deg); }
+.chem-details > summary::marker, .chem-facet > summary::marker { content:""; }
+.chemistry-rail .chem-details > summary { color:var(--ink); font-weight:650; font-size:12.5px; }
+/* Patterns the current selection can no longer reach stay listed but recede. */
+.chem-check.is-empty { opacity:.45; }
+.chem-check.is-empty .chem-count { font-style:italic; }
 .chem-body { display:grid; gap:8px; padding:4px 0 8px; }
 .chem-facet { border-top:1px solid var(--line); }
 /* Reserve the scrollbar track so it never sits on top of the right-aligned counts. */
