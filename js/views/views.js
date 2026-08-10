@@ -760,23 +760,27 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
     uniq(x => x.transducer_panels || []), value => transducerLabel(value)));
   filterGrid.appendChild(selectFilter("evidenceTier", t("evidence_tier"),
     uniq(x => x.pathway_evidence_tiers || []), value=>t("evidence_tier_"+value)));
-  rail.appendChild(filterGrid);
+  // The controls that narrow the list sit on their own surface, so the panel reads as two
+  // parts: what you set at the top, and what comes back below it.
+  const filterBlock = el("div", { class: "filter-block" });
+  filterBlock.appendChild(filterGrid);
   // Repeat depositions of one receptor-ligand context dominate the larger families, so this
   // reduces each to its sharpest structure. A count is offered next to it because the
   // reduction is large and worth seeing before it is applied.
   const repToggle = el("input", { type:"checkbox",
     onchange: e => { filters.representativeOnly = e.target.checked; drawList(); drawDetail(); } });
   const repCount = el("span", { class:"rep-count" });
-  rail.appendChild(el("label", { class:"rep-filter" }, [
+  filterBlock.appendChild(el("label", { class:"rep-filter" }, [
     repToggle,
     el("span", { class:"rep-filter-text" }, [
       el("span", { text:t("representative_only") }), repCount ]),
     metricHelp(t("representative_only_help"))
   ]));
-  rail.appendChild(el("label", { class: "filter-field search-field" }, [
+  filterBlock.appendChild(el("label", { class: "filter-field search-field" }, [
     el("span", { text: t("search") }), el("input", { type: "search", placeholder: t("search_placeholder"),
       oninput: debounce(e => { filters.search = e.target.value; drawList(); drawDetail(); }, 120) })
   ]));
+  rail.appendChild(filterBlock);
   const listHead = el("div", { class: "result-head" });
   const resultList = el("div", { class: "result-list" });
   const unknownBox = el("div", { class: "unassessable" });
