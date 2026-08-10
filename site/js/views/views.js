@@ -839,8 +839,11 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
   chemBox.appendChild(chemDetails);
   chemSlot.appendChild(chemBox);
 
+  // The chemistry column exists for these filters, so it opens with the view rather than
+  // hiding behind a disclosure the reader has to find first.
+  if (chemMode) chemDetails.open = true;
   let chemLoaded = false;
-  chemDetails.addEventListener("toggle", async () => {
+  const loadChemistry = async () => {
     if (!chemDetails.open || chemLoaded) return;
     chemLoaded = true;
     clear(chemBody); chemBody.appendChild(el("p", { class: "muted small", text: t("loading") }));
@@ -849,13 +852,56 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
       chemistry = new Map((payload.records || []).map(r => [r.ccd, r]));
       chemistryCatalog = catalog;
       buildChemistryControls(payload, catalog);
+      refreshFacetCounts(partition().match);
     } catch (error) {
       clear(chemBody); chemBody.appendChild(el("p", { class: "notice", text: L.errorMessage(error) }));
     }
-  });
+  };
+  chemDetails.addEventListener("toggle", loadChemistry);
+  if (chemMode) loadChemistry();
+
+  const countNodes = new Map();
+  let coverageNodes = [];
+
+  /* Recount every facet against the rows currently shown. Patterns that can no longer be
+     reached drop to zero and are dimmed rather than removed, so the reader can see that the
+     option exists but the current selection excludes it. */
+  function refreshFacetCounts(rows) {
+    if (!chemistry || !countNodes.size) return;
+    const counts = new Map();
+    let assessable = 0;
+    for (const structure of rows) {
+      for (const observation of structure.observations || []) {
+        const code = componentOf(observation);
+        const record = code ? chemistry.get(code) : null;
+        if (!record || record.parse_status === "failed") continue;
+        assessable += 1;
+        for (const facet of ["functional_groups", "ring_systems"]) {
+          for (const name of record.facets[facet] || []) {
+            counts.set(name, (counts.get(name) || 0) + 1);
+          }
+        }
+      }
+    }
+    for (const [name, node] of countNodes) {
+      const value = counts.get(name) || 0;
+      node.countSpan.textContent = String(value);
+      node.row.classList.toggle("is-empty", value === 0 && !node.row.querySelector("input").checked);
+    }
+    for (const node of coverageNodes) {
+      const covered = rows.reduce((n, structure) => n + (structure.observations || [])
+        .filter(observation => {
+          const code = componentOf(observation);
+          const record = code ? chemistry.get(code) : null;
+          return record && record.descriptors && record.descriptors[node.field] != null;
+        }).length, 0);
+      node.el.textContent = t("chem_coverage", { covered, total: assessable });
+    }
+  }
 
   function buildChemistryControls(payload, catalog) {
     clear(chemBody);
+    countNodes.clear(); coverageNodes = [];
     chemBody.appendChild(el("p", { class: "muted small", text:
       t("chem_provenance", { rdkit: payload.rdkit_version, catalog: payload.catalog_version }) }));
 
@@ -869,7 +915,9 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
     chemBody.appendChild(el("label", { class: "filter-field" }, [
       el("span", { text: t("chem_biological_type") }), typeSelect ]));
 
-    // Each facet lists only patterns that actually occur, with their real coverage.
+    /* Counts are recomputed against whatever is currently on screen, not against the whole
+       corpus. A static number would claim, say, 549 carbonyl ligands whether the reader had
+       narrowed to lipids or not, which tells them nothing about what is still reachable. */
     const present = { functional_groups: new Map(), ring_systems: new Map() };
     for (const record of payload.records || []) {
       if (!record.pharmacological_instances) continue;
@@ -891,9 +939,11 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
           const set = new Set(filters[key]);
           if (e.target.checked) set.add(name); else set.delete(name);
           filters[key] = [...set]; drawList(); drawDetail(); } });
-        list.appendChild(el("label", { class: "chem-check" }, [ input,
-          el("span", { text: spec["label_" + getLang()] || spec.label_en || name }),
-          el("span", { class: "chem-count", text: String(count) }) ]));
+        const countSpan = el("span", { class: "chem-count", text: String(count) });
+        const row = el("label", { class: "chem-check", "data-pattern": name }, [ input,
+          el("span", { text: spec["label_" + getLang()] || spec.label_en || name }), countSpan ]);
+        countNodes.set(name, { countSpan, row });
+        list.appendChild(row);
       }
       box.appendChild(list); chemBody.appendChild(box);
     };
@@ -939,11 +989,13 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
       const live = debounce(apply, 90);
       minInput.addEventListener("input", live); maxInput.addEventListener("input", live);
       readout.textContent = low.toFixed(decimals) + " – " + high.toFixed(decimals);
+      const coverageNode = el("span", { class: "chem-coverage",
+        text: t("chem_coverage", { covered, total: totalInstances }) });
+      coverageNodes.push({ field, el: coverageNode });
       rangeBox.appendChild(el("div", { class: "chem-range" }, [
         el("span", { class: "chem-range-label", text: t(labelKey) }), readout,
         el("div", { class: "chem-sliders" }, [minInput, maxInput]),
-        el("span", { class: "chem-coverage",
-          text: t("chem_coverage", { covered, total: totalInstances }) })
+        coverageNode
       ]));
     }
     chemBody.appendChild(rangeBox);
@@ -1053,6 +1105,7 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
       text: " · " + split.ligandMatches + " " + t("ligand_matches") }));
     listHead.appendChild(el("span", { class: "muted small", text: t("sorted_resolution") }));
     drawUnknown(split);
+    refreshFacetCounts(rows);
     let selectedItem = null;
     for (const x of rows) {
       const o = observationFor(x);
