@@ -67,9 +67,18 @@ function ligandSelection(o) {
   if (POLYMER[o.binding_site_class] && (o.ligand_selection.chains || []).length)
     return o.ligand_selection.chains.map(chain => ":" + chain).join(" or ");
   // Ligand selections may contain symmetry-related copies from every protomer.
-  // The contact list identifies the copy paired with the active receptor chain.
-  const residueSele = sel((o.contact_ligand_residues || []).length
-    ? o.contact_ligand_residues : o.ligand_selection.residues);
+  // The contact list identifies the copy paired with the active receptor chain, so it is
+  // preferred — but only where it agrees with the residues this observation declares. A
+  // structure can hold two copies of one component in different sites (7CFN: INT-777 at R:403
+  // orthosteric and R:401 lipid-facing), and there the contact list names both copies. Taking
+  // it whole made the two observations resolve to the same atoms, so switching between them
+  // changed nothing on screen.
+  const declared = o.ligand_selection.residues || [];
+  const contacts = o.contact_ligand_residues || [];
+  const residueKey = r => r[0] + ":" + r[1];
+  const declaredKeys = new Set(declared.map(residueKey));
+  const narrowed = contacts.filter(r => declaredKeys.has(residueKey(r)));
+  const residueSele = sel(narrowed.length ? narrowed : (declared.length ? declared : contacts));
   // Author residue numbers are not globally unique across ATOM and HETATM records.  Without
   // this guard, a ligand such as A:301 also selects receptor residue A:301 and creates a false
   // second ligand/contact focus. Polymer ligands take the complete-chain branch above.
@@ -553,6 +562,9 @@ export function statusMessage() {
   if (meta.apo_status === "confirmed_apo") return t("apo_confirmed");
   if (o && o.coordinate_status === "annotated_not_observed") return t("ano_msg");
   if (o && o.binding_site_class === "unresolved") return t("unresolved_site");
+  // Some observations are recorded from the annotation but carry no atom selection, so nothing
+  // can be drawn or highlighted for them. Silence there reads as a broken viewer.
+  if (o && ligandSelection(o) === "none") return t("no_ligand_selection");
   const un = (meta.receptor_instances || []).some(r => r.generic_mapping === "unresolved");
   if (un) return t("generic_unresolved");
   return "";

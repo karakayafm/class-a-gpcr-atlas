@@ -1,6 +1,7 @@
 // All views. Each returns a DOM node; none recomputes science — every number is read from a
 // Phase 4-derived payload field.
-import { t, siteClassLabel, siteClassDefinition, stateLabel, warnLabel, transducerLabel, getLang } from "../core/i18n.js";
+import { t, siteClassLabel, siteClassDefinition, stateLabel, warnLabel, transducerLabel,
+  ligandClassLabel, biologicalTypeLabel, methodLabel, getLang } from "../core/i18n.js";
 import { el, clear, fmt, pct, paginate, debounce } from "../components/dom.js";
 import { toCSV, download } from "../components/csv.js";
 import { downloadXLSX } from "../components/xlsx.js";
@@ -17,14 +18,16 @@ export function plainName(value) {
   node.innerHTML = String(value || "").replace(/<sub>(.*?)<\/sub>/gi, "$1");
   return (node.textContent || "").replace(/\s+/g, " ").trim();
 }
-function familyDisplayName(value) {
+export function familyDisplayName(value) {
   const clean = plainName(value);
   if (getLang() !== "tr") return clean;
   return ({ "Aminergic receptors": "Aminergik reseptörler", "Peptide receptors": "Peptit reseptörleri",
     "Lipid receptors": "Lipit reseptörleri", "Orphan receptors": "Yetim reseptörler",
     "Nucleotide receptors": "Nükleotit reseptörleri", "Protein receptors": "Protein reseptörleri",
     "Sensory receptors": "Duyusal reseptörler", "Melatonin receptors": "Melatonin reseptörleri",
-    "Steroid receptors": "Steroid reseptörleri", "Other": "Diğer" })[clean] || clean;
+    "Steroid receptors": "Steroit reseptörleri",
+    "Alicarboxylic acid receptors": "Alikarboksilik asit reseptörleri",
+    "Other": "Diğer" })[clean] || clean;
 }
 export function modeClass(value) {
   const key = String(value || "").toLowerCase();
@@ -499,7 +502,9 @@ function pocketTable(record, open3D, core, positions, keep) {
       const row = el("tr", { class: core && core.has(residue.generic_number) ? "is-core-row" : "" }, [
         el("td", { text:segment.segment }),
         el("td", {}, el("button", { class:"link-button", title:t("panel_open_residue_3d"),
-          text:(residue.aa || "") + " " + (residue.generic_number || "—"),
+          // Without a generic number the position is just the residue letter; appending a dash
+          // made it read as an empty field rather than a residue with no generic mapping.
+          text:[residue.aa, residue.generic_number].filter(Boolean).join(" "),
           onclick:() => open3D(record.pdb_id, null, { chain:residue.chain, seq:residue.auth_seq_id }) })),
         el("td", { text:residue.residue_name + residue.auth_seq_id }),
         el("td", { "data-band":bandToken(residue.distance_angstrom),
@@ -627,7 +632,7 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
   const median = contactCounts.slice().sort((a,b) => a-b)[Math.floor(contactCounts.length / 2)] || 0;
 
   wrap.appendChild(el("section", { class: "atlas-intro" }, [
-    el("div", {}, [el("h2", { text: ligandMode ? d.ligand_class
+    el("div", {}, [el("h2", { text: ligandMode ? ligandClassLabel(d.ligand_class)
       : panelMode ? transducerLabel(d.panel)
       : familyDisplayName(family ? family.name : slug) })]),
     el("div", { class: "summary-strip" }, [
@@ -650,7 +655,7 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
         for (const n of quick.querySelectorAll("button")) n.classList.toggle("active", n === b);
         drawList(); drawDetail();
       } }, [
-        el("span", { class: "tab-label", text: mode || t("all") }),
+        el("span", { class: "tab-label", text: mode ? ligandClassLabel(mode) : t("all") }),
         countBadge(mode ? modeCounts.get(mode) : d.count)
       ]);
     quick.appendChild(b);
@@ -672,7 +677,7 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
         const button=el("button", { class:"panel-tab family-panel-tab"+(active?" active":""),
           "data-panel":entry.slug, "aria-pressed":active?"true":"false",
           onclick:()=>navigate({ view:"ligands", ligand:entry.slug }) }, [
-            el("span", { class:"tab-label", text:entry.label }),
+            el("span", { class:"tab-label", text:ligandClassLabel(entry.label) }),
             countBadge(entry.structures)
           ]);
         strip.appendChild(button);
@@ -744,10 +749,12 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
   }
   filterGrid.appendChild(selectFilter("family", t("receptor_family"), uniq(x => [x.receptor_family_name])));
   filterGrid.appendChild(selectFilter("receptor", t("receptors"), uniq(x => [x.receptor_name])));
-  filterGrid.appendChild(selectFilter("mode", t("ligand_class"), uniq(x => x.observations.map(o => o.binding_mode))));
+  filterGrid.appendChild(selectFilter("mode", t("ligand_class"),
+    uniq(x => x.observations.map(o => o.binding_mode)), value => ligandClassLabel(value)));
   filterGrid.appendChild(selectFilter("site", t("site_class"),
     uniq(x => x.observations.map(o => o.binding_site_class)), siteClassLabel));
-  filterGrid.appendChild(selectFilter("state", t("state"), uniq(x => [x.structural_state])));
+  filterGrid.appendChild(selectFilter("state", t("state"), uniq(x => [x.structural_state]),
+    value => stateLabel(value)));
   filterGrid.appendChild(selectFilter("transducer", t("transducer"),
     uniq(x => x.transducer_panels || []), value => transducerLabel(value)));
   filterGrid.appendChild(selectFilter("evidenceTier", t("evidence_tier"),
@@ -899,9 +906,11 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
     }
   }
 
+  const rangeResets = [];
+
   function buildChemistryControls(payload, catalog) {
     clear(chemBody);
-    countNodes.clear(); coverageNodes = [];
+    countNodes.clear(); coverageNodes = []; rangeResets.length = 0;
     chemBody.appendChild(el("p", { class: "muted small", text:
       t("chem_provenance", { rdkit: payload.rdkit_version, catalog: payload.catalog_version }) }));
 
@@ -911,7 +920,8 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
     const typeSelect = el("select", { onchange: e => {
       filters.biologicalType = e.target.value; drawList(); drawDetail(); } });
     typeSelect.appendChild(el("option", { value: "", text: t("all") }));
-    for (const value of types) typeSelect.appendChild(el("option", { value, text: value }));
+    for (const value of types)
+      typeSelect.appendChild(el("option", { value, text: biologicalTypeLabel(value) }));
     chemBody.appendChild(el("label", { class: "filter-field" }, [
       el("span", { text: t("chem_biological_type") }), typeSelect ]));
 
@@ -989,6 +999,14 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
       const live = debounce(apply, 90);
       minInput.addEventListener("input", live); maxInput.addEventListener("input", live);
       readout.textContent = low.toFixed(decimals) + " – " + high.toFixed(decimals);
+      /* Clearing a range input by setting value to "" lands a slider on its midpoint, which
+         collapsed both handles together and read as a filter of one value. Reset puts each
+         handle back on its own end instead. */
+      rangeResets.push(() => {
+        minInput.value = String(low); maxInput.value = String(high);
+        readout.textContent = low.toFixed(decimals) + " – " + high.toFixed(decimals);
+        filters.ranges[field] = null;
+      });
       const coverageNode = el("span", { class: "chem-coverage",
         text: t("chem_coverage", { covered, total: totalInstances }) });
       coverageNodes.push({ field, el: coverageNode });
@@ -1004,9 +1022,8 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
       onclick: () => {
         filters.biologicalType = ""; filters.functionalGroups = []; filters.ringSystems = [];
         filters.ranges = {};
-        for (const input of chemBody.querySelectorAll("input")) {
-          if (input.type === "checkbox") input.checked = false; else input.value = "";
-        }
+        for (const input of chemBody.querySelectorAll("input[type=checkbox]")) input.checked = false;
+        for (const reset of rangeResets) reset();
         typeSelect.value = "";
         drawList(); drawDetail();
       } });
@@ -1114,6 +1131,10 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
       const item = el("button", { class: "result-item" + (selected === x ? " selected" : ""),
         "aria-pressed": selected === x ? "true" : "false", onclick: () => {
           selected = x;
+          // Record the selection in the address bar. The view is rebuilt from the route on a
+          // language change, so a selection that lived only in memory was lost there; it also
+          // makes the chosen structure linkable and survivable across back and forward.
+          navigate(Object.assign({}, parseRoute(), { pdb: x.pdb_id }), true);
           for (const n of resultList.querySelectorAll(".result-item")) {
             const active = n === item;
             n.classList.toggle("selected", active);
@@ -1126,7 +1147,8 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
           el("small", { text: fmt(x.resolution, 2) + " Å · " + (o.receptor_residues_5A || 0) + " " + t("contacts_short") })]),
         el("div", { class: "result-ligand", text: ligandText }),
         el("div", { class: "result-modes" }, Array.from(new Set(shown.map(v => v.binding_mode).filter(Boolean)))
-          .map(mode => el("span", { class: "mode-pill" + modeClass(mode), text: mode })))
+          .map(mode => el("span", { class: "mode-pill" + modeClass(mode),
+            text: ligandClassLabel(mode) })))
       ]);
       if (selected === x) selectedItem = item;
       resultList.appendChild(item);
@@ -1165,7 +1187,8 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
     detail.appendChild(el("div", { class: "detail-tags" }, [
       el("span", { class: "chip", text: plainName(x.receptor_family_name || "—") }),
       el("span", { class: "chip", text: stateLabel(x.structural_state || "unknown") }),
-      ...modes.map(mode => el("span", { class: "chip mode-pill" + modeClass(mode), text: mode })),
+      ...modes.map(mode => el("span", { class: "chip mode-pill" + modeClass(mode),
+        text: ligandClassLabel(mode) })),
       el("span", { class: "chip", text: siteClassLabel(o.binding_site_class || "unresolved") }),
       ...(x.transducer_class ? [el("span", { class: "chip chip-transducer",
         text: t("transducer") + ": " + transducerLabel(x.transducer_class) })] : []),
@@ -1177,8 +1200,8 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
     ]));
     detail.appendChild(el("div", { class: "detail-facts" }, [
       fact(t("receptors"), plainName(x.receptor_name || "—")), fact(t("resolution"), fmt(x.resolution,2) + " Å"),
-      fact(t("method"), x.experimental_method || "—"), fact(t("species"), x.species || "—"),
-      fact(t("ligand_class"), modes.join(" + ") || "—"),
+      fact(t("method"), methodLabel(x.experimental_method)), fact(t("species"), x.species || "—"),
+      fact(t("ligand_class"), modes.map(ligandClassLabel).join(" + ") || "—"),
       fact(t("transducer"), transducerLabel(x.transducer_class))
     ]));
     // One compact line instead of three large tiles: the shell counts are reference numbers,
@@ -1222,8 +1245,13 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
     // Structural evidence first, then functional, so the row order matches how the claim is built.
     rows.sort((a, b) => (a.tier || "").localeCompare(b.tier || ""));
     const table = el("table", { class: "data compact evidence" });
-    table.appendChild(el("thead", {}, el("tr", {}, [t("ev_col_pathway"), t("ev_col_evidence"),
-      t("ev_col_assay"), t("ev_col_source"), t("ev_col_membership")].map(h => el("th", { text: h })))));
+    // The membership column decides whether a row puts this structure in a panel, which is not
+    // obvious from a tick mark; the header carries the explanation.
+    table.appendChild(el("thead", {}, el("tr", {}, [
+      el("th", { text: t("ev_col_pathway") }), el("th", { text: t("ev_col_evidence") }),
+      el("th", { text: t("ev_col_assay") }), el("th", { text: t("ev_col_source") }),
+      el("th", {}, [el("span", { text: t("ev_col_membership") }), metricHelp(t("ev_membership_help"))])
+    ])));
     const body = el("tbody");
     for (const row of rows) {
       const fe = row.functional_evidence || {};
@@ -1662,7 +1690,7 @@ export async function compare(root) {
     const c = csel.value; const list = cf.site_class_families[c] || [];
     for (const s of [fa, fb]) { clear(s);
       for (const f of list) { const fam = (m.families || []).find(x => x.family_id === f);
-        s.appendChild(el("option", { value: f, text: fam ? fam.name : f })); } }
+        s.appendChild(el("option", { value: f, text: fam ? familyDisplayName(fam.name) : f })); } }
   }
   async function draw() {
     clear(out);
@@ -1899,7 +1927,8 @@ export async function references(root, slug) {
     const list = el("ol", { class: "reference-list" });
     for (const key of keys) {
       const c = cites[key];
-      const item = el("li", {}, [ el("span", { text: plainCitation(c) }) ]);
+      const item = el("li", {}, [ el("strong", { class: "ref-db-label", text: databaseLabel(key) + " — " }),
+        el("span", { text: plainCitation(c) }) ]);
       if (c.pubmed_url) item.appendChild(el("a", { href: c.pubmed_url, target: "_blank",
         rel: "noopener", text: " PubMed" }));
       list.appendChild(item);
@@ -1953,6 +1982,14 @@ function bibtex(pdb, citation) {
   field("doi", citation.doi);
   lines.push("}");
   return lines.join("\n");
+}
+
+/* Which resource a citation belongs to. The payload keys are internal, so they are mapped to
+   the name a reader would recognise; an unmapped key falls back to the key rather than being
+   hidden, so a newly added resource is visible rather than silently unlabelled. */
+function databaseLabel(key) {
+  const label = t("db_label_" + key);
+  return label === "db_label_" + key ? key : label;
 }
 
 function plainCitation(citation) {
@@ -2043,7 +2080,10 @@ export async function cite(root, pdb, slug) {
       const cites = g.database_citations || {};
       const keys = Object.keys(cites).sort();
       if (!keys.length) { body.appendChild(el("p", { class: "muted", text: t("source_none") })); return; }
-      for (const key of keys) body.appendChild(citationBlock(plainCitation(cites[key]), "cite_copy"));
+      for (const key of keys) {
+        body.appendChild(el("h3", { class: "cite-db-label", text: databaseLabel(key) }));
+        body.appendChild(citationBlock(plainCitation(cites[key]), "cite_copy"));
+      }
       body.appendChild(el("p", { class: "muted small", text: t("cite_db_note") }));
     }
   };

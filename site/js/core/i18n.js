@@ -68,6 +68,10 @@ export const DICT = {
     cite_choose_structure: "Yapı seçin",
     cite_no_primary: "Bu yapı için birincil yayın kaydı bulunamadı.",
     cite_db_note: "Bu künyeler NCBI E-utilities üzerinden alınmıştır.",
+    db_label_pdb: "Protein Data Bank (RCSB PDB / wwPDB)", db_label_gpcrdb: "GPCRdb",
+    db_label_gtopdb: "IUPHAR/BPS Guide to PHARMACOLOGY", db_label_chembl: "ChEMBL",
+    db_label_pubchem: "PubChem", db_label_uniprot: "UniProt",
+    db_label_ngl_2015: "NGL Viewer (2015)", db_label_ngl_2018: "NGL Viewer (2018)",
     ref_databases: "Veritabanı yayınları",
     ref_pick_family: "Yapı düzeyinde kaynakça için bir aile seçin.",
     pocket_view_table: "Tablo", pocket_view_cards: "Kartlar",
@@ -77,10 +81,10 @@ export const DICT = {
     threshold_all: "bütün etkileşimler",
     threshold_min: "panelin en az %{percent}'inde temas eden konumlar",
     threshold_hidden: "{hidden} / {total} kalıntı eşiğin altında kaldığı için gizlendi.",
-    threshold_help: "Panelde ender görülen temasları listeden çıkarır. Eşiği yükselttikçe yalnızca yapıların çoğunda tekrarlanan, korunmuş konumlar kalır. Jenerik numarası olmayan kalıntılar için panel sıklığı bilinmediğinden onlar her zaman görünür kalır.",
-    export_filtered_set_help: "Soldaki listede duran yapıların künye tablosu — hangi reseptör, hangi çözünürlük, hangi yöntem, hangi iletici. Makale tablosu hazırlarken ya da seçtiğiniz seti kayıt altına alırken kullanışlı. XLSX seçerseniz ligand bilgileri de ikinci sayfada gelir.",
-    export_contact_list_help: "Ligandın değdiği her kalıntı ayrı bir satır: hangi segmentte, hangi jenerik konumda, kaç Ångström uzaklıkta. Kendi hesabınızı yapmak ya da yapıları kalıntı kalıntı karşılaştırmak isterseniz ham veri burada.",
-    export_matrix_help: "Hangi yapı cebin hangi konumuna değiyor — satırlar konumlar, sütunlar yapılar, hücrelerde mesafe. Boş hücre o yapıda temas yok demek. Korunmuş konumları ve tek bir yapıya özgü temasları bir bakışta görmek için.",
+    threshold_help: "Panelde ender rastlanan temasları listeden çıkarır. Eşik yükseldikçe yalnızca yapıların çoğunda tekrarlanan korunmuş konumlar görüntülenir. Jenerik numarası bulunmayan kalıntılar için panel sıklığı hesaplanamadığından, bu kalıntılar her durumda listede kalır.",
+    export_filtered_set_help: "Listede görüntülenen yapıların künye tablosunu dışa aktarır. Her satır bir yapıyı temsil eder; sütunlarda reseptör, tür, deneysel yöntem, çözünürlük ve iletici bilgileri yer alır. XLSX biçimi, her yapıya ait ligand gözlemlerini ikinci bir sayfada ayrıca sunar.",
+    export_contact_list_help: "Ligand–reseptör temaslarını kalıntı düzeyinde dışa aktarır. Her satır tek bir teması tanımlar; sütunlarda segment, GPCRdb jenerik konumu, kalıntı kimliği ve en yakın ağır atom mesafesi bulunur. Kendi analizlerinizde ham veri olarak kullanılabilir.",
+    export_matrix_help: "Seçili yapıları bağlanma cebi konumları üzerinden karşılaştırmak için kullanılır. Satırlarda jenerik konumlar, sütunlarda yapılar yer alır; her hücre ilgili konumdaki en yakın ağır atom mesafesini gösterir. Boş hücreler, o yapıda 5 Å kabuğunda temas bulunmadığı anlamına gelir.",
     chem_heading: "Ligand kimyası", chem_prompt: "Kimya verisi ilk açılışta yüklenir.",
     chem_provenance: "Descriptor'lar RDKit {rdkit} ile hesaplandı; desen kataloğu {catalog}.",
     chem_biological_type: "Biyolojik tip", chem_functional_groups: "Fonksiyonel gruplar",
@@ -101,6 +105,7 @@ export const DICT = {
     ev_col_pathway: "YOLAK", ev_col_evidence: "KANIT", ev_col_assay: "DENEY / GEREKÇE",
     ev_col_source: "KAYNAK", ev_col_membership: "PANEL ÜYELİĞİ",
     ev_member_yes: "var", ev_member_no: "yok",
+    ev_membership_help: "Bu satırdaki kanıtın yapıyı ilgili iletici paneline koyup koymadığını gösterir. ✓ var ise yapı o panelde listelenir; ✗ yok ise bu kanıt üyelik doğurmaz — negatif bir deney sonucu yapının o panelde neden bulunmadığını açıkladığı için tabloda kalır.",
     ev_result_structural_presence: "yapıda iletici var", ev_result_structural_absence: "yapıda iletici yok",
     ev_result_positive_full: "pozitif (tam)", ev_result_positive_partial: "pozitif (kısmi)",
     ev_result_positive_weak: "pozitif (zayıf)", ev_result_negative: "negatif",
@@ -144,6 +149,7 @@ export const DICT = {
     v_pocket: "Bağlanma bölgesine dön", v_contact_list: "Bağlanma bölgesi kalıntıları",
     v_interactions: "Etkileşim", v_clear_selection: "seçimi temizle", v_snapshot: "Görüntü al",
     v_background_black: "Siyah arka plan", v_background_white: "Beyaz arka plan",
+    v_background_switch: "Görüntüleyici arka planını değiştir",
     v_surface_receptor: "Protein cebi", v_surface_ligand: "Ligand",
     v_group_ligand: "Ligand bağlanması", v_group_activation: "Aktivasyon", v_group_structural: "Yapısal",
     v_motif_tm5_polar: "TM5 polar küme", v_motif_aromatic: "Aromatik cep",
@@ -235,6 +241,19 @@ export const DICT = {
     scd_bitopic_or_multi_region_site: "Tek ligandın iki veya daha fazla cep ya da reseptör bölgesine birlikte uzandığı bağlanma düzeni.",
     scd_other_site: "Tanımlı ana bölge sınıflarına girmeyen bağlanma bölgesi.",
     scd_unresolved: "Mevcut yapı ve anotasyonla bağlanma bölgesi sınıfı güvenilir biçimde belirlenememiştir.",
+    no_ligand_selection: "Bu gözlemin çizilebilir bir atom seçimi yok; görünümde vurgulanamıyor.",
+    observation_undisplayable: "çizilemiyor",
+    observation_hint: "Bu yapıda birden fazla ligand var; görünümü değiştirmek için seçin.",
+    observation_previous: "Önceki ligand", observation_next: "Sonraki ligand",
+    em_x_ray_diffraction: "X-ışını kırınımı", em_electron_microscopy: "Elektron mikroskobu",
+    em_electron_crystallography: "Elektron kristalografisi",
+    lc_agonist: "Agonist", lc_antagonist: "Antagonist", lc_inverse_agonist: "Ters agonist",
+    lc_agonist_partial: "Kısmi agonist", lc_allosteric_agonist: "Allosterik agonist",
+    lc_allosteric_antagonist: "Allosterik antagonist", lc_pam: "Pozitif allosterik modülatör (PAM)",
+    lc_nam: "Negatif allosterik modülatör (NAM)", lc_ago_pam: "Ago-PAM", lc_cofactor: "Kofaktör",
+    lc_unknown: "Bilinmiyor", lc_not_specified: "Belirtilmemiş",
+    bt_small_molecule: "Küçük molekül", bt_peptide: "Peptit", bt_protein: "Protein",
+    bt_lipid: "Lipit", bt_unknown: "Bilinmiyor",
     st_active: "Aktif", st_inactive: "İnaktif", st_intermediate: "Ara", st_unknown: "Bilinmiyor"
   },
   en: {
@@ -304,6 +323,10 @@ export const DICT = {
     cite_choose_structure: "Choose a structure",
     cite_no_primary: "No primary publication record was found for this structure.",
     cite_db_note: "These records were retrieved through NCBI E-utilities.",
+    db_label_pdb: "Protein Data Bank (RCSB PDB / wwPDB)", db_label_gpcrdb: "GPCRdb",
+    db_label_gtopdb: "IUPHAR/BPS Guide to PHARMACOLOGY", db_label_chembl: "ChEMBL",
+    db_label_pubchem: "PubChem", db_label_uniprot: "UniProt",
+    db_label_ngl_2015: "NGL Viewer (2015)", db_label_ngl_2018: "NGL Viewer (2018)",
     ref_databases: "Database publications",
     ref_pick_family: "Choose a family for structure-level references.",
     pocket_view_table: "Table", pocket_view_cards: "Cards",
@@ -313,10 +336,10 @@ export const DICT = {
     threshold_all: "all interactions",
     threshold_min: "positions contacted in at least {percent}% of the panel",
     threshold_hidden: "{hidden} of {total} residues hidden below the threshold.",
-    threshold_help: "Drops contacts that are rare across the panel. Raise it and only the positions repeated in most structures — the conserved ones — remain. Residues without a generic number have no panel frequency, so they always stay visible.",
-    export_filtered_set_help: "A summary table of the structures currently in the list — receptor, resolution, method, transducer. Handy for a paper table or for recording the set you selected. Pick XLSX and the ligand details come along on a second sheet.",
-    export_contact_list_help: "Every residue the ligand touches, one per row: which segment, which generic position, how many Ångström away. The raw data, for running your own numbers or comparing structures residue by residue.",
-    export_matrix_help: "Which structure touches which part of the pocket — positions down the side, structures across the top, distances in the cells. A blank cell means no contact in that structure. Good for spotting conserved positions and one-off contacts at a glance.",
+    threshold_help: "Removes contacts that are rare across the panel. As the threshold rises, only the conserved positions repeated in most structures remain visible. Panel frequency cannot be computed for residues without a generic number, so those residues always stay listed.",
+    export_filtered_set_help: "Exports a summary table of the structures currently listed. Each row is one structure, with columns for receptor, species, experimental method, resolution and transducer. The XLSX format additionally provides each structure\u2019s ligand observations on a second sheet.",
+    export_contact_list_help: "Exports ligand\u2013receptor contacts at residue level. Each row describes a single contact, with columns for segment, GPCRdb generic position, residue identity and closest heavy-atom distance. Suitable as raw data for your own analyses.",
+    export_matrix_help: "Used to compare the selected structures across binding-pocket positions. Rows are generic positions and columns are structures; each cell gives the closest heavy-atom distance at that position. An empty cell means no contact within the 5 Å shell for that structure.",
     chem_heading: "Ligand chemistry", chem_prompt: "Chemistry data loads when first opened.",
     chem_provenance: "Descriptors computed with RDKit {rdkit}; pattern catalogue {catalog}.",
     chem_biological_type: "Biological type", chem_functional_groups: "Functional groups",
@@ -337,6 +360,7 @@ export const DICT = {
     ev_col_pathway: "PATHWAY", ev_col_evidence: "EVIDENCE", ev_col_assay: "ASSAY / RATIONALE",
     ev_col_source: "SOURCE", ev_col_membership: "PANEL MEMBERSHIP",
     ev_member_yes: "yes", ev_member_no: "no",
+    ev_membership_help: "Whether this row of evidence places the structure in the corresponding transducer panel. A tick means it is listed there; a cross means this evidence confers no membership — a negative assay stays in the table because it explains why the structure is absent from that panel.",
     ev_result_structural_presence: "transducer present in structure",
     ev_result_structural_absence: "no transducer in structure",
     ev_result_positive_full: "positive (full)", ev_result_positive_partial: "positive (partial)",
@@ -381,6 +405,7 @@ export const DICT = {
     v_pocket: "Return to binding site", v_contact_list: "Binding-site residues",
     v_interactions: "Interactions", v_clear_selection: "clear selection", v_snapshot: "Snapshot",
     v_background_black: "Black background", v_background_white: "White background",
+    v_background_switch: "Switch the viewer background",
     v_surface_receptor: "Protein pocket", v_surface_ligand: "Ligand",
     v_group_ligand: "Ligand binding", v_group_activation: "Activation", v_group_structural: "Structural",
     v_motif_tm5_polar: "TM5 polar cluster", v_motif_aromatic: "Aromatic pocket",
@@ -472,6 +497,19 @@ export const DICT = {
     scd_bitopic_or_multi_region_site: "A binding mode in which one ligand spans two or more pockets or receptor regions.",
     scd_other_site: "A binding site outside the principal defined site classes.",
     scd_unresolved: "The binding-site class could not be assigned reliably from the available structure and annotation.",
+    no_ligand_selection: "This observation carries no drawable atom selection, so it cannot be highlighted.",
+    observation_undisplayable: "not drawable",
+    observation_hint: "This structure holds more than one ligand; choose one to change the view.",
+    observation_previous: "Previous ligand", observation_next: "Next ligand",
+    em_x_ray_diffraction: "X-ray diffraction", em_electron_microscopy: "Electron microscopy",
+    em_electron_crystallography: "Electron crystallography",
+    lc_agonist: "Agonist", lc_antagonist: "Antagonist", lc_inverse_agonist: "Inverse agonist",
+    lc_agonist_partial: "Partial agonist", lc_allosteric_agonist: "Allosteric agonist",
+    lc_allosteric_antagonist: "Allosteric antagonist", lc_pam: "Positive allosteric modulator (PAM)",
+    lc_nam: "Negative allosteric modulator (NAM)", lc_ago_pam: "Ago-PAM", lc_cofactor: "Cofactor",
+    lc_unknown: "Unknown", lc_not_specified: "Not specified",
+    bt_small_molecule: "Small molecule", bt_peptide: "Peptide", bt_protein: "Protein",
+    bt_lipid: "Lipid", bt_unknown: "Unknown",
     st_active: "Active", st_inactive: "Inactive", st_intermediate: "Intermediate", st_unknown: "Unknown"
   }
 };
@@ -490,6 +528,18 @@ export function t(key, vars) {
 export function transducerLabel(id) {
   if (!id) return "—";
   return t("tp_" + String(id).replace(/[^A-Za-z0-9]+/g, "_")); }
+/* Source vocabularies arrive in English. These map them to the interface language; an
+   unmapped value falls back to the raw string so a new category stays visible rather than
+   disappearing behind a missing key. */
+function vocabLabel(prefix, value) {
+  if (!value) return "—";
+  const key = prefix + String(value).toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+  const label = t(key);
+  return label === key ? value : label;
+}
+export function ligandClassLabel(value) { return vocabLabel("lc_", value); }
+export function methodLabel(value) { return vocabLabel("em_", value); }
+export function biologicalTypeLabel(value) { return vocabLabel("bt_", value); }
 export function siteClassLabel(id) { return t("sc_" + id); }
 export function siteClassDefinition(id) { return t("scd_" + id); }
 export function stateLabel(id) { return t("st_" + id); }
