@@ -12,10 +12,16 @@
   <h1>Class A GPCR Atlas</h1>
   <span class="chip" id="verchip">pre-release</span>
   <span class="spacer"></span>
-  <label for="lang" class="small muted">Lang</label>
-  <select id="lang" aria-label="Language"></select>
-  <label for="theme" class="small muted">Theme</label>
-  <select id="theme" aria-label="Theme"></select>
+  <label for="lang" class="small muted lang-label" title="">
+    <svg class="globe-icon" viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"
+         fill="none" stroke="currentColor" stroke-width="1.7">
+      <circle cx="12" cy="12" r="9"/><path d="M3 12h18"/>
+      <path d="M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18"/>
+    </svg>
+  </label>
+  <select id="lang"></select>
+  <label for="theme" class="small muted theme-label"></label>
+  <select id="theme"></select>
 </header>
 <p id="prerelease" role="note"></p>
 <p id="filewarn" role="alert" hidden></p>
