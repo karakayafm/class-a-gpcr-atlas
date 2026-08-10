@@ -1198,21 +1198,23 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
         el("span", { class: "chip chip-panel-extra",
           text: t("also_in_panel", { panel: transducerLabel(p) }) }))
     ]));
-    detail.appendChild(el("div", { class: "detail-facts" }, [
+    // One compact line instead of three large tiles: the shell counts are reference numbers,
+    // not the headline of the page, and the tiles pushed the evidence table below the fold.
+    // It rides in the fact row rather than below it, where the row already ends in dead space.
+    const facts = el("div", { class: "detail-facts" }, [
       fact(t("receptors"), plainName(x.receptor_name || "—")), fact(t("resolution"), fmt(x.resolution,2) + " Å"),
       fact(t("method"), methodLabel(x.experimental_method)), fact(t("species"), x.species || "—"),
       fact(t("ligand_class"), modes.map(ligandClassLabel).join(" + ") || "—"),
       fact(t("transducer"), transducerLabel(x.transducer_class))
-    ]));
-    // One compact line instead of three large tiles: the shell counts are reference numbers,
-    // not the headline of the page, and the tiles pushed the evidence table below the fold.
-    detail.appendChild(el("div", { class: "detail-shell" }, [
+    ]);
+    facts.appendChild(el("div", { class: "detail-shell" }, [
       el("span", { class: "shell-label", text: t("contact_shell") }),
       el("strong", { text: (o.receptor_residues_5A || 0) + " " + t("residues") }),
       el("span", { class: "shell-extra", title: t("binding_site_explain"),
         text: "≤ 4.5 Å: " + (o.receptor_residues_4_5A || 0) +
           " · ≤ 4.0 Å: " + (o.receptor_residues_4A || 0) })
     ]));
+    detail.appendChild(facts);
     const sourcesSection = el("section", { class: "detail-section sources" }, [
       el("h3", { text: t("source_links") }),
       SOURCES.linkRow(famOf(x),x)

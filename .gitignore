@@ -28,6 +28,7 @@ tests/*
 !tests/deploy/
 tests/deploy/*
 !tests/deploy/test_gh_pages_protection.py
+!tests/deploy/test_repo_hygiene.py
 !tests/enrichment/
 tests/enrichment/*
 !tests/enrichment/test_chemistry_smarts.py
