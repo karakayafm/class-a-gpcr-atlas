@@ -1,5 +1,5 @@
 // Application shell: routing, lazy loading, the 3D modal and the accessibility plumbing.
-import { t, initLang, setLang, getLang } from "./core/i18n.js";
+import { t, initLang, setLang, getLang, methodLabel } from "./core/i18n.js";
 import { initTheme, setTheme, getTheme, themes } from "./core/theme.js";
 import { parseRoute, navigate, onRoute, startRouter } from "./core/router.js";
 import * as ST from "./core/state.js";
@@ -49,8 +49,25 @@ function buildChrome(manifest) {
     const f = (manifest.families || []).find(x => x.slug === r.family);
     fam.appendChild(el("a", { class: "crumb", href: "#view=landing", text: t("back_to_families") }));
     fam.appendChild(el("span", { class: "crumb sep", text: "›" }));
-    fam.appendChild(el("span", { class: "crumb", text: f ? f.name : r.family }));
+    fam.appendChild(el("span", { class: "crumb", text: f ? V.familyDisplayName(f.name) : r.family }));
   }
+  // Chrome labels are translated on every render; leaving them as static English text meant
+  // "Lang" and "Theme" stayed English while the rest of the page was Turkish.
+  const langLabel = document.querySelector(".lang-label");
+  if (langLabel) langLabel.title = t("lang");
+  const langSelect = document.getElementById("lang");
+  if (langSelect) langSelect.setAttribute("aria-label", t("lang"));
+  const themeLabel = document.querySelector(".theme-label");
+  if (themeLabel) themeLabel.textContent = t("theme");
+  const themeSelect = document.getElementById("theme");
+  if (themeSelect) {
+    themeSelect.setAttribute("aria-label", t("theme"));
+    for (const option of themeSelect.options) option.textContent = t("theme_" + option.value);
+  }
+  // The pre-release banner used to be written once at boot, so it kept the language the page
+  // happened to start in. It is part of the chrome and is translated with the rest of it.
+  const prerelease = document.getElementById("prerelease");
+  if (prerelease) prerelease.textContent = t("prerelease_notice");
   const globalInput = document.getElementById("global-search-input");
   if (globalInput) {
     globalInput.placeholder = t("global_search_placeholder");
@@ -141,7 +158,10 @@ function ensureModal() {
       el("button", { class: "btn close", id: "modal-close", "aria-label": "Esc", text: "✕" })
     ]),
     el("div", { class: "modal-body" }, [
-      el("div", { id: "viewport", class: "viewport" }),
+      el("div", { class: "viewport-shell" }, [
+        el("div", { id: "viewport", class: "viewport" }),
+        el("div", { id: "viewer-obs-switch", class: "obs-switch", hidden: true })
+      ]),
       el("aside", { id: "viewer-side", class: "viewer-side" })
     ]),
     el("p", { id: "viewer-status", class: "notice", hidden: true })
@@ -190,6 +210,7 @@ async function openModal(pdb, observationId, focusResidue) {
   if (focusResidue && !VIEW.isResidueSelected(focusResidue.chain, focusResidue.seq))
     VIEW.toggleResidue(focusResidue.chain, focusResidue.seq);
   buildViewerSide(meta);
+  buildObservationSwitch(meta);
   const note = VIEW.statusMessage();
   st.textContent = note; st.hidden = !note;
   document.getElementById("modal-close").focus();
@@ -206,10 +227,21 @@ function updateModalTitle(meta) {
     class:"mode-pill modal-mode-pill" + V.modeClass(current.binding_mode),
     text:current.binding_mode
   }));
-  if (current && (current.ligand_name || current.ligand_entity_id)) title.appendChild(el("span", {
-    class:"modal-ligand-name",
-    text:V.plainName(current.ligand_name || current.ligand_entity_id)
-  }));
+  if (current && (current.ligand_name || current.ligand_entity_id)) {
+    const list = meta.observations || [];
+    const label = V.plainName(current.ligand_name || current.ligand_entity_id);
+    // With a single ligand the name is just a caption; with several it is the control that
+    // advances to the next one, which is where a reader looks first.
+    if (list.length < 2) title.appendChild(el("span", { class:"modal-ligand-name", text:label }));
+    else {
+      const at = currentIndex(meta);
+      title.appendChild(el("button", { class:"modal-ligand-name modal-ligand-switch", type:"button",
+        title:t("observation_hint"), onclick:() =>
+          applyObservation(meta, list[(at + 1) % list.length].observation_id) }, [
+        el("span", { text:label }),
+        el("span", { class:"obs-switch-count", text:(at + 1) + " / " + list.length })]));
+    }
+  }
 }
 function closeModal() {
   const m = document.getElementById("modal");
@@ -224,18 +256,57 @@ function closeModal() {
   if (modalOpener && modalOpener.focus) modalOpener.focus();
   modalOpener = null;
 }
+/* A structure can hold several ligands, and readers were missing that the view is showing only
+   one of them. The choice is offered in three places now — the modal title, the side panel and an
+   overlay on the viewer — so they all route through here and refresh each other. */
+function applyObservation(meta, id) {
+  VIEW.setObservation(id);
+  const status = VIEW.statusMessage(), node = document.getElementById("viewer-status");
+  node.textContent = status; node.hidden = !status;
+  navigate(Object.assign({}, parseRoute(), { observation:id }), true);
+  updateModalTitle(meta); buildViewerSide(meta); buildObservationSwitch(meta);
+}
+function observationList(meta) { return meta.observations || []; }
+function observationText(o) { return V.plainName(o.ligand_name || o.ligand_entity_id) + " — " + o.ligand_role; }
+/* An observation with no coordinates or no atom selection stays in the list — it is a real
+   annotation — but it is labelled, so switching to it does not look like a broken viewer. */
+function observationDrawable(o) {
+  return o.coordinate_status === "observed" && !!o.ligand_selection;
+}
+function currentIndex(meta) {
+  const list = observationList(meta);
+  const at = list.findIndex(o => o.observation_id === VIEW.currentObservation());
+  return at < 0 ? 0 : at;
+}
+/* Overlay in the corner of the canvas: previous / position / next. Stepping through the ligands
+   is the common action, so it is one click away without opening any list. */
+function buildObservationSwitch(meta) {
+  const box = document.getElementById("viewer-obs-switch");
+  if (!box) return;
+  const list = observationList(meta);
+  clear(box);
+  box.hidden = list.length < 2;
+  if (box.hidden) return;
+  const at = currentIndex(meta);
+  const step = delta => applyObservation(meta, list[(at + delta + list.length) % list.length].observation_id);
+  box.appendChild(el("span", { class:"obs-switch-label", text:t("observation") }));
+  box.appendChild(el("button", { class:"obs-switch-step", type:"button",
+    "aria-label":t("observation_previous"), text:"‹", onclick:() => step(-1) }));
+  box.appendChild(el("span", { class:"obs-switch-count", text:(at + 1) + " / " + list.length }));
+  box.appendChild(el("button", { class:"obs-switch-step", type:"button",
+    "aria-label":t("observation_next"), text:"›", onclick:() => step(1) }));
+  box.appendChild(el("span", { class:"obs-switch-name", title:observationText(list[at]),
+    text:V.plainName(list[at].ligand_name || list[at].ligand_entity_id) }));
+}
 function buildViewerSide(meta) {
   const side = document.getElementById("viewer-side");
   clear(side);
   side.appendChild(el("h3", { text: meta.pdb_id + " — " + V.plainName(meta.receptor_name || "") }));
   side.appendChild(el("p", { class: "muted small", text: meta.species + " · " +
-    (meta.experimental_method || "") + " · " + (meta.resolution != null ? meta.resolution + " Å" : "") }));
+    (meta.experimental_method ? methodLabel(meta.experimental_method) : "") + " · " +
+    (meta.resolution != null ? meta.resolution + " Å" : "") }));
   if ((meta.observations || []).length > 1) {
-    const selectObservation = id => { VIEW.setObservation(id);
-      const n = VIEW.statusMessage(); const st = document.getElementById("viewer-status");
-      st.textContent = n; st.hidden = !n;
-      const r = parseRoute(); navigate(Object.assign({}, r, { observation:id }), true);
-      updateModalTitle(meta); buildViewerSide(meta); };
+    const selectObservation = id => applyObservation(meta, id);
     // Keep a native selector for assistive technology and automated keyboard checks, while the
     // visible disclosure below can wrap very long chemical/peptide names inside the side panel.
     const sel = el("select", { class:"observation-native", "aria-label": t("observation"),
@@ -245,16 +316,21 @@ function buildViewerSide(meta) {
       selected: o.observation_id === VIEW.currentObservation() }));
     const currentObservation = meta.observations.find(o =>
       o.observation_id === VIEW.currentObservation()) || meta.observations[0];
-    const observationText = o => (o.ligand_name || o.ligand_entity_id) + " — " + o.ligand_role;
-    const picker = el("details", { class:"observation-picker" }, [
+    const picker = el("details", { class:"observation-picker", open:true }, [
       el("summary", { text:observationText(currentObservation) }),
       el("div", { class:"observation-options" }, meta.observations.map(o => el("button", {
         class:"observation-option" + (o === currentObservation ? " selected" : ""),
         type:"button", "aria-current":o === currentObservation ? "true" : null,
-        text:observationText(o), onclick:() => selectObservation(o.observation_id)
-      })))
+        onclick:() => selectObservation(o.observation_id) }, [
+        el("span", { text:observationText(o) }),
+        observationDrawable(o) ? null
+          : el("span", { class:"observation-flag", text:t("observation_undisplayable") })
+      ].filter(Boolean))))
     ]);
-    side.appendChild(el("label", { class:"observation-heading", text:t("observation") }));
+    side.appendChild(el("label", { class:"observation-heading" }, [
+      el("span", { text:t("observation") }),
+      el("span", { class:"observation-count", text:String(meta.observations.length) })]));
+    side.appendChild(el("p", { class:"observation-hint", text:t("observation_hint") }));
     side.appendChild(sel); side.appendChild(picker);
   }
   const on = { cartoon: true, ligand: true, contacts: true, motifs: false, motifLabels: true,
@@ -355,16 +431,25 @@ function buildViewerSide(meta) {
     } });
   ctrl.appendChild(surfaceMaster);
   add("spin", t("v_spin"));
-  const background = VIEW.currentBackground();
-  const backgroundButton = (mode, label) => el("button", { class:"viewer-tool",
-    "aria-pressed":background === mode ? "true" : "false", text:label, onclick:() => {
-      VIEW.setBackground(mode);
-      blackBackground.setAttribute("aria-pressed", mode === "black" ? "true" : "false");
-      whiteBackground.setAttribute("aria-pressed", mode === "white" ? "true" : "false");
-    } });
-  const blackBackground = backgroundButton("black", t("v_background_black"));
-  const whiteBackground = backgroundButton("white", t("v_background_white"));
-  ctrl.append(blackBackground, whiteBackground);
+  /* One switch rather than two buttons: the background is either dark or light, and two
+     separate controls made it look as though both could be off. */
+  const backgroundSwitch = el("button", { class:"viewer-switch", type:"button", role:"switch" },
+    [el("span", { class:"viewer-switch-label" }), el("span", { class:"viewer-switch-track" },
+      el("span", { class:"viewer-switch-knob" }))]);
+  const paintBackground = () => {
+    const dark = VIEW.currentBackground() === "black";
+    backgroundSwitch.setAttribute("aria-checked", dark ? "true" : "false");
+    backgroundSwitch.classList.toggle("is-on", dark);
+    backgroundSwitch.querySelector(".viewer-switch-label").textContent =
+      dark ? t("v_background_black") : t("v_background_white");
+    backgroundSwitch.setAttribute("aria-label", t("v_background_switch"));
+  };
+  backgroundSwitch.addEventListener("click", () => {
+    VIEW.setBackground(VIEW.currentBackground() === "black" ? "white" : "black");
+    paintBackground();
+  });
+  paintBackground();
+  ctrl.appendChild(backgroundSwitch);
   ctrl.appendChild(el("button", { class: "viewer-tool", text: t("v_reset"),
     onclick: () => { VIEW.resetView(); buildViewerSide(meta); } }));
   ctrl.appendChild(el("button", { class: "viewer-tool", text: t("v_snapshot"),

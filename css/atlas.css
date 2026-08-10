@@ -6,7 +6,7 @@
   --band-mid-bg:#e8eef2; --band-mid-line:#7fa3b8;
   --band-far-bg:#f2f3f4; --band-far-line:#c2c8cd;
   --missing-bg:#fbeeee; --missing-line:#d9a3a3; --missing-ink:#8a3f3f;
-  --chem-panel:#fbfaff; --chem-line:#e2dced;
+  --chem-panel:#fbf2e7; --chem-line:#ecd7bd;
 }
 :root[data-theme="dark"] {
   --bg:#15171a; --panel:#1d2024; --ink:#e6e8ea; --muted:#9aa2aa; --line:#2c3138;
@@ -15,7 +15,7 @@
   --band-mid-bg:#232b31; --band-mid-line:#4d6b7d;
   --band-far-bg:#1f2327; --band-far-line:#39424a;
   --missing-bg:#332323; --missing-line:#6d4444; --missing-ink:#e0a3a3;
-  --chem-panel:#1f1d26; --chem-line:#332e3d;
+  --chem-panel:#272019; --chem-line:#413425;
 }
 * { box-sizing:border-box; }
 html,body { margin:0; padding:0; }
@@ -122,7 +122,20 @@ ul.cols { columns:5; font-size:12.5px; }
 .modal-head { display:flex; align-items:center; gap:10px; padding:8px 14px; border-bottom:1px solid var(--line); }
 .modal-head h2 { margin:0; font-size:16px; flex:1; }
 .modal-body { flex:1; display:grid; grid-template-columns:minmax(0,1fr) 340px; min-height:0; }
-.viewport { min-height:420px; background:#0b0d10; }
+.viewport-shell { position:relative; display:flex; min-width:0; min-height:420px; }
+.viewport { flex:1; min-width:0; min-height:420px; background:#0b0d10; }
+/* Ligand stepper over the canvas. It sits clear of the NGL controls in the opposite corner. */
+.obs-switch { position:absolute; top:10px; right:10px; z-index:3; display:flex; align-items:center;
+  gap:6px; max-width:min(360px,calc(100% - 20px)); padding:5px 8px; border-radius:9px;
+  border:1px solid rgba(255,255,255,.28); background:rgba(17,20,24,.82); color:#f2f4f6;
+  font-size:12px; backdrop-filter:blur(3px); }
+.obs-switch-label { text-transform:uppercase; letter-spacing:.05em; font-size:10px; opacity:.72; }
+.obs-switch-step { min-width:22px; padding:1px 6px; border-radius:6px; cursor:pointer;
+  border:1px solid rgba(255,255,255,.32); background:transparent; color:inherit; font-size:15px; line-height:1.2; }
+.obs-switch-step:hover { background:rgba(255,255,255,.16); }
+.obs-switch-count { padding:1px 6px; border-radius:999px; background:rgba(255,255,255,.16);
+  font-variant-numeric:tabular-nums; font-size:11px; }
+.obs-switch-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 :root[data-theme="dark"] .viewport { background:#0e1013; }
 .viewer-side { min-width:0; border-left:1px solid var(--line); padding:10px 12px; overflow:auto; overflow-x:hidden; }
 .toggles { display:grid; gap:3px; margin:8px 0; }
@@ -146,15 +159,24 @@ body.modal-open { overflow:hidden; }
 .explorer-layout { display:grid; grid-template-columns:360px minmax(0,1fr); gap:16px; align-items:start; }
 /* Ligand mode adds a third column for the chemistry filters, on the far right. */
 .explorer-layout.with-chemistry { grid-template-columns:340px minmax(0,1fr) 320px; }
-/* A barely-there violet so the filter column reads as a distinct surface without competing
-   with the result list or the detail panel beside it. */
+/* A warm, low-saturation amber so the filter column reads as a distinct surface without
+   competing with the result list or the detail panel beside it. */
 .chemistry-rail { background:var(--chem-panel); border:1px solid var(--chem-line); border-radius:12px;
   position:sticky; top:112px; padding:10px 14px; max-height:calc(100vh - 130px); overflow-y:auto;
   scrollbar-gutter:stable; }
 .chemistry-rail .rail-chemistry { margin:0; }
 .chemistry-rail .chem-details > summary { font-size:12px; }
 .explorer-rail,.structure-detail { background:var(--panel); border:1px solid var(--line); border-radius:12px; }
-.explorer-rail { position:sticky; top:112px; overflow:hidden; }
+/* No clipping here: the rail hosts help popovers that must be able to reach past its edge,
+   and overflow:hidden was cutting them off mid-sentence. The inner list keeps its own rounded
+   corners, so nothing spills over the border. */
+.explorer-rail { position:sticky; top:112px; }
+/* The help button sits mid-row, so anchoring the popover to either of its edges pushes the
+   box out of the panel. Position it against the row instead: it then spans the rail's inner
+   width and cannot overflow on either side. */
+.explorer-rail .metric-help-wrap { position:static; }
+.explorer-rail .export-row, .explorer-rail .threshold-head { position:relative; }
+.explorer-rail .site-help-popover { left:0; right:0; width:auto; max-width:none; }
 .filter-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:12px 12px 8px; }
 .filter-field { display:grid; gap:3px; min-width:0; }
 .filter-field > span { color:var(--muted); font-size:10px; text-transform:uppercase; letter-spacing:.07em; }
@@ -183,11 +205,17 @@ body.modal-open { overflow:hidden; }
 .modal-head h2 { display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
 .modal-mode-pill { margin-top:0; font-size:11px; line-height:1.35; vertical-align:middle; }
 .modal-ligand-name { color:var(--muted); font-size:13px; font-weight:500; }
+.modal-ligand-switch { display:inline-flex; align-items:center; gap:7px; max-width:46ch; padding:3px 9px;
+  border:1px solid var(--accent); border-radius:999px; background:var(--panel); cursor:pointer;
+  color:var(--ink); overflow:hidden; }
+.modal-ligand-switch > span:first-child { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.modal-ligand-switch:hover { background:var(--accent); color:#fff; }
+.modal-ligand-switch .obs-switch-count { background:rgba(0,0,0,.10); color:inherit; }
 .quick-filter.mode-agonist:not(.active) { border-color:#16845f; color:#075c3f; }
 .quick-filter.mode-partial:not(.active) { border-color:#41b98f; color:#087c57; }
 .quick-filter.mode-antagonist:not(.active) { border-color:#e79a3b; color:#9a5100; }
 .quick-filter.mode-inverse:not(.active) { border-color:#dc6870; color:#a52d35; }
-.quick-filter.mode-modulator:not(.active) { border-color:#4d535a; color:#f2f3f4; background:#4d535a; }
+.quick-filter.mode-modulator:not(.active) { border-color:#6b727a; color:#41474e; }
 .quick-filter.mode-agonist,.quick-filter.mode-antagonist,.quick-filter.mode-inverse { font-weight:700; }
 .rail-actions { padding:9px 12px; border-top:1px solid var(--line); }
 .structure-detail { min-height:650px; overflow:hidden; }
@@ -239,10 +267,14 @@ body.modal-open { overflow:hidden; }
 .btn-primary { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); font-weight:650; }
 .viewer-side h3 { margin:0 0 4px; }
 .viewer-side h4 { margin:16px 0 4px; }
-.observation-heading { display:block; margin-top:5px; font-size:12px; }
+.observation-heading { display:flex; align-items:center; gap:7px; margin-top:5px; font-size:12px; }
+.observation-count { padding:1px 7px; border-radius:999px; background:var(--accent); color:#fff;
+  font-variant-numeric:tabular-nums; font-size:11px; }
+.observation-hint { margin:3px 0 0; font-size:11.5px; line-height:1.45; color:var(--muted); }
 .observation-native { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden;
   clip:rect(0,0,0,0); white-space:nowrap; border:0; }
-.observation-picker { width:100%; min-width:0; margin:3px 0 7px; }
+.observation-picker { width:100%; min-width:0; margin:3px 0 7px; padding:6px; border-radius:9px;
+  border:1px solid var(--accent); background:var(--chem-panel); }
 .observation-picker summary,.observation-option { box-sizing:border-box; width:100%; min-width:0;
   overflow-wrap:anywhere; word-break:break-word; white-space:normal; text-align:left; line-height:1.35; }
 .observation-picker summary { padding:6px 9px; border:1px solid var(--line); border-radius:7px;
@@ -251,6 +283,9 @@ body.modal-open { overflow:hidden; }
 .observation-option { padding:6px 8px; border:1px solid var(--line); border-radius:7px;
   background:var(--panel); color:var(--ink); cursor:pointer; font:inherit; font-size:12px; }
 .observation-option:hover,.observation-option.selected { border-color:var(--accent); }
+.observation-option { display:flex; align-items:center; gap:7px; justify-content:space-between; }
+.observation-flag { flex:none; padding:1px 6px; border-radius:999px; font-size:10px;
+  background:var(--warn-bg); color:var(--warn-ink); }
 .viewer-tools { display:flex; gap:6px; flex-wrap:wrap; padding-bottom:9px; border-bottom:1px solid var(--line); }
 .viewer-tool { background:var(--panel); color:var(--ink); border:1px solid var(--line); border-radius:8px;
   padding:6px 9px; cursor:pointer; font:inherit; font-size:12px; }
@@ -486,9 +521,12 @@ td.eff-warning_only { color:var(--muted); }
 .pocket-detail h3 .btn { margin-left:6px; text-transform:none; letter-spacing:0; }
 .pocket-table td[data-band="near"] { color:var(--band-near-line); font-weight:650; }
 .pocket-table tr.is-core-row td:first-child { border-left:3px solid #d98c2b; }
+/* No underline: in a dense table it reads as a ruled line under every row. Colour plus the
+   hover and focus treatments carry the affordance. */
 .link-button { border:0; background:none; padding:0; font:inherit; color:var(--accent);
-  cursor:pointer; text-decoration:underline; text-underline-offset:2px; }
-.link-button:hover,.link-button:focus-visible { outline:1px solid var(--accent); outline-offset:2px; }
+  cursor:pointer; text-decoration:none; }
+.link-button:hover { text-decoration:underline; text-underline-offset:2px; }
+.link-button:focus-visible { outline:1px solid var(--accent); outline-offset:2px; }
 
 /* Data-sources role table and citation tabs. */
 .source-roles th[scope="row"] { min-width:170px; }
@@ -544,3 +582,33 @@ td.eff-warning_only { color:var(--muted); }
 .unassessable-reasons { margin:7px 0 4px; padding-left:18px; font-size:12px; color:var(--missing-ink); }
 .unassessable-items { margin:4px 0 0; padding-left:18px; font-size:11.5px; color:var(--ink);
   max-height:190px; overflow-y:auto; scrollbar-gutter:stable; }
+
+/* Name the resource each citation belongs to; the list was a wall of references with no
+   indication of which was which. */
+.cite-db-label { margin:14px 0 4px; font-size:11px; letter-spacing:.4px; color:var(--muted);
+  text-transform:uppercase; font-weight:650; }
+.cite-db-label:first-child { margin-top:0; }
+.ref-db-label { color:var(--muted); }
+
+.evidence-table th { white-space:nowrap; }
+.evidence-table th .metric-help-wrap { margin-left:4px; }
+
+/* Background switch: one control with an on/off state, in place of two buttons that looked
+   as though neither had to be chosen. */
+.viewer-switch { display:flex; align-items:center; gap:8px; width:100%;
+  border:1px solid var(--line); border-radius:8px; background:var(--panel); color:var(--ink);
+  padding:6px 10px; font:inherit; font-size:13px; cursor:pointer; }
+.viewer-switch:hover { border-color:var(--accent); }
+.viewer-switch:focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
+.viewer-switch-label { flex:1; text-align:left; }
+.viewer-switch-track { flex:none; width:34px; height:18px; border-radius:999px;
+  background:var(--line); position:relative; transition:background .15s ease; }
+.viewer-switch-knob { position:absolute; top:2px; left:2px; width:14px; height:14px;
+  border-radius:50%; background:var(--panel); box-shadow:0 1px 2px rgba(0,0,0,.3);
+  transition:transform .15s ease; }
+.viewer-switch.is-on .viewer-switch-track { background:var(--accent); }
+.viewer-switch.is-on .viewer-switch-knob { transform:translateX(16px); }
+
+/* Globe rather than the word "Lang", which stayed English whichever language was selected. */
+.lang-label { display:inline-flex; align-items:center; cursor:pointer; }
+.globe-icon { display:block; }
