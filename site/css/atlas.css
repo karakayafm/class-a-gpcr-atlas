@@ -197,16 +197,15 @@ body.modal-open { overflow:hidden; }
   font-variant-numeric:tabular-nums; font-size:11px; }
 .result-head { display:flex; align-items:center; justify-content:space-between; padding:9px 12px;
   border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
-.result-list { height:min(55vh,570px); min-height:360px; overflow:auto; scrollbar-gutter:stable; }
-.result-item { display:block; width:100%; border:0; border-bottom:1px solid var(--line); background:var(--panel);
-  color:var(--ink); text-align:left; padding:10px 12px; cursor:pointer; }
-/* Alternating rows. The entries are three lines tall and wrap, so a row boundary alone was
-   not enough to keep one structure visually separate from the next while scrolling. */
-.result-item:nth-child(even) { background:var(--bg); }
-.result-item:hover, .result-item:nth-child(even):hover {
-  background:color-mix(in srgb,var(--accent) 7%,var(--panel)); }
-.result-item.selected, .result-item:nth-child(even).selected {
-  background:color-mix(in srgb,var(--accent) 12%,var(--panel)); box-shadow:inset 3px 0 var(--accent); }
+.result-list { height:min(55vh,570px); min-height:360px; overflow:auto; scrollbar-gutter:stable;
+  background:var(--bg); display:grid; gap:6px; padding:8px; align-content:start; }
+/* Each entry is its own card. Banding the rows separated them but read as stripes across the
+   panel; a card carries the separation on the entry itself. */
+.result-item { display:block; width:100%; border:1px solid var(--line); border-radius:9px;
+  background:var(--panel); color:var(--ink); text-align:left; padding:10px 12px; cursor:pointer; }
+.result-item:hover { border-color:var(--accent); }
+.result-item.selected { border-color:var(--accent);
+  background:color-mix(in srgb,var(--accent) 10%,var(--panel)); box-shadow:inset 3px 0 var(--accent); }
 .result-line { display:grid; grid-template-columns:auto 1fr auto; gap:8px; align-items:baseline; }
 .result-line strong { font-size:15px; }.result-line span { color:var(--muted); font-size:12px; overflow:hidden;
   text-overflow:ellipsis; white-space:nowrap; }.result-line small { color:var(--muted); font-size:10px; }
