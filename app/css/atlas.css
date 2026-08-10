@@ -175,7 +175,7 @@ body.modal-open { overflow:hidden; }
    box out of the panel. Position it against the row instead: it then spans the rail's inner
    width and cannot overflow on either side. */
 .explorer-rail .metric-help-wrap { position:static; }
-.explorer-rail .export-row, .explorer-rail .threshold-head { position:relative; }
+.explorer-rail .export-row, .explorer-rail .threshold-head, .explorer-rail .rep-filter { position:relative; }
 .explorer-rail .site-help-popover { left:0; right:0; width:auto; max-width:none; }
 .filter-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:12px 12px 8px; }
 .filter-field { display:grid; gap:3px; min-width:0; }
