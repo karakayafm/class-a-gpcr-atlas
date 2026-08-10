@@ -954,7 +954,8 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
       const entries = [...present[facet].entries()].sort((a, b) => b[1] - a[1]);
       if (!entries.length) return;
       const box = el("details", { class: "chem-facet" });
-      box.appendChild(el("summary", { text: t(labelKey) + " (" + entries.length + ")" }));
+      box.appendChild(el("summary", {}, [el("span", { text: t(labelKey) }),
+        el("span", { class: "chem-facet-count", text: String(entries.length) })]));
       const list = el("div", { class: "chem-checks" });
       for (const [name, count] of entries) {
         const spec = (catalog.patterns || {})[name] || {};
