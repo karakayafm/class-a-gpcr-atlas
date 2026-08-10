@@ -3,13 +3,14 @@
 **Class A GPCR Atlas · ölçülmüş kapsam, veri modeli ve devredilebilir teknik plan**
 
 Hazırlanma tarihi: **9 Ağustos 2026**
-Çalışma kökü: `/media/arma/Elements/python_projeler/pymol_views/class_a_gpcr_atlas`
-Kaynak araştırma: `../Class_A_GPCR_Ligand_Explorer_Research_and_Specification_2026-08-09.md`
+Kaynak araştırma: harici bir derin araştırma raporu (bu depoda tutulmuyor;
+sayıları devralınmamış, yalnızca kapsam tartışması için kullanılmıştır).
 
 Bu belgedeki **her sayı bu korpusta ölçülmüştür**; hiçbiri araştırma raporundan
-devralınmamış veya tahmin edilmemiştir. Ölçüm betiklerinin çıktıları
-`/tmp/claude-1000/ligand_audit.txt` ve `/tmp/claude-1000/smarts_validation.txt`
-içinde; §9'da kalıcı hâle getirilmeleri planlanmıştır.
+devralınmamış veya tahmin edilmemiştir. §9'da planlandığı gibi ölçümler kalıcı
+hâle getirilmiştir: kapsam denetimi `docs/LIGAND_CHEMISTRY_AUDIT.md` içinde
+(üreteci `pipeline/enrichment/audit_ligand_chemistry.py`), SMARTS doğrulaması ise
+`tests/enrichment/test_chemistry_smarts.py` testinde koşar.
 
 Uygulamaya **henüz başlanmamıştır.** Belge sonundaki STOP POINT kabul edilmeden kod yazılmaz.
 
