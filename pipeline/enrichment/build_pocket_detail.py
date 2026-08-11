@@ -13,6 +13,7 @@ import jsonschema
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "pipeline"))
+from common import curated_copies                          # noqa: E402
 from common.generic_numbers import display_generic_number  # noqa: E402
 
 UNIVERSE = ROOT / "data/normalized/class_a_structure_universe.json"
@@ -69,6 +70,12 @@ def main() -> None:
         with gzip.open(path, "rt", encoding="utf-8") as handle:
             for line in handle:
                 row = json.loads(line)
+                # Copies that are not the ligand under study are withheld, so the pocket cards
+                # describe the same ligand the viewer draws.
+                if not curated_copies.keeps(row.get("ligand_entity_id"),
+                                            row.get("ligand_auth_asym_id"),
+                                            row.get("ligand_auth_seq_id")):
+                    continue
                 source_rows += 1
                 pdb_id = row["pdb_id"]
                 key = residue_key(row)

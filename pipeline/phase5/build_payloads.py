@@ -11,11 +11,12 @@ import hashlib, json, statistics, sys
 from collections import Counter, defaultdict
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]; sys.path.insert(0,str(ROOT/"pipeline"))
+from common import curated_copies
 from common.canonical import canonical_dumps, content_sha256   # noqa: E402
 IN,P3,P4=ROOT/"data/intermediate",ROOT/"data/intermediate/phase3",ROOT/"data/intermediate/phase4"
-ENRICH=ROOT/"data/freezes/enrichment-1.0.0"
+ENRICH=ROOT/"data/freezes/enrichment-1.0.1"
 AGG=ROOT/"data/aggregates"; WEB=ROOT/"data/web"
-SCHEMA_VERSION="5.0.0"; DATA_VERSION="phase4-freeze-1.0.0+enrichment-1.0.0"
+SCHEMA_VERSION="5.0.0"; DATA_VERSION="phase4-freeze-1.0.0+enrichment-1.0.1"
 POLYMER={"extracellular_polymer_interface","tethered_ligand_interface"}
 SUPERSEDED_PDB={"7XOX":"8IA7"}
 CURATED_APO_STRUCTURES={"7VUY","7VUZ","7VV3","8IW1","8IW9",
@@ -239,6 +240,33 @@ def main()->int:
     EL={e["structure_ligand_id"]:e for e in rd(P3/"contact_eligibility.jsonl")}
     SUMO={s["structure_ligand_id"]:s for s in rd(ROOT/"data/contacts/observation_contact_summary.jsonl")}
     ANO={a["structure_ligand_id"]:a for a in rd(P4/"annotated_not_observed.jsonl")}
+    # Where a deposition holds copies of one component that are not the ligand under study,
+    # the phase 4 summary still counts all of them. Those observations are recounted here from
+    # the curated contact rows, so the headline figure agrees with the viewer and the pocket
+    # cards. Every other observation keeps the phase 4 value untouched.
+    if curated_copies.curated_entities():
+        import gzip as _gzip
+        recount: dict[str, dict] = {}
+        for path in sorted((ROOT/"data/contacts/by_family").glob("*/residue_pair_contacts.jsonl.gz")):
+            for line in _gzip.open(path, "rt", encoding="utf-8"):
+                if '"ligand_entity_id"' not in line: continue
+                row = json.loads(line)
+                if row.get("ligand_entity_id") not in curated_copies.curated_entities(): continue
+                if not curated_copies.keeps(row["ligand_entity_id"], row["ligand_auth_asym_id"],
+                                            row["ligand_auth_seq_id"]): continue
+                acc = recount.setdefault(row["structure_ligand_id"],
+                                         {"r5": set(), "r45": set(), "r4": set(), "lig": set()})
+                res = (row["receptor_auth_asym_id"], row["receptor_auth_seq_id"])
+                acc["r5"].add(res)
+                if row.get("within_4_5A"): acc["r45"].add(res)
+                if row.get("within_4A"): acc["r4"].add(res)
+                acc["lig"].add((row["ligand_auth_asym_id"], row["ligand_auth_seq_id"]))
+        for sl, acc in recount.items():
+            if sl in SUMO:
+                SUMO[sl] = dict(SUMO[sl], receptor_residues_5A=len(acc["r5"]),
+                                receptor_residues_4_5A=len(acc["r45"]),
+                                receptor_residues_4A=len(acc["r4"]),
+                                ligand_residue_contact_count=len(acc["lig"]))
     U=rd(P4/"aggregation_units.jsonl"); PREV=rd(AGG/"contact_prevalence.jsonl")
     # One structure stands for each aggregation unit, so a reader can browse distinct
     # receptor-ligand contexts instead of every repeat deposition: beta2 with G1I in the active

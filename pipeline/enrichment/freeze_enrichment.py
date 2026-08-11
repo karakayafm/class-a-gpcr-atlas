@@ -9,7 +9,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SRC = ROOT / "data/intermediate/enrichment"
-DEST = ROOT / "data/freezes/enrichment-1.0.0"
+DEST = ROOT / "data/freezes/enrichment-1.0.1"
 
 FILES = [
     "transducer_assignments.jsonl",
@@ -49,10 +49,14 @@ def main() -> int:
     (DEST / "checksums.sha256").write_text(checksums, encoding="utf-8")
     freeze = {
         "schema": "enrichment_freeze",
-        "version": "enrichment-1.0.0",
-        "created": "2026-08-09",
+        "version": "enrichment-1.0.1",
+        "created": "2026-08-11",
         "contract": ("Validated enrichment records are copied byte-for-byte; this freeze "
                      "does not infer or recompute scientific evidence."),
+        "supersedes": "enrichment-1.0.0",
+        "reason": ("Rebuilt after config/curated_ligand_copies.json withheld the eleven "
+                   "structural-lipid copies of OLA in 8TF5 from the pocket, which the pocket "
+                   "detail counts."),
         "files": records,
         "file_count": len(records),
     }

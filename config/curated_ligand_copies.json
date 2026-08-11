@@ -1,0 +1,24 @@
+{
+  "_schema": "curated_ligand_copies/1.0.0",
+  "_purpose": "Restrict an observation to named residue copies where a deposition contains several copies of one chemical component and only some of them are the ligand under study. Applied wherever contacts are read; it never invents a contact, it only withholds copies that are not the ligand.",
+  "_rule": "A copy may be withheld only when the deposition itself distinguishes it, and the reason must be recorded per entry. Withholding a copy because it is inconvenient is not a curation.",
+  "_recorded": "2026-08-11",
+  "entries": [
+    {
+      "pdb_id": "8TF5",
+      "ligand_entity_id": "8TF5:LE:np:OLA",
+      "component": "OLA",
+      "keep": [["A", "1210"]],
+      "withheld_copies": 11,
+      "rationale_tr": "Yapıda oleik asidin 12 kopyası var ve hepsi kanonik 7TM cebi olarak sınıflandırılmış. Ortosterik konumdaki tek kopya A zinciri 1210; kalan 11 kopya zar yüzeyine yerleşmiş yapısal lipitler. Bunlar ligand sayıldığında tek bir gözlem 12 kopyanın temaslarını birleştiriyor ve cep 86 reseptör kalıntısına çıkıyor.",
+      "rationale_en": "The deposition holds 12 copies of oleic acid, all classified as the canonical 7TM pocket. Only chain A residue 1210 occupies the orthosteric position; the remaining 11 are structural lipids against the membrane face. Counting them as ligand merged the contacts of 12 copies into one observation and inflated the pocket to 86 receptor residues.",
+      "basis": "visual inspection of the deposited coordinates by the project owner",
+      "measured_effect": {
+        "contact_rows": [102, 22],
+        "receptor_residues_5A": [86, 22],
+        "receptor_residues_4_5A": [null, 22],
+        "receptor_residues_4A": [null, 15]
+      }
+    }
+  ]
+}

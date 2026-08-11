@@ -14,6 +14,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]; sys.path.insert(0,str(ROOT/"pipeline"))
 from phase3.mmcif import read, atoms                          # noqa: E402
+from common import curated_copies                             # noqa: E402
 from common.canonical import content_sha256                   # noqa: E402
 IN,P3,P4=ROOT/"data/intermediate",ROOT/"data/intermediate/phase3",ROOT/"data/intermediate/phase4"
 WEB=ROOT/"data/web/structures"; SCHEMA_VERSION="5.0.0"
@@ -447,7 +448,10 @@ def main()->int:
     contacts=defaultdict(list)
     for f in sorted((ROOT/"data/contacts/by_family").glob("*/residue_pair_contacts.jsonl.gz")):
         for l in gzip.open(f,"rt"):
-            c=json.loads(l); contacts[c["structure_ligand_id"]].append(c)
+            c=json.loads(l)
+            if not curated_copies.keeps(c.get("ligand_entity_id"), c.get("ligand_auth_asym_id"),
+                                        c.get("ligand_auth_seq_id")): continue
+            contacts[c["structure_ligand_id"]].append(c)
 
     idx=[]; pdbs=sorted(S)
     if args.limit: pdbs=pdbs[:args.limit]
@@ -521,6 +525,12 @@ def main()->int:
                 if override and override.get("display_ligand_chains"):
                     keep=override["display_ligand_chains"]
                     mine={k for k in mine if k[0]!="poly" or k[1] in keep}
+            # Withheld copies leave the key set too, not just the contact table. Contacts are
+            # partly recomputed from coordinates further down, and that pass collects its ligand
+            # atoms from these keys — filtering one route alone lets the copies back in by the
+            # other.
+            mine={k for k in mine if k[0]!="np" or
+                  curated_copies.keeps(lg["ligand_entity_id"], k[1], k[2])}
             crows=list(contacts.get(slid,[]))
             # 8YNS/8YNT contain MCHR1 as two deposited sequence segments separated by BRIL.
             # The generic-mapping remediation recovered the second segment (TM6–H8), but marked
