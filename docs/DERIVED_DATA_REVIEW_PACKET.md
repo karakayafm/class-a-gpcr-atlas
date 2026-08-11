@@ -52,9 +52,21 @@ a curator can see the source was not consulted.
 The open gate carried since Phase 2 was whether ODbL / CC BY-SA share-alike obligations from
 GtoPdb attach to this project's derived data.
 
-**Direct attachment: no.** Share-alike is triggered by using the licensed material. GtoPdb is
-not called, not cached, not stored and not redistributed. There is no GtoPdb content in the
-release to trigger anything.
+**Direct attachment: open.** Share-alike is triggered by using the licensed material, and the
+chemical cross-reference step uses it. `pipeline/enrichment/fetch_chemical_xrefs.py` calls GtoPdb,
+ChEMBL, PubChem and UniChem, their responses are cached under `data/cache/`, and the published
+payload carries per chemical component the identifier, the link, the retrieval date, the basis on
+which the match was made, and the source's preferred compound name where one was found — 219
+ChEMBL, 300 GtoPdb and 484 PubChem labels across 580 records. The component name, formula and
+InChIKey come from the RCSB chemical component dictionary and are unaffected.
+
+Identifiers and links are facts about which entry corresponds to which component. The labels are
+content taken from databases published under CC BY-SA 3.0 (ChEMBL) and CC BY-SA 4.0 (GtoPdb
+contents). Whether carrying a preferred name alongside its identifier makes this atlas a
+derivative under those terms is the question, and it is not one the pipeline can answer.
+
+Dropping the labels and keeping identifiers and links only would remove the question. The
+interface does not depend on them: it displays the identifier.
 
 **The residual question, which this project cannot answer and does not attempt to.** GPCRdb's
 receptor classification and nomenclature — the family tree this atlas is organised around, the

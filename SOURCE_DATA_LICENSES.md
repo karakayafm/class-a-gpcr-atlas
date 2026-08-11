@@ -47,19 +47,29 @@ established. A licence this project did not verify itself is recorded as unverif
 - **Role:** chemical component identity
 - **Licence:** part of the PDB archive
 
-## Sources deliberately NOT used
+## Chemical cross-reference sources
 
-Recorded so that "not used" is distinguishable from "forgotten".
+Used to resolve each chemical component to its entry in the public chemistry databases, so a
+reader can follow a ligand out of this atlas. Queried by
+`pipeline/enrichment/fetch_chemical_xrefs.py`; responses are cached under `data/cache/` and a
+normal build reads the cache without reaching the network.
 
-| Source | Status | Reason |
+| Source | Licence | What the release carries |
 |---|---|---|
-| Guide to Pharmacology (GtoPdb) | **not called** | Licence recorded as owner-provided (database ODbL; contents CC BY-SA 4.0), **not verified by this project** — two direct retrieval attempts failed with DNS errors while other hosts responded in the same session. |
-| ChEMBL | not called | Pharmacology, out of scope for this atlas |
-| PubChem | not called | Pharmacology, out of scope for this atlas |
+| EMBL-EBI UniChem | EMBL-EBI terms | Used to map component to database entries; nothing from it appears in the release |
+| Guide to Pharmacology (GtoPdb) | database ODbL; contents CC BY-SA 4.0. Recorded as owner-provided, **not verified by this project** | Ligand identifier, link, retrieval date, match basis, and the preferred name where one was found (300 of 580 records) |
+| ChEMBL | CC BY-SA 3.0 | Molecule identifier, link, retrieval date, match basis, and the preferred name where one was found (219 of 580 records) |
+| PubChem | NCBI public domain | Compound identifier, link, retrieval date, match basis, and the preferred name where one was found (484 of 580 records) |
 
-**Share-alike:** because the ODbL / CC BY-SA sources are not called, cached, stored or
-redistributed, no share-alike obligation is triggered by direct use. This was verified by reading
-the pipeline source, not assumed.
+Component name, formula and InChIKey come from the PDB Chemical Component Dictionary, not from
+these sources.
+
+**Share-alike: open.** Identifiers and links are facts about which entry corresponds to which
+component. The preferred names are content from databases published under CC BY-SA 3.0 (ChEMBL)
+and CC BY-SA 4.0 (GtoPdb contents), and whether carrying a name alongside its identifier makes
+this atlas a derivative under those terms is unresolved. Dropping the names would remove the
+question at no cost to the interface, which displays the identifier. See
+`docs/DERIVED_DATA_REVIEW_PACKET.md` §3.
 
 ## Third-party software
 

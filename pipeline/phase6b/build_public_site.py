@@ -15,7 +15,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-RC = ROOT / "releases/phase6a/rc10"
+RC = ROOT / "releases/phase6a/rc11"
 OUT = ROOT / "releases/phase6b/public_repository"
 OVERLAY = ROOT / "data/release_overlays/rc6"
 
@@ -121,6 +121,21 @@ def main() -> int:
         meta_bytes += src.stat().st_size
     report["trees"]["viewer_metadata_overlay"] = {
         "files": meta_files, "bytes": meta_bytes, "source": "data/web/structures/*/viewer_meta.json"}
+
+    # Family/global indices are small presentation payloads and may receive curator-confirmed
+    # chain and ligand corrections after the frozen aggregate release.  Overlay them together
+    # so their manifests and contents always remain hash-consistent on Pages.  Coordinate CIFs
+    # and the frozen aggregate science remain sourced from the validated release candidate.
+    payload_files = payload_bytes = 0
+    for subtree in ("families", "global"):
+        src_tree = ROOT / "data/web" / subtree
+        dst_tree = OUT / "site/data/web" / subtree
+        f3, b3 = copy_tree(src_tree, dst_tree)
+        payload_files += f3
+        payload_bytes += b3
+    report["trees"]["maintained_payload_overlay"] = {
+        "files": payload_files, "bytes": payload_bytes,
+        "source": "data/web/{families,global}"}
 
     # --- source code -------------------------------------------------------------------------
     for t in CODE_TREES:
