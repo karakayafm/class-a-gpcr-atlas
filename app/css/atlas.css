@@ -129,13 +129,15 @@ ul.cols { columns:5; font-size:12.5px; }
   gap:6px; max-width:min(360px,calc(100% - 20px)); padding:5px 8px; border-radius:9px;
   border:1px solid rgba(255,255,255,.28); background:rgba(17,20,24,.82); color:#f2f4f6;
   font-size:12px; backdrop-filter:blur(3px); }
-.obs-switch-label { text-transform:uppercase; letter-spacing:.05em; font-size:10px; opacity:.72; }
+.obs-switch-label { flex:0 0 auto; white-space:nowrap; text-transform:uppercase; letter-spacing:.05em;
+  font-size:10px; opacity:.72; }
 .obs-switch-step { min-width:22px; padding:1px 6px; border-radius:6px; cursor:pointer;
-  border:1px solid rgba(255,255,255,.32); background:transparent; color:inherit; font-size:15px; line-height:1.2; }
+  flex:0 0 auto; border:1px solid rgba(255,255,255,.32); background:transparent; color:inherit;
+  font-size:15px; line-height:1.2; }
 .obs-switch-step:hover { background:rgba(255,255,255,.16); }
 .obs-switch-count { padding:1px 6px; border-radius:999px; background:rgba(255,255,255,.16);
-  font-variant-numeric:tabular-nums; font-size:11px; }
-.obs-switch-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  flex:0 0 auto; white-space:nowrap; font-variant-numeric:tabular-nums; font-size:11px; }
+.obs-switch-name { min-width:0; flex:1 1 auto; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 :root[data-theme="dark"] .viewport { background:#0e1013; }
 .viewer-side { min-width:0; border-left:1px solid var(--line); padding:10px 12px; overflow:auto; overflow-x:hidden; }
 .toggles { display:grid; gap:3px; margin:8px 0; }
@@ -228,8 +230,9 @@ body.modal-open { overflow:hidden; }
 .modal-ligand-name { color:var(--muted); font-size:13px; font-weight:500; }
 .modal-ligand-switch { display:inline-flex; align-items:center; gap:7px; max-width:46ch; padding:3px 9px;
   border:1px solid var(--accent); border-radius:999px; background:var(--panel); cursor:pointer;
-  color:var(--ink); overflow:hidden; }
-.modal-ligand-switch > span:first-child { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  color:var(--ink); overflow:hidden; white-space:nowrap; }
+.modal-ligand-switch > span:first-child { min-width:0; flex:1 1 auto; overflow:hidden;
+  text-overflow:ellipsis; white-space:nowrap; }
 .modal-ligand-switch:hover { background:var(--accent); color:#fff; }
 .modal-ligand-switch .obs-switch-count { background:rgba(0,0,0,.10); color:inherit; }
 .quick-filter.mode-agonist:not(.active) { border-color:#16845f; color:#075c3f; }
