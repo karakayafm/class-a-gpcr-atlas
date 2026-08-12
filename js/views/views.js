@@ -606,14 +606,58 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
   const wrap = el("section", { class: "view" });
   const family = (L.getManifest().families || []).find(f => f.slug === slug);
   const availableSites = new Set(d.structures.flatMap(x => x.observations.map(o => o.binding_site_class).filter(Boolean)));
-  const filters = { family: "", receptor: "", mode: "", state: "", transducer:"", evidenceTier:"",
-    representativeOnly: false,
-    site: availableSites.has(initialSite) ? initialSite : "", search: "", sort: "resolution",
-    contactThreshold: 0,
-    biologicalType: "", functionalGroups: [], ringSystems: [], ranges: {} };
+  /* Filters live in the address bar, not only in this closure. A language change rebuilds the
+     view from the route, so anything held here alone was lost at that point; carrying them in
+     the route also makes a narrowed list something you can send to someone. The route already
+     spends `family` on the family slug, so the receptor-family filter is `rfam`. */
+  const FILTER_KEYS = { family:"rfam", receptor:"rcpt", mode:"mode", state:"state",
+    transducer:"tdx", evidenceTier:"tier", site:"site", search:"q", sort:"sort",
+    biologicalType:"bio" };
+  const LIST_KEYS = { functionalGroups:"fg", ringSystems:"rs" };
+  function readFilters() {
+    const r = parseRoute(), out = {};
+    for (const [name, key] of Object.entries(FILTER_KEYS)) out[name] = r[key] || "";
+    for (const [name, key] of Object.entries(LIST_KEYS))
+      out[name] = r[key] ? String(r[key]).split(",").filter(Boolean) : [];
+    out.representativeOnly = r.rep === "1";
+    out.contactThreshold = r.thr ? Number(r.thr) || 0 : 0;
+    out.ranges = {};
+    for (const part of String(r.rng || "").split(",").filter(Boolean)) {
+      const [field, span] = part.split(":");
+      const [low, high] = String(span || "").split("-");
+      if (field) out.ranges[field] = [low === "" ? null : Number(low),
+                                      high === "" ? null : Number(high)];
+    }
+    if (!out.site && availableSites.has(initialSite)) out.site = initialSite;
+    if (!out.sort) out.sort = "resolution";
+    return out;
+  }
+  function writeFilters() {
+    const next = Object.assign({}, parseRoute());
+    for (const [name, key] of Object.entries(FILTER_KEYS)) next[key] = filters[name] || "";
+    for (const [name, key] of Object.entries(LIST_KEYS)) next[key] = (filters[name] || []).join(",");
+    next.rep = filters.representativeOnly ? "1" : "";
+    next.thr = filters.contactThreshold ? String(filters.contactThreshold) : "";
+    next.rng = Object.entries(filters.ranges || {})
+      .filter(([, span]) => span && (span[0] != null || span[1] != null))
+      .map(([field, span]) => field + ":" + (span[0] == null ? "" : span[0]) +
+           "-" + (span[1] == null ? "" : span[1])).join(",");
+    navigate(next, true);
+  }
+  const filters = readFilters();
+  // Every filter change goes through here, so none can be added that redraws without
+  // recording itself in the route.
+  function refilter() { writeFilters(); drawList(); drawDetail(); }
   // Chemistry payloads are fetched on first use; until then no chemistry filter can be active.
   let chemistry = null, chemistryCatalog = null;
   function activeChemistry() {
+    // A chemistry filter can now arrive from the route, before the payload it needs has been
+    // fetched. Applying it against an empty map would answer "no structure matches", which is
+    // not the same statement as "not known yet". The filter waits for the payload; the list is
+    // redrawn when it lands.
+    if (!chemistry) return { biologicalType: filters.biologicalType, functionalGroups: [],
+                             ringSystems: [], ranges: [], needsChemistry: false,
+                             any: !!filters.biologicalType };
     const ranges = Object.entries(filters.ranges).filter(([, r]) => r && (r[0] != null || r[1] != null));
     const needsChemistry = filters.functionalGroups.length > 0 || filters.ringSystems.length > 0
       || ranges.length > 0;
@@ -654,7 +698,7 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
       onclick: () => {
         filters.mode = mode; if (filterControls.mode) filterControls.mode.value = mode;
         for (const n of quick.querySelectorAll("button")) n.classList.toggle("active", n === b);
-        drawList(); drawDetail();
+        refilter();
       } }, [
         el("span", { class: "tab-label", text: mode ? ligandClassLabel(mode) : t("all") }),
         countBadge(mode ? modeCounts.get(mode) : d.count)
@@ -711,7 +755,7 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
           const active=node.dataset.panel===filters.transducer;
           node.classList.toggle("active",active); node.setAttribute("aria-pressed",active?"true":"false");
         }
-        drawList(); drawDetail();
+        refilter();
       } }, [
         el("span", { class:"tab-label", text:transducerLabel(panel) }),
         count === null ? el("span") : countBadge(count)
@@ -741,7 +785,7 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
         const active=n.dataset.panel===e.target.value;
         n.classList.toggle("active",active); n.setAttribute("aria-pressed",active?"true":"false");
       }
-      drawList(); drawDetail(); } });
+      refilter(); } });
     filterControls[key] = s;
     s.appendChild(el("option", { value: "", text: t("all") }));
     for (const value of values) s.appendChild(el("option", { value,
@@ -767,8 +811,8 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
   // Repeat depositions of one receptor-ligand context dominate the larger families, so this
   // reduces each to its sharpest structure. A count is offered next to it because the
   // reduction is large and worth seeing before it is applied.
-  const repToggle = el("input", { type:"checkbox",
-    onchange: e => { filters.representativeOnly = e.target.checked; drawList(); drawDetail(); } });
+  const repToggle = el("input", { type:"checkbox", checked: filters.representativeOnly,
+    onchange: e => { filters.representativeOnly = e.target.checked; refilter(); } });
   const repCount = el("span", { class:"rep-count" });
   filterBlock.appendChild(el("label", { class:"rep-filter" }, [
     repToggle,
@@ -777,8 +821,9 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
     metricHelp(t("representative_only_help"))
   ]));
   filterBlock.appendChild(el("label", { class: "filter-field search-field" }, [
-    el("span", { text: t("search") }), el("input", { type: "search", placeholder: t("search_placeholder"),
-      oninput: debounce(e => { filters.search = e.target.value; drawList(); drawDetail(); }, 120) })
+    el("span", { text: t("search") }), el("input", { type: "search", value: filters.search,
+      placeholder: t("search_placeholder"),
+      oninput: debounce(e => { filters.search = e.target.value; refilter(); }, 120) })
   ]));
   rail.appendChild(filterBlock);
   const listHead = el("div", { class: "result-head" });
@@ -876,7 +921,9 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
       chemistry = new Map((payload.records || []).map(r => [r.ccd, r]));
       chemistryCatalog = catalog;
       buildChemistryControls(payload, catalog);
-      refreshFacetCounts(partition().match);
+      // Filters carried in the route were held back until now; the list still shows the set
+      // from before the payload arrived.
+      drawList(); drawDetail();
     } catch (error) {
       clear(chemBody); chemBody.appendChild(el("p", { class: "notice", text: L.errorMessage(error) }));
     }
@@ -935,7 +982,7 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
     const types = Array.from(new Set(d.structures.flatMap(x =>
       (x.observations || []).map(o => o.biological_type).filter(Boolean)))).sort();
     const typeSelect = el("select", { onchange: e => {
-      filters.biologicalType = e.target.value; drawList(); drawDetail(); } });
+      filters.biologicalType = e.target.value; refilter(); } });
     typeSelect.appendChild(el("option", { value: "", text: t("all") }));
     for (const value of types)
       typeSelect.appendChild(el("option", { value, text: biologicalTypeLabel(value) }));
@@ -963,10 +1010,11 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
       const list = el("div", { class: "chem-checks" });
       for (const [name, count] of entries) {
         const spec = (catalog.patterns || {})[name] || {};
-        const input = el("input", { type: "checkbox", value: name, onchange: e => {
+        const input = el("input", { type: "checkbox", value: name,
+          checked: (filters[key] || []).includes(name), onchange: e => {
           const set = new Set(filters[key]);
           if (e.target.checked) set.add(name); else set.delete(name);
-          filters[key] = [...set]; drawList(); drawDetail(); } });
+          filters[key] = [...set]; refilter(); } });
         const countSpan = el("span", { class: "chem-count", text: String(count) });
         const row = el("label", { class: "chem-check", "data-pattern": name }, [ input,
           el("span", { text: spec["label_" + getLang()] || spec.label_en || name }), countSpan ]);
@@ -1012,7 +1060,7 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
         // A range spanning the whole observed span is not a filter; leaving it null keeps
         // ligands whose descriptor is missing from being judged against it.
         filters.ranges[field] = (a <= low && b >= high) ? null : [a, b];
-        drawList(); drawDetail();
+        refilter();
       };
       const live = debounce(apply, 90);
       minInput.addEventListener("input", live); maxInput.addEventListener("input", live);
@@ -1043,7 +1091,7 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
         for (const input of chemBody.querySelectorAll("input[type=checkbox]")) input.checked = false;
         for (const reset of rangeResets) reset();
         typeSelect.value = "";
-        drawList(); drawDetail();
+        refilter();
       } });
     chemBody.appendChild(reset);
   }
