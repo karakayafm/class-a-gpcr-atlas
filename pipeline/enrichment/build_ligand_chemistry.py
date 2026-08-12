@@ -35,9 +35,38 @@ CANDIDATES = ROOT / "data/intermediate/ligand_candidates.jsonl"
 OUT = ROOT / "data/intermediate/enrichment/ligand_chemistry.json"
 REPORT = ROOT / "reports/enrichment_ligand_chemistry.md"
 
-from rdkit import Chem, RDLogger  # noqa: E402
+from rdkit import Chem, RDLogger                                # noqa: E402
+from rdkit.Chem.Scaffolds import MurckoScaffold                # noqa: E402
 from rdkit.Chem import Crippen, Descriptors, rdMolDescriptors  # noqa: E402
 RDLogger.DisableLog("rdApp.*")
+
+
+SCAFFOLD_MIN_LIGANDS = 2
+
+
+def scaffold_index(records: list[dict]) -> dict:
+    """Scaffolds shared by at least SCAFFOLD_MIN_LIGANDS components, and what was left out."""
+    counts: dict[str, int] = {}
+    acyclic = 0
+    for record in records:
+        if record.get("parse_status") != "ok":
+            continue
+        scaffold = record.get("scaffold")
+        if scaffold is None:
+            acyclic += 1
+            continue
+        counts[scaffold] = counts.get(scaffold, 0) + 1
+    shared = {k: v for k, v in counts.items() if v >= SCAFFOLD_MIN_LIGANDS}
+    return {
+        "min_ligands": SCAFFOLD_MIN_LIGANDS,
+        "distinct_scaffolds": len(counts),
+        "shared_scaffolds": len(shared),
+        "components_acyclic": acyclic,
+        "components_with_unique_scaffold": sum(1 for v in counts.values()
+                                               if v < SCAFFOLD_MIN_LIGANDS),
+        "scaffolds": [{"smiles": k, "components": v}
+                      for k, v in sorted(shared.items(), key=lambda kv: (-kv[1], kv[0]))],
+    }
 
 
 def deposited_smiles(doc: dict) -> str | None:
@@ -142,6 +171,16 @@ def main() -> int:
                    "ring_systems": sorted(n for n, q in queries.items()
                                           if patterns[n]["facet"] == "ring_system"
                                           and mol.HasSubstructMatch(q))}
+        # Bemis-Murcko: strip the side chains, keep the ring systems and the linkers between
+        # them. Computed, not named — this is the scaffold the algorithm returns, and no
+        # pharmacological chemotype is asserted over it. A ligand with no ring has no scaffold,
+        # which is recorded as null rather than as an empty string.
+        try:
+            scaffold_mol = MurckoScaffold.GetScaffoldForMol(mol)
+            scaffold = Chem.MolToSmiles(scaffold_mol) if scaffold_mol is not None else ""
+        except Exception:
+            scaffold = ""
+        scaffold = scaffold or None
         # Bulk descriptors only where they describe a free molecule.
         usable = base["free_form_status"] == "free_form_available"
         records.append({**base, "parse_status": "ok", "raw_smiles": smiles,
@@ -149,6 +188,8 @@ def main() -> int:
                         "concept_key": inchikey.split("-")[0] if inchikey else None,
                         "descriptors": descriptors_for(mol) if usable else None,
                         "descriptors_omitted_reason": None if usable else base["free_form_status"],
+                        "scaffold": scaffold,
+                        "scaffold_status": "acyclic" if scaffold is None else "computed",
                         "facets": matched})
 
     payload = {
@@ -162,6 +203,14 @@ def main() -> int:
                             "SMILES. Values published by other resources are a separate claim "
                             "and are not merged into these fields."),
         "count": len(records),
+        # A scaffold seen in one ligand cannot group anything, and there are hundreds of them.
+        # The index carries the ones that are shared, so an interface can offer a list the
+        # length of the other facets rather than one entry per ligand.
+        "scaffold_index": scaffold_index(records),
+        "scaffold_note": ("Bemis-Murcko scaffolds computed with the recorded RDKit version: the "
+                          "ring systems and the linkers between them, with side chains removed. "
+                          "They are not named chemotypes and no pharmacological class is claimed "
+                          "for them."),
         "records": sorted(records, key=lambda r: r["ccd"]),
     }
     OUT.parent.mkdir(parents=True, exist_ok=True)

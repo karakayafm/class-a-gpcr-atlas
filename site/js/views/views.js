@@ -458,6 +458,11 @@ function evaluateChemistry(observation, chemistry, active) {
   for (const ring of active.ringSystems) {
     if (!(record.facets.ring_systems || []).includes(ring)) return CHEM_NO_MATCH;
   }
+  // A component with no ring has no scaffold at all; asking for one excludes it rather than
+  // leaving it unjudged, because the answer is known.
+  if (active.scaffolds.length && !active.scaffolds.includes(record.scaffold || "")) {
+    return CHEM_NO_MATCH;
+  }
   if (active.ranges.length) {
     // Descriptors are absent for components that only exist bound; that is unassessable,
     // not a failure.
@@ -613,7 +618,7 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
   const FILTER_KEYS = { family:"rfam", receptor:"rcpt", mode:"mode", state:"state",
     transducer:"tdx", evidenceTier:"tier", site:"site", search:"q", sort:"sort",
     biologicalType:"bio" };
-  const LIST_KEYS = { functionalGroups:"fg", ringSystems:"rs" };
+  const LIST_KEYS = { functionalGroups:"fg", ringSystems:"rs", scaffolds:"scaf" };
   function readFilters() {
     const r = parseRoute(), out = {};
     for (const [name, key] of Object.entries(FILTER_KEYS)) out[name] = r[key] || "";
@@ -656,14 +661,14 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
     // not the same statement as "not known yet". The filter waits for the payload; the list is
     // redrawn when it lands.
     if (!chemistry) return { biologicalType: filters.biologicalType, functionalGroups: [],
-                             ringSystems: [], ranges: [], needsChemistry: false,
+                             ringSystems: [], scaffolds: [], ranges: [], needsChemistry: false,
                              any: !!filters.biologicalType };
     const ranges = Object.entries(filters.ranges).filter(([, r]) => r && (r[0] != null || r[1] != null));
     const needsChemistry = filters.functionalGroups.length > 0 || filters.ringSystems.length > 0
-      || ranges.length > 0;
+      || filters.scaffolds.length > 0 || ranges.length > 0;
     return { biologicalType: filters.biologicalType,
              functionalGroups: filters.functionalGroups, ringSystems: filters.ringSystems,
-             ranges, needsChemistry,
+             scaffolds: filters.scaffolds, ranges, needsChemistry,
              any: needsChemistry || !!filters.biologicalType };
   }
   let selected = d.structures.find(x => x.pdb_id === String(initialPdb || "").toUpperCase()) ||
@@ -992,7 +997,11 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
     /* Counts are recomputed against whatever is currently on screen, not against the whole
        corpus. A static number would claim, say, 549 carbonyl ligands whether the reader had
        narrowed to lipids or not, which tells them nothing about what is still reachable. */
-    const present = { functional_groups: new Map(), ring_systems: new Map() };
+    const present = { functional_groups: new Map(), ring_systems: new Map(), scaffolds: new Map() };
+    // Only the scaffolds two or more components share can group anything; the index says which
+    // those are, and the note under the list accounts for everything left out.
+    const scaffoldIndex = payload.scaffold_index || {};
+    const shared = new Set((scaffoldIndex.scaffolds || []).map(row => row.smiles));
     for (const record of payload.records || []) {
       if (!record.pharmacological_instances) continue;
       for (const facet of ["functional_groups", "ring_systems"]) {
@@ -1000,8 +1009,12 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
           present[facet].set(name, (present[facet].get(name) || 0) + record.pharmacological_instances);
         }
       }
+      if (record.scaffold && shared.has(record.scaffold)) {
+        present.scaffolds.set(record.scaffold,
+          (present.scaffolds.get(record.scaffold) || 0) + record.pharmacological_instances);
+      }
     }
-    const facetBox = (facet, key, labelKey) => {
+    const facetBox = (facet, key, labelKey, note) => {
       const entries = [...present[facet].entries()].sort((a, b) => b[1] - a[1]);
       if (!entries.length) return;
       const box = el("details", { class: "chem-facet" });
@@ -1021,10 +1034,15 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
         countNodes.set(name, { countSpan, row });
         list.appendChild(row);
       }
-      box.appendChild(list); chemBody.appendChild(box);
+      box.appendChild(list);
+      if (note) box.appendChild(note);
+      chemBody.appendChild(box);
     };
     facetBox("functional_groups", "functionalGroups", "chem_functional_groups");
     facetBox("ring_systems", "ringSystems", "chem_ring_systems");
+    facetBox("scaffolds", "scaffolds", "chem_scaffolds", el("p", { class:"chem-facet-note",
+      text: t("chem_scaffold_note", { unique: scaffoldIndex.components_with_unique_scaffold || 0,
+                                      acyclic: scaffoldIndex.components_acyclic || 0 }) }));
 
     /* Every descriptor carries its own coverage: how many ligand instances actually have that
        value. Applying one global percentage to all of them would misstate each one. */
@@ -1087,6 +1105,7 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
     const reset = el("button", { class: "btn small", type: "button", text: t("chem_reset"),
       onclick: () => {
         filters.biologicalType = ""; filters.functionalGroups = []; filters.ringSystems = [];
+        filters.scaffolds = [];
         filters.ranges = {};
         for (const input of chemBody.querySelectorAll("input[type=checkbox]")) input.checked = false;
         for (const reset of rangeResets) reset();
