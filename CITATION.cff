@@ -1,8 +1,9 @@
 cff-version: 1.2.0
 message: >-
-  If you use this atlas, please cite the repository, the release tag and the version below,
-  together with the underlying data resources (RCSB PDB, GPCRdb, UniProt). This is a pre-release
-  beta: it has no DOI and it is not a curated or independently validated resource.
+  If you use this atlas, please cite it with the DOI below, together with the underlying data
+  resources (RCSB PDB, GPCRdb, UniProt). The DOI resolves to the most recent release; each
+  release also has a DOI of its own if you need to cite one exactly. This is a pre-release beta:
+  it is not a curated or independently validated resource.
 title: "Class A GPCR Structure-Ligand Contact and Interface Atlas"
 abstract: >-
   Atlas of 1358 experimentally determined Class A (rhodopsin-like) GPCR structures across 11
@@ -19,7 +20,7 @@ authors:
     given-names: "Muhammed Fatih"
     affiliation: "Cancer Signaling Laboratory, Boğaziçi University"
     email: "edu.mfatih@gmail.com"
-version: "0.1.0-beta.1"
+version: "0.1.0-beta.2"
 date-released: "2026-08-05"
 repository-code: "https://github.com/karakayafm/class-a-gpcr-atlas"
 url: "https://karakayafm.github.io/class-a-gpcr-atlas/"

@@ -1,6 +1,6 @@
 # Class A GPCR Structure–Ligand Contact and Interface Atlas
 
-**Class A GPCR Contact Atlas** — version `0.1.0-beta.1`
+**Class A GPCR Contact Atlas** — version `0.1.0-beta.2`
 
 Website: <https://karakayafm.github.io/class-a-gpcr-atlas/>
 
@@ -123,9 +123,9 @@ the size that belongs in a Git tree. Each carries its own licence and third-part
 
 ## How to cite
 
-`CITATION.cff` is in the repository root. **This beta has no DOI**; cite the repository, the tag
-`v0.1.0-beta.1` and the version `0.1.0-beta.1`, together with the underlying data resources
-(RCSB PDB, GPCRdb, UniProt).
+`CITATION.cff` is in the repository root and carries the DOI. Cite that DOI together with the
+underlying data resources (RCSB PDB, GPCRdb, UniProt). The DOI resolves to the most recent
+release; each release also has a DOI of its own if you need to cite one exactly.
 
 Do not cite this build as a curated or validated resource.
 
