@@ -1,7 +1,8 @@
 # Derived data review packet
 
-Phase 6A. For institutional review of what this project would redistribute, under what upstream
-terms, and which questions must be answered by a person rather than by a pipeline.
+Phase 6A. What this project redistributes, under what upstream terms, and which questions the
+copyright holder has to answer rather than the pipeline. Release authority for this project
+rests with the copyright holder alone; nothing here is routed through an institution.
 
 Companion file: `DATA_DISTRIBUTION_MATRIX.csv` — the same content as a table, generated from the
 release candidate's actual contents rather than written by hand.
@@ -75,7 +76,7 @@ IUPHAR/BPS nomenclature, and IUPHAR/BPS nomenclature is what the Guide to Pharma
 publishes. This project takes that classification from GPCRdb, which states CC BY 4.0 over its
 data.
 
-So the question for institutional review is not *"did we use GtoPdb"* — demonstrably no — but:
+So the question is no longer *"did we use GtoPdb"* — §3 above answers that — but the second one:
 
 > When an upstream aggregator relicenses under CC BY 4.0 material whose underlying nomenclature
 > originates with a CC BY-SA / ODbL source, does a downstream user of the aggregator inherit any
