@@ -461,9 +461,12 @@ function buildViewerSide(meta) {
     el("button", { class: "btn", text: t("v_pocket"), onclick: () => VIEW.focusPocket() })
   ]));
 
+  // The residue list is what a reader works with; the motif shortcuts sit under it.
+  const contactSection = el("div", { class: "viewer-section" });
+  const motifSection = el("div", { class: "viewer-section" });
   const motifs = VIEW.motifGroups();
   if (motifs.length || VIEW.hasCovalentBond()) {
-    side.appendChild(el("h4", { class: "viewer-section-title", text: t("v_motif_shortcuts") }));
+    motifSection.appendChild(el("h4", { class: "viewer-section-title", text: t("v_motif_shortcuts") }));
     const list = el("div", { class: "motif-picker" });
     if (VIEW.hasCovalentBond()) {
       list.appendChild(el("div", { class:"motif-group-title group-covalent",
@@ -510,15 +513,15 @@ function buildViewerSide(meta) {
       }
       list.appendChild(row);
     }
-    side.appendChild(list);
+    motifSection.appendChild(list);
   }
-  side.appendChild(el("button", { class: "clear-selection", text: t("v_clear_selection"),
+  motifSection.appendChild(el("button", { class: "clear-selection", text: t("v_clear_selection"),
     onclick: () => { VIEW.clearSelections(); buildViewerSide(meta); } }));
 
   const contacts = VIEW.contactResidues();
   if (contacts.length) {
-    side.appendChild(el("h4", { class: "viewer-section-title", text: t("v_contact_list") }));
-    side.appendChild(el("p", { class: "muted small", text: t("v_click_hint") }));
+    contactSection.appendChild(el("h4", { class: "viewer-section-title", text: t("v_contact_list") }));
+    contactSection.appendChild(el("p", { class: "muted small", text: t("v_click_hint") }));
     const list = el("div", { class: "residue-picker" });
     for (const r of contacts) {
       const initiallySelected = VIEW.isResidueSelected(r.chain, r.seq);
@@ -535,8 +538,10 @@ function buildViewerSide(meta) {
       } else b.textContent = r.label;
       list.appendChild(b);
     }
-    side.appendChild(list);
+    contactSection.appendChild(list);
   }
+  side.appendChild(contactSection);
+  side.appendChild(motifSection);
 
   const legend = el("div", { class: "viewer-legend" });
   const legendRow = (cls, text) => el("div", { class: "legend-row" }, [
