@@ -123,9 +123,10 @@ the size that belongs in a Git tree. Each carries its own licence and third-part
 
 ## How to cite
 
-`CITATION.cff` is in the repository root and carries the DOI. Cite that DOI together with the
-underlying data resources (RCSB PDB, GPCRdb, UniProt). The DOI resolves to the most recent
-release; each release also has a DOI of its own if you need to cite one exactly.
+Cite `10.5281/zenodo.21901790` together with the underlying data resources (RCSB PDB, GPCRdb,
+UniProt). That DOI resolves to the most recent release; release 0.1.0-beta.2 is
+`10.5281/zenodo.21901791` if you need to cite one exactly. `CITATION.cff` in the repository root
+carries both.
 
 Do not cite this build as a curated or validated resource.
 

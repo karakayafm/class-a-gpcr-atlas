@@ -21,7 +21,15 @@ authors:
     affiliation: "Cancer Signaling Laboratory, Boğaziçi University"
     email: "edu.mfatih@gmail.com"
 version: "0.1.0-beta.2"
-date-released: "2026-08-05"
+date-released: "2026-08-12"
+doi: "10.5281/zenodo.21901790"
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.21901790"
+    description: "Concept DOI — resolves to the most recent release"
+  - type: doi
+    value: "10.5281/zenodo.21901791"
+    description: "Version DOI — release 0.1.0-beta.2"
 repository-code: "https://github.com/karakayafm/class-a-gpcr-atlas"
 url: "https://karakayafm.github.io/class-a-gpcr-atlas/"
 license-url: "https://polyformproject.org/licenses/noncommercial/1.0.0"
