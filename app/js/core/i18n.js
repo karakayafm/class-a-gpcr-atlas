@@ -89,7 +89,7 @@ export const DICT = {
     chem_provenance: "Descriptor'lar RDKit {rdkit} ile hesaplandı; desen kataloğu {catalog}.",
     chem_biological_type: "Biyolojik tip", chem_functional_groups: "Fonksiyonel gruplar",
     chem_scaffolds: "İskeletler (Bemis–Murcko)",
-    chem_scaffold_note: "Yan zincirler çıkarıldıktan sonra kalan halka sistemleri ve bağlayıcılar. Hesaplanmış iskeletlerdir; adlandırılmış bir kemotip sınıfı iddia edilmez. Listede yalnızca en az iki bileşenin paylaştığı iskeletler var: {unique} bileşenin iskeleti kendine özgü, {acyclic} bileşen halkasız olduğu için iskeleti yok.",
+    chem_scaffold_note: "Bir bileşiğin yan zincirleri çıkarıldığında geriye kalan halka sistemleri ve bunları birbirine bağlayan köprüler o bileşiğin iskeletini oluşturur. Buradaki iskeletler RDKit ile hesaplanmıştır; adlandırılmış bir kemotip sınıfına karşılık geldikleri ileri sürülmez. Listede yalnızca en az iki bileşenin paylaştığı iskeletler yer alır, çünkü tek bir bileşende görülen iskelet gruplama sağlamaz: {unique} bileşenin iskeleti kendine özgüdür, {acyclic} bileşen ise halka içermediğinden iskeleti bulunmaz.",
     chem_ring_systems: "Halka sistemleri", chem_descriptors: "Fizikokimyasal aralıklar",
     chem_mw: "Molekül ağırlığı", chem_logp: "MolLogP", chem_tpsa: "TPSA",
     chem_hbd: "H-bağı vericisi", chem_hba: "H-bağı alıcısı", chem_rotb: "Döndürülebilir bağ",
@@ -348,7 +348,7 @@ export const DICT = {
     chem_provenance: "Descriptors computed with RDKit {rdkit}; pattern catalogue {catalog}.",
     chem_biological_type: "Biological type", chem_functional_groups: "Functional groups",
     chem_scaffolds: "Scaffolds (Bemis–Murcko)",
-    chem_scaffold_note: "The ring systems and the linkers between them, with side chains removed. These are computed scaffolds; no named chemotype class is claimed for them. The list holds only scaffolds shared by at least two components: {unique} components have a scaffold of their own and {acyclic} have no ring, so no scaffold.",
+    chem_scaffold_note: "Removing a compound's side chains leaves the ring systems and the linkers that join them, and that remainder is its scaffold. These scaffolds are computed with RDKit and are not claimed to correspond to any named chemotype class. The list holds only scaffolds shared by at least two components, since a scaffold seen in a single component groups nothing: {unique} components have a scaffold of their own, and {acyclic} contain no ring and therefore have no scaffold.",
     chem_ring_systems: "Ring systems", chem_descriptors: "Physicochemical ranges",
     chem_mw: "Molecular weight", chem_logp: "MolLogP", chem_tpsa: "TPSA",
     chem_hbd: "H-bond donors", chem_hba: "H-bond acceptors", chem_rotb: "Rotatable bonds",
@@ -527,8 +527,10 @@ export function setLang(l) { lang = (l === "en" || l === "tr") ? l : "tr";
   document.documentElement.setAttribute("lang", lang); }
 export function getLang() { return lang; }
 export function initLang() {
+  // English by default: the atlas is published for an international readership. A reader who
+  // switches keeps their choice, so the stored value wins over the default.
   let s = null; try { s = localStorage.getItem("atlas.lang"); } catch (e) {}
-  setLang(s === "en" ? "en" : "tr"); }
+  setLang(s === "tr" ? "tr" : "en"); }
 export function t(key, vars) {
   let s = (DICT[lang] && DICT[lang][key]) || (DICT.en[key]) || key;
   if (vars) for (const k of Object.keys(vars)) s = s.split("{" + k + "}").join(String(vars[k]));
