@@ -14,9 +14,9 @@ ROOT=Path(__file__).resolve().parents[2]; sys.path.insert(0,str(ROOT/"pipeline")
 from common import curated_copies
 from common.canonical import canonical_dumps, content_sha256   # noqa: E402
 IN,P3,P4=ROOT/"data/intermediate",ROOT/"data/intermediate/phase3",ROOT/"data/intermediate/phase4"
-ENRICH=ROOT/"data/freezes/enrichment-1.0.2"
+ENRICH=ROOT/"data/freezes/enrichment-1.0.3"
 AGG=ROOT/"data/aggregates"; WEB=ROOT/"data/web"
-SCHEMA_VERSION="5.0.0"; DATA_VERSION="phase4-freeze-1.0.0+enrichment-1.0.2"
+SCHEMA_VERSION="5.0.0"; DATA_VERSION="phase4-freeze-1.0.0+enrichment-1.0.3"
 POLYMER={"extracellular_polymer_interface","tethered_ligand_interface"}
 SUPERSEDED_PDB={"7XOX":"8IA7"}
 CURATED_APO_STRUCTURES={"7VUY","7VUZ","7VV3","8IW1","8IW9",

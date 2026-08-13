@@ -57,19 +57,18 @@ normal build reads the cache without reaching the network.
 | Source | Licence | What the release carries |
 |---|---|---|
 | EMBL-EBI UniChem | EMBL-EBI terms | Used to map component to database entries; nothing from it appears in the release |
-| Guide to Pharmacology (GtoPdb) | database ODbL; contents CC BY-SA 4.0. Recorded as owner-provided, **not verified by this project** | Ligand identifier, link, retrieval date, match basis, and the preferred name where one was found (300 of 580 records) |
-| ChEMBL | CC BY-SA 3.0 | Molecule identifier, link, retrieval date, match basis, and the preferred name where one was found (219 of 580 records) |
-| PubChem | NCBI public domain | Compound identifier, link, retrieval date, match basis, and the preferred name where one was found (484 of 580 records) |
+| Guide to Pharmacology (GtoPdb) | database ODbL; contents CC BY-SA 4.0. Recorded as owner-provided, **not verified by this project** | Ligand identifier, link, retrieval date, match basis |
+| ChEMBL | CC BY-SA 3.0 | Molecule identifier, link, retrieval date, match basis |
+| PubChem | NCBI public domain | Compound identifier, link, retrieval date, match basis |
 
 Component name, formula and InChIKey come from the PDB Chemical Component Dictionary, not from
 these sources.
 
-**Share-alike: open.** Identifiers and links are facts about which entry corresponds to which
-component. The preferred names are content from databases published under CC BY-SA 3.0 (ChEMBL)
-and CC BY-SA 4.0 (GtoPdb contents), and whether carrying a name alongside its identifier makes
-this atlas a derivative under those terms is unresolved. Dropping the names would remove the
-question at no cost to the interface, which displays the identifier. See
-`docs/DERIVED_DATA_REVIEW_PACKET.md` §3.
+**Share-alike: not applicable.** What is carried from these sources is which entry corresponds
+to which component, and where to find it. The preferred compound name each of them publishes is
+not carried, so no content under CC BY-SA 3.0 or CC BY-SA 4.0 is redistributed and their
+share-alike terms are not engaged. The interface shows the identifier and links to the page
+where the source publishes the name.
 
 ## Third-party software
 

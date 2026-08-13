@@ -1,5 +1,13 @@
 #!/usr/bin/env python3
-"""E3: cache and normalize CCD cross-references from live primary APIs."""
+"""E3: cache and normalize CCD cross-references from live primary APIs.
+
+Identifiers and links only. The preferred compound name each source publishes is content from
+databases under CC BY-SA 3.0 (ChEMBL) and CC BY-SA 4.0 (GtoPdb contents), and carrying it would
+put this atlas in the position of arguing that a name alongside its identifier is not a
+derivative. The `label` field is kept in the record shape and left null so that the absence is
+visible rather than looking like a gap in the fetch; the interface falls back to the identifier,
+and the link goes to the page where the name is published.
+"""
 from __future__ import annotations
 
 import argparse
@@ -208,7 +216,7 @@ def choose_pubchem(code: str, candidates: list[str], payload: dict | None,
         approximate = True
         basis = f"{basis}_structure_key_mismatch"
     return {
-        "id": selected, "label": item.get("Title"),
+        "id": selected, "label": None,
         "url": f"https://pubchem.ncbi.nlm.nih.gov/compound/{selected}",
         "approximate": approximate, "basis": basis, "retrieved": TODAY,
     }, None
@@ -228,7 +236,7 @@ def choose_chembl(candidates: list[str], payload: dict | None, inchi_key: str | 
     approximate = bool(inchi_key and key and key != inchi_key)
     basis = basis_by_id[selected] + ("_structure_key_mismatch" if approximate else "")
     return {
-        "id": selected, "label": payload.get("pref_name"),
+        "id": selected, "label": None,
         "url": f"https://www.ebi.ac.uk/chembl/explore/compound/{selected}",
         "approximate": approximate, "basis": basis, "retrieved": TODAY,
     }, None
@@ -238,7 +246,7 @@ def choose_gtopdb(payload: object, name_payload: object, name: str | None):
     if isinstance(payload, list) and len(payload) == 1 and payload[0].get("ligandId"):
         item = payload[0]
         return {
-            "id": str(item["ligandId"]), "label": item.get("name"),
+            "id": str(item["ligandId"]), "label": None,
             "url": f"https://www.guidetopharmacology.org/GRAC/LigandDisplayForward?ligandId={item['ligandId']}",
             "approximate": False, "basis": "gtopdb_exact_full_inchikey", "retrieved": TODAY,
         }, None
@@ -248,7 +256,7 @@ def choose_gtopdb(payload: object, name_payload: object, name: str | None):
         if len(matches) == 1:
             item = matches[0]
             return {
-                "id": str(item["ligandId"]), "label": item.get("name"),
+                "id": str(item["ligandId"]), "label": None,
                 "url": f"https://www.guidetopharmacology.org/GRAC/LigandDisplayForward?ligandId={item['ligandId']}",
                 "approximate": True, "basis": "gtopdb_exact_normalized_name", "retrieved": TODAY,
             }, None
