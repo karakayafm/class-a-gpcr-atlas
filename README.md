@@ -40,6 +40,16 @@ This section is as important as the one above.
 - **No structure–activity relationships.**
 - **Not a primary database.** It derives from GPCRdb and the RCSB PDB and replaces neither.
 
+## How this was built
+
+Developed by Fatih Karakaya, with AI assistance from OpenAI Codex and Anthropic's Claude Code.
+Those tools wrote a substantial part of the pipeline code and the web interface, working to the
+author's direction; commits carry a co-author trailer where that assistance was used.
+
+The scientific requirements, the architectural decisions, the curation rules, the verification
+of the data and the maintenance of the project are the author's own responsibility. No AI system
+is an author of this work.
+
 ## Public-beta status
 
 - **189 review items await human decision.** Not one has been decided.

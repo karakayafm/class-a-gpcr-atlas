@@ -3,7 +3,10 @@ message: >-
   If you use this atlas, please cite it with the DOI below, together with the underlying data
   resources (RCSB PDB, GPCRdb, UniProt). The DOI resolves to the most recent release; each
   release also has a DOI of its own if you need to cite one exactly. This is a pre-release beta:
-  it is not a curated or independently validated resource.
+  it is not a curated or independently validated resource. The pipeline code and the web
+  interface were developed with AI assistance (OpenAI Codex, Anthropic Claude Code); the
+  scientific decisions, curation and verification are the author's own, and no AI system is an
+  author of this work.
 title: "Class A GPCR Structure-Ligand Contact and Interface Atlas"
 abstract: >-
   Atlas of 1358 experimentally determined Class A (rhodopsin-like) GPCR structures across 11
