@@ -1336,10 +1336,18 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
         /* Selecting either drawing opens both at a size worth reading, with the pair downloadable
            as one image. The thumbnails are 200px because the rail is narrow; that is enough to see
            that two molecules differ and not enough to see how. */
-        function openCompare(rec, note) {
+        async function openCompare(rec, note) {
           const width = 430, height = 350;
-          const parts = drawPair(rec, width, height).parts.filter(Boolean);
-          if (!parts.length) return;
+          const catalog = await L.loadChemistryCatalog().catch(() => null);
+          const mols = [[query, t("sim_compare_query")], [rec.smiles, rec.ccd]].map(([smiles, label]) => {
+            const mol = mod.get_mol(smiles);
+            if (!mol || !mol.is_valid || !mol.is_valid()) { if (mol) mol.delete(); return null; }
+            return { mol, label };
+          });
+          if (mols.some(m => !m)) { for (const m of mols) if (m) m.mol.delete(); return; }
+          const marks = sharedMarks(rec, mols, catalog);
+          let chosen = 0;
+
           const name = "compare_" + rec.ccd;
           const opener = document.activeElement;
           const overlay = el("div", { class: "sim-lightbox", role: "dialog", "aria-modal": "true",
@@ -1348,33 +1356,118 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
             document.removeEventListener("keydown", onKey);
             overlay.remove();
             document.body.classList.remove("modal-open");
+            for (const m of mols) m.mol.delete();
             if (opener && opener.focus) opener.focus();
           };
           const onKey = e => { if (e.key === "Escape") { e.preventDefault(); close(); } };
           const closeButton = el("button", { class: "btn close", type: "button",
             "aria-label": t("sim_compare_close"), text: "✕", onclick: close });
           const figures = el("div", { class: "sim-lightbox-figures" });
-          for (const part of parts) {
-            const cell = el("figure", { class: "sim-lightbox-figure" });
-            cell.innerHTML = part.svg;
-            cell.appendChild(el("figcaption", { text: part.label }));
-            figures.appendChild(cell);
+          const chips = el("div", { class: "sim-marks" });
+
+          const parts = () => renderMarked(mols, marks[chosen], width, height);
+          function paint() {
+            clear(figures);
+            for (const part of parts()) {
+              const cell = el("figure", { class: "sim-lightbox-figure" });
+              cell.innerHTML = part.svg;
+              cell.appendChild(el("figcaption", { text: part.label }));
+              figures.appendChild(cell);
+            }
+            for (const button of chips.querySelectorAll(".sim-mark")) {
+              const on = Number(button.dataset.mark) === chosen;
+              button.classList.toggle("active", on);
+              button.setAttribute("aria-pressed", on ? "true" : "false");
+            }
+          }
+          /* What the two molecules actually have in common, named and markable one at a time.
+             Before this the panel marked a shared ring system or nothing at all, which left a
+             reader looking at a 20% score with no way to see where the 20% was. */
+          if (marks.length > 1) {
+            chips.appendChild(el("span", { class: "muted small", text: t("sim_marks_title") }));
+            marks.forEach((mark, i) => {
+              chips.appendChild(el("button", { class: "sim-mark", type: "button", "data-mark": String(i),
+                text: mark.label, onclick: () => { chosen = i; paint(); } }));
+            });
+          } else {
+            chips.appendChild(el("span", { class: "muted small", text: t("sim_marks_empty") }));
           }
           overlay.appendChild(el("div", { class: "sim-lightbox-inner" }, [
             el("header", { class: "sim-lightbox-head" }, [
               el("h2", { text: t("sim_compare_open") + " — " + rec.ccd }),
               el("button", { class: "btn small", type: "button", text: t("sim_compare_png"),
-                onclick: () => downloadPairPng(parts, name, width, height) }),
+                onclick: () => downloadPairPng(parts(), name, width, height) }),
               el("button", { class: "btn small", type: "button", text: t("sim_compare_svg"),
-                onclick: () => downloadPairSvg(parts, name, width, height) }),
+                onclick: () => downloadPairSvg(parts(), name, width, height) }),
               closeButton ]),
-            figures,
-            el("p", { class: "sim-lightbox-note", text: note })]));
+            figures, chips,
+            el("p", { class: "sim-lightbox-note", text: note }),
+            el("p", { class: "sim-lightbox-note", text: t("sim_marks_note") })]));
+          paint();
           overlay.addEventListener("click", e => { if (e.target === overlay) close(); });
           document.addEventListener("keydown", onKey);
           document.body.classList.add("modal-open");
           document.body.appendChild(overlay);
           closeButton.focus();
+        }
+        function renderMarked(mols, mark, width, height) {
+          return mols.map((m, i) => ({
+            label: m.label,
+            svg: m.mol.get_svg_with_highlights(JSON.stringify({
+              width, height, bondLineWidth: width > 300 ? 2 : 1, addStereoAnnotation: false,
+              atoms: (mark && mark.atoms[i]) || [], bonds: (mark && mark.bonds[i]) || [],
+              highlightColour: [0.62, 0.85, 0.72] })) }));
+        }
+        /* The pieces both molecules carry, from the atlas's own SMARTS catalogue — the same 39
+           patterns the chemistry filters are built on, so what is marked here is what the facet
+           lists elsewhere already name. A pattern is kept only when it matches both molecules,
+           and dropped when a more specific child of it also matches, so an amide is not also
+           reported as a carbonyl. */
+        function sharedMarks(rec, mols, catalog) {
+          const union = qmol => mols.map(m => {
+            let out = { atoms: [], bonds: [] };
+            try {
+              for (const hit of JSON.parse(m.mol.get_substruct_matches(qmol)) || []) {
+                out.atoms = out.atoms.concat(hit.atoms || []);
+                out.bonds = out.bonds.concat(hit.bonds || []);
+              }
+            } catch (e) { /* an unmatchable pattern is simply not shared */ }
+            return out;
+          });
+          const found = [];
+          // The scaffold first: it is the largest single thing the two can share.
+          if (rec.scaffold) {
+            const qmol = mod.get_qmol(rec.scaffold);
+            if (qmol) {
+              const per = union(qmol); qmol.delete();
+              if (per.every(p => p.atoms.length))
+                found.push({ key: "scaffold", label: t("sim_marks_scaffold"),
+                             atoms: per.map(p => p.atoms), bonds: per.map(p => p.bonds) });
+            }
+          }
+          const patterns = (catalog && catalog.patterns) || {};
+          const shared = [];
+          for (const [key, spec] of Object.entries(patterns)) {
+            if (!spec.smarts) continue;
+            const qmol = mod.get_qmol(spec.smarts);
+            if (!qmol) continue;
+            const per = union(qmol); qmol.delete();
+            if (per.every(p => p.atoms.length))
+              shared.push({ key, spec, atoms: per.map(p => p.atoms), bonds: per.map(p => p.bonds) });
+          }
+          const parents = new Set(shared.map(s => s.spec.parent).filter(Boolean));
+          for (const s of shared) {
+            if (parents.has(s.key)) continue;
+            found.push({ key: s.key, atoms: s.atoms, bonds: s.bonds,
+              label: s.spec["label_" + getLang()] || s.spec.label_en || s.key });
+          }
+          if (found.length < 2) return found.length ? found : [{ key: "none", label: "",
+            atoms: [[], []], bonds: [[], []] }];
+          // Everything at once, so the reader sees the whole overlap before picking it apart.
+          const all = { key: "all", label: t("sim_marks_all"),
+            atoms: mols.map((m, i) => [...new Set(found.flatMap(f => f.atoms[i]))]),
+            bonds: mols.map((m, i) => [...new Set(found.flatMap(f => f.bonds[i]))]) };
+          return [all].concat(found);
         }
         function comparison(rec) {
           const box = el("div", { class: "sim-compare" });
@@ -1393,6 +1486,10 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
               box.appendChild(cell);
             }
             box.appendChild(el("p", { class: "sim-compare-note", text: note }));
+            // The rail is too narrow to name what the two share; the enlarged pair does, and
+            // without this line there is nothing to say so.
+            box.appendChild(el("p", { class: "sim-compare-note sim-compare-more",
+              text: t("sim_compare_enlarge") }));
           } catch (error) { box.appendChild(el("p", { class: "muted small", text: t("sim_compare_failed") })); }
           return box;
         }

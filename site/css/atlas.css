@@ -885,5 +885,14 @@ td.eff-warning_only { color:var(--muted); }
   overflow-wrap:anywhere; }
 .sim-lightbox-note { margin:12px 0 0; font-size:11.5px; line-height:1.55; color:var(--muted);
   max-width:78ch; }
+/* One shared piece marked at a time, named. The row wraps rather than scrolls: a reader needs to
+   see how many things the two have in common before choosing between them. */
+.sim-compare-more { color:var(--accent); }
+.sim-marks { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-top:12px; }
+.sim-mark { padding:2px 9px; border:1px solid var(--line); border-radius:999px;
+  background:var(--panel); color:var(--ink); cursor:pointer; font-size:11.5px; }
+.sim-mark:hover { border-color:var(--accent); color:var(--accent); }
+.sim-mark.active { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+.sim-mark:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
 @media (max-width:720px) { .sim-lightbox { padding:8px; }
   .sim-lightbox-figure { flex:1 1 100%; } }
