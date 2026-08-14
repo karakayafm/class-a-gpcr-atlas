@@ -624,7 +624,9 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
     for (const [name, key] of Object.entries(FILTER_KEYS)) out[name] = r[key] || "";
     for (const [name, key] of Object.entries(LIST_KEYS))
       out[name] = r[key] ? String(r[key]).split(",").filter(Boolean) : [];
-    out.representativeOnly = r.rep === "1";
+    // On unless the route says otherwise: the repeat depositions are the reason a family list
+    // is unreadable, and a reader who wants them can say so.
+    out.representativeOnly = r.rep !== "0";
     out.contactThreshold = r.thr ? Number(r.thr) || 0 : 0;
     out.ranges = {};
     for (const part of String(r.rng || "").split(",").filter(Boolean)) {
@@ -641,7 +643,7 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
     const next = Object.assign({}, parseRoute());
     for (const [name, key] of Object.entries(FILTER_KEYS)) next[key] = filters[name] || "";
     for (const [name, key] of Object.entries(LIST_KEYS)) next[key] = (filters[name] || []).join(",");
-    next.rep = filters.representativeOnly ? "1" : "";
+    next.rep = filters.representativeOnly ? "" : "0";
     next.thr = filters.contactThreshold ? String(filters.contactThreshold) : "";
     next.rng = Object.entries(filters.ranges || {})
       .filter(([, span]) => span && (span[0] != null || span[1] != null))
@@ -911,6 +913,8 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
   const chemBody = el("div", { class: "chem-body" }, [el("p", { class: "muted small", text: t("chem_prompt") })]);
   chemDetails.appendChild(chemBody);
   chemBox.appendChild(chemDetails);
+  // Above the chemistry filters: a reader arriving with a molecule should meet this first.
+  if (chemMode) chemSlot.appendChild(buildSimilarityPanel());
   chemSlot.appendChild(chemBox);
 
   // The chemistry column exists for these filters, so it opens with the view rather than
@@ -1115,6 +1119,172 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
     chemBody.appendChild(reset);
   }
 
+  /* Structural-similarity search. It sits above the chemistry filters because it is the entry
+     point a reader arrives with a molecule for, and it is answered differently from everything
+     else here: the corpus is fingerprinted in the pipeline and shipped, the query is fingerprinted
+     by the vendored RDKit build in the reader's own browser, and Tanimoto is a bit operation. A
+     structure someone has drawn but not published therefore never leaves their machine. */
+  let rdkit = null, rdkitLoading = null, fingerprints = null;
+  function loadRdkit() {
+    if (rdkit) return Promise.resolve(rdkit);
+    if (rdkitLoading) return rdkitLoading;
+    rdkitLoading = new Promise((resolve, reject) => {
+      const tag = document.createElement("script");
+      tag.src = "vendor/rdkit/RDKit_minimal.js";
+      tag.onerror = () => reject(new Error("rdkit"));
+      tag.onload = () => window.initRDKitModule({ locateFile: () => "vendor/rdkit/RDKit_minimal.wasm" })
+        .then(mod => { rdkit = mod; resolve(mod); }).catch(reject);
+      document.head.appendChild(tag);
+    });
+    return rdkitLoading;
+  }
+  const POPCOUNT = new Uint8Array(256);
+  for (let i = 0; i < 256; i++) POPCOUNT[i] = (i & 1) + POPCOUNT[i >> 1];
+  function unpack(b64) {
+    const raw = atob(b64), out = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+    return out;
+  }
+  function tanimoto(a, b) {
+    let both = 0, either = 0;
+    for (let i = 0; i < a.length; i++) { both += POPCOUNT[a[i] & b[i]]; either += POPCOUNT[a[i] | b[i]]; }
+    return either === 0 ? 0 : both / either;
+  }
+  function buildSimilarityPanel() {
+    const box = el("details", { class: "sim-panel", open: true });
+    box.appendChild(el("summary", {}, [el("span", { text: t("sim_title") })]));
+    const body = el("div", { class: "sim-body" });
+    const input = el("input", { type: "text", class: "sim-input", spellcheck: "false",
+      placeholder: t("sim_placeholder") });
+    const pdbInput = el("input", { type: "text", class: "sim-pdb", spellcheck: "false",
+      maxlength: "4", placeholder: t("sim_pdb_placeholder") });
+    const status = el("p", { class: "sim-status muted small" });
+    const results = el("div", { class: "sim-results" });
+
+    /* Pull the ligand out of a deposition the reader names, so a structure can be the query
+       without them having to find its SMILES first. Where an entry holds several components the
+       first one carrying a structure in the atlas is taken, and the panel says which. */
+    async function fromPdb() {
+      const code = pdbInput.value.trim().toUpperCase();
+      clear(results);
+      if (!/^[0-9A-Z]{4}$/.test(code)) { status.textContent = t("sim_pdb_invalid"); return; }
+      status.textContent = t("sim_working");
+      try {
+        const payloadFp = fingerprints || (fingerprints = await L.loadLigandFingerprints());
+        const chemistry = await L.loadLigandChemistry();
+        const smilesOf = new Map((chemistry.records || []).map(r => [r.ccd, r.raw_smiles]));
+        const codes = ((payloadFp.by_structure || {})[code] || []).filter(c => smilesOf.get(c));
+        if (!codes.length) { status.textContent = t("sim_pdb_no_ligand", { pdb: code }); return; }
+        const chosen = codes[0];
+        input.value = smilesOf.get(chosen);
+        status.textContent = t("sim_pdb_taken", { pdb: code, ccd: chosen });
+        await run(t("sim_pdb_taken", { pdb: code, ccd: chosen }) + " ");
+      } catch (error) { status.textContent = t("sim_pdb_failed", { pdb: code }); }
+    }
+
+    async function run(prefix) {
+      const query = input.value.trim();
+      clear(results);
+      if (!query) { status.textContent = ""; return; }
+      status.textContent = (prefix || "") + t("sim_working");
+      try {
+        const [mod, payloadFp] = await Promise.all([
+          loadRdkit(),
+          fingerprints ? Promise.resolve(fingerprints) : L.loadLigandFingerprints()]);
+        fingerprints = payloadFp;
+        const mol = mod.get_mol(query);
+        if (!mol || !mol.is_valid || !mol.is_valid()) {
+          if (mol) mol.delete();
+          status.textContent = t("sim_invalid"); return;
+        }
+        const bits = mol.get_morgan_fp_as_uint8array(
+          JSON.stringify({ radius: payloadFp.radius, nBits: payloadFp.bits }));
+        mol.delete();
+        const scored = (payloadFp.records || [])
+          .map(r => ({ rec: r, score: tanimoto(bits, unpack(r.fp)) }))
+          .filter(r => r.score > 0 && (r.rec.seen_in || []).length)
+          .sort((a, b) => b.score - a.score).slice(0, 20);
+        status.textContent = (prefix || "") +
+          (scored.length ? t("sim_found", { n: scored.length }) : t("sim_none"));
+        /* What the two molecules have in common, drawn rather than asserted. The hit's
+           Bemis-Murcko scaffold is matched into both structures and those atoms are highlighted:
+           it is the shared ring system, not a maximum common substructure, and the caption says
+           so. Where the scaffold does not match the query the pair is still drawn, unmarked. */
+        function comparison(rec) {
+          const box = el("div", { class: "sim-compare" });
+          try {
+            const pattern = rec.scaffold ? mod.get_qmol(rec.scaffold) : null;
+            const draw = (smiles, label) => {
+              const m = mod.get_mol(smiles);
+              if (!m || !m.is_valid || !m.is_valid()) { if (m) m.delete(); return null; }
+              let hit = { atoms: [], bonds: [] };
+              if (pattern) { try { hit = JSON.parse(m.get_substruct_match(pattern)) || hit; }
+                             catch (e) { hit = { atoms: [], bonds: [] }; } }
+              const svg = m.get_svg_with_highlights(JSON.stringify({
+                width: 200, height: 150, bondLineWidth: 1, addStereoAnnotation: false,
+                atoms: hit.atoms || [], bonds: hit.bonds || [],
+                highlightColour: [0.62, 0.85, 0.72] }));
+              m.delete();
+              const cell = el("figure", { class: "sim-figure" });
+              cell.innerHTML = svg;
+              cell.appendChild(el("figcaption", { text: label }));
+              return { cell, matched: (hit.atoms || []).length > 0 };
+            };
+            const left = draw(query, t("sim_compare_query"));
+            const right = draw(rec.smiles, rec.ccd);
+            if (pattern) pattern.delete();
+            if (left) box.appendChild(left.cell);
+            if (right) box.appendChild(right.cell);
+            box.appendChild(el("p", { class: "sim-compare-note",
+              text: left && right && left.matched && right.matched
+                ? t("sim_compare_shared") : t("sim_compare_none") }));
+          } catch (error) { box.appendChild(el("p", { class: "muted small", text: t("sim_compare_failed") })); }
+          return box;
+        }
+        for (const hit of scored) {
+          const place = hit.rec.seen_in[0];
+          // A hit opens where its structures are, in a new tab, so the list the reader was
+          // working with is still there when they come back.
+          const href = "#" + buildHash({ family: place.family, view: "structures",
+                                         q: hit.rec.ccd }).slice(1);
+          results.appendChild(el("a", { class: "sim-hit", href, target: "_blank", rel: "noopener",
+            title: t("sim_open_hint", { family: familyDisplayName(
+              (L.getManifest().families || []).find(f => f.slug === place.family)?.name || place.family) }) }, [
+            el("span", { class: "sim-score", text: Math.round(hit.score * 100) + "%" }),
+            el("span", { class: "sim-ccd", text: hit.rec.ccd }),
+            el("span", { class: "sim-name", text: plainName(hit.rec.name || "") }),
+            el("span", { class: "sim-where", text: place.structures + " " + t("structures_short") })]));
+          if (hit.rec.smiles) {
+            const details = el("details", { class: "sim-compare-wrap" });
+            details.appendChild(el("summary", { text: t("sim_compare_open") }));
+            let drawn = false;
+            details.addEventListener("toggle", () => {
+              if (!details.open || drawn) return;
+              drawn = true; details.appendChild(comparison(hit.rec));
+            });
+            results.appendChild(details);
+          }
+        }
+      } catch (error) { status.textContent = t("sim_failed"); }
+    }
+
+    input.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); run(); } });
+    pdbInput.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); fromPdb(); } });
+    body.appendChild(el("label", { class: "sim-label", text: t("sim_smiles_label") }));
+    body.appendChild(input);
+    body.appendChild(el("button", { class: "btn small sim-run", type: "button",
+      text: t("sim_run"), onclick: () => run() }));
+    body.appendChild(el("label", { class: "sim-label sim-or", text: t("sim_pdb_label") }));
+    const pdbRow = el("div", { class: "sim-pdb-row" }, [pdbInput,
+      el("button", { class: "btn small", type: "button", text: t("sim_pdb_run"), onclick: fromPdb })]);
+    body.appendChild(pdbRow);
+    body.appendChild(status);
+    body.appendChild(results);
+    body.appendChild(el("p", { class: "sim-note", text: t("sim_note") }));
+    box.appendChild(body);
+    return box;
+  }
+
   /* Contact-frequency threshold. It hides pocket positions the panel rarely touches, which is a
      different question from the ≥75% markers: the markers annotate, this filters. */
   const thresholdValue = el("span", { class: "threshold-value", text: "0%" });
@@ -1167,8 +1337,12 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
       (!filters.transducer || (x.transducer_panels||[]).includes(filters.transducer)) &&
       (!filters.evidenceTier || (x.pathway_evidence_tiers||[]).includes(filters.evidenceTier)) &&
       (!filters.representativeOnly || x.analysis_unit_representative === true) &&
+      // The chemical component code is searchable too: a similarity hit is a CCD, and a reader
+      // arriving from one would otherwise land on an empty list.
       (!q || [x.pdb_id, plainName(x.receptor_name), x.receptor_entry_name,
-        ...x.observations.map(o => o.ligand_name || "")].join(" ").toLowerCase().includes(q)));
+        ...x.observations.map(o => o.ligand_name || ""),
+        ...x.observations.flatMap(o => o.ligand_components || [])]
+        .join(" ").toLowerCase().includes(q)));
     return rows.sort((a,b) => (a.resolution == null) - (b.resolution == null) ||
       (a.resolution || 99) - (b.resolution || 99) || a.pdb_id.localeCompare(b.pdb_id));
   }
@@ -2007,7 +2181,10 @@ export async function sources() {
 
   wrap.appendChild(el("h3", { text: t("sr_release_gates") }));
   wrap.appendChild(el("ul", {}, (d.release_gates || []).map(g =>
-    el("li", {}, [el("strong", { text: g.gate + " — " + g.status }),
+    // The label, not the record key: `odbl_sharealike_derived_data_review` is how the pipeline
+    // names it, and putting that on the page reads as a leaked variable.
+    el("li", {}, [el("strong", { text: g.label || g.gate }),
+      el("span", { class: "muted", text: " — " + t("gate_" + g.status) }),
       el("span", { text: ": " + g.note })]))));
   return wrap;
 }
@@ -2200,5 +2377,248 @@ export async function cite(root, pdb, slug) {
     tabs.appendChild(button);
   }
   await draw();
+  return wrap;
+}
+
+/* Motif explorer. The family views answer "what is in this structure"; this answers the reverse —
+   which structures carry a motif position, what residue each receptor has there, and where a
+   deposited construct was engineered away from it.
+
+   Two quantities are kept apart throughout, because merging them would report thermostabilising
+   constructs as biology: sequence variation between receptors, counted once per receptor, and
+   engineered mutation, counted per structure. */
+export async function motifSearch(root) {
+  clear(root);
+  const wrap = el("section", { class: "view" });
+  root.appendChild(wrap);
+  let payload;
+  try { payload = await L.loadMotifSearch(); }
+  catch (error) { wrap.appendChild(el("p", { class: "notice", text: L.errorMessage(error) })); return wrap; }
+
+  const families = (L.getManifest().families || []);
+  const nameOf = new Map(families.map(f => [f.slug, familyDisplayName(f.name)]));
+  // Several positions can be required at once — the question is usually "which structures have
+  // D at 2x50 *and* N at 7x49", not either alone.
+  const state = { motif: payload.motifs[0].motif_id, scope: "class_a", picks: [], query: "",
+                  colour: "" };
+  /* Side-chain classes, used to colour the result cards by the residue a structure carries at
+     the position under examination. The grouping is the conventional one; histidine is placed
+     with the basic residues although it is only partly charged at physiological pH, and glycine
+     and proline are kept apart because neither behaves like the class it would otherwise join. */
+  const RESIDUE_CLASS = {
+    A: "hydrophobic", V: "hydrophobic", L: "hydrophobic", I: "hydrophobic", M: "hydrophobic",
+    F: "aromatic", W: "aromatic", Y: "aromatic",
+    S: "polar", T: "polar", N: "polar", Q: "polar", C: "polar",
+    D: "acidic", E: "acidic",
+    K: "basic", R: "basic", H: "basic",
+    G: "glycine", P: "proline" };
+  const sameP = (a, b) => a.position === b.position && a.kind === b.kind && a.residue === b.residue;
+  const posIndex = new Map(payload.positions.map((p, i) => [p, i]));
+
+  wrap.appendChild(el("div", {}, [
+    el("h2", { text: t("nav_motifs") }),
+    el("p", { class: "muted", text: t("motif_intro") })]));
+
+  const controls = el("div", { class: "motif-controls" });
+  const scopeSelect = el("select", { onchange: e => { state.scope = e.target.value; draw(); } });
+  scopeSelect.appendChild(el("option", { value: "class_a", text: t("motif_scope_class_a") }));
+  for (const f of families)
+    scopeSelect.appendChild(el("option", { value: f.slug, text: familyDisplayName(f.name) }));
+  controls.appendChild(el("label", { class: "filter-field" }, [
+    el("span", { text: t("motif_scope") }), scopeSelect]));
+  const queryInput = el("input", { type: "text", class: "motif-query", spellcheck: "false",
+    placeholder: t("motif_query_placeholder") });
+  queryInput.addEventListener("input", debounce(() => { state.query = queryInput.value; draw(); }, 200));
+  controls.appendChild(el("label", { class: "filter-field motif-query-field" }, [
+    el("span", { text: t("motif_query") }), queryInput,
+    el("small", { class: "muted", text: t("motif_query_hint") })]));
+  // Colouring needs a position to read the residue from, so it applies to the first requirement
+  // in force; with none set there is nothing to colour by and the control says so.
+  const colourSelect = el("select", { onchange: e => { state.colour = e.target.value; draw(); } });
+  colourSelect.appendChild(el("option", { value: "", text: t("motif_colour_none") }));
+  colourSelect.appendChild(el("option", { value: "class", text: t("motif_colour_class") }));
+  controls.appendChild(el("label", { class: "filter-field" }, [
+    el("span", { text: t("motif_colour") }), colourSelect]));
+  wrap.appendChild(controls);
+
+  const strip = el("div", { class: "motif-strip" });
+  for (const m of payload.motifs) {
+    strip.appendChild(el("button", { class: "motif-tab", type: "button", "data-motif": m.motif_id,
+      onclick: () => { state.motif = m.motif_id; draw(); } }, [
+      el("span", { text: t("motif_" + m.motif_id) }),
+      el("span", { class: "tab-count", text: m.segments.join(" ") })]));
+  }
+  wrap.appendChild(strip);
+
+  const table = el("div", { class: "motif-table" });
+  const listHead = el("div", { class: "result-head" });
+  const list = el("div", { class: "result-list motif-list" });
+  wrap.appendChild(table); wrap.appendChild(listHead); wrap.appendChild(list);
+
+  /* Free-text specification: `2x50D, 7x49N` requires aspartate at 2x50 and asparagine at 7x49.
+     `2x50!` asks instead for a construct mutated at that position. Anything unrecognised is
+     reported rather than dropped, so a typo does not quietly widen the result. */
+  function parseQuery(text) {
+    const picks = [], bad = [];
+    for (const token of String(text || "").split(/[\s,;]+/).filter(Boolean)) {
+      const mutation = /^(\d+x\d+)\s*!$/.exec(token);
+      const residue = /^(\d+x\d+)\s*([A-Za-z])$/.exec(token);
+      if (mutation && posIndex.has(mutation[1])) picks.push({ position: mutation[1], kind: "mutation" });
+      else if (residue && posIndex.has(residue[1]))
+        picks.push({ position: residue[1], kind: "residue", residue: residue[2].toUpperCase() });
+      else bad.push(token);
+    }
+    return { picks, bad };
+  }
+  function activePicks() {
+    const parsed = parseQuery(state.query);
+    return { picks: state.picks.concat(parsed.picks), bad: parsed.bad };
+  }
+  function matching(picks) {
+    const rows = Object.entries(payload.structures)
+      .filter(([, s]) => state.scope === "class_a" || s.f === state.scope);
+    if (!picks.length) return rows;
+    // Every requirement has to hold: the reader asked for a combination, not a union.
+    return rows.filter(([, s]) => picks.every(pick => {
+      const ch = s.s[posIndex.get(pick.position)];
+      return pick.kind === "mutation" ? ch >= "a" && ch <= "z"
+                                      : ch.toUpperCase() === pick.residue;
+    }));
+  }
+
+  function draw() {
+    for (const tab of strip.querySelectorAll(".motif-tab")) {
+      const on = tab.dataset.motif === state.motif;
+      tab.classList.toggle("active", on);
+      tab.setAttribute("aria-pressed", on ? "true" : "false");
+    }
+    const active = activePicks();
+    const motif = payload.motifs.find(m => m.motif_id === state.motif);
+    const variation = (payload.variation || {})[state.scope] || {};
+    const mutations = (payload.mutations || {})[state.scope] || {};
+    clear(table);
+    table.appendChild(el("p", { class: "muted small", text: t("motif_" + state.motif + "_note") }));
+    if (state.colour === "class") {
+      const legend = el("div", { class: "motif-legend" });
+      legend.appendChild(el("span", { class: "muted small", text: t("motif_legend") }));
+      for (const cls of ["hydrophobic", "aromatic", "polar", "acidic", "basic", "glycine", "proline"])
+        legend.appendChild(el("span", { class: "motif-legend-item aa-" + cls, text: t("aa_" + cls) }));
+      table.appendChild(legend);
+    }
+    const grid = el("table", { class: "data compact" });
+    grid.appendChild(el("thead", {}, el("tr", {}, [t("motif_position"), t("motif_segment"),
+      t("motif_consensus"), t("motif_variation"), t("motif_mutation")]
+      .map(x => el("th", {}, x === t("motif_mutation")
+        ? [document.createTextNode(x + " "), metricHelp(t("motif_mutation_help"))]
+        : [document.createTextNode(x)])))));
+    const body = el("tbody");
+    for (const position of motif.positions) {
+      const v = variation[position], m = mutations[position];
+      const dist = el("span", { class: "motif-dist" });
+      if (v) {
+        for (const [residue, n] of v.by_receptor) {
+          const want = { position, kind: "residue", residue };
+          const on = state.picks.some(x => sameP(x, want));
+          const tint = state.colour === "class" ? " aa-" + (RESIDUE_CLASS[residue] || "other") : "";
+          dist.appendChild(el("button", { class: "motif-chip" + tint + (on ? " active" : ""),
+            type: "button",
+            title: t("motif_pick_hint"),
+            onclick: () => { state.picks = on ? state.picks.filter(x => !sameP(x, want))
+                                              : state.picks.concat([want]); draw(); } },
+            [el("strong", { text: residue }), el("span", { class: "tab-count", text: String(n) })]));
+        }
+      }
+      const wantMut = { position, kind: "mutation" };
+      const mutOn = state.picks.some(x => sameP(x, wantMut));
+      body.appendChild(el("tr", {}, [
+        el("td", {}, [el("strong", { text: position })]),
+        el("td", { text: payload.segments[position] || "" }),
+        el("td", {}, [el("strong", { text: (v && v.consensus) || "—" }),
+          el("span", { class: "muted small",
+            text: v ? "  " + Math.round(v.divergent_receptor_share * 100) + "% " + t("motif_divergent") : "" })]),
+        el("td", {}, [dist]),
+        el("td", {}, m ? [el("button", { class: "motif-chip mutation" + (mutOn ? " active" : ""),
+            type: "button", title: t("motif_mutation_hint"),
+            onclick: () => { state.picks = mutOn ? state.picks.filter(x => !sameP(x, wantMut))
+                                                 : state.picks.concat([wantMut]); draw(); } },
+            [el("span", { text: m.structures + " " + t("structures_short") })])]
+          : [el("span", { class: "muted small", text: "—" })])]));
+    }
+    grid.appendChild(body);
+    table.appendChild(grid);
+
+    const rows = matching(active.picks);
+    clear(listHead); clear(list);
+    listHead.appendChild(el("strong", { text: rows.length + " " + t("results") }));
+    if (active.picks.length) listHead.appendChild(el("span", { class: "muted small",
+      text: active.picks.map(x => x.position + (x.kind === "mutation" ? "!" : x.residue)).join(" + ") }));
+    if (active.bad.length) listHead.appendChild(el("span", { class: "motif-bad",
+      text: t("motif_query_bad", { tokens: active.bad.join(", ") }) }));
+    if (state.picks.length) listHead.appendChild(el("button", { class: "btn small", type: "button",
+      text: t("motif_clear_pick"), onclick: () => { state.picks = []; draw(); } }));
+    for (const [pdb, s] of rows.slice(0, 400)) {
+      // Wild type and, where the construct was engineered, what it carries instead. Naming only
+      // one of the two left it ambiguous which the letter referred to.
+      const detail = active.picks.map(pick => {
+        const ch = s.s[posIndex.get(pick.position)];
+        const wild = ch.toUpperCase();
+        const swap = (s.m || {})[pick.position];
+        return pick.position + " " + wild + (swap ? " \u2192 " + swap : "");
+      }).join(" · ");
+      list.appendChild(el("button", { class: "result-item motif-item", type: "button",
+        onclick: () => navigate({ family: s.f, view: "structures", pdb }) }, [
+        el("div", { class: "result-line" }, [
+          el("strong", { text: pdb }),
+          el("span", { title: plainName(s.n), text: plainName(s.n) }),
+          el("small", { text: nameOf.get(s.f) || s.f })]),
+        el("div", { class: "result-ligand", text: s.r + (detail ? " · " + detail : "") })]));
+    }
+    if (rows.length > 400) list.appendChild(el("p", { class: "muted small",
+      text: t("motif_truncated", { shown: 400, total: rows.length }) }));
+  }
+  draw();
+  return wrap;
+}
+
+/* Guide. The methods page states what the pipeline does; this states what each panel is for,
+   what question it answers and — the part a methods list cannot carry — how far the answer
+   reaches. Every panel here ends with what it does not establish, because a contact distance
+   and a binding claim are different things and the interface should not let one stand in for
+   the other. */
+export async function guide(root) {
+  clear(root);
+  const wrap = el("section", { class: "view prose guide" });
+  root.appendChild(wrap);
+  wrap.appendChild(el("h2", { text: t("nav_guide") }));
+  wrap.appendChild(el("p", { class: "guide-lead", text: t("guide_lead") }));
+
+  wrap.appendChild(el("div", { class: "guide-caution" }, [
+    el("h3", { text: t("guide_caution_title") }),
+    el("ul", {}, ["guide_caution_geometry", "guide_caution_annotation", "guide_caution_curation",
+                  "guide_caution_absence"].map(k => el("li", { text: t(k) })))]));
+
+  const panels = [
+    ["families", ["read", "use", "limit"]],
+    ["structure", ["read", "use", "limit"]],
+    ["viewer", ["read", "use", "limit"]],
+    ["panels", ["read", "use", "limit"]],
+    ["motifsearch", ["read", "use", "limit"]],
+    ["ligands", ["read", "use", "limit"]],
+    ["similarity", ["read", "use", "limit"]],
+    ["isomers", ["read", "use", "limit"]],
+    ["exports", ["read", "use", "limit"]],
+  ];
+  for (const [key, parts] of panels) {
+    const box = el("section", { class: "guide-panel" });
+    box.appendChild(el("h3", { text: t("guide_" + key + "_title") }));
+    box.appendChild(el("p", { text: t("guide_" + key + "_read") }));
+    const list = el("dl", { class: "guide-facets" });
+    list.appendChild(el("dt", { text: t("guide_label_use") }));
+    list.appendChild(el("dd", { text: t("guide_" + key + "_use") }));
+    list.appendChild(el("dt", { text: t("guide_label_limit") }));
+    list.appendChild(el("dd", { text: t("guide_" + key + "_limit") }));
+    box.appendChild(list);
+    wrap.appendChild(box);
+  }
   return wrap;
 }

@@ -82,6 +82,8 @@ async function loadGlobalChecked(name) {
 }
 export function loadLigandChemistry() { return loadGlobalChecked("ligand_chemistry.json"); }
 export function loadChemistryCatalog() { return loadGlobalChecked("chemistry_catalog.json"); }
+export function loadLigandFingerprints() { return loadGlobalChecked("ligand_fingerprints.json"); }
+export function loadMotifSearch() { return loadGlobalChecked("motif_search.json"); }
 
 /* Per-pharmacology-class structure list: every structure carrying a ligand of that class,
    across families. */

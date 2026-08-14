@@ -9,7 +9,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SRC = ROOT / "data/intermediate/enrichment"
-DEST = ROOT / "data/freezes/enrichment-1.0.3"
+DEST = ROOT / "data/freezes/enrichment-1.0.4"
 
 FILES = [
     "transducer_assignments.jsonl",
@@ -19,6 +19,7 @@ FILES = [
     "database_citations.json",
     "panel_statistics.json",
     "ligand_chemistry.json",
+    "ligand_fingerprints.json",
     "ligand_chemistry_audit.json",
 ]
 
@@ -49,14 +50,13 @@ def main() -> int:
     (DEST / "checksums.sha256").write_text(checksums, encoding="utf-8")
     freeze = {
         "schema": "enrichment_freeze",
-        "version": "enrichment-1.0.3",
-        "created": "2026-08-13",
+        "version": "enrichment-1.0.4",
+        "created": "2026-08-14",
         "contract": ("Validated enrichment records are copied byte-for-byte; this freeze "
                      "does not infer or recompute scientific evidence."),
-        "supersedes": "enrichment-1.0.2",
-        "reason": ("Drops the preferred compound name taken from ChEMBL, GtoPdb and PubChem. "
-                   "Identifiers and links are kept; those are facts about which entry "
-                   "corresponds to which component, and they carry no licence question."),
+        "supersedes": "enrichment-1.0.3",
+        "reason": ("Adds Morgan fingerprints for every parsed chemical component, so a reader "
+                   "can search the corpus by structural similarity from their own browser."),
         "files": records,
         "file_count": len(records),
     }

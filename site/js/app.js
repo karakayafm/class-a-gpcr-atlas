@@ -30,11 +30,13 @@ function buildChrome(manifest) {
   clear(nav);
   const r = parseRoute();
   const items = r.family
-    ? [["structures", "nav_structures"], ["panels", "nav_panels"], ["ligands", "nav_ligands"],
-       ["methods", "nav_methods"], ["sources", "nav_sources"],
+    ? [["structures", "nav_structures"], ["panels", "nav_panels"], ["motifsearch", "nav_motifs"],
+       ["ligands", "nav_ligands"],
+       ["guide", "nav_guide"], ["methods", "nav_methods"], ["sources", "nav_sources"],
        ["references", "nav_references"], ["cite", "nav_cite"]]
-    : [["landing", "families"], ["panels", "nav_panels"], ["ligands", "nav_ligands"],
-       ["methods", "nav_methods"], ["sources", "nav_sources"],
+    : [["landing", "families"], ["panels", "nav_panels"], ["motifsearch", "nav_motifs"],
+       ["ligands", "nav_ligands"],
+       ["guide", "nav_guide"], ["methods", "nav_methods"], ["sources", "nav_sources"],
        ["references", "nav_references"], ["cite", "nav_cite"]];
   for (const [view, key] of items) {
     const on = r.view === view;
@@ -351,6 +353,9 @@ function buildViewerSide(meta) {
   const hasLig = !!(cur && cur.ligand_selection);
   add("cartoon", t("v_cartoon"));
   add("motifLabels", t("v_motif_labels"));
+  // The contacting side chains were drawn unconditionally; a reader looking at ligand
+  // topology alone had no way to clear them.
+  add("contacts", t("v_side_chains"), apo || !hasLig);
   const interactionsButton = add("lines", t("v_interactions"), apo || !hasLig);
   let covalentButton = null;
   let ligandPanel = null;
@@ -430,7 +435,6 @@ function buildViewerSide(meta) {
       VIEW.toggles.surface(on.surface);
     } });
   ctrl.appendChild(surfaceMaster);
-  add("spin", t("v_spin"));
   /* One switch rather than two buttons: the background is either dark or light, and two
      separate controls made it look as though both could be off. */
   const backgroundSwitch = el("button", { class:"viewer-switch", type:"button", role:"switch" },
@@ -594,9 +598,11 @@ async function render(r) {
         if (!cls) { fatal(t("err_route")); return; }
         node = await V.structures(main, null, openModal, null, r.pdb, { ligandSlug: cls }); break;
       }
+      case "motifsearch": node = await V.motifSearch(main); break;
       case "evidence": node = await V.evidence(main, r.family, r.open === "1"); break;
       case "contacts": case "interfaces": case "motifs": case "compare":
         navigate(r.family ? { family: r.family, view: "structures" } : { view: "landing" }, true); return;
+      case "guide": node = await V.guide(main); break;
       case "methods": node = await V.methods(); break;
       case "sources": node = await V.sources(); break;
       case "references": node = await V.references(main, r.family); break;

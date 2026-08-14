@@ -14,9 +14,9 @@ ROOT=Path(__file__).resolve().parents[2]; sys.path.insert(0,str(ROOT/"pipeline")
 from common import curated_copies
 from common.canonical import canonical_dumps, content_sha256   # noqa: E402
 IN,P3,P4=ROOT/"data/intermediate",ROOT/"data/intermediate/phase3",ROOT/"data/intermediate/phase4"
-ENRICH=ROOT/"data/freezes/enrichment-1.0.3"
+ENRICH=ROOT/"data/freezes/enrichment-1.0.4"
 AGG=ROOT/"data/aggregates"; WEB=ROOT/"data/web"
-SCHEMA_VERSION="5.0.0"; DATA_VERSION="phase4-freeze-1.0.0+enrichment-1.0.3"
+SCHEMA_VERSION="5.0.0"; DATA_VERSION="phase4-freeze-1.0.0+enrichment-1.0.4"
 POLYMER={"extracellular_polymer_interface","tethered_ligand_interface"}
 SUPERSEDED_PDB={"7XOX":"8IA7"}
 CURATED_APO_STRUCTURES={"7VUY","7VUZ","7VV3","8IW1","8IW9",
@@ -297,6 +297,27 @@ def main()->int:
     lown=json.loads((ROOT/"config/phase4/low_n_warnings.json").read_text(encoding="utf-8"))
     srcv=json.loads((ROOT/"releases/phase4/SOURCE_VERSIONS.json").read_text(encoding="utf-8"))
     lic=json.loads((ROOT/"data/licences/licence_verification_phase2.json").read_text(encoding="utf-8"))
+    # The phase 2 artefact records what was open in phase 2 and is kept as that record. What the
+    # interface must show is what is open now, which lives in the governance file: the code and
+    # data licences have since been decided and the share-alike question closed, and a reader
+    # told otherwise would be reading a statement this project no longer makes.
+    _decisions=json.loads((ROOT/"governance/RELEASE_DECISIONS_PENDING.json")
+                          .read_text(encoding="utf-8"))["fields"]
+    _labels={"DERIVED_DATA_REVIEW_STATUS":
+               ("Derived-data redistribution",
+                "The copyright holder's decision on what this project redistributes from its "
+                "sources. The material for it is docs/DERIVED_DATA_REVIEW_PACKET.md."),
+             "STABLE_CURATED_RELEASE_GATE":
+               ("Stable curated release",
+                "A stable release may not be called fully curated or independently validated "
+                "until the outstanding review decisions are taken and the contact rule is "
+                "reference-tested beyond the single cell it was validated in.")}
+    lic["release_gates_still_open"]=[
+        {"gate":key,"label":_labels[key][0],
+         "status":_decisions[key].get("resolution") or "open",
+         "note":_labels[key][1]}
+        for key in _labels
+        if (_decisions.get(key) or {}).get("resolution") not in ("settled", None)]
     UNIV_by_pdb=defaultdict(list)
     for u in UNIV: UNIV_by_pdb[u["pdb_id"]].append(u)
     obs_by_pdb=defaultdict(list)
@@ -781,6 +802,46 @@ def main()->int:
     # first used, so the landing payload is unchanged.
     chem=json.loads((ENRICH/"ligand_chemistry.json").read_text(encoding="utf-8"))
     gfiles["ligand_chemistry.json"]=wj(G/"ligand_chemistry.json",chem)
+    # Fetched only when a reader opens the similarity search, so it does not weigh on a
+    # visit that never uses it.
+    fps=json.loads((ENRICH/"ligand_fingerprints.json").read_text(encoding="utf-8"))
+    # Where each component is actually seen. A similarity hit is only useful if it leads to the
+    # structures carrying it, so every record names the family to open and a representative
+    # entry, sharpest first.
+    seen={}; by_structure={}
+    for fam_dir in sorted((WEB/"families").glob("*/structures.json")):
+        slug=fam_dir.parent.name
+        for row in json.loads(fam_dir.read_text(encoding="utf-8"))["structures"]:
+            for obs in row.get("observations") or []:
+                for code in obs.get("ligand_components") or []:
+                    entry=seen.setdefault(code,{})
+                    bucket=entry.setdefault(slug,[])
+                    bucket.append((row.get("resolution") if row.get("resolution") is not None else 99,
+                                   row["pdb_id"]))
+                    codes=by_structure.setdefault(row["pdb_id"],[])
+                    if code not in codes: codes.append(code)
+    chem_names={r["ccd"]:(r.get("name") or "") for r in chem.get("records",[])}
+    chem_smiles={r["ccd"]:(r.get("raw_smiles") or "") for r in chem.get("records",[])}
+    chem_scaffold={r["ccd"]:(r.get("scaffold") or "") for r in chem.get("records",[])}
+    for record in fps.get("records",[]):
+        record["name"]=chem_names.get(record["ccd"],"")
+        # Carried so a hit can be drawn beside the query and their shared ring system marked,
+        # without a second payload for what is already computed.
+        record["smiles"]=chem_smiles.get(record["ccd"],"")
+        record["scaffold"]=chem_scaffold.get(record["ccd"],"")
+        places=seen.get(record["ccd"]) or {}
+        record["seen_in"]=[{"family":slug,
+                            "structures":len(rows),
+                            "pdb_id":sorted(rows)[0][1]}
+                           for slug,rows in sorted(places.items(), key=lambda kv:-len(kv[1]))]
+    # Which components each deposition holds, so a reader can name a PDB entry and have its
+    # ligand taken as the query. The viewer bundle does not carry the component codes.
+    fps["by_structure"]=dict(sorted(by_structure.items()))
+    gfiles["ligand_fingerprints.json"]=wj(G/"ligand_fingerprints.json",fps)
+    motif_search=ROOT/"data/intermediate/phase5/motif_search.json"
+    if motif_search.is_file():
+        gfiles["motif_search.json"]=wj(G/"motif_search.json",
+          json.loads(motif_search.read_text(encoding="utf-8")))
     gfiles["chemistry_catalog.json"]=wj(G/"chemistry_catalog.json",
       json.loads((ROOT/"config/enrichment/chemistry_catalog.json").read_text(encoding="utf-8")))
     gfiles["ligand_chemistry_audit.json"]=wj(G/"ligand_chemistry_audit.json",

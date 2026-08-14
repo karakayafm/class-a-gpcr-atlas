@@ -1,8 +1,9 @@
 # Third-party notices
 
-The Class A GPCR Atlas application ships one third-party file, `vendor/ngl.js`. That file is a
-bundle: it contains NGL itself and several libraries NGL builds on, each under its own licence.
-Every notice below is reproduced because the corresponding licence requires it.
+The Class A GPCR Atlas application ships third-party code in `vendor/`: `ngl.js`, which is a
+bundle containing NGL itself and several libraries NGL builds on, and `rdkit/`, the RDKit
+WebAssembly build used for the similarity search. Every notice below is reproduced because the
+corresponding licence requires it.
 
 This file covers **software only**. Data sources and their licences are listed separately in the
 application's reference panel and in `reports/phase6a/DATA_DISTRIBUTION_MATRIX.csv`.
@@ -161,4 +162,47 @@ Kdtree
 @author Roman Bolzern <roman.bolzern@fhnw.ch>, 2013
 @author I4DS http://www.fhnw.ch/i4ds, 2013
 @license MIT License <http://www.opensource.org/licenses/mit-license.php>
+```
+
+---
+
+## RDKit (JavaScript / WebAssembly build) 2025.03.2
+
+- Source: `https://unpkg.com/@rdkit/rdkit@2025.3.2-1.0.0/dist/`
+- `RDKit_minimal.js` SHA-256: `75b2d2a82e00a57dccdf830d9af0b80155f8d2d2d8837bd7466c79a565272707`
+- `RDKit_minimal.wasm` SHA-256: `0913b06774eb29d1c059416c802f2b9f60799173b525a97de7aa7cd4fb2c5794`
+- Retrieved 2026-08-14, distributed unmodified.
+- Used in the browser to parse a query SMILES, compute its Morgan fingerprint and draw the
+  structure comparison. It runs entirely on the reader's machine; nothing is transmitted.
+
+```
+BSD 3-Clause License
+
+Copyright (c) 2021-2022, Valence Discovery Inc., Greg Landrum, Paolo Tosco, and other RDKit contributors
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ```
