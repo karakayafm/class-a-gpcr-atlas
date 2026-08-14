@@ -635,6 +635,21 @@ td.eff-warning_only { color:var(--muted); }
 .chem-facet[open] > .chem-checks [data-pattern^="N"] > span:nth-child(2) {
   font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11.5px; word-break:break-all; }
 .chem-facet-note { margin:6px 10px 8px; font-size:11px; line-height:1.5; color:var(--muted); }
+
+.sim-input { width:100%; min-width:0; box-sizing:border-box; font-family:ui-monospace,SFMono-Regular,
+  Menlo,monospace; font-size:11.5px; }
+.sim-run { margin-top:6px; }
+.sim-status { margin:6px 0 0; }
+/* Tall enough that an opened comparison is not cut in half by the scroll box it sits in. */
+.sim-results { display:grid; gap:3px; max-height:min(60vh,520px); overflow-y:auto;
+  scrollbar-gutter:stable; margin-top:6px; }
+.sim-hit { display:grid; grid-template-columns:auto auto minmax(0,1fr); gap:8px; align-items:baseline;
+  text-align:left; padding:5px 7px; border:1px solid var(--line); border-radius:7px;
+  background:var(--panel); color:var(--ink); cursor:pointer; font-size:12px; }
+.sim-hit:hover { border-color:var(--accent); }
+.sim-score { font-variant-numeric:tabular-nums; font-weight:700; min-width:3.2em; }
+.sim-ccd { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11.5px; }
+.sim-name { color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .chem-check .chem-count { margin-left:auto; color:var(--muted); font-size:11px;
   font-variant-numeric:tabular-nums; }
 .chem-range { display:flex; align-items:center; gap:5px; flex-wrap:wrap; margin:4px 0; font-size:12px; }
@@ -663,20 +678,161 @@ td.eff-warning_only { color:var(--muted); }
 
 /* Background switch: one control with an on/off state, in place of two buttons that looked
    as though neither had to be chosen. */
-.viewer-switch { display:flex; align-items:center; gap:8px; width:100%;
+/* Sits inline with the tool buttons rather than claiming a row of its own: it is one more
+   control, and at full width it read as a section heading. */
+.viewer-switch { display:inline-flex; align-items:center; gap:7px;
   border:1px solid var(--line); border-radius:8px; background:var(--panel); color:var(--ink);
-  padding:6px 10px; font:inherit; font-size:13px; cursor:pointer; }
+  padding:5px 9px; font:inherit; font-size:12.5px; cursor:pointer; }
 .viewer-switch:hover { border-color:var(--accent); }
 .viewer-switch:focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
-.viewer-switch-label { flex:1; text-align:left; }
-.viewer-switch-track { flex:none; width:34px; height:18px; border-radius:999px;
+.viewer-switch-label { text-align:left; white-space:nowrap; }
+.viewer-switch-track { flex:none; width:28px; height:15px; border-radius:999px;
   background:var(--line); position:relative; transition:background .15s ease; }
-.viewer-switch-knob { position:absolute; top:2px; left:2px; width:14px; height:14px;
+.viewer-switch-knob { position:absolute; top:2px; left:2px; width:11px; height:11px;
   border-radius:50%; background:var(--panel); box-shadow:0 1px 2px rgba(0,0,0,.3);
   transition:transform .15s ease; }
 .viewer-switch.is-on .viewer-switch-track { background:var(--accent); }
-.viewer-switch.is-on .viewer-switch-knob { transform:translateX(16px); }
+.viewer-switch.is-on .viewer-switch-knob { transform:translateX(13px); }
 
 /* Globe rather than the word "Lang", which stayed English whichever language was selected. */
 .lang-label { display:inline-flex; align-items:center; cursor:pointer; }
 .globe-icon { display:block; }
+
+/* ---- motif explorer ------------------------------------------------------------------- */
+.motif-controls { display:flex; flex-wrap:wrap; gap:16px; margin:10px 0 14px; align-items:start; }
+.motif-controls > .filter-field { min-width:220px; }
+.motif-query-field { min-width:280px; }
+.motif-query { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+.motif-query-field small { margin-top:3px; font-size:10.5px; }
+.motif-bad { color:var(--warn-ink); background:var(--warn-bg); padding:1px 7px; border-radius:999px;
+  font-size:11px; }
+.motif-strip { display:flex; flex-wrap:wrap; gap:7px; margin:0 0 14px; }
+.motif-tab { display:inline-flex; align-items:center; gap:9px; padding:7px 11px; cursor:pointer;
+  border:1px solid var(--line); border-radius:9px; background:var(--panel); color:var(--ink);
+  font-size:12.5px; font-weight:600; }
+.motif-tab:hover { border-color:var(--accent); }
+.motif-tab.active { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+.motif-tab.active .tab-count { background:rgba(255,255,255,.24); color:inherit; }
+/* No overflow container here: it would clip the help popover that opens from the column head.
+   The table is allowed to set its own minimum width and the page scrolls if it must. */
+.motif-table { margin-bottom:16px; }
+.motif-table .metric-help-wrap { position:relative; }
+/* This popover hangs from a column head at the top of the table, so it opens downward and to
+   the left: upward it would sit over the controls, and anchored at left:0 it ran off the page. */
+.motif-table .site-help-popover { width:min(420px,80vw); left:auto; right:0;
+  bottom:auto; top:calc(100% + 7px); }
+.motif-table .site-help-popover::after { left:auto; right:18px; top:auto; bottom:100%;
+  border-top-color:transparent; border-bottom-color:var(--panel); }
+.motif-table table { width:100%; }
+.motif-dist { display:flex; flex-wrap:wrap; gap:4px; }
+.motif-chip { display:inline-flex; align-items:center; gap:5px; padding:2px 7px; cursor:pointer;
+  border:1px solid var(--line); border-radius:999px; background:var(--panel); color:var(--ink);
+  font-size:11.5px; }
+.motif-chip:hover { border-color:var(--accent); }
+.motif-chip.active { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+.motif-chip[class*="aa-"] .tab-count { background:rgba(0,0,0,.07); }
+.motif-chip.active .tab-count { background:rgba(255,255,255,.24); color:inherit; }
+/* Engineered mutation is a property of the construct, not the receptor, and is marked apart
+   from the sequence-variation chips so the two are never read as the same statement. */
+.motif-chip.mutation { border-color:var(--warn-ink); color:var(--warn-ink); background:var(--warn-bg); }
+.motif-chip.mutation.active { background:var(--warn-ink); color:var(--warn-bg); }
+.motif-list { height:min(46vh,460px); }
+.motif-item .result-ligand { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11.5px; }
+
+/* ---- similarity panel ------------------------------------------------------------------
+   Its own tint, cooler than the amber of the chemistry filters beneath it: this is the entry
+   point for a reader who arrives holding a molecule, and it should read as a different kind of
+   thing from the facets that narrow an existing list. */
+:root { --sim-panel:#e8f4ee; --sim-line:#b9ddca; --sim-ink:#1c5c3c; }
+:root[data-theme="dark"] { --sim-panel:#16241d; --sim-line:#2c4a39; --sim-ink:#7fc9a2; }
+.sim-panel { margin:0 0 12px; border:1px solid var(--sim-line); border-radius:12px;
+  background:var(--sim-panel); }
+.sim-panel > summary { cursor:pointer; padding:11px 14px; font-size:12.5px; font-weight:700;
+  letter-spacing:.3px; text-transform:uppercase; color:var(--sim-ink);
+  display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.sim-panel > summary::marker { content:""; }
+.sim-panel > summary::after { content:""; flex:none; width:7px; height:7px;
+  border-right:2px solid currentColor; border-bottom:2px solid currentColor;
+  transform:rotate(45deg) translate(-2px,-2px); transition:transform .15s ease; opacity:.7; }
+.sim-panel[open] > summary::after { transform:rotate(-135deg) translate(-2px,-2px); }
+.sim-body { padding:0 14px 12px; }
+.sim-label { display:block; font-size:10px; text-transform:uppercase; letter-spacing:.07em;
+  color:var(--muted); margin-bottom:3px; }
+.sim-or { margin-top:12px; }
+.sim-pdb-row { display:flex; gap:6px; }
+.sim-pdb { width:6em; flex:none; font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  text-transform:uppercase; }
+.sim-note { margin:10px 0 0; font-size:11px; line-height:1.5; color:var(--muted); }
+.sim-hit { grid-template-columns:auto auto minmax(0,1fr) auto; text-decoration:none; }
+.sim-where { flex:none; color:var(--muted); font-size:11px; white-space:nowrap; }
+
+/* Family label on a motif card: it identifies where the structure lives and is read as often as
+   the receptor name, so it is set at the same size rather than as a footnote. */
+.motif-item .result-line small { font-size:12px; color:var(--accent); }
+.motif-legend { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:0 0 10px; }
+.motif-legend-item { padding:2px 9px; border-radius:999px; font-size:11px;
+  border:1px solid var(--line); }
+/* Side-chain classes. Hues laid out at even spacing in CIELAB at fixed lightness, so no two
+   classes sit closer than dE 14 — the first attempt put polar, basic and glycine within dE 5 of
+   one another, which is below what anyone can separate at chip size. Glycine is neutral by
+   construction: it is the residue with no side chain to classify. */
+:root {
+  --aa-hydrophobic:#e3d191; --aa-hydrophobic-line:#a89639;
+  --aa-aromatic:#e6ddff;    --aa-aromatic-line:#a99dde;
+  --aa-polar:#b2eee8;       --aa-polar-line:#39b7b0;
+  --aa-acidic:#ffd4d8;      --aa-acidic-line:#e98b96;
+  --aa-basic:#c5e6ff;       --aa-basic-line:#64ace5;
+  --aa-glycine:#e2e2e2;     --aa-glycine-line:#a8a8a8;
+  --aa-proline:#ffe5d0;     --aa-proline-line:#e7a07e;
+}
+:root[data-theme="dark"] {
+  --aa-hydrophobic:#453d1c; --aa-hydrophobic-line:#6d6029;
+  --aa-aromatic:#3f3a58;    --aa-aromatic-line:#655c94;
+  --aa-polar:#034642;       --aa-polar-line:#00716c;
+  --aa-acidic:#5e3036;      --aa-acidic-line:#9b4a55;
+  --aa-basic:#1d415b;       --aa-basic-line:#0f699a;
+  --aa-glycine:#3e3e3e;     --aa-glycine-line:#6f6f6f;
+  --aa-proline:#63402c;     --aa-proline-line:#a06243;
+}
+.aa-hydrophobic { background:var(--aa-hydrophobic); border-color:var(--aa-hydrophobic-line); }
+.aa-aromatic    { background:var(--aa-aromatic);    border-color:var(--aa-aromatic-line); }
+.aa-polar       { background:var(--aa-polar);       border-color:var(--aa-polar-line); }
+.aa-acidic      { background:var(--aa-acidic);      border-color:var(--aa-acidic-line); }
+.aa-basic       { background:var(--aa-basic);       border-color:var(--aa-basic-line); }
+.aa-glycine     { background:var(--aa-glycine);     border-color:var(--aa-glycine-line); }
+.aa-proline     { background:var(--aa-proline);     border-color:var(--aa-proline-line); }
+:root[data-theme="dark"] .motif-chip[class*="aa-"],
+:root[data-theme="dark"] .motif-legend-item { color:var(--ink); }
+
+/* ---- guide ------------------------------------------------------------------------------ */
+.guide { max-width:78ch; }
+.guide-lead { font-size:15px; color:var(--muted); }
+/* The interpretation limits lead the page rather than closing it: they qualify everything
+   below, and a caveat placed last is read last or not at all. */
+.guide-caution { margin:18px 0 26px; padding:14px 16px; border-radius:12px;
+  border:1px solid var(--warn-ink); background:var(--warn-bg); }
+.guide-caution h3 { margin:0 0 8px; font-size:13px; text-transform:uppercase; letter-spacing:.05em;
+  color:var(--warn-ink); }
+.guide-caution ul { margin:0; padding-left:18px; }
+.guide-caution li { margin:6px 0; line-height:1.55; }
+.guide-panel { margin:0 0 22px; padding-bottom:18px; border-bottom:1px solid var(--line); }
+.guide-panel:last-child { border-bottom:0; }
+.guide-panel h3 { margin:0 0 6px; }
+.guide-facets { display:grid; grid-template-columns:auto minmax(0,1fr); gap:4px 14px; margin:10px 0 0; }
+.guide-facets dt { font-size:10.5px; text-transform:uppercase; letter-spacing:.06em;
+  color:var(--muted); padding-top:3px; }
+.guide-facets dd { margin:0; line-height:1.55; }
+@media (max-width:640px) { .guide-facets { grid-template-columns:minmax(0,1fr); }
+  .guide-facets dt { padding-top:8px; } }
+
+.sim-compare-wrap { margin:2px 0 6px; }
+.sim-compare-wrap > summary { cursor:pointer; font-size:11px; color:var(--accent);
+  padding:2px 0 2px 4px; }
+.sim-compare { display:flex; flex-wrap:wrap; gap:8px; padding:6px 0 0; }
+.sim-figure { margin:0; flex:1 1 45%; min-width:0; text-align:center;
+  border:1px solid var(--line); border-radius:8px; background:#fff; padding:4px; }
+.sim-figure svg { max-width:100%; height:auto; }
+.sim-figure figcaption { font-size:10.5px; color:var(--muted); padding-top:2px;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.sim-compare-note { flex:1 1 100%; margin:2px 0 0; font-size:10.5px; line-height:1.5;
+  color:var(--muted); }
