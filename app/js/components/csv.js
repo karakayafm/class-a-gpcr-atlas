@@ -11,10 +11,12 @@ export function toCSV(columns, rows, meta) {
   for (const r of rows) out.push(columns.map(c => esc(typeof c.get === "function" ? c.get(r) : r[c.key])).join(","));
   return out.join("\n") + "\n";
 }
-export function download(name, text) {
-  const b = new Blob([text], { type: "text/csv;charset=utf-8" });
-  const u = URL.createObjectURL(b);
+export function downloadBlob(name, blob) {
+  const u = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = u; a.download = name; document.body.appendChild(a); a.click();
   setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(u); }, 0);
+}
+export function download(name, text) {
+  downloadBlob(name, new Blob([text], { type: "text/csv;charset=utf-8" }));
 }

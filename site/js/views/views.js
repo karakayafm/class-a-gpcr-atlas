@@ -3,7 +3,7 @@
 import { t, siteClassLabel, siteClassDefinition, stateLabel, warnLabel, transducerLabel,
   ligandClassLabel, biologicalTypeLabel, methodLabel, getLang } from "../core/i18n.js";
 import { el, clear, fmt, pct, paginate, debounce } from "../components/dom.js";
-import { toCSV, download } from "../components/csv.js";
+import { toCSV, download, downloadBlob } from "../components/csv.js";
 import { downloadXLSX } from "../components/xlsx.js";
 import * as L from "../data/loader.js";
 import * as ST from "../core/state.js";
@@ -1256,34 +1256,133 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
            Bemis-Murcko scaffold is matched into both structures and those atoms are highlighted:
            it is the shared ring system, not a maximum common substructure, and the caption says
            so. Where the scaffold does not match the query the pair is still drawn, unmarked. */
+        function drawPair(rec, width, height) {
+          const pattern = rec.scaffold ? mod.get_qmol(rec.scaffold) : null;
+          const one = (smiles, label) => {
+            const m = mod.get_mol(smiles);
+            if (!m || !m.is_valid || !m.is_valid()) { if (m) m.delete(); return null; }
+            let hit = { atoms: [], bonds: [] };
+            if (pattern) { try { hit = JSON.parse(m.get_substruct_match(pattern)) || hit; }
+                           catch (e) { hit = { atoms: [], bonds: [] }; } }
+            /* The enlarged pair is redrawn rather than scaled up: RDKit lays a molecule out for
+               the box it is given, and stretching the 200px drawing would thin the bonds and
+               leave the labels at thumbnail proportions. Stereo annotation stays off in both, so
+               the large drawing is the small one, only bigger. */
+            const svg = m.get_svg_with_highlights(JSON.stringify({
+              width, height, bondLineWidth: width > 300 ? 2 : 1, addStereoAnnotation: false,
+              atoms: hit.atoms || [], bonds: hit.bonds || [],
+              highlightColour: [0.62, 0.85, 0.72] }));
+            m.delete();
+            return { svg, label, matched: (hit.atoms || []).length > 0 };
+          };
+          const parts = [one(query, t("sim_compare_query")), one(rec.smiles, rec.ccd)];
+          if (pattern) pattern.delete();
+          return parts;
+        }
+        /* One image holding both molecules, so what leaves the browser is the comparison and not
+           two drawings the reader has to put side by side again. RDKit hands back a complete SVG
+           document each time; nesting them keeps each one's own coordinate system intact. */
+        function pairSvg(parts, width, height) {
+          const pad = 14, cap = 22;
+          const w = width * parts.length + pad * (parts.length + 1);
+          const h = height + cap + pad * 2;
+          const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
+                                    .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+          let body = "";
+          parts.forEach((part, i) => {
+            const x = pad + i * (width + pad);
+            body += part.svg.replace(/^[\s\S]*?(?=<svg)/, "").replace("<svg", `<svg x="${x}" y="${pad}"`);
+            body += `<text x="${x + width / 2}" y="${pad + height + 15}" text-anchor="middle" `
+                  + `font-family="system-ui,sans-serif" font-size="13" fill="#444">${esc(part.label)}</text>`;
+          });
+          return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" `
+               + `viewBox="0 0 ${w} ${h}"><rect width="100%" height="100%" fill="#ffffff"/>`
+               + body + `</svg>`;
+        }
+        function downloadPairSvg(parts, name, width, height) {
+          downloadBlob(name + ".svg",
+            new Blob([pairSvg(parts, width, height)], { type: "image/svg+xml;charset=utf-8" }));
+        }
+        // Rasterised at three times the drawing size, matching the viewer's own snapshot factor,
+        // so the image is usable in a figure rather than only on screen.
+        function downloadPairPng(parts, name, width, height) {
+          const url = URL.createObjectURL(
+            new Blob([pairSvg(parts, width, height)], { type: "image/svg+xml;charset=utf-8" }));
+          const image = new Image();
+          image.onload = () => {
+            const canvas = el("canvas");
+            canvas.width = image.width * 3; canvas.height = image.height * 3;
+            const ctx = canvas.getContext("2d");
+            ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+            URL.revokeObjectURL(url);
+            canvas.toBlob(blob => blob && downloadBlob(name + ".png", blob), "image/png");
+          };
+          image.onerror = () => URL.revokeObjectURL(url);
+          image.src = url;
+        }
+        /* Selecting either drawing opens both at a size worth reading, with the pair downloadable
+           as one image. The thumbnails are 200px because the rail is narrow; that is enough to see
+           that two molecules differ and not enough to see how. */
+        function openCompare(rec, note) {
+          const width = 430, height = 350;
+          const parts = drawPair(rec, width, height).filter(Boolean);
+          if (!parts.length) return;
+          const name = "compare_" + rec.ccd;
+          const opener = document.activeElement;
+          const overlay = el("div", { class: "sim-lightbox", role: "dialog", "aria-modal": "true",
+            "aria-label": t("sim_compare_open") });
+          const close = () => {
+            document.removeEventListener("keydown", onKey);
+            overlay.remove();
+            document.body.classList.remove("modal-open");
+            if (opener && opener.focus) opener.focus();
+          };
+          const onKey = e => { if (e.key === "Escape") { e.preventDefault(); close(); } };
+          const closeButton = el("button", { class: "btn close", type: "button",
+            "aria-label": t("sim_compare_close"), text: "✕", onclick: close });
+          const figures = el("div", { class: "sim-lightbox-figures" });
+          for (const part of parts) {
+            const cell = el("figure", { class: "sim-lightbox-figure" });
+            cell.innerHTML = part.svg;
+            cell.appendChild(el("figcaption", { text: part.label }));
+            figures.appendChild(cell);
+          }
+          overlay.appendChild(el("div", { class: "sim-lightbox-inner" }, [
+            el("header", { class: "sim-lightbox-head" }, [
+              el("h2", { text: t("sim_compare_open") + " — " + rec.ccd }),
+              el("button", { class: "btn small", type: "button", text: t("sim_compare_png"),
+                onclick: () => downloadPairPng(parts, name, width, height) }),
+              el("button", { class: "btn small", type: "button", text: t("sim_compare_svg"),
+                onclick: () => downloadPairSvg(parts, name, width, height) }),
+              closeButton ]),
+            figures,
+            el("p", { class: "sim-lightbox-note", text: note })]));
+          overlay.addEventListener("click", e => { if (e.target === overlay) close(); });
+          document.addEventListener("keydown", onKey);
+          document.body.classList.add("modal-open");
+          document.body.appendChild(overlay);
+          closeButton.focus();
+        }
         function comparison(rec) {
           const box = el("div", { class: "sim-compare" });
           try {
-            const pattern = rec.scaffold ? mod.get_qmol(rec.scaffold) : null;
-            const draw = (smiles, label) => {
-              const m = mod.get_mol(smiles);
-              if (!m || !m.is_valid || !m.is_valid()) { if (m) m.delete(); return null; }
-              let hit = { atoms: [], bonds: [] };
-              if (pattern) { try { hit = JSON.parse(m.get_substruct_match(pattern)) || hit; }
-                             catch (e) { hit = { atoms: [], bonds: [] }; } }
-              const svg = m.get_svg_with_highlights(JSON.stringify({
-                width: 200, height: 150, bondLineWidth: 1, addStereoAnnotation: false,
-                atoms: hit.atoms || [], bonds: hit.bonds || [],
-                highlightColour: [0.62, 0.85, 0.72] }));
-              m.delete();
-              const cell = el("figure", { class: "sim-figure" });
-              cell.innerHTML = svg;
-              cell.appendChild(el("figcaption", { text: label }));
-              return { cell, matched: (hit.atoms || []).length > 0 };
-            };
-            const left = draw(query, t("sim_compare_query"));
-            const right = draw(rec.smiles, rec.ccd);
-            if (pattern) pattern.delete();
-            if (left) box.appendChild(left.cell);
-            if (right) box.appendChild(right.cell);
-            box.appendChild(el("p", { class: "sim-compare-note",
-              text: left && right && left.matched && right.matched
-                ? t("sim_compare_shared") : t("sim_compare_none") }));
+            const parts = drawPair(rec, 200, 150);
+            const [left, right] = parts;
+            const note = left && right && left.matched && right.matched
+              ? t("sim_compare_shared") : t("sim_compare_none");
+            for (const part of parts) {
+              if (!part) continue;
+              const cell = el("figure", { class: "sim-figure", role: "button", tabindex: "0",
+                title: t("sim_compare_enlarge"),
+                onclick: () => openCompare(rec, note) });
+              cell.innerHTML = part.svg;
+              cell.appendChild(el("figcaption", { text: part.label }));
+              cell.addEventListener("keydown", e => {
+                if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openCompare(rec, note); } });
+              box.appendChild(cell);
+            }
+            box.appendChild(el("p", { class: "sim-compare-note", text: note }));
           } catch (error) { box.appendChild(el("p", { class: "muted small", text: t("sim_compare_failed") })); }
           return box;
         }
