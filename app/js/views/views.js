@@ -981,11 +981,47 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
 
   const rangeResets = [];
 
+  /* Clearing the chemistry filters was reachable only from the foot of the panel, below every
+     facet list and all nine descriptor sliders — a long scroll from the checkbox that was just
+     ticked. The same control is offered at the head as well. Both report how many filters are
+     in force and go inert when none are, so neither reads as a live button over an empty set. */
+  const chemResetButtons = [];
+  function chemistryActiveCount() {
+    return (filters.biologicalType ? 1 : 0)
+      + (filters.functionalGroups || []).length + (filters.ringSystems || []).length
+      + (filters.scaffolds || []).length
+      + Object.values(filters.ranges || {}).filter(Boolean).length;
+  }
+  function syncChemReset() {
+    const n = chemistryActiveCount();
+    for (const button of chemResetButtons) {
+      button.disabled = n === 0;
+      button.textContent = n ? t("chem_reset") + " (" + n + ")" : t("chem_reset");
+    }
+  }
+
   function buildChemistryControls(payload, catalog) {
     clear(chemBody);
     countNodes.clear(); coverageNodes = []; rangeResets.length = 0;
+    chemResetButtons.length = 0;
+    const resetAll = () => {
+      filters.biologicalType = ""; filters.functionalGroups = []; filters.ringSystems = [];
+      filters.scaffolds = [];
+      filters.ranges = {};
+      for (const input of chemBody.querySelectorAll("input[type=checkbox]")) input.checked = false;
+      for (const reset of rangeResets) reset();
+      typeSelect.value = "";
+      refilter();
+    };
+    const resetButton = () => {
+      const button = el("button", { class: "btn small chem-reset", type: "button",
+        text: t("chem_reset"), onclick: resetAll });
+      chemResetButtons.push(button);
+      return button;
+    };
     chemBody.appendChild(el("p", { class: "muted small", text:
       t("chem_provenance", { rdkit: payload.rdkit_version, catalog: payload.catalog_version }) }));
+    chemBody.appendChild(el("div", { class: "chem-reset-row" }, [resetButton()]));
 
     // Biological type reads a field every ligand has, so peptides are answerable here.
     const types = Array.from(new Set(d.structures.flatMap(x =>
@@ -1106,17 +1142,8 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
     }
     chemBody.appendChild(rangeBox);
 
-    const reset = el("button", { class: "btn small", type: "button", text: t("chem_reset"),
-      onclick: () => {
-        filters.biologicalType = ""; filters.functionalGroups = []; filters.ringSystems = [];
-        filters.scaffolds = [];
-        filters.ranges = {};
-        for (const input of chemBody.querySelectorAll("input[type=checkbox]")) input.checked = false;
-        for (const reset of rangeResets) reset();
-        typeSelect.value = "";
-        refilter();
-      } });
-    chemBody.appendChild(reset);
+    chemBody.appendChild(el("div", { class: "chem-reset-row" }, [resetButton()]));
+    syncChemReset();
   }
 
   /* Structural-similarity search. It sits above the chemistry filters because it is the entry
@@ -1159,27 +1186,46 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
     const pdbInput = el("input", { type: "text", class: "sim-pdb", spellcheck: "false",
       maxlength: "4", placeholder: t("sim_pdb_placeholder") });
     const status = el("p", { class: "sim-status muted small" });
+    const alternatives = el("div", { class: "sim-alt" });
     const results = el("div", { class: "sim-results" });
 
     /* Pull the ligand out of a deposition the reader names, so a structure can be the query
-       without them having to find its SMILES first. Where an entry holds several components the
-       first one carrying a structure in the atlas is taken, and the panel says which. */
+       without them having to find its SMILES first. An entry often holds more than one component
+       with a structure here — 5T1A holds two — and taking the first silently made the panel look
+       as though the entry had one ligand. The rest are offered as buttons: the reader can see
+       there was a choice and make it differently. The component code names each one, and the
+       chemical name on hover comes from the PDB chemical component dictionary, which is where
+       every name in this atlas comes from. */
     async function fromPdb() {
       const code = pdbInput.value.trim().toUpperCase();
-      clear(results);
+      clear(results); clear(alternatives);
       if (!/^[0-9A-Z]{4}$/.test(code)) { status.textContent = t("sim_pdb_invalid"); return; }
       status.textContent = t("sim_working");
       try {
         const payloadFp = fingerprints || (fingerprints = await L.loadLigandFingerprints());
         const chemistry = await L.loadLigandChemistry();
         const smilesOf = new Map((chemistry.records || []).map(r => [r.ccd, r.raw_smiles]));
+        const nameOf = new Map((chemistry.records || []).map(r => [r.ccd, plainName(r.name || "")]));
         const codes = ((payloadFp.by_structure || {})[code] || []).filter(c => smilesOf.get(c));
         if (!codes.length) { status.textContent = t("sim_pdb_no_ligand", { pdb: code }); return; }
-        const chosen = codes[0];
-        input.value = smilesOf.get(chosen);
-        status.textContent = t("sim_pdb_taken", { pdb: code, ccd: chosen });
-        await run(t("sim_pdb_taken", { pdb: code, ccd: chosen }) + " ");
+        await take(code, codes, codes[0], smilesOf, nameOf);
       } catch (error) { status.textContent = t("sim_pdb_failed", { pdb: code }); }
+    }
+    async function take(code, codes, chosen, smilesOf, nameOf) {
+      clear(alternatives);
+      input.value = smilesOf.get(chosen);
+      const message = t("sim_pdb_taken", { pdb: code, ccd: chosen });
+      status.textContent = message;
+      const others = codes.filter(c => c !== chosen);
+      if (others.length) {
+        alternatives.appendChild(el("span", { class: "muted small",
+          text: others.length === 1 ? t("sim_pdb_others_one") : t("sim_pdb_others", { n: others.length }) }));
+        for (const other of others)
+          alternatives.appendChild(el("button", { class: "sim-alt-pick", type: "button",
+            text: other, title: nameOf.get(other) || other,
+            onclick: () => take(code, codes, other, smilesOf, nameOf) }));
+      }
+      await run(message + " ");
     }
 
     async function run(prefix) {
@@ -1268,17 +1314,21 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
       } catch (error) { status.textContent = t("sim_failed"); }
     }
 
-    input.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); run(); } });
+    // A query typed as SMILES is no longer the one taken from an entry, so the other components
+    // of that entry stop being offered.
+    const runTyped = () => { clear(alternatives); run(); };
+    input.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); runTyped(); } });
     pdbInput.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); fromPdb(); } });
     body.appendChild(el("label", { class: "sim-label", text: t("sim_smiles_label") }));
     body.appendChild(input);
     body.appendChild(el("button", { class: "btn small sim-run", type: "button",
-      text: t("sim_run"), onclick: () => run() }));
+      text: t("sim_run"), onclick: runTyped }));
     body.appendChild(el("label", { class: "sim-label sim-or", text: t("sim_pdb_label") }));
     const pdbRow = el("div", { class: "sim-pdb-row" }, [pdbInput,
       el("button", { class: "btn small", type: "button", text: t("sim_pdb_run"), onclick: fromPdb })]);
     body.appendChild(pdbRow);
     body.appendChild(status);
+    body.appendChild(alternatives);
     body.appendChild(results);
     body.appendChild(el("p", { class: "sim-note", text: t("sim_note") }));
     box.appendChild(body);
@@ -1390,6 +1440,7 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
     filters.representativeOnly = was;
     repCount.textContent = String(representatives);
     refreshFacetCounts(rows);
+    syncChemReset();
     let selectedItem = null;
     for (const x of rows) {
       const o = observationFor(x);
@@ -2506,10 +2557,15 @@ export async function motifSearch(root) {
       table.appendChild(legend);
     }
     const grid = el("table", { class: "data compact" });
+    /* The two right-hand columns count different things — receptors on the left, structures on
+       the right — and a reader comparing "A 2" against a result list of six has no way to see
+       that from the numbers. Both carry a note saying which unit they are in. */
+    const HEAD_HELP = { [t("motif_variation")]: "motif_variation_help",
+                        [t("motif_mutation")]: "motif_mutation_help" };
     grid.appendChild(el("thead", {}, el("tr", {}, [t("motif_position"), t("motif_segment"),
       t("motif_consensus"), t("motif_variation"), t("motif_mutation")]
-      .map(x => el("th", {}, x === t("motif_mutation")
-        ? [document.createTextNode(x + " "), metricHelp(t("motif_mutation_help"))]
+      .map(x => el("th", {}, HEAD_HELP[x]
+        ? [document.createTextNode(x + " "), metricHelp(t(HEAD_HELP[x]))]
         : [document.createTextNode(x)])))));
     const body = el("tbody");
     for (const position of motif.positions) {
@@ -2522,7 +2578,7 @@ export async function motifSearch(root) {
           const tint = state.colour === "class" ? " aa-" + (RESIDUE_CLASS[residue] || "other") : "";
           dist.appendChild(el("button", { class: "motif-chip" + tint + (on ? " active" : ""),
             type: "button",
-            title: t("motif_pick_hint"),
+            title: t("motif_pick_hint_n", { n }),
             onclick: () => { state.picks = on ? state.picks.filter(x => !sameP(x, want))
                                               : state.picks.concat([want]); draw(); } },
             [el("strong", { text: residue }), el("span", { class: "tab-count", text: String(n) })]));
@@ -2550,6 +2606,14 @@ export async function motifSearch(root) {
     const rows = matching(active.picks);
     clear(listHead); clear(list);
     listHead.appendChild(el("strong", { text: rows.length + " " + t("results") }));
+    /* How many receptors those structures come from. The distribution above counts receptors and
+       this list counts structures, so a chip reading "A 2" answering with six results looks like
+       an error until the second number is on screen beside the first. */
+    if (active.picks.length) {
+      const receptors = new Set(rows.map(([, s]) => s.r)).size;
+      listHead.appendChild(el("span", { class: "muted small",
+        text: t("motif_receptors_n", { n: receptors }) }));
+    }
     if (active.picks.length) listHead.appendChild(el("span", { class: "muted small",
       text: active.picks.map(x => x.position + (x.kind === "mutation" ? "!" : x.residue)).join(" + ") }));
     if (active.bad.length) listHead.appendChild(el("span", { class: "motif-bad",

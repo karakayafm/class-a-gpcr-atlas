@@ -635,6 +635,12 @@ td.eff-warning_only { color:var(--muted); }
 .chem-facet[open] > .chem-checks [data-pattern^="N"] > span:nth-child(2) {
   font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11.5px; word-break:break-all; }
 .chem-facet-note { margin:6px 10px 8px; font-size:11px; line-height:1.5; color:var(--muted); }
+/* One reset at the head of the panel and one at its foot. The facet lists and the nine
+   descriptor sliders between them are long enough that a single control at either end is out of
+   reach from the other. Right-aligned so the pair sits on one edge rather than drifting. */
+.chem-reset-row { display:flex; justify-content:flex-end; margin:8px 0; }
+.chem-reset:disabled { opacity:.45; cursor:default; }
+.chem-reset:disabled:hover { border-color:var(--line); }
 
 .sim-input { width:100%; min-width:0; box-sizing:border-box; font-family:ui-monospace,SFMono-Regular,
   Menlo,monospace; font-size:11.5px; }
@@ -763,6 +769,14 @@ td.eff-warning_only { color:var(--muted); }
 .sim-pdb { width:6em; flex:none; font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
   text-transform:uppercase; }
 .sim-note { margin:10px 0 0; font-size:11px; line-height:1.5; color:var(--muted); }
+/* The other components of a named entry. Offered rather than described, so switching the query
+   to one of them costs a click instead of a second lookup. */
+.sim-alt { display:flex; flex-wrap:wrap; align-items:center; gap:5px; margin:4px 0 0; }
+.sim-alt:empty { display:none; }
+.sim-alt-pick { padding:1px 7px; border:1px solid var(--line); border-radius:999px;
+  background:var(--panel); color:var(--ink); cursor:pointer; font-size:11px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+.sim-alt-pick:hover { border-color:var(--accent); color:var(--accent); }
 .sim-hit { grid-template-columns:auto auto minmax(0,1fr) auto; text-decoration:none; }
 .sim-where { flex:none; color:var(--muted); font-size:11px; white-space:nowrap; }
 
@@ -825,10 +839,24 @@ td.eff-warning_only { color:var(--muted); }
 @media (max-width:640px) { .guide-facets { grid-template-columns:minmax(0,1fr); }
   .guide-facets dt { padding-top:8px; } }
 
-.sim-compare-wrap { margin:2px 0 6px; }
-.sim-compare-wrap > summary { cursor:pointer; font-size:11px; color:var(--accent);
-  padding:2px 0 2px 4px; }
-.sim-compare { display:flex; flex-wrap:wrap; gap:8px; padding:6px 0 0; }
+/* The comparison belongs to the hit above it, but as plain accent-coloured text between two
+   bordered cards it read as loose text with no owner. Indenting it under its own hit and running
+   a rule down the left binds the two; the extra space below separates it from the next hit. The
+   chevron says the line opens something rather than being a label. */
+.sim-compare-wrap { margin:0 0 4px 16px; border-left:2px solid var(--line); }
+.sim-compare-wrap + .sim-hit { margin-top:7px; }
+.sim-compare-wrap[open] { border-left-color:var(--accent); }
+.sim-compare-wrap > summary { display:flex; align-items:center; gap:6px; cursor:pointer;
+  font-size:11px; font-weight:650; color:var(--accent); padding:4px 8px; }
+.sim-compare-wrap > summary::marker { content:""; }
+.sim-compare-wrap > summary::-webkit-details-marker { display:none; }
+.sim-compare-wrap > summary::before { content:""; flex:none; width:6px; height:6px;
+  border-right:1.5px solid currentColor; border-bottom:1.5px solid currentColor;
+  transform:translateY(-1px) rotate(-45deg); transition:transform .12s ease; }
+.sim-compare-wrap[open] > summary::before { transform:translateY(-2px) rotate(45deg); }
+.sim-compare-wrap > summary:hover { text-decoration:underline; }
+.sim-compare-wrap > summary:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+.sim-compare { display:flex; flex-wrap:wrap; gap:8px; padding:2px 8px 8px; }
 .sim-figure { margin:0; flex:1 1 45%; min-width:0; text-align:center;
   border:1px solid var(--line); border-radius:8px; background:#fff; padding:4px; }
 .sim-figure svg { max-width:100%; height:auto; }
