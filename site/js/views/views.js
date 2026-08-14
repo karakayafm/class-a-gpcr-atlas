@@ -1336,7 +1336,7 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
         /* Selecting either drawing opens both at a size worth reading, with the pair downloadable
            as one image. The thumbnails are 200px because the rail is narrow; that is enough to see
            that two molecules differ and not enough to see how. */
-        async function openCompare(rec, note) {
+        async function openCompare(rec) {
           const width = 430, height = 350;
           const catalog = await L.loadChemistryCatalog().catch(() => null);
           const mols = [[query, t("sim_compare_query")], [rec.smiles, rec.ccd]].map(([smiles, label]) => {
@@ -1401,7 +1401,11 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
                 onclick: () => downloadPairSvg(parts(), name, width, height) }),
               closeButton ]),
             figures, chips,
-            el("p", { class: "sim-lightbox-note", text: note }),
+            /* Not the thumbnail's caption: that one says what the green is, and here the green
+               is whatever chip is selected. What stays true is what the scaffold option means,
+               or why there is not one. */
+            el("p", { class: "sim-lightbox-note", text: marks.some(m => m.key === "scaffold")
+              ? t("sim_scaffold_present") : t("sim_scaffold_absent") }),
             el("p", { class: "sim-lightbox-note", text: t("sim_marks_note") })]));
           paint();
           overlay.addEventListener("click", e => { if (e.target === overlay) close(); });
@@ -1478,11 +1482,11 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
               if (!part) continue;
               const cell = el("figure", { class: "sim-figure", role: "button", tabindex: "0",
                 title: t("sim_compare_enlarge"),
-                onclick: () => openCompare(rec, note) });
+                onclick: () => openCompare(rec) });
               cell.innerHTML = part.svg;
               cell.appendChild(el("figcaption", { text: part.label }));
               cell.addEventListener("keydown", e => {
-                if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openCompare(rec, note); } });
+                if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openCompare(rec); } });
               box.appendChild(cell);
             }
             box.appendChild(el("p", { class: "sim-compare-note", text: note }));
