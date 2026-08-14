@@ -1258,26 +1258,38 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
            so. Where the scaffold does not match the query the pair is still drawn, unmarked. */
         function drawPair(rec, width, height) {
           const pattern = rec.scaffold ? mod.get_qmol(rec.scaffold) : null;
-          const one = (smiles, label) => {
-            const m = mod.get_mol(smiles);
-            if (!m || !m.is_valid || !m.is_valid()) { if (m) m.delete(); return null; }
-            let hit = { atoms: [], bonds: [] };
-            if (pattern) { try { hit = JSON.parse(m.get_substruct_match(pattern)) || hit; }
-                           catch (e) { hit = { atoms: [], bonds: [] }; } }
-            /* The enlarged pair is redrawn rather than scaled up: RDKit lays a molecule out for
-               the box it is given, and stretching the 200px drawing would thin the bonds and
-               leave the labels at thumbnail proportions. Stereo annotation stays off in both, so
-               the large drawing is the small one, only bigger. */
-            const svg = m.get_svg_with_highlights(JSON.stringify({
+          const prepared = [[query, t("sim_compare_query")], [rec.smiles, rec.ccd]]
+            .map(([smiles, label]) => {
+              const m = mod.get_mol(smiles);
+              if (!m || !m.is_valid || !m.is_valid()) { if (m) m.delete(); return null; }
+              let found = { atoms: [], bonds: [] };
+              if (pattern) { try { found = JSON.parse(m.get_substruct_match(pattern)) || found; }
+                             catch (e) { found = { atoms: [], bonds: [] }; } }
+              return { mol: m, label, found, matched: (found.atoms || []).length > 0 };
+            });
+          /* The pattern is the hit's own Bemis-Murcko scaffold, so it always covers most of the
+             hit — that is what a scaffold is. Marking it there while the query carries no match
+             painted four fifths of one molecule green and none of the other, which reads as a
+             similarity map and is not one: the score comes from the whole-molecule fingerprint,
+             not from the marked atoms. The highlight means "this is what the two share", so it is
+             drawn only when both actually carry it, and otherwise the pair is drawn plain and the
+             caption says why. */
+          const shared = prepared.every(p => p && p.matched);
+          /* The enlarged pair is redrawn rather than scaled up: RDKit lays a molecule out for the
+             box it is given, and stretching the 200px drawing would thin the bonds and leave the
+             labels at thumbnail proportions. Stereo annotation stays off in both, so the large
+             drawing is the small one, only bigger. */
+          const parts = prepared.map(p => {
+            if (!p) return null;
+            const svg = p.mol.get_svg_with_highlights(JSON.stringify({
               width, height, bondLineWidth: width > 300 ? 2 : 1, addStereoAnnotation: false,
-              atoms: hit.atoms || [], bonds: hit.bonds || [],
+              atoms: shared ? p.found.atoms || [] : [], bonds: shared ? p.found.bonds || [] : [],
               highlightColour: [0.62, 0.85, 0.72] }));
-            m.delete();
-            return { svg, label, matched: (hit.atoms || []).length > 0 };
-          };
-          const parts = [one(query, t("sim_compare_query")), one(rec.smiles, rec.ccd)];
+            p.mol.delete();
+            return { svg, label: p.label };
+          });
           if (pattern) pattern.delete();
-          return parts;
+          return { parts, shared };
         }
         /* One image holding both molecules, so what leaves the browser is the comparison and not
            two drawings the reader has to put side by side again. RDKit hands back a complete SVG
@@ -1326,7 +1338,7 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
            that two molecules differ and not enough to see how. */
         function openCompare(rec, note) {
           const width = 430, height = 350;
-          const parts = drawPair(rec, width, height).filter(Boolean);
+          const parts = drawPair(rec, width, height).parts.filter(Boolean);
           if (!parts.length) return;
           const name = "compare_" + rec.ccd;
           const opener = document.activeElement;
@@ -1367,10 +1379,8 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
         function comparison(rec) {
           const box = el("div", { class: "sim-compare" });
           try {
-            const parts = drawPair(rec, 200, 150);
-            const [left, right] = parts;
-            const note = left && right && left.matched && right.matched
-              ? t("sim_compare_shared") : t("sim_compare_none");
+            const { parts, shared } = drawPair(rec, 200, 150);
+            const note = shared ? t("sim_compare_shared") : t("sim_compare_none");
             for (const part of parts) {
               if (!part) continue;
               const cell = el("figure", { class: "sim-figure", role: "button", tabindex: "0",
