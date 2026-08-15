@@ -938,7 +938,10 @@ td.eff-warning_only { color:var(--muted); }
 .lx-query .sim-status, .lx-query .sim-alt, .lx-query .sim-results, .lx-query .sim-note {
   grid-column:1/-1; }
 .lx-query .sim-results { max-height:min(42vh,380px); }
-.lx-query .sim-note { max-width:100ch; }
+/* A 700px measure left the notes stuck to the left of a 1400px panel, reading as a mistake rather
+   than as restraint. They flow into as many columns as fit at a readable width instead, so the
+   line length stays short and the block fills the box it is in. */
+.lx-query .sim-note { max-width:none; columns:46em; column-gap:40px; }
 
 .lx-roles { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:14px 0 10px; }
 .lx-role-tab { display:inline-flex; align-items:center; gap:7px; padding:4px 11px; cursor:pointer;
@@ -1167,3 +1170,10 @@ a.result-item:focus-visible { outline:2px solid var(--accent); outline-offset:-2
 /* The card's lines were set solid against each other; each is a separate fact and reads as one. */
 .lx-card-props, .lx-card-counts { line-height:1.6; }
 .lx-card-counts { margin-top:1px; }
+
+/* The rail's search is the way into the list by name, and it looked like any other field. */
+.lx-search { padding:7px 10px; font-size:13px; border:1px solid var(--line); border-radius:8px;
+  background:var(--panel); }
+.lx-search:focus { border-color:var(--accent);
+  outline:2px solid color-mix(in srgb, var(--accent) 30%, transparent); outline-offset:0; }
+.lx-search::placeholder { color:var(--muted); opacity:.85; }
