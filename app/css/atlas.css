@@ -963,7 +963,9 @@ td.eff-warning_only { color:var(--muted); }
 .lx-search { width:100%; box-sizing:border-box; }
 
 .lx-head { border-radius:8px 8px 0 0; gap:10px; }
-.lx-head .btn { margin-left:auto; }
+/* One choice of format, so the two sit together rather than being pushed to opposite ends by the
+   head's space-between. */
+.lx-exports { display:flex; gap:6px; margin-left:auto; }
 /* auto-fill, not auto-fit: a single result keeps a card's width instead of stretching to the
    full row, which read as a different kind of object. */
 .lx-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:10px;
@@ -1054,9 +1056,17 @@ td.eff-warning_only { color:var(--muted); }
 /* The score leads the card under a query: it is the answer to what was asked. */
 .lx-card-hit { display:flex; align-items:center; gap:8px; }
 .lx-card-score { font-size:14px; font-variant-numeric:tabular-nums; color:var(--sim-ink); }
-.lx-card-compare { margin-left:auto; padding:1px 8px; border:1px solid var(--line);
-  border-radius:999px; background:var(--panel); color:var(--accent); cursor:pointer; font-size:10.5px; }
-.lx-card-compare:hover { border-color:var(--accent); background:var(--accent); color:var(--accent-ink); }
+/* It was a pale outline against a white card and read as a caption. It is the action the card
+   exists to offer under a query, so it is drawn as one. */
+.lx-card-compare { margin-left:auto; padding:2px 9px; border:1px solid var(--accent);
+  border-radius:999px; background:var(--accent); color:var(--accent-ink); cursor:pointer;
+  font-size:10.5px; font-weight:650; white-space:nowrap; }
+.lx-card-compare:hover { filter:brightness(1.08); }
+.lx-card-compare:focus-visible { outline:2px solid var(--ink); outline-offset:2px; }
+/* The same action in the detail, where there is room to say what it compares against. */
+.lx-detail-compare { display:flex; align-items:center; gap:10px; margin:2px 0 12px; }
+.lx-detail-score { font-size:15px; font-weight:700; font-variant-numeric:tabular-nums;
+  color:var(--sim-ink); }
 .lx-role-tab.is-empty { opacity:.4; }
 .lx-card-pocket { display:flex; align-items:center; gap:6px; font-size:10.5px; color:var(--muted);
   text-decoration:none; }

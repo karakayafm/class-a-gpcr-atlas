@@ -594,6 +594,19 @@ export async function ligandExplorer(root, initialLigand) {
     body.appendChild(facts);
     detail.appendChild(body);
 
+    /* Under a query the detail offers the same comparison the card does. Opening a ligand to look
+       at it closely and then having to go back to its card to see it against the query was the
+       one move the page made a reader retrace. */
+    const detailHit = hitOf(entry);
+    if (detailHit) {
+      detail.appendChild(el("div", { class: "lx-detail-compare" }, [
+        el("span", { class: "lx-detail-score",
+          text: Math.round(detailHit.score * 100) + "%" }),
+        el("button", { class: "btn small lx-compare-btn", type: "button",
+          text: t("lx_compare_query"), title: t("sim_compare_enlarge"),
+          onclick: () => detailHit.openCompare() })]));
+    }
+
     const groupsFound = [...(entry.chem?.facets?.functional_groups || []),
                          ...(entry.chem?.facets?.ring_systems || [])];
     if (groupsFound.length) {
@@ -742,10 +755,11 @@ export async function ligandExplorer(root, initialLigand) {
     resultHead.appendChild(el("strong", { text: t("lx_results", { n: rows.length }) }));
     resultHead.appendChild(el("span", { class: "muted small",
       text: t("lx_results_evidence", { structures: structures.size, receptors: receptors.size }) }));
-    resultHead.appendChild(el("button", { class: "btn small", type: "button", text: t("export_csv"),
-      onclick: () => exportRows(rows, false) }));
-    resultHead.appendChild(el("button", { class: "btn small", type: "button", text: t("export_xlsx"),
-      onclick: () => exportRows(rows, true) }));
+    resultHead.appendChild(el("div", { class: "lx-exports" }, [
+      el("button", { class: "btn small", type: "button", text: t("export_csv"),
+        onclick: () => exportRows(rows, false) }),
+      el("button", { class: "btn small", type: "button", text: t("export_xlsx"),
+        onclick: () => exportRows(rows, true) })]));
 
     if (!rows.length) grid.appendChild(el("p", { class: "muted", text: t("no_results") }));
     for (const entry of rows.slice(0, shown)) grid.appendChild(card(entry));
