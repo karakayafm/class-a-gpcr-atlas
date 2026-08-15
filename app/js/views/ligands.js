@@ -625,8 +625,12 @@ export async function ligandExplorer(root, initialLigand) {
       for (const [role, structures] of [...byRole.entries()].sort((a, b) => b[1].size - a[1].size)) {
         const group = el("div", { class: "lx-role-group" });
         group.appendChild(el("span", { class: "mode-pill" + modeClass(role), text: role }));
+        /* Structures and receptors are different numbers and eighteen of the first can be one of
+           the second, so both are given rather than leaving the count to be read as either. */
+        const receptors = new Set([...structures.values()].map(x => x.receptor_entry_name)).size;
         group.appendChild(el("span", { class: "lx-role-caption",
-          text: t("lx_role_structures", { role, n: structures.size }) }));
+          text: t("lx_role_structures", { n: structures.size }) + " · "
+            + t(receptors === 1 ? "lx_role_receptors_one" : "lx_role_receptors", { n: receptors }) }));
         const list = el("div", { class: "lx-role-pdbs" });
         for (const [pdb, structure] of [...structures.entries()].sort())
           list.appendChild(el("a", { class: "lx-pdb" + modeClass(role), text: pdb,

@@ -2582,7 +2582,8 @@ export async function motifSearch(root) {
       list.appendChild(item);
     }
     if (rows.length > 400) list.appendChild(el("p", { class: "muted small",
-      text: t("motif_truncated", { shown: 400, total: rows.length }) }));
+      text: t("motif_truncated", { shown: 400, total: rows.length })
+        + (active.picks.length ? " " + t("motif_truncated_export", { total: rows.length }) : "") }));
   }
   draw();
   return wrap;
