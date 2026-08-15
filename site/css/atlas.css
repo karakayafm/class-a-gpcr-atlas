@@ -906,9 +906,10 @@ td.eff-warning_only { color:var(--muted); }
 .lx-stats { margin:14px 0 4px; }
 .lx-query { margin:14px 0 6px; }
 /* The similarity search opens the page here instead of sitting in a rail, so it is given the
-   width to be read as the entry point it is. */
-.lx-query .sim-panel { border:1px solid var(--line); border-radius:12px; background:var(--panel);
-  padding:10px 14px; }
+   width to be read as the entry point it is. It keeps its green: the tint is what separates a
+   thing you ask a question with from the filters and results around it, and on a white page at
+   full width it needs that more than it did in the rail, not less. Only the padding changes. */
+.lx-query .sim-panel { padding:10px 14px 4px; }
 /* The panel was built for a 300px rail, where one control per line is the only option. With the
    page's width the two ways in — a SMILES you type and a deposition you name — sit side by side
    as the alternatives they are, and everything they produce runs full width beneath them. */
