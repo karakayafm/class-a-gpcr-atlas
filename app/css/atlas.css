@@ -1032,6 +1032,17 @@ td.eff-warning_only { color:var(--muted); }
   color:var(--accent); text-decoration:none; background:var(--panel); }
 .lx-xref:hover { border-color:var(--accent); background:var(--accent); color:var(--accent-ink); }
 .lx-affinity-note { max-width:86ch; line-height:1.55; margin-top:6px; }
+/* The affinity table is the one table on this page whose numbers come from outside the atlas, so
+   its header carries a tint of its own rather than the grey every other header uses. The rows keep
+   the panel ground: the values are what is being read, and tinting them too would make the whole
+   block decoration. */
+:root { --aff-head:#e4ecf6; --aff-head-ink:#1f3f66; --aff-head-line:#c3d4e8; }
+:root[data-theme="dark"] { --aff-head:#182335; --aff-head-ink:#9dbde2; --aff-head-line:#2b3d56; }
+/* Written against `table.data.lx-affinity`, not `.lx-affinity`: the shared `table.data thead th`
+   rule is the more specific of the two and would otherwise keep its grey. */
+table.data.lx-affinity { border-color:var(--aff-head-line); }
+table.data.lx-affinity thead th { background:var(--aff-head); color:var(--aff-head-ink);
+  border-bottom-color:var(--aff-head-line); }
 .lx-affinity td strong { font-variant-numeric:tabular-nums; }
 .lx-pmids { display:flex; flex-wrap:wrap; gap:4px; }
 .lx-pmid { padding:1px 6px; border:1px solid var(--line); border-radius:6px; font-size:11px;
