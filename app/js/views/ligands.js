@@ -844,7 +844,11 @@ export async function ligandExplorer(root, initialLigand) {
         get: r => scoreOf(r).toFixed(4) }] : []),
       { key: "name", label: "ligand_name" },
       { key: "components", label: "chemical_components", get: r => r.components.join("+") },
-      { key: "roles", label: "roles_by_receptor_context",
+      /* Named for its unit. "roles_by_receptor_context" left a reader to work out that the number
+         beside a role counts receptors — and the note that says so is a # line the spreadsheet
+         hides. A role's count and the receptors column do not add up, because a receptor can carry
+         two roles, so the header has to carry the unit itself. */
+      { key: "roles", label: "roles_receptor_counts",
         get: r => roleSummary(r).map(x => x.role + ":" + x.contexts).join("; ") },
       { key: "receptors", label: "receptors", get: r => r.receptors.size },
       { key: "families", label: "families", get: r => r.families.size },
@@ -855,7 +859,7 @@ export async function ligandExplorer(root, initialLigand) {
       { key: "inchikey", label: "inchikey", get: r => r.chem?.inchikey ?? "" }];
     if (simResult && simResult.batch) { exportBatch(xlsx); return; }
     const meta = { release: L.getManifest().data_version || "", rows: rows.length,
-      unit: "one row per ligand entity; role counts are distinct receptors",
+      unit: "one row per ligand entity; a role's count is distinct receptors, so roles may sum above the receptors column when one receptor carries two roles",
       ...(simResult ? { query: simResult.query,
         ranking: "Tanimoto over Morgan fingerprints, radius 2, 2048 bits" } : {}) };
     const stem = simResult ? "ligands_similar" : "ligands";
