@@ -64,6 +64,38 @@ normal build reads the cache without reaching the network.
 Component name, formula and InChIKey come from the PDB Chemical Component Dictionary, not from
 these sources.
 
+## BindingDB
+
+- **Role:** reported binding affinity for ligand-receptor pairs the atlas already holds
+- **Licence as stated by the provider:** BindingDB states **two** licences for its contents, not
+  one. **Verified by this project on 2026-08-15** by direct retrieval of
+  `https://www.bindingdb.org/rwd/bind/info.jsp`, which reads: *"Data imported from ChEMBL are
+  provided under their Creative Commons Attribution-Share Alike 3.0 Unported License. All data
+  curated by BindingDB staff are provided under the Creative Commons Attribution 3.0 License."*
+- **What is fetched:** only `BindingDB_BindingDB_Articles_202608_tsv.zip`, the staff-curated
+  subset, SHA-256 `2529b1c5…`. The ChEMBL-derived records are a **separate download that is never
+  retrieved**. The remaining subsets — PDSPKi, Patents, PubChem, CSAR, ITC, Covid-19 — fall under
+  neither of the two stated categories, so their terms are not established by that sentence and
+  they are not used.
+- **Why the REST API is not used:** it returns no field identifying which measurement came from
+  where. Its columns are `affinity`, `affinity_type`, `doi`, `pmid`, `query`, `smile`, so a
+  response cannot be separated into the licence categories above and would mix CC BY-SA content
+  into the release.
+- **What the release carries:** measurement type, value in nM as a median with its range, the
+  number of measurements, and the PubMed identifiers. Values reported as a limit (`>`, `<`) are
+  not measurements and are excluded.
+- **Coverage:** 23 of 578 components with an InChIKey, across 29 receptors and 63 ligand-receptor
+  pairs. The interface states this where a compound has no value, so an absent value is not read
+  as an absent measurement.
+- **Attribution: required.** CC BY 3.0. Given on the Data sources page as *"Data from BindingDB
+  (https://www.bindingdb.org), CC BY 3.0."*
+- **Effect on this release's own licence:** none. CC BY 3.0 imposes attribution but no
+  share-alike, so the derived data stays under CC BY-NC 4.0. This is the reason the ChEMBL-derived
+  subset is excluded rather than merely deprioritised: CC BY-SA material cannot be relicensed
+  under a noncommercial term, and carrying any of it would change the licence of the whole
+  release. As with GPCRdb's CC BY 4.0, nothing in this project's licences may be read to restrict
+  a recipient's exercise of the rights CC BY 3.0 grants over the BindingDB material itself.
+
 **Share-alike: not applicable.** What is carried from these sources is which entry corresponds
 to which component, and where to find it. The preferred compound name each of them publishes is
 not carried, so no content under CC BY-SA 3.0 or CC BY-SA 4.0 is redistributed and their
