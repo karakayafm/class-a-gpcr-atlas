@@ -2500,6 +2500,45 @@ export async function motifSearch(root) {
       text: t("motif_partial_note") }));
     if (active.bad.length) listHead.appendChild(el("span", { class: "motif-bad",
       text: t("motif_query_bad", { tokens: active.bad.join(", ") }) }));
+    /* One row per structure, one column per position asked for, and the residue that structure
+       carries in the cell. Folding the whole match into a single text column would hand back a
+       string to be split again before anything could be sorted or counted, which is the opposite
+       of what a table is for. */
+    if (active.picks.length) {
+      const wanted = wantedFrom(active.picks);
+      const columns = [
+        { key: "pdb", label: t("col_pdb_id"), get: r => r.pdb },
+        { key: "receptor", label: t("col_receptor"), get: r => r.s.r },
+        { key: "receptor_name", label: t("col_receptor_name"), get: r => plainName(r.s.n) },
+        { key: "family", label: t("col_family"), get: r => nameOf.get(r.s.f) || r.s.f },
+        { key: "matched", label: t("col_positions_matched"), get: r => r.hits },
+        { key: "asked", label: t("col_positions_asked"), get: r => r.total },
+        // The positions themselves, in the order the motif runs.
+        ...wanted.map((group, i) => ({ key: "pos_" + group.position, label: group.position,
+          get: r => { const cell = r.per[i];
+            return cell ? cell.carried + (cell.swap ? " \u2192 " + cell.swap : "") : ""; } }))];
+      const meta = () => ({ release: L.getManifest().data_version || "",
+        scope: state.scope, rows: rows.length,
+        asked: wanted.map(g => g.position + " " + (g.kind === "mutation" ? "!"
+          : [...g.residues].sort().join("/"))).join("; "),
+        unit: "one row per structure; a cell is the residue that structure carries at that "
+              + "position, with the engineered substitution after an arrow where there is one" });
+      const exports = el("div", { class: "lx-exports" }, [
+        el("button", { class: "btn small", type: "button", text: t("export_csv"),
+          onclick: () => download("motif_matches.csv", toCSV(columns, rows, meta())) }),
+        el("button", { class: "btn small", type: "button", text: t("export_xlsx"),
+          onclick: () => downloadXLSX("motif_matches.xlsx", [
+            { name: "Matches", columns, rows },
+            { name: "Positions", columns: [
+              { key: "position", label: t("col_position"), get: g => g.position },
+              { key: "segment", label: t("col_segment"), get: g => payload.segments[g.position] || "" },
+              { key: "asked", label: t("col_asked_for"),
+                get: g => g.kind === "mutation" ? t("motif_mutated") : [...g.residues].sort().join(" / ") },
+              { key: "consensus", label: t("col_consensus"),
+                get: g => (variation[g.position] || {}).consensus || "" }],
+              rows: wanted }]) })]);
+      listHead.appendChild(exports);
+    }
     if (state.picks.length) listHead.appendChild(el("button", { class: "btn small", type: "button",
       text: t("motif_clear_pick"), onclick: () => { state.picks = []; draw(); } }));
     for (const row of rows.slice(0, 400)) {
