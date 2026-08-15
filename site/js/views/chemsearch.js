@@ -680,6 +680,9 @@ export function createSimilarityPanel(options) {
   const batchActions = el("div", { class: "sim-batch-actions" });
   const runButton = el("button", { class: "btn small btn-primary", type: "button", text: t("sim_batch_run"),
     onclick: async () => {
+      // Anything still sitting in the PDB box is added before the run: a reader who typed a code
+      // and pressed the button that says "run them all" meant that code to be one of them.
+      if (batchPdb.value.trim()) await addPdbCodes();
       batchStatus.textContent = t("sim_batch_working", { done: 0, total: 0 });
       let result;
       try {
@@ -753,8 +756,7 @@ export function createSimilarityPanel(options) {
 
   const batchPdb = el("input", { type: "text", class: "sim-batch-pdb", spellcheck: "false",
     placeholder: t("sim_batch_pdb_placeholder") });
-  const batchPdbButton = el("button", { class: "btn small", type: "button",
-    text: t("sim_batch_pdb_run"), onclick: async () => {
+  async function addPdbCodes() {
       const codes = batchPdb.value.toUpperCase().split(/[^0-9A-Z]+/).filter(x => x.length === 4);
       if (!codes.length) { batchStatus.textContent = t("sim_pdb_invalid"); return; }
       batchStatus.textContent = t("sim_working");
@@ -777,7 +779,9 @@ export function createSimilarityPanel(options) {
           + (missing.length ? " " + t("sim_batch_pdb_missing", { list: missing.join(", ") }) : "");
         batchPdb.value = "";
       } catch (error) { batchStatus.textContent = t("sim_failed"); }
-    } });
+  }
+  const batchPdbButton = el("button", { class: "btn small", type: "button",
+    text: t("sim_batch_pdb_run"), onclick: addPdbCodes });
 
   batchBox.appendChild(batchInput);
   batchBox.appendChild(el("div", { class: "sim-batch-feeds" }, [

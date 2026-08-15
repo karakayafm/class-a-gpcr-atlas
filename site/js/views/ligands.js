@@ -454,7 +454,11 @@ export async function ligandExplorer(root, initialLigand) {
   const grid = el("div", { class: "lx-grid" });
   const more = el("div", { class: "lx-more" });
   const detail = el("div", { class: "lx-detail" });
-  main.appendChild(queryBanner); main.appendChild(resultHead); main.appendChild(grid); main.appendChild(more); main.appendChild(detail);
+  /* The detail opens directly under the result head rather than below the grid. Selecting a card
+     used to scroll the reader to the foot of the page, which is a long way from the card they
+     clicked and further from the list they were working through. */
+  main.appendChild(queryBanner); main.appendChild(resultHead); main.appendChild(detail);
+  main.appendChild(grid); main.appendChild(more);
 
   let shown = CARD_PAGE;
   let selected = null;
@@ -525,7 +529,7 @@ export async function ligandExplorer(root, initialLigand) {
     for (const { role, contexts } of roleSummary(entry))
       roles.appendChild(el("span", { class: "lx-role",
         title: t("lx_role_contexts", { role, n: contexts }),
-        text: role + " · " + contexts }));
+        text: t(contexts === 1 ? "lx_role_chip_one" : "lx_role_chip", { role, n: contexts }) }));
     node.appendChild(roles);
     /* Weight and lipophilicity, then the strongest reported affinity where there is one. TPSA
        fills that third slot only when there is not: a measured constant is what a reader came for,
