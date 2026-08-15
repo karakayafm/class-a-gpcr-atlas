@@ -2617,6 +2617,26 @@ export async function guide(root) {
     ["isomers", ["read", "use", "limit"]],
     ["exports", ["read", "use", "limit"]],
   ];
+  /* The column dictionary. Every file the atlas writes is listed with its columns, and each column
+     is named by the same key the export itself uses — so a column cannot exist without a
+     definition here, and a definition cannot drift from the heading it explains. */
+  const FILES = [
+    ["guide_file_ligands", ["similarity", "name", "components", "roles_receptor_counts",
+      "roles_by_receptor", "receptors", "families", "structures", "pdb_ids", "mw", "mollogp",
+      "tpsa", "inchikey", "affinity", "affinity_source"]],
+    ["guide_file_contexts", ["name", "components", "receptor", "family", "role",
+      "binding_site_classes", "structures", "pdb_ids"]],
+    ["guide_file_affinity", ["name", "components", "receptor", "affinity_type",
+      "affinity_median_nm", "affinity_min_nm", "affinity_max_nm", "affinity_n", "pmids"]],
+    ["guide_file_batch", ["query", "query_smiles", "rank", "component", "component_name",
+      "tanimoto", "shares_hit_scaffold", "hit_scaffold", "shared_functional_groups",
+      "shared_ring_systems", "shared_pattern_count", "structures", "families", "example_pdb"]],
+    ["guide_file_batch_queries", ["query", "smiles", "hits", "status"]],
+    ["guide_file_motif", ["pdb_id", "receptor", "receptor_name", "family", "positions_matched",
+      "positions_asked", "engineered"]],
+    ["guide_file_motif_positions", ["position", "segment", "asked_for", "consensus"]],
+  ];
+
   for (const [key, parts] of panels) {
     const box = el("section", { class: "guide-panel" });
     box.appendChild(el("h3", { text: t("guide_" + key + "_title") }));
@@ -2629,5 +2649,25 @@ export async function guide(root) {
     box.appendChild(list);
     wrap.appendChild(box);
   }
+
+  wrap.appendChild(el("h3", { class: "guide-columns-head", text: t("guide_columns_title") }));
+  wrap.appendChild(el("p", { text: t("guide_columns_lead") }));
+  for (const [fileKey, columns] of FILES) {
+    const box = el("section", { class: "guide-panel guide-file" });
+    box.appendChild(el("h4", { text: t(fileKey) }));
+    box.appendChild(el("p", { class: "muted small", text: t(fileKey + "_what") }));
+    const table = el("table", { class: "data compact guide-column-table" });
+    table.appendChild(el("thead", {}, el("tr", {}, [t("guide_col_heading"), t("guide_col_meaning")]
+      .map(x => el("th", {}, x)))));
+    const body = el("tbody");
+    for (const column of columns)
+      body.appendChild(el("tr", {}, [
+        el("td", {}, [el("code", { text: t("col_" + column) })]),
+        el("td", { text: t("coldef_" + column) })]));
+    table.appendChild(body);
+    box.appendChild(table);
+    wrap.appendChild(box);
+  }
+  wrap.appendChild(el("p", { class: "guide-columns-note", text: t("guide_columns_encoding") }));
   return wrap;
 }
