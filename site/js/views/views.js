@@ -2365,16 +2365,26 @@ export async function motifSearch(root) {
     const parsed = parseQuery(state.query);
     return { picks: state.picks.concat(parsed.picks), bad: parsed.bad };
   }
+  /* Scored rather than filtered. Requiring every position to hold answered a four-position motif
+     with nothing at all the moment one of them varied, which is the case worth seeing: a reader
+     asking about a motif wants to know which part of it moved and where. Structures matching some
+     of the positions are kept and ranked by how many, and each one says which position failed and
+     what it carries instead. A structure matching none is not an answer to the question and is
+     left out. */
   function matching(picks) {
     const rows = Object.entries(payload.structures)
       .filter(([, s]) => state.scope === "class_a" || s.f === state.scope);
-    if (!picks.length) return rows;
-    // Every requirement has to hold: the reader asked for a combination, not a union.
-    return rows.filter(([, s]) => picks.every(pick => {
-      const ch = s.s[posIndex.get(pick.position)];
-      return pick.kind === "mutation" ? ch >= "a" && ch <= "z"
-                                      : ch.toUpperCase() === pick.residue;
-    }));
+    if (!picks.length) return rows.map(([pdb, s]) => ({ pdb, s, per: [], hits: 0, total: 0 }));
+    return rows.map(([pdb, s]) => {
+      const per = picks.map(pick => {
+        const ch = s.s[posIndex.get(pick.position)];
+        const mutated = ch >= "a" && ch <= "z";
+        const ok = pick.kind === "mutation" ? mutated : ch.toUpperCase() === pick.residue;
+        return { pick, ok, carried: ch.toUpperCase(), swap: (s.m || {})[pick.position] || "" };
+      });
+      return { pdb, s, per, hits: per.filter(x => x.ok).length, total: picks.length };
+    }).filter(r => r.hits > 0)
+      .sort((a, b) => b.hits - a.hits || a.pdb.localeCompare(b.pdb));
   }
 
   function draw() {
@@ -2450,32 +2460,49 @@ export async function motifSearch(root) {
        this list counts structures, so a chip reading "A 2" answering with six results looks like
        an error until the second number is on screen beside the first. */
     if (active.picks.length) {
-      const receptors = new Set(rows.map(([, s]) => s.r)).size;
+      const receptors = new Set(rows.map(r => r.s.r)).size;
       listHead.appendChild(el("span", { class: "muted small",
         text: t("motif_receptors_n", { n: receptors }) }));
+      // How many carry the whole motif, said plainly, because the list no longer implies it.
+      const complete = rows.filter(r => r.hits === r.total).length;
+      listHead.appendChild(el("span", { class: "muted small",
+        text: t("motif_complete_n", { n: complete, total: active.picks.length }) }));
     }
     if (active.picks.length) listHead.appendChild(el("span", { class: "muted small",
       text: active.picks.map(x => x.position + (x.kind === "mutation" ? "!" : x.residue)).join(" + ") }));
+    if (active.picks.length) list.appendChild(el("p", { class: "muted small motif-partial-note",
+      text: t("motif_partial_note") }));
     if (active.bad.length) listHead.appendChild(el("span", { class: "motif-bad",
       text: t("motif_query_bad", { tokens: active.bad.join(", ") }) }));
     if (state.picks.length) listHead.appendChild(el("button", { class: "btn small", type: "button",
       text: t("motif_clear_pick"), onclick: () => { state.picks = []; draw(); } }));
-    for (const [pdb, s] of rows.slice(0, 400)) {
-      // Wild type and, where the construct was engineered, what it carries instead. Naming only
-      // one of the two left it ambiguous which the letter referred to.
-      const detail = active.picks.map(pick => {
-        const ch = s.s[posIndex.get(pick.position)];
-        const wild = ch.toUpperCase();
-        const swap = (s.m || {})[pick.position];
-        return pick.position + " " + wild + (swap ? " \u2192 " + swap : "");
-      }).join(" · ");
-      list.appendChild(el("button", { class: "result-item motif-item", type: "button",
+    for (const row of rows.slice(0, 400)) {
+      const { pdb, s, per, hits, total } = row;
+      /* Position by position: what the structure carries there, and whether that is what was
+         asked for. Wild type and, where the construct was engineered, what it carries instead —
+         naming only one of the two left it ambiguous which the letter referred to. The positions
+         that failed are the reason a partial match is worth showing, so they are marked rather
+         than left for the reader to work out by comparing letters. */
+      const detail = el("span", { class: "motif-detail" });
+      for (const cell of per) {
+        detail.appendChild(el("span", { class: "motif-cell" + (cell.ok ? "" : " miss"),
+          title: cell.ok ? t("motif_cell_match") : t("motif_cell_miss", {
+            wanted: cell.pick.kind === "mutation" ? t("motif_mutated") : cell.pick.residue,
+            carried: cell.carried }),
+          text: cell.pick.position + " " + cell.carried + (cell.swap ? " \u2192 " + cell.swap : "") }));
+      }
+      const item = el("button", { class: "result-item motif-item", type: "button",
         onclick: () => navigate({ family: s.f, view: "structures", pdb }) }, [
         el("div", { class: "result-line" }, [
           el("strong", { text: pdb }),
           el("span", { title: plainName(s.n), text: plainName(s.n) }),
           el("small", { text: nameOf.get(s.f) || s.f })]),
-        el("div", { class: "result-ligand", text: s.r + (detail ? " · " + detail : "") })]));
+        el("div", { class: "result-ligand" }, [
+          total ? el("span", { class: "motif-score" + (hits === total ? " full" : ""),
+            title: t("motif_score_hint", { hits, total }),
+            text: hits + "/" + total }) : document.createTextNode(""),
+          el("span", { text: s.r }), detail ])]);
+      list.appendChild(item);
     }
     if (rows.length > 400) list.appendChild(el("p", { class: "muted small",
       text: t("motif_truncated", { shown: 400, total: rows.length }) }));

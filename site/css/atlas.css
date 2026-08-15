@@ -1147,3 +1147,16 @@ table.data.lx-affinity thead th { background:var(--aff-head); color:var(--aff-he
 .sim-file:focus-visible + .sim-file-button { outline:2px solid var(--accent); outline-offset:2px; }
 .sim-file-name { font-size:11px; color:var(--muted); overflow:hidden; text-overflow:ellipsis;
   white-space:nowrap; max-width:32ch; }
+/* A partial motif match: the score, and which positions failed. */
+.motif-score { flex:none; padding:1px 7px; border-radius:999px; font-size:10.5px; font-weight:700;
+  font-variant-numeric:tabular-nums; background:var(--chip); color:var(--muted); }
+.motif-score.full { background:var(--accent); color:var(--accent-ink); }
+.motif-detail { display:inline-flex; flex-wrap:wrap; gap:4px; }
+.motif-cell { padding:0 6px; border-radius:5px; background:var(--chip); font-size:10.5px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+/* A failed position is the reason the row is here, so it is marked rather than left to be
+   spotted by comparing letters. */
+.motif-cell.miss { background:#fff0f1; color:#a52d35; border:1px solid #dc6870; }
+:root[data-theme="dark"] .motif-cell.miss { background:#2a1a1c; color:#e0868c; border-color:#7a3b40; }
+.motif-item .result-ligand { display:flex; flex-wrap:wrap; align-items:center; gap:6px; }
+.motif-partial-note { padding:8px 12px; margin:0; border-bottom:1px solid var(--line); }
