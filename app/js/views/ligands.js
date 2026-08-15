@@ -187,7 +187,6 @@ export async function ligandExplorer(root, initialLigand) {
     clear(status); status.className = "notice"; status.textContent = L.errorMessage(error); return wrap;
   }
   status.remove();
-  wrap.appendChild(el("p", { class: "lx-lead", text: t("lx_lead") }));
 
   const all = [...index.ligands.values()];
   const hitOf = entry => simResult && entry.components.length === 1
@@ -209,16 +208,6 @@ export async function ligandExplorer(root, initialLigand) {
     families: new Set(), species: new Set(), states: new Set(), transducers: new Set(),
     methods: new Set(), affinity: new Set(), ranges: {}, query: "" };
 
-  /* ------------------------------------------------------------------ header numbers */
-  const statRow = el("div", { class: "summary-strip lx-stats" });
-  wrap.appendChild(statRow);
-  const statNodes = [];
-  for (const [key, labelKey] of [["ligands", "lx_stat_ligands"], ["receptors", "lx_stat_receptors"],
-    ["structures", "lx_stat_structures"], ["scaffolds", "lx_stat_scaffolds"]]) {
-    const value = el("strong", { text: "—" });
-    statRow.appendChild(el("div", { class: "summary-metric" }, [value, el("span", { text: t(labelKey) })]));
-    statNodes.push({ key, value });
-  }
 
   /* The query a reader arrives with a molecule for. It opens the page rather than sitting in a
      side rail, because on a page about compounds it is the first question, not an aside. */
@@ -778,15 +767,12 @@ export async function ligandExplorer(root, initialLigand) {
     for (const group of groups) paintGroup(group, rows);
     paintRoles(rows);
 
-    const receptors = new Set(), structures = new Set(), scaffolds = new Set();
+    // The result head is where these are stated; the tiles above repeated it a screen away.
+    const receptors = new Set(), structures = new Set();
     for (const entry of rows) {
       for (const r of entry.receptors) receptors.add(r);
       for (const p of entry.structures) structures.add(p);
-      if (entry.chem && entry.chem.scaffold) scaffolds.add(entry.chem.scaffold);
     }
-    const values = { ligands: rows.length, receptors: receptors.size,
-                     structures: structures.size, scaffolds: scaffolds.size };
-    for (const node of statNodes) node.value.textContent = String(values[node.key]);
 
     clear(resultHead); clear(grid); clear(more); clear(queryBanner);
     if (simResult) {

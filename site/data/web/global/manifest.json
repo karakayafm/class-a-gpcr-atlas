@@ -167,8 +167,8 @@
    "url": "global/references.json"
   },
   "release_metadata.json": {
-   "bytes": 1384,
-   "sha256": "a7313e2c595c2e279ae339707975de6f63f167df4e364b931c11b0cc30df45bb",
+   "bytes": 1711,
+   "sha256": "3831551f92476858eb41391752a136cf8bd942e78427786af07afccb5cf72e13",
    "url": "global/release_metadata.json"
   },
   "search_index.json": {

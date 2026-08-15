@@ -626,10 +626,12 @@ export function createSimilarityPanel(options) {
      Mol2 is not offered: this RDKit build exposes get_mol and get_mol_from_uint8array and carries
      no mol2 parser, so a .mol2 would fail with a message about SMILES that explained nothing. It
      is named as unsupported instead. */
-  const fileInput = el("input", { type: "file", class: "sim-file",
+  const fileName = el("span", { class: "sim-file-name" });
+  const fileInput = el("input", { type: "file", class: "sim-file", id: "sim-file-single",
     accept: ".sdf,.mol,.mdl,.sd,chemical/x-mdl-molfile,chemical/x-mdl-sdfile" });
   fileInput.addEventListener("change", async () => {
     const file = fileInput.files && fileInput.files[0];
+    fileName.textContent = file ? file.name : "";
     if (!file) return;
     clear(results); clear(alternatives);
     if (/\.mol2$/i.test(file.name)) { status.textContent = t("sim_file_mol2"); return; }
@@ -654,7 +656,9 @@ export function createSimilarityPanel(options) {
     } catch (error) { status.textContent = t("sim_file_failed", { name: file.name }); }
   });
   body.appendChild(el("label", { class: "sim-label sim-or", text: t("sim_file_label") }));
-  body.appendChild(fileInput);
+  body.appendChild(el("div", { class: "sim-file-row" }, [fileInput,
+    el("label", { class: "btn small sim-file-button", for: "sim-file-single",
+      text: t("sim_file_choose") }), fileName]));
   body.appendChild(el("label", { class: "sim-label sim-or" }, [
     document.createTextNode(t("sim_pdb_label") + " "),
     el("span", { class: "sim-tab-hint", text: t("sim_tab_hint") })]));
@@ -674,7 +678,7 @@ export function createSimilarityPanel(options) {
     placeholder: t("sim_batch_placeholder"), spellcheck: "false" });
   const batchStatus = el("p", { class: "sim-status muted small" });
   const batchActions = el("div", { class: "sim-batch-actions" });
-  const runButton = el("button", { class: "btn small", type: "button", text: t("sim_batch_run"),
+  const runButton = el("button", { class: "btn small btn-primary", type: "button", text: t("sim_batch_run"),
     onclick: async () => {
       batchStatus.textContent = t("sim_batch_working", { done: 0, total: 0 });
       let result;
@@ -710,10 +714,13 @@ export function createSimilarityPanel(options) {
     batchInput.value = (existing ? existing + "\n" : "") + lines.join("\n") + "\n";
     batchInput.scrollTop = batchInput.scrollHeight;
   };
+  const batchFileName = el("span", { class: "sim-file-name" });
   const batchFiles = el("input", { type: "file", class: "sim-file", multiple: true,
     accept: ".sdf,.mol,.mdl,.sd,chemical/x-mdl-molfile,chemical/x-mdl-sdfile" });
+  batchFiles.id = "sim-file-batch";
   batchFiles.addEventListener("change", async () => {
     const files = [...(batchFiles.files || [])];
+    batchFileName.textContent = files.length ? t("sim_file_count", { n: files.length }) : "";
     if (!files.length) return;
     batchStatus.textContent = t("sim_working");
     const added = [], failed = [];
@@ -774,7 +781,10 @@ export function createSimilarityPanel(options) {
 
   batchBox.appendChild(batchInput);
   batchBox.appendChild(el("div", { class: "sim-batch-feeds" }, [
-    el("label", { class: "sim-label", text: t("sim_batch_files_label") }), batchFiles,
+    el("label", { class: "sim-label", text: t("sim_batch_files_label") }),
+    el("div", { class: "sim-file-row" }, [batchFiles,
+      el("label", { class: "btn small sim-file-button", for: "sim-file-batch",
+        text: t("sim_file_choose_many") }), batchFileName]),
     el("label", { class: "sim-label", text: t("sim_batch_pdb_label") }),
     el("div", { class: "sim-pdb-row" }, [batchPdb, batchPdbButton])]));
   batchBox.appendChild(batchActions);

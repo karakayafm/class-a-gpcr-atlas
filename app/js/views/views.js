@@ -2156,12 +2156,36 @@ export async function cite(root, pdb, slug) {
 
   const panels = {
     atlas: () => {
+      /* The release has a DOI and a code licence; the panel used to say it had neither, because
+         both were decided after this text was written. The citation carries the version DOI, which
+         names this release exactly, and the concept DOI is offered beside it for citing whichever
+         release is current. */
+      const doi = rm.doi_version || rm.doi_concept;
       const text = "Class A GPCR Atlas, version " + m.version + " (pre-release). Data freeze " +
-        m.data_version + ".";
-      body.appendChild(el("p", { class: "muted", text: t("no_doi") }));
+        m.data_version + (doi ? ". https://doi.org/" + doi : "") + ".";
+      if (rm.doi_concept) {
+        const dois = el("p", { class: "muted" }, [
+          el("span", { text: t("cite_doi_version") + " " }),
+          el("a", { href: "https://doi.org/" + rm.doi_version, target: "_blank", rel: "noopener",
+            text: rm.doi_version }),
+          el("span", { text: " · " + t("cite_doi_concept") + " " }),
+          el("a", { href: "https://doi.org/" + rm.doi_concept, target: "_blank", rel: "noopener",
+            text: rm.doi_concept })]);
+        body.appendChild(dois);
+        body.appendChild(el("p", { class: "muted small",
+          text: rm["doi_note_" + lang] || rm.doi_note_en || "" }));
+      } else {
+        body.appendChild(el("p", { class: "muted", text: t("no_doi") }));
+      }
       body.appendChild(citationBlock(text, "cite_copy"));
-      body.appendChild(el("p", { class: "notice",
-        text: rm["code_licence_note_" + lang] || rm.code_licence_note_en }));
+      if (rm.code_licence && rm.code_licence !== "pending") {
+        body.appendChild(el("p", { class: "muted small" }, [
+          el("span", { text: t("cite_code_licence") + " " }),
+          rm.code_licence_url
+            ? el("a", { href: rm.code_licence_url, target: "_blank", rel: "noopener",
+                text: rm.code_licence })
+            : el("span", { text: rm.code_licence })]));
+      }
     },
     structure: async () => {
       // Without a family there is nothing to list, so send the reader somewhere they can pick one
