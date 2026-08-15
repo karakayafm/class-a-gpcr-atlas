@@ -45,7 +45,12 @@ function tanimoto(a, b) {
   for (let i = 0; i < a.length; i++) { both += POPCOUNT[a[i] & b[i]]; either += POPCOUNT[a[i] | b[i]]; }
   return either === 0 ? 0 : both / either;
 }
-export function createSimilarityPanel() {
+/* `onResults` lets a view take the hits over and render them itself. The panel keeps the query
+   controls and the status line; the caller gets each hit with the function that opens its
+   comparison, so the RDKit work stays here and only the presentation moves. Without the option
+   the panel renders its own list, which is what the structure view still wants. */
+export function createSimilarityPanel(options) {
+  const onResults = options && options.onResults;
   const box = el("details", { class: "sim-panel", open: true });
   box.appendChild(el("summary", {}, [el("span", { text: t("sim_title") })]));
   const body = el("div", { class: "sim-body" });
@@ -99,7 +104,7 @@ export function createSimilarityPanel() {
   async function run(prefix) {
     const query = input.value.trim();
     clear(results);
-    if (!query) { status.textContent = ""; return; }
+    if (!query) { status.textContent = ""; if (onResults) onResults(null); return; }
     status.textContent = (prefix || "") + t("sim_working");
     try {
       const [mod, payloadFp] = await Promise.all([
@@ -109,7 +114,7 @@ export function createSimilarityPanel() {
       const mol = mod.get_mol(query);
       if (!mol || !mol.is_valid || !mol.is_valid()) {
         if (mol) mol.delete();
-        status.textContent = t("sim_invalid"); return;
+        status.textContent = t("sim_invalid"); if (onResults) onResults(null); return;
       }
       const bits = mol.get_morgan_fp_as_uint8array(
         JSON.stringify({ radius: payloadFp.radius, nBits: payloadFp.bits }));
@@ -120,6 +125,7 @@ export function createSimilarityPanel() {
         .sort((a, b) => b.score - a.score).slice(0, 20);
       status.textContent = (prefix || "") +
         (scored.length ? t("sim_found", { n: scored.length }) : t("sim_none"));
+      const handOver = hits => onResults({ query, hits });
       /* What the two molecules have in common, drawn rather than asserted. The hit's
          Bemis-Murcko scaffold is matched into both structures and those atoms are highlighted:
          it is the shared ring system, not a maximum common substructure, and the caption says
@@ -368,6 +374,12 @@ export function createSimilarityPanel() {
         } catch (error) { box.appendChild(el("p", { class: "muted small", text: t("sim_compare_failed") })); }
         return box;
       }
+      if (onResults) {
+        // The caller draws them; the strip inside a query panel is the wrong place to work in.
+        handOver(scored.map(hit => ({ ccd: hit.rec.ccd, score: hit.score, rec: hit.rec,
+          openCompare: () => openCompare(hit.rec) })));
+        return;
+      }
       for (const hit of scored) {
         const place = hit.rec.seen_in[0];
         /* A hit opens where its structures are, in a new tab, so the list the reader was working
@@ -405,7 +417,7 @@ export function createSimilarityPanel() {
           results.appendChild(details);
         }
       }
-    } catch (error) { status.textContent = t("sim_failed"); }
+    } catch (error) { status.textContent = t("sim_failed"); if (onResults) onResults(null); }
   }
 
   // A query typed as SMILES is no longer the one taken from an entry, so the other components

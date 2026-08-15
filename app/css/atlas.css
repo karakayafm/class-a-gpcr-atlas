@@ -1040,3 +1040,27 @@ td.eff-warning_only { color:var(--muted); }
 
 .sim-file { width:100%; max-width:46ch; box-sizing:border-box; font-size:11.5px; }
 .lx-pdb { display:inline-block; text-decoration:none; }
+/* A query supersedes the default listing, so the page says so where the list begins. */
+.lx-banner { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+.lx-banner:empty { display:none; }
+.lx-banner { padding:8px 12px; margin-bottom:-1px; border:1px solid var(--sim-line);
+  border-radius:8px 8px 0 0; background:var(--sim-panel); }
+.lx-banner-mark { font-size:11px; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
+  color:var(--sim-ink); }
+.lx-banner-query { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11.5px;
+  padding:2px 8px; border-radius:6px; background:var(--panel); max-width:60ch;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.lx-banner .btn { margin-left:auto; }
+/* The score leads the card under a query: it is the answer to what was asked. */
+.lx-card-hit { display:flex; align-items:center; gap:8px; }
+.lx-card-score { font-size:14px; font-variant-numeric:tabular-nums; color:var(--sim-ink); }
+.lx-card-compare { margin-left:auto; padding:1px 8px; border:1px solid var(--line);
+  border-radius:999px; background:var(--panel); color:var(--accent); cursor:pointer; font-size:10.5px; }
+.lx-card-compare:hover { border-color:var(--accent); background:var(--accent); color:var(--accent-ink); }
+.lx-role-tab.is-empty { opacity:.4; }
+.lx-card-pocket { display:flex; align-items:center; gap:6px; font-size:10.5px; color:var(--muted);
+  text-decoration:none; }
+.lx-card-pocket code { padding:0 5px; border-radius:4px; background:var(--chip); color:var(--ink);
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+.lx-card-pocket:hover { color:var(--accent); }
+.lx-card-pocket:hover code { background:var(--accent); color:var(--accent-ink); }

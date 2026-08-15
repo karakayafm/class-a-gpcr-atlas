@@ -183,6 +183,9 @@ export async function ligandExplorer(root, initialLigand) {
   wrap.appendChild(el("p", { class: "lx-lead", text: t("lx_lead") }));
 
   const all = [...index.ligands.values()];
+  const hitOf = entry => simResult && entry.components.length === 1
+    ? simResult.byCcd.get(entry.components[0]) : null;
+  const scoreOf = entry => { const h = hitOf(entry); return h ? h.score : 0; };
   const strongest = entry => entry.components.length === 1 && affinity
     ? strongestOf((affinity.records || {})[entry.components[0]]) : null;
   const chemOf = entry => entry.components.length === 1 ? chemistry.get(entry.components[0]) : null;
@@ -208,7 +211,18 @@ export async function ligandExplorer(root, initialLigand) {
      side rail, because on a page about compounds it is the first question, not an aside. */
   const querySlot = el("div", { class: "lx-query" });
   wrap.appendChild(querySlot);
-  querySlot.appendChild(createSimilarityPanel());
+  /* A query supersedes the default listing rather than answering into a strip beside it. The
+     stat tiles, the role tabs, every facet count and the CSV all read the same filtered rows, so
+     once the hits are the rows the whole page follows the query without any of it being special-
+     cased. A reader who came to search should not be looking at 671 unrelated compounds. */
+  let simResult = null;
+  querySlot.appendChild(createSimilarityPanel({ onResults: payload => {
+    simResult = payload && payload.hits && payload.hits.length
+      ? { query: payload.query, byCcd: new Map(payload.hits.map(h => [h.ccd, h])) } : null;
+    shown = CARD_PAGE; selected = null;
+    draw();
+    if (simResult) resultHead.scrollIntoView({ block: "start", behavior: "smooth" });
+  } }));
 
   const layout = el("div", { class: "lx-layout" });
   const rail = el("aside", { class: "lx-rail" });
@@ -398,6 +412,8 @@ export async function ligandExplorer(root, initialLigand) {
 
   /* ------------------------------------------------------------------ selection */
   function passes(entry) {
+    if (simResult && !(entry.components.length === 1 && simResult.byCcd.has(entry.components[0])))
+      return false;
     if (filters.query) {
       const hay = (entry.name + " " + entry.components.join(" ") + " " +
         [...entry.receptors].join(" ")).toLowerCase();
@@ -429,11 +445,12 @@ export async function ligandExplorer(root, initialLigand) {
   }
 
   /* ------------------------------------------------------------------ results */
+  const queryBanner = el("div", { class: "lx-banner" });
   const resultHead = el("div", { class: "result-head lx-head" });
   const grid = el("div", { class: "lx-grid" });
   const more = el("div", { class: "lx-more" });
   const detail = el("div", { class: "lx-detail" });
-  main.appendChild(resultHead); main.appendChild(grid); main.appendChild(more); main.appendChild(detail);
+  main.appendChild(queryBanner); main.appendChild(resultHead); main.appendChild(grid); main.appendChild(more); main.appendChild(detail);
 
   let shown = CARD_PAGE;
   let selected = null;
@@ -480,6 +497,15 @@ export async function ligandExplorer(root, initialLigand) {
     if (entry.chem && entry.chem.raw_smiles) schedule(art, entry.chem.raw_smiles, 190, 140);
     else art.appendChild(el("span", { class: "lx-art-none", text: t(noDepictionKey(entry)) }));
     node.appendChild(art);
+    const hit = hitOf(entry);
+    if (hit) {
+      const badge = el("div", { class: "lx-card-hit" }, [
+        el("strong", { class: "lx-card-score", text: Math.round(hit.score * 100) + "%" }),
+        el("button", { class: "lx-card-compare", type: "button", text: t("sim_compare_open"),
+          title: t("sim_compare_enlarge"),
+          onclick: e => { e.stopPropagation(); hit.openCompare(); } })]);
+      node.appendChild(badge);
+    }
     node.appendChild(el("div", { class: "lx-card-name", title: entry.name, text: entry.name || "—" }));
     node.appendChild(el("div", { class: "lx-card-id" },
       entry.components.length ? [el("code", { text: entry.components.join(" + ") })]
@@ -514,6 +540,19 @@ export async function ligandExplorer(root, initialLigand) {
     node.appendChild(el("div", { class: "lx-card-counts", text:
       t("lx_card_counts", { receptors: entry.receptors.size, families: entry.families.size,
                             structures: entry.structures.size }) }));
+    /* Under a query the card is the hit, so it carries what the hit row carried: the deposition
+       the pipeline ranks sharpest for this compound, opening its pocket in 3D. Without it the
+       reader would have to select the card and cross the detail table to reach the same place. */
+    const place = hit && hit.rec && (hit.rec.seen_in || [])[0];
+    if (place) {
+      const pocket = el("a", { class: "lx-card-pocket", target: "_blank", rel: "noopener",
+        href: "#" + buildHash({ family: place.family, view: "3d", pdb: place.pdb_id }).slice(1),
+        title: t("lx_open_structure", { pdb: place.pdb_id }),
+        onclick: e => e.stopPropagation() }, [
+        el("code", { text: place.pdb_id }),
+        el("span", { text: t("sim_open_pocket") })]);
+      node.appendChild(pocket);
+    }
     return node;
   }
 
@@ -665,7 +704,9 @@ export async function ligandExplorer(root, initialLigand) {
 
   function draw() {
     const rows = all.filter(passes);
-    rows.sort((a, b) => b.structures.size - a.structures.size ||
+    // Under a query the ranking is the answer, so it wins over the default order.
+    if (simResult) rows.sort((a, b) => scoreOf(b) - scoreOf(a));
+    else rows.sort((a, b) => b.structures.size - a.structures.size ||
       (a.name || "").localeCompare(b.name || ""));
     for (const group of groups) paintGroup(group, rows);
     paintRoles(rows);
@@ -680,7 +721,23 @@ export async function ligandExplorer(root, initialLigand) {
                      structures: structures.size, scaffolds: scaffolds.size };
     for (const node of statNodes) node.value.textContent = String(values[node.key]);
 
-    clear(resultHead); clear(grid); clear(more);
+    clear(resultHead); clear(grid); clear(more); clear(queryBanner);
+    if (simResult) {
+      queryBanner.appendChild(el("span", { class: "lx-banner-mark", text: t("lx_query_active") }));
+      queryBanner.appendChild(el("code", { class: "lx-banner-query", text: simResult.query }));
+      queryBanner.appendChild(el("span", { class: "muted small", text: t("lx_query_ranked") }));
+      queryBanner.appendChild(el("button", { class: "btn small", type: "button",
+        text: t("lx_query_clear"), onclick: () => {
+          simResult = null; shown = CARD_PAGE; selected = null;
+          const input = wrap.querySelector(".sim-input");
+          if (input) input.value = "";
+          const status = wrap.querySelector(".sim-status");
+          if (status) status.textContent = "";
+          const alt = wrap.querySelector(".sim-alt");
+          if (alt) clear(alt);
+          draw();
+        } }));
+    }
     resultHead.appendChild(el("strong", { text: t("lx_results", { n: rows.length }) }));
     resultHead.appendChild(el("span", { class: "muted small",
       text: t("lx_results_evidence", { structures: structures.size, receptors: receptors.size }) }));
@@ -714,7 +771,10 @@ export async function ligandExplorer(root, initialLigand) {
     chipRow.appendChild(el("span", { class: "muted small", text: t("lx_role_filter") }));
     for (const [role, bucket] of [...counts.entries()].sort((a, b) => b[1].ligands - a[1].ligands)) {
       const on = filters.roles.has(role);
-      chipRow.appendChild(el("button", { class: "lx-role-tab" + (on ? " active" : ""), type: "button",
+      // Dimmed rather than dropped, as the facet rows are: the option still exists, it is the
+      // current selection that puts it out of reach.
+      chipRow.appendChild(el("button", { class: "lx-role-tab" + (on ? " active" : "")
+        + (bucket.ligands === 0 && !on ? " is-empty" : ""), type: "button",
         "aria-pressed": on ? "true" : "false",
         onclick: () => { if (on) filters.roles.delete(role); else filters.roles.add(role);
                          shown = CARD_PAGE; draw(); } }, [
@@ -726,7 +786,10 @@ export async function ligandExplorer(root, initialLigand) {
   }
 
   function exportRows(rows) {
+    // Whatever the page is showing, including the query's ranking when there is one.
     const cols = [
+      ...(simResult ? [{ key: "similarity", label: "tanimoto_similarity",
+        get: r => scoreOf(r).toFixed(4) }] : []),
       { key: "name", label: "ligand_name" },
       { key: "components", label: "chemical_components", get: r => r.components.join("+") },
       { key: "roles", label: "roles_by_receptor_context",
@@ -738,9 +801,11 @@ export async function ligandExplorer(root, initialLigand) {
       { key: "mw", label: "mw", get: r => r.chem?.descriptors?.mw ?? "" },
       { key: "mollogp", label: "mollogp", get: r => r.chem?.descriptors?.mollogp ?? "" },
       { key: "inchikey", label: "inchikey", get: r => r.chem?.inchikey ?? "" }];
-    download("ligands.csv", toCSV(cols, rows, {
+    download(simResult ? "ligands_similar.csv" : "ligands.csv", toCSV(cols, rows, {
       release: L.getManifest().data_version || "", rows: rows.length,
-      unit: "one row per ligand entity; role counts are distinct receptors" }));
+      unit: "one row per ligand entity; role counts are distinct receptors",
+      ...(simResult ? { query: simResult.query,
+        ranking: "Tanimoto over Morgan fingerprints, radius 2, 2048 bits" } : {}) }));
   }
 
   if (initialLigand) {
