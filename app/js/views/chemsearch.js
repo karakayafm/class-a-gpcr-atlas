@@ -372,7 +372,9 @@ export function createSimilarityPanel() {
            the filtered list: the row said "1 structures" without ever saying which one, so the
            identifier the reader would have gone looking for was the one thing missing. The
            pipeline puts the sharpest structure of the family first, and that is the one opened. */
-        const href = "#" + buildHash({ family: place.family, view: "structures",
+        // Straight into the 3D panel, which is what the line under the row promises. Every
+        // structure in this release carries a viewer bundle, so the route holds for all of them.
+        const href = "#" + buildHash({ family: place.family, view: "3d",
                                        pdb: place.pdb_id, q: hit.rec.ccd }).slice(1);
         // Across every family it appears in, not just the first — the count read as the total.
         const total = (hit.rec.seen_in || []).reduce((n, x) => n + (x.structures || 0), 0);
@@ -412,6 +414,43 @@ export function createSimilarityPanel() {
   body.appendChild(input);
   body.appendChild(el("button", { class: "btn small sim-run", type: "button",
     text: t("sim_run"), onclick: runTyped }));
+  /* A structure someone drew is in a file, and asking them to convert it to SMILES first is
+     asking them to do the one step this panel exists to save. Molfiles are read by the same RDKit
+     build that does everything else here, so the file is parsed in the browser and never uploaded;
+     "upload" is the familiar word for the control, but nothing leaves the machine.
+
+     Mol2 is not offered: this RDKit build exposes get_mol and get_mol_from_uint8array and carries
+     no mol2 parser, so a .mol2 would fail with a message about SMILES that explained nothing. It
+     is named as unsupported instead. */
+  const fileInput = el("input", { type: "file", class: "sim-file",
+    accept: ".sdf,.mol,.mdl,.sd,chemical/x-mdl-molfile,chemical/x-mdl-sdfile" });
+  fileInput.addEventListener("change", async () => {
+    const file = fileInput.files && fileInput.files[0];
+    if (!file) return;
+    clear(results); clear(alternatives);
+    if (/\.mol2$/i.test(file.name)) { status.textContent = t("sim_file_mol2"); return; }
+    status.textContent = t("sim_working");
+    try {
+      const text = await file.text();
+      // An SDF holds a series; the first record is taken as the query and the panel says so.
+      const parts = text.split(/^\$\$\$\$/m).filter(x => x.trim());
+      const mod = await getRdkit();
+      const mol = mod.get_mol(parts[0] || text);
+      if (!mol || !mol.is_valid || !mol.is_valid()) {
+        if (mol) mol.delete();
+        status.textContent = t("sim_file_invalid", { name: file.name }); return;
+      }
+      const smiles = mol.get_smiles();
+      mol.delete();
+      input.value = smiles;
+      const prefix = t("sim_file_taken", { name: file.name }) +
+        (parts.length > 1 ? " " + t("sim_file_more", { n: parts.length - 1 }) : "");
+      status.textContent = prefix;
+      await run(prefix + " ");
+    } catch (error) { status.textContent = t("sim_file_failed", { name: file.name }); }
+  });
+  body.appendChild(el("label", { class: "sim-label sim-or", text: t("sim_file_label") }));
+  body.appendChild(fileInput);
   body.appendChild(el("label", { class: "sim-label sim-or", text: t("sim_pdb_label") }));
   const pdbRow = el("div", { class: "sim-pdb-row" }, [pdbInput,
     el("button", { class: "btn small", type: "button", text: t("sim_pdb_run"), onclick: fromPdb })]);

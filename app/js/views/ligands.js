@@ -30,11 +30,24 @@ import { t, getLang, biologicalTypeLabel, siteClassLabel, stateLabel,
 import { el, clear, debounce } from "../components/dom.js";
 import { toCSV, download } from "../components/csv.js";
 import * as L from "../data/loader.js";
-import { navigate } from "../core/router.js";
+import { navigate, buildHash } from "../core/router.js";
 import { plainName, familyDisplayName } from "./names.js";
+import { metricHelp } from "./views.js";
 import { createSimilarityPanel, getRdkit } from "./chemsearch.js";
 
 const CARD_PAGE = 60;
+
+/* Why a ligand has no 2D depiction. The card used to guess from the biological type and call
+   everything that was not a protein a peptide, which labelled an unresolved small molecule a
+   peptide ligand. The reason is in the record: a polymer has no component code because it is a
+   chain, and an unresolved ligand has none because it was annotated but never modelled. */
+function noDepictionKey(entry) {
+  const types = entry.biologicalTypes;
+  if (types.has("protein")) return "lx_no_depiction_protein";
+  if (types.has("peptide")) return "lx_no_depiction_peptide";
+  if (entry.forms && entry.forms.has("unresolved")) return "lx_no_depiction_unresolved";
+  return "lx_no_depiction_other";
+}
 
 /* Affinities run from picomolar to millimolar. Fixed decimals would print 0.00 at one end and
    eleven digits at the other, so the precision follows the magnitude. */
@@ -76,14 +89,37 @@ function buildIndex(payloads) {
           observations.set(observation.observation_id, { structure, observation });
     }
   }
+  /* An observation whose ligand was annotated but never resolved in the coordinates carries no
+     chemical component, so keying on the component alone split such a compound in two: carazolol
+     appeared once as CAU with twelve structures and again, undrawable, with three. They are one
+     molecule. Where a componentless observation's name matches exactly one component-keyed
+     compound, it joins that compound. Where the name would match two different components it is
+     left alone rather than guessed at; in this release no name does. */
+  const nameToKeys = new Map();
+  for (const { observation } of observations.values()) {
+    const components = observation.ligand_components || [];
+    if (!components.length) continue;
+    const name = plainName(observation.ligand_name || "").toLowerCase();
+    if (!name) continue;
+    if (!nameToKeys.has(name)) nameToKeys.set(name, new Set());
+    nameToKeys.get(name).add(entityKey(observation));
+  }
+  const mergeInto = name => {
+    const keys = nameToKeys.get(name);
+    return keys && keys.size === 1 ? [...keys][0] : null;
+  };
+
   const ligands = new Map();
   for (const { structure, observation } of observations.values()) {
-    const key = entityKey(observation);
+    const components = observation.ligand_components || [];
+    const key = components.length ? entityKey(observation)
+      : (mergeInto(plainName(observation.ligand_name || "").toLowerCase()) || entityKey(observation));
     let entry = ligands.get(key);
     if (!entry) {
       const components = observation.ligand_components || [];
       entry = { key, components,
         name: plainName(observation.ligand_name || ""),
+        forms: new Set(),
         roles: new Map(), receptors: new Set(), families: new Map(), structures: new Set(),
         siteClasses: new Set(), biologicalTypes: new Set(), species: new Set(),
         states: new Set(), transducers: new Set(), methods: new Set(),
@@ -99,6 +135,7 @@ function buildIndex(payloads) {
     entry.structures.add(structure.pdb_id);
     if (observation.binding_site_class) entry.siteClasses.add(observation.binding_site_class);
     if (observation.biological_type) entry.biologicalTypes.add(observation.biological_type);
+    if (observation.entity_form) entry.forms.add(observation.entity_form);
     if (structure.species) entry.species.add(structure.species);
     if (structure.structural_state) entry.states.add(structure.structural_state);
     if (structure.experimental_method) entry.methods.add(structure.experimental_method);
@@ -112,7 +149,8 @@ export async function ligandExplorer(root, initialLigand) {
   clear(root);
   const wrap = el("section", { class: "view ligand-explorer" });
   root.appendChild(wrap);
-  wrap.appendChild(el("h2", { text: t("lx_title") }));
+  wrap.appendChild(el("h2", {}, [document.createTextNode(t("lx_title") + " "),
+    metricHelp(t("lx_help"))]));
   const status = el("p", { class: "muted", text: t("loading") });
   wrap.appendChild(status);
 
@@ -153,7 +191,7 @@ export async function ligandExplorer(root, initialLigand) {
   const filters = { roles: new Set(), biologicalTypes: new Set(), siteClasses: new Set(),
     functionalGroups: new Set(), ringSystems: new Set(), scaffolds: new Set(),
     families: new Set(), species: new Set(), states: new Set(), transducers: new Set(),
-    methods: new Set(), ranges: {}, query: "" };
+    methods: new Set(), affinity: new Set(), ranges: {}, query: "" };
 
   /* ------------------------------------------------------------------ header numbers */
   const statRow = el("div", { class: "summary-strip lx-stats" });
@@ -253,6 +291,17 @@ export async function ligandExplorer(root, initialLigand) {
     return spec["label_" + getLang()] || spec.label_en || name;
   };
 
+  /* Which compounds have a measured constant at all, and of what kind. It leads the rail because
+     "only the ones somebody has measured" is a question asked before any question about chemistry,
+     and because the answer is a small share of the list. */
+  const affinityTypes = entry => {
+    const rows = entry.components.length === 1 && affinity
+      ? (affinity.records || {})[entry.components[0]] : null;
+    if (!rows || !rows.length) return [];
+    return ["any", ...new Set(rows.map(r => r.type))];
+  };
+  if (affinity) checkGroup("lx_affinity_filter", filters.affinity, affinityTypes,
+    v => v === "any" ? t("lx_affinity_any") : v, true);
   checkGroup("lx_biological_type", filters.biologicalTypes, e => e.biologicalTypes,
     biologicalTypeLabel, true);
   checkGroup("lx_site_class", filters.siteClasses, e => e.siteClasses, siteClassLabel);
@@ -355,6 +404,7 @@ export async function ligandExplorer(root, initialLigand) {
       if (!hay.includes(filters.query)) return false;
     }
     if (filters.roles.size && ![...entry.roles.keys()].some(r => filters.roles.has(r))) return false;
+    if (filters.affinity.size && !affinityTypes(entry).some(v => filters.affinity.has(v))) return false;
     for (const [set, pick] of [[filters.biologicalTypes, e => e.biologicalTypes],
       [filters.siteClasses, e => e.siteClasses], [filters.species, e => e.species],
       [filters.states, e => e.states], [filters.transducers, e => e.transducers],
@@ -428,8 +478,7 @@ export async function ligandExplorer(root, initialLigand) {
       type: "button", onclick: () => { selected = entry; draw(); detail.scrollIntoView({ block: "nearest" }); } });
     const art = el("div", { class: "lx-art" });
     if (entry.chem && entry.chem.raw_smiles) schedule(art, entry.chem.raw_smiles, 190, 140);
-    else art.appendChild(el("span", { class: "lx-art-none",
-      text: t("lx_no_depiction_" + ([...entry.biologicalTypes][0] === "protein" ? "protein" : "peptide")) }));
+    else art.appendChild(el("span", { class: "lx-art-none", text: t(noDepictionKey(entry)) }));
     node.appendChild(art);
     node.appendChild(el("div", { class: "lx-card-name", title: entry.name, text: entry.name || "—" }));
     node.appendChild(el("div", { class: "lx-card-id" },
@@ -483,7 +532,7 @@ export async function ligandExplorer(root, initialLigand) {
     const body = el("div", { class: "lx-detail-body" });
     const art = el("figure", { class: "lx-detail-art" });
     if (entry.chem && entry.chem.raw_smiles) schedule(art, entry.chem.raw_smiles, 320, 260);
-    else art.appendChild(el("span", { class: "lx-art-none", text: t("lx_no_depiction_peptide") }));
+    else art.appendChild(el("span", { class: "lx-art-none", text: t(noDepictionKey(entry)) }));
     body.appendChild(art);
 
     const facts = el("dl", { class: "lx-facts" });
@@ -593,11 +642,15 @@ export async function ligandExplorer(root, initialLigand) {
       bucket.pdbs.add(row.structure.pdb_id);
     }
     for (const bucket of [...byContext.values()].sort((a, b) => b.pdbs.size - a.pdbs.size)) {
+      /* Links rather than buttons, opening the 3D panel in a new tab: a reader working through a
+         ligand's contexts is comparing them, and replacing the page they are comparing from is
+         the wrong move. Every structure in this release carries a viewer bundle, so the 3D route
+         is safe for all of them. */
       const pdbCell = el("td", { class: "lx-pdbs" });
       for (const pdb of [...bucket.pdbs].sort())
-        pdbCell.appendChild(el("button", { class: "lx-pdb", type: "button", text: pdb,
+        pdbCell.appendChild(el("a", { class: "lx-pdb", text: pdb, target: "_blank", rel: "noopener",
           title: t("lx_open_structure", { pdb }),
-          onclick: () => navigate({ family: bucket.slug, view: "structures", pdb }) }));
+          href: "#" + buildHash({ family: bucket.slug, view: "3d", pdb }).slice(1) }));
       tbody.appendChild(el("tr", {}, [
         el("td", {}, [el("strong", { text: bucket.receptor })]),
         el("td", { text: familyDisplayName(bucket.family || bucket.slug) }),

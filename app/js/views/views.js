@@ -83,7 +83,9 @@ function siteClassChip(id, count, familySlug) {
   return wrap;
 }
 
-function metricHelp(text) {
+// Exported: the ligand explorer needs the same affordance, and a second implementation of a
+// popover is a second set of focus and escape bugs.
+export function metricHelp(text) {
   const tipId = "metric-help-" + Math.random().toString(36).slice(2, 8);
   const tip = el("span", { class:"site-help-popover", id:tipId, role:"tooltip", hidden:true, text });
   let pinned = false;
