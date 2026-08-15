@@ -896,3 +896,111 @@ td.eff-warning_only { color:var(--muted); }
 .sim-mark:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
 @media (max-width:720px) { .sim-lightbox { padding:8px; }
   .sim-lightbox-figure { flex:1 1 100%; } }
+
+/* ---------------------------------------------------------------- ligand explorer */
+/* This page's result is a compound, so its list is a grid of molecules rather than the single
+   column of rows the structure views use. The difference is deliberate: the two pages were
+   indistinguishable when they shared a layout, and a reader could not tell which question they
+   were looking at the answer to. */
+.ligand-explorer .lx-lead { max-width:88ch; line-height:1.6; color:var(--muted); font-size:12.5px; }
+.lx-stats { margin:14px 0 4px; }
+.lx-query { margin:14px 0 6px; }
+/* The similarity search opens the page here instead of sitting in a rail, so it is given the
+   width to be read as the entry point it is. */
+.lx-query .sim-panel { border:1px solid var(--line); border-radius:12px; background:var(--panel);
+  padding:10px 14px; }
+/* The panel was built for a 300px rail, where one control per line is the only option. With the
+   page's width the two ways in — a SMILES you type and a deposition you name — sit side by side
+   as the alternatives they are, and everything they produce runs full width beneath them. */
+.lx-query .sim-body { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:2px 22px;
+  align-items:end; }
+.lx-query .sim-label { grid-column:1; }
+.lx-query .sim-input { grid-column:1; }
+.lx-query .sim-run { grid-column:2; grid-row:2; margin:0; }
+.lx-query .sim-or { grid-column:1; margin-top:10px; }
+.lx-query .sim-pdb-row { grid-column:1/-1; }
+.lx-query .sim-status, .lx-query .sim-alt, .lx-query .sim-results, .lx-query .sim-note {
+  grid-column:1/-1; }
+.lx-query .sim-results { max-height:min(42vh,380px); }
+.lx-query .sim-note { max-width:100ch; }
+
+.lx-roles { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:14px 0 10px; }
+.lx-role-tab { display:inline-flex; align-items:center; gap:7px; padding:4px 11px; cursor:pointer;
+  border:1px solid var(--line); border-radius:999px; background:var(--panel); color:var(--ink);
+  font-size:12px; }
+.lx-role-tab:hover { border-color:var(--accent); }
+.lx-role-tab.active { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+.lx-role-tab .tab-count { font-size:11px; opacity:.85; }
+.lx-role-tab.active .tab-count { background:rgba(255,255,255,.2); }
+
+.lx-layout { display:grid; grid-template-columns:290px minmax(0,1fr); gap:16px; align-items:start; }
+.lx-rail { display:grid; gap:8px; position:sticky; top:8px; }
+.lx-facet > summary { justify-content:space-between; }
+.lx-evidence > summary { cursor:pointer; font-size:12px; letter-spacing:.04em;
+  text-transform:uppercase; color:var(--muted); padding:8px 10px; border:1px solid var(--line);
+  border-radius:8px; }
+.lx-evidence[open] > summary { border-color:var(--accent); color:var(--accent); }
+.lx-evidence > div { display:grid; gap:8px; padding-top:8px; }
+.lx-search { width:100%; box-sizing:border-box; }
+
+.lx-head { border-radius:8px 8px 0 0; gap:10px; }
+.lx-head .btn { margin-left:auto; }
+/* auto-fill, not auto-fit: a single result keeps a card's width instead of stretching to the
+   full row, which read as a different kind of object. */
+.lx-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:10px;
+  padding:12px 0; }
+.lx-card { display:flex; flex-direction:column; gap:5px; padding:9px; text-align:left;
+  border:1px solid var(--line); border-radius:10px; background:var(--panel); color:var(--ink);
+  cursor:pointer; font:inherit; }
+.lx-card:hover { border-color:var(--accent); }
+.lx-card.active { border-color:var(--accent); box-shadow:0 0 0 1px var(--accent) inset; }
+.lx-card:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+/* The depiction keeps a white ground in either theme: it is a chemical drawing, and inverting it
+   would change what the colours mean. */
+.lx-art { display:flex; align-items:center; justify-content:center; min-height:140px;
+  border-radius:7px; background:#fff; overflow:hidden; }
+.lx-art svg { max-width:100%; height:auto; }
+.lx-art-none { padding:10px; text-align:center; font-size:11px; line-height:1.45; color:#666; }
+.lx-card-name { font-weight:650; font-size:12.5px; line-height:1.35; overflow:hidden;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+.lx-card-id code { font-size:11.5px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+.lx-card-roles { display:flex; flex-wrap:wrap; gap:4px; }
+.lx-role { padding:1px 7px; border-radius:999px; background:var(--chip); color:var(--muted);
+  font-size:10.5px; white-space:nowrap; }
+.lx-tag { padding:1px 7px; border-radius:999px; background:var(--chip); color:var(--muted);
+  font-size:10.5px; }
+.lx-card-counts { font-size:10.5px; color:var(--muted); }
+.lx-more { display:flex; justify-content:center; padding-bottom:12px; }
+
+.lx-detail { border-top:1px solid var(--line); padding-top:14px; margin-top:6px; }
+.lx-detail:empty { border-top:0; padding:0; }
+.lx-detail-head { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.lx-detail-head h3 { margin:0; font-size:16px; }
+.lx-detail-head .btn { margin-left:auto; }
+.lx-detail-ccd { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12px;
+  padding:2px 8px; border-radius:6px; background:var(--chip); }
+.lx-detail-body { display:grid; grid-template-columns:auto minmax(0,1fr); gap:18px;
+  align-items:start; margin:12px 0; }
+.lx-detail-art { margin:0; display:flex; align-items:center; justify-content:center;
+  min-width:260px; min-height:200px; background:#fff; border:1px solid var(--line);
+  border-radius:10px; padding:6px; }
+.lx-facts { display:grid; grid-template-columns:auto minmax(0,1fr); gap:5px 14px; margin:0;
+  font-size:12.5px; align-content:start; }
+.lx-facts dt { color:var(--muted); font-size:11px; letter-spacing:.04em; }
+.lx-facts dd { margin:0; }
+.lx-chips { display:flex; flex-wrap:wrap; align-items:center; gap:5px; margin:6px 0 12px; }
+.lx-contexts .lx-pdbs { display:flex; flex-wrap:wrap; gap:4px; }
+.lx-pdb { padding:1px 7px; border:1px solid var(--line); border-radius:6px; cursor:pointer;
+  background:var(--panel); color:var(--accent); font-size:11.5px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+.lx-pdb:hover { border-color:var(--accent); background:var(--accent); color:var(--accent-ink); }
+
+@media (max-width:980px) {
+  .lx-layout { grid-template-columns:minmax(0,1fr); }
+  .lx-rail { position:static; }
+  .lx-query .sim-body { grid-template-columns:minmax(0,1fr); }
+  .lx-detail-body { grid-template-columns:minmax(0,1fr); }
+  .lx-detail-art { min-width:0; }
+}
+.lx-check-label { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.lx-facet .chem-check { display:flex; align-items:center; gap:7px; }

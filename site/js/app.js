@@ -6,6 +6,7 @@ import * as ST from "./core/state.js";
 import * as L from "./data/loader.js";
 import { el, clear } from "./components/dom.js";
 import * as V from "./views/views.js";
+import { ligandExplorer } from "./views/ligands.js";
 import * as VIEW from "./viewer/viewer.js";
 
 const MAIN = () => document.getElementById("main");
@@ -591,13 +592,10 @@ async function render(r) {
         if (!panel) { fatal(t("err_route")); return; }
         node = await V.structures(main, null, openModal, null, r.pdb, { panelSlug: panel }); break;
       }
-      case "ligands": {
-        const available = Object.keys(L.getManifest().ligand_files || {});
-        const cls = available.includes(r.ligand) ? r.ligand
-          : (available.includes("agonist") ? "agonist" : available[0]);
-        if (!cls) { fatal(t("err_route")); return; }
-        node = await V.structures(main, null, openModal, null, r.pdb, { ligandSlug: cls }); break;
-      }
+      // The ligand route used to be the structure list with a class filter applied, which made it
+      // a second copy of that page and counted a compound once per deposition. It now has its own
+      // view, whose unit is the ligand; the class filter it replaced still exists in Structures.
+      case "ligands": node = await ligandExplorer(main, r.ligand); break;
       case "motifsearch": node = await V.motifSearch(main); break;
       case "evidence": node = await V.evidence(main, r.family, r.open === "1"); break;
       case "contacts": case "interfaces": case "motifs": case "compare":
