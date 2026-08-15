@@ -29,6 +29,7 @@ import { t, getLang, biologicalTypeLabel, siteClassLabel, stateLabel,
   transducerLabel, methodLabel } from "../core/i18n.js";
 import { el, clear, debounce } from "../components/dom.js";
 import { toCSV, download } from "../components/csv.js";
+import { downloadXLSX } from "../components/xlsx.js";
 import * as L from "../data/loader.js";
 import { navigate, buildHash } from "../core/router.js";
 import { plainName, familyDisplayName } from "./names.js";
@@ -742,7 +743,9 @@ export async function ligandExplorer(root, initialLigand) {
     resultHead.appendChild(el("span", { class: "muted small",
       text: t("lx_results_evidence", { structures: structures.size, receptors: receptors.size }) }));
     resultHead.appendChild(el("button", { class: "btn small", type: "button", text: t("export_csv"),
-      onclick: () => exportRows(rows) }));
+      onclick: () => exportRows(rows, false) }));
+    resultHead.appendChild(el("button", { class: "btn small", type: "button", text: t("export_xlsx"),
+      onclick: () => exportRows(rows, true) }));
 
     if (!rows.length) grid.appendChild(el("p", { class: "muted", text: t("no_results") }));
     for (const entry of rows.slice(0, shown)) grid.appendChild(card(entry));
@@ -785,7 +788,7 @@ export async function ligandExplorer(root, initialLigand) {
     }
   }
 
-  function exportRows(rows) {
+  function exportRows(rows, xlsx) {
     // Whatever the page is showing, including the query's ranking when there is one.
     const cols = [
       ...(simResult ? [{ key: "similarity", label: "tanimoto_similarity",
@@ -801,11 +804,41 @@ export async function ligandExplorer(root, initialLigand) {
       { key: "mw", label: "mw", get: r => r.chem?.descriptors?.mw ?? "" },
       { key: "mollogp", label: "mollogp", get: r => r.chem?.descriptors?.mollogp ?? "" },
       { key: "inchikey", label: "inchikey", get: r => r.chem?.inchikey ?? "" }];
-    download(simResult ? "ligands_similar.csv" : "ligands.csv", toCSV(cols, rows, {
-      release: L.getManifest().data_version || "", rows: rows.length,
+    const meta = { release: L.getManifest().data_version || "", rows: rows.length,
       unit: "one row per ligand entity; role counts are distinct receptors",
       ...(simResult ? { query: simResult.query,
-        ranking: "Tanimoto over Morgan fingerprints, radius 2, 2048 bits" } : {}) }));
+        ranking: "Tanimoto over Morgan fingerprints, radius 2, 2048 bits" } : {}) };
+    const stem = simResult ? "ligands_similar" : "ligands";
+    if (!xlsx) { download(stem + ".csv", toCSV(cols, rows, meta)); return; }
+    /* A second sheet with one row per ligand-receptor context. The first sheet collapses those
+       into counts, and the counts are what a role or a receptor total is made of; without them
+       the workbook states a number it cannot show the working for. */
+    const contexts = [];
+    for (const entry of rows) {
+      const byContext = new Map();
+      for (const row of entry.observations) {
+        const key = row.receptor + "|" + row.role;
+        if (!byContext.has(key)) byContext.set(key, { entry, receptor: row.receptor, role: row.role,
+          family: row.structure.family_name, sites: new Set(), pdbs: new Set() });
+        const bucket = byContext.get(key);
+        if (row.observation.binding_site_class) bucket.sites.add(row.observation.binding_site_class);
+        bucket.pdbs.add(row.structure.pdb_id);
+      }
+      contexts.push(...byContext.values());
+    }
+    downloadXLSX(stem + ".xlsx", [
+      { name: "Ligands", columns: cols, rows },
+      { name: "Contexts", columns: [
+        { key: "name", label: "ligand_name", get: r => r.entry.name },
+        { key: "components", label: "chemical_components", get: r => r.entry.components.join("+") },
+        { key: "receptor", label: "receptor" },
+        { key: "family", label: "family", get: r => familyDisplayName(r.family || "") },
+        { key: "role", label: "role" },
+        { key: "sites", label: "binding_site_classes",
+          get: r => [...r.sites].map(siteClassLabel).join("; ") },
+        { key: "structures", label: "structures", get: r => r.pdbs.size },
+        { key: "pdb_ids", label: "pdb_ids", get: r => [...r.pdbs].sort().join(" ") }],
+        rows: contexts }]);
   }
 
   if (initialLigand) {

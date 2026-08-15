@@ -47,6 +47,19 @@ function tanimoto(a, b) {
   return either === 0 ? 0 : both / either;
 }
 
+/* Tab fills an empty field with a worked example and runs it. The gesture is only bound while the
+   field is empty, so Tab still moves focus the moment there is anything to move on from, and each
+   field says it offers this rather than leaving it to be discovered. */
+function exampleOnTab(field, example, run) {
+  field.addEventListener("keydown", event => {
+    if (event.key !== "Tab" || event.shiftKey || event.altKey || event.ctrlKey || event.metaKey) return;
+    if (field.value.trim()) return;
+    event.preventDefault();
+    field.value = example;
+    run();
+  });
+}
+
 /* A Bemis-Murcko scaffold matched back into the molecule it came from should always match, and
    for 33 of this release's 497 scaffolds it did not. Stripping the side chains changes the
    hydrogen count on whatever they were attached to — an N-methyl becomes N-H, a quaternary
@@ -572,8 +585,12 @@ export function createSimilarityPanel(options) {
   // of that entry stop being offered.
   const runTyped = () => { clear(alternatives); run(); };
   input.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); runTyped(); } });
+  exampleOnTab(input, t("sim_example_smiles"), runTyped);
   pdbInput.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); fromPdb(); } });
-  body.appendChild(el("label", { class: "sim-label", text: t("sim_smiles_label") }));
+  exampleOnTab(pdbInput, t("sim_pdb_placeholder"), fromPdb);
+  body.appendChild(el("label", { class: "sim-label" }, [
+    document.createTextNode(t("sim_smiles_label") + " "),
+    el("span", { class: "sim-tab-hint", text: t("sim_tab_hint") })]));
   body.appendChild(input);
   body.appendChild(el("button", { class: "btn small sim-run", type: "button",
     text: t("sim_run"), onclick: runTyped }));
@@ -614,7 +631,9 @@ export function createSimilarityPanel(options) {
   });
   body.appendChild(el("label", { class: "sim-label sim-or", text: t("sim_file_label") }));
   body.appendChild(fileInput);
-  body.appendChild(el("label", { class: "sim-label sim-or", text: t("sim_pdb_label") }));
+  body.appendChild(el("label", { class: "sim-label sim-or" }, [
+    document.createTextNode(t("sim_pdb_label") + " "),
+    el("span", { class: "sim-tab-hint", text: t("sim_tab_hint") })]));
   const pdbRow = el("div", { class: "sim-pdb-row" }, [pdbInput,
     el("button", { class: "btn small", type: "button", text: t("sim_pdb_run"), onclick: fromPdb })]);
   body.appendChild(pdbRow);
@@ -625,7 +644,8 @@ export function createSimilarityPanel(options) {
      the one the panel opens with: not "show me what this resembles" but "give me the table for
      these twenty and let me keep it". */
   const batchBox = el("details", { class: "sim-batch" });
-  batchBox.appendChild(el("summary", { text: t("sim_batch_title") }));
+  batchBox.appendChild(el("summary", {}, [document.createTextNode(t("sim_batch_title") + " "),
+    el("span", { class: "sim-tab-hint", text: t("sim_tab_hint") })]));
   const batchInput = el("textarea", { class: "sim-batch-input", rows: "5",
     placeholder: t("sim_batch_placeholder"), spellcheck: "false" });
   const batchStatus = el("p", { class: "sim-status muted small" });
@@ -668,6 +688,7 @@ export function createSimilarityPanel(options) {
       xlsxButton.disabled = !batchResult.rows.length;
     } });
   batchActions.appendChild(runButton); batchActions.appendChild(csvButton); batchActions.appendChild(xlsxButton);
+  exampleOnTab(batchInput, t("sim_batch_example"), () => runButton.click());
   batchBox.appendChild(batchInput);
   batchBox.appendChild(batchActions);
   batchBox.appendChild(batchStatus);
