@@ -175,7 +175,7 @@ export async function runBatch({ text, limit = 20, onProgress }) {
       }
       const place = (rec.seen_in || [])[0] || {};
       rows.push({
-        query_label: query.label, query_smiles: query.smiles, rank: rank + 1,
+        rec, query_label: query.label, query_smiles: query.smiles, rank: rank + 1,
         ccd: rec.ccd, name: plainName(rec.name || ""), similarity: hit.score,
         shared_scaffold: sharedScaffold, hit_scaffold: rec.scaffold || "",
         shared_functional_groups: groups, shared_ring_systems: rings,
@@ -192,7 +192,20 @@ export async function runBatch({ text, limit = 20, onProgress }) {
   return { rows, queries, failed };
 }
 
-const BATCH_COLUMNS = [
+/* A compound can be hit by several of the queries. The card shows the best of them and compares
+   against that one, because "compare with the query" has no answer otherwise. */
+function bestPerHit(result) {
+  const best = new Map();
+  for (const row of result.rows) {
+    const held = best.get(row.ccd);
+    if (!held || row.similarity > held.score)
+      best.set(row.ccd, { ccd: row.ccd, score: row.similarity, rec: row.rec,
+                          queryLabel: row.query_label, querySmiles: row.query_smiles });
+  }
+  return [...best.values()].sort((a, b) => b.score - a.score);
+}
+
+export const BATCH_COLUMNS = [
   { key: "query_label", label: "query" },
   { key: "query_smiles", label: "query_smiles" },
   { key: "rank", label: "rank" },
@@ -267,15 +280,269 @@ export function createSimilarityPanel(options) {
     await run(message + " ");
   }
 
+    /* The one RDKit instance, held where the comparison machinery can reach it: getRdkit caches a
+     singleton, and both the single query and a batch resolve to the same object. */
+  let mod = null;
+
+  /* What the two molecules have in common, drawn rather than asserted. The hit's
+       Bemis-Murcko scaffold is matched into both structures and those atoms are highlighted:
+       it is the shared ring system, not a maximum common substructure, and the caption says
+       so. Where the scaffold does not match the query the pair is still drawn, unmarked. */
+    function drawPair(rec, width, height, qSmiles) {
+      const pattern = rec.scaffold ? scaffoldQuery(mod, rec.scaffold) : null;
+      const prepared = [[qSmiles, t("sim_compare_query")], [rec.smiles, rec.ccd]]
+        .map(([smiles, label]) => {
+          const m = mod.get_mol(smiles);
+          if (!m || !m.is_valid || !m.is_valid()) { if (m) m.delete(); return null; }
+          let found = { atoms: [], bonds: [] };
+          if (pattern) { try { found = JSON.parse(m.get_substruct_match(pattern)) || found; }
+                         catch (e) { found = { atoms: [], bonds: [] }; } }
+          return { mol: m, label, found, matched: (found.atoms || []).length > 0 };
+        });
+      /* The pattern is the hit's own Bemis-Murcko scaffold, so it always covers most of the
+         hit — that is what a scaffold is. Marking it there while the query carries no match
+         painted four fifths of one molecule green and none of the other, which reads as a
+         similarity map and is not one: the score comes from the whole-molecule fingerprint,
+         not from the marked atoms. The highlight means "this is what the two share", so it is
+         drawn only when both actually carry it, and otherwise the pair is drawn plain and the
+         caption says why. */
+      const shared = prepared.every(p => p && p.matched);
+      /* The enlarged pair is redrawn rather than scaled up: RDKit lays a molecule out for the
+         box it is given, and stretching the 200px drawing would thin the bonds and leave the
+         labels at thumbnail proportions. Stereo annotation stays off in both, so the large
+         drawing is the small one, only bigger. */
+      const parts = prepared.map(p => {
+        if (!p) return null;
+        const svg = p.mol.get_svg_with_highlights(JSON.stringify({
+          width, height, bondLineWidth: width > 300 ? 2 : 1, addStereoAnnotation: false,
+          atoms: shared ? p.found.atoms || [] : [], bonds: shared ? p.found.bonds || [] : [],
+          highlightColour: [0.62, 0.85, 0.72] }));
+        p.mol.delete();
+        return { svg, label: p.label };
+      });
+      if (pattern) pattern.delete();
+      return { parts, shared };
+    }
+    /* One image holding both molecules, so what leaves the browser is the comparison and not
+       two drawings the reader has to put side by side again. RDKit hands back a complete SVG
+       document each time; nesting them keeps each one's own coordinate system intact. */
+    function pairSvg(parts, width, height) {
+      const pad = 14, cap = 22;
+      const w = width * parts.length + pad * (parts.length + 1);
+      const h = height + cap + pad * 2;
+      const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
+                                .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+      let body = "";
+      parts.forEach((part, i) => {
+        const x = pad + i * (width + pad);
+        body += part.svg.replace(/^[\s\S]*?(?=<svg)/, "").replace("<svg", `<svg x="${x}" y="${pad}"`);
+        body += `<text x="${x + width / 2}" y="${pad + height + 15}" text-anchor="middle" `
+              + `font-family="system-ui,sans-serif" font-size="13" fill="#444">${esc(part.label)}</text>`;
+      });
+      return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" `
+           + `viewBox="0 0 ${w} ${h}"><rect width="100%" height="100%" fill="#ffffff"/>`
+           + body + `</svg>`;
+    }
+    function downloadPairSvg(parts, name, width, height) {
+      downloadBlob(name + ".svg",
+        new Blob([pairSvg(parts, width, height)], { type: "image/svg+xml;charset=utf-8" }));
+    }
+    // Rasterised at three times the drawing size, matching the viewer's own snapshot factor,
+    // so the image is usable in a figure rather than only on screen.
+    function downloadPairPng(parts, name, width, height) {
+      const url = URL.createObjectURL(
+        new Blob([pairSvg(parts, width, height)], { type: "image/svg+xml;charset=utf-8" }));
+      const image = new Image();
+      image.onload = () => {
+        const canvas = el("canvas");
+        canvas.width = image.width * 3; canvas.height = image.height * 3;
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+        URL.revokeObjectURL(url);
+        canvas.toBlob(blob => blob && downloadBlob(name + ".png", blob), "image/png");
+      };
+      image.onerror = () => URL.revokeObjectURL(url);
+      image.src = url;
+    }
+    /* Selecting either drawing opens both at a size worth reading, with the pair downloadable
+       as one image. The thumbnails are 200px because the rail is narrow; that is enough to see
+       that two molecules differ and not enough to see how. */
+    async function openCompare(rec, qSmiles) {
+      const width = 430, height = 350;
+      const catalog = await L.loadChemistryCatalog().catch(() => null);
+      const mols = [[qSmiles, t("sim_compare_query")], [rec.smiles, rec.ccd]].map(([smiles, label]) => {
+        const mol = mod.get_mol(smiles);
+        if (!mol || !mol.is_valid || !mol.is_valid()) { if (mol) mol.delete(); return null; }
+        return { mol, label };
+      });
+      if (mols.some(m => !m)) { for (const m of mols) if (m) m.mol.delete(); return; }
+      const marks = sharedMarks(rec, mols, catalog);
+      let chosen = 0;
+
+      const name = "compare_" + rec.ccd;
+      const opener = document.activeElement;
+      const overlay = el("div", { class: "sim-lightbox", role: "dialog", "aria-modal": "true",
+        "aria-label": t("sim_compare_open") });
+      const close = () => {
+        document.removeEventListener("keydown", onKey);
+        overlay.remove();
+        document.body.classList.remove("modal-open");
+        for (const m of mols) m.mol.delete();
+        if (opener && opener.focus) opener.focus();
+      };
+      const onKey = e => { if (e.key === "Escape") { e.preventDefault(); close(); } };
+      const closeButton = el("button", { class: "btn close", type: "button",
+        "aria-label": t("sim_compare_close"), text: "✕", onclick: close });
+      const figures = el("div", { class: "sim-lightbox-figures" });
+      const chips = el("div", { class: "sim-marks" });
+
+      const parts = () => renderMarked(mols, marks[chosen], width, height);
+      function paint() {
+        clear(figures);
+        for (const part of parts()) {
+          const cell = el("figure", { class: "sim-lightbox-figure" });
+          cell.innerHTML = part.svg;
+          cell.appendChild(el("figcaption", { text: part.label }));
+          figures.appendChild(cell);
+        }
+        for (const button of chips.querySelectorAll(".sim-mark")) {
+          const on = Number(button.dataset.mark) === chosen;
+          button.classList.toggle("active", on);
+          button.setAttribute("aria-pressed", on ? "true" : "false");
+        }
+      }
+      /* What the two molecules actually have in common, named and markable one at a time.
+         Before this the panel marked a shared ring system or nothing at all, which left a
+         reader looking at a 20% score with no way to see where the 20% was. */
+      if (marks.length) {
+        chips.appendChild(el("span", { class: "muted small", text: t("sim_marks_title") }));
+        marks.forEach((mark, i) => {
+          chips.appendChild(el("button", { class: "sim-mark", type: "button", "data-mark": String(i),
+            text: mark.label, onclick: () => { chosen = i; paint(); } }));
+        });
+      } else {
+        chips.appendChild(el("span", { class: "muted small", text: t("sim_marks_empty") }));
+      }
+      overlay.appendChild(el("div", { class: "sim-lightbox-inner" }, [
+        el("header", { class: "sim-lightbox-head" }, [
+          el("h2", { text: t("sim_compare_open") + " — " + rec.ccd }),
+          el("button", { class: "btn small", type: "button", text: t("sim_compare_png"),
+            onclick: () => downloadPairPng(parts(), name, width, height) }),
+          el("button", { class: "btn small", type: "button", text: t("sim_compare_svg"),
+            onclick: () => downloadPairSvg(parts(), name, width, height) }),
+          closeButton ]),
+        figures, chips,
+        /* Not the thumbnail's caption: that one says what the green is, and here the green
+           is whatever chip is selected. What stays true is what the scaffold option means,
+           or why there is not one. */
+        el("p", { class: "sim-lightbox-note", text: marks.some(m => m.key === "scaffold")
+          ? t("sim_scaffold_present") : t("sim_scaffold_absent") }),
+        el("p", { class: "sim-lightbox-note", text: t("sim_marks_note") })]));
+      paint();
+      overlay.addEventListener("click", e => { if (e.target === overlay) close(); });
+      document.addEventListener("keydown", onKey);
+      document.body.classList.add("modal-open");
+      document.body.appendChild(overlay);
+      closeButton.focus();
+    }
+    function renderMarked(mols, mark, width, height) {
+      return mols.map((m, i) => ({
+        label: m.label,
+        svg: m.mol.get_svg_with_highlights(JSON.stringify({
+          width, height, bondLineWidth: width > 300 ? 2 : 1, addStereoAnnotation: false,
+          atoms: (mark && mark.atoms[i]) || [], bonds: (mark && mark.bonds[i]) || [],
+          highlightColour: [0.62, 0.85, 0.72] })) }));
+    }
+    /* The pieces both molecules carry, from the atlas's own SMARTS catalogue — the same 39
+       patterns the chemistry filters are built on, so what is marked here is what the facet
+       lists elsewhere already name. A pattern is kept only when it matches both molecules,
+       and dropped when a more specific child of it also matches, so an amide is not also
+       reported as a carbonyl. */
+    function sharedMarks(rec, mols, catalog) {
+      const union = qmol => mols.map(m => {
+        let out = { atoms: [], bonds: [] };
+        try {
+          for (const hit of JSON.parse(m.mol.get_substruct_matches(qmol)) || []) {
+            out.atoms = out.atoms.concat(hit.atoms || []);
+            out.bonds = out.bonds.concat(hit.bonds || []);
+          }
+        } catch (e) { /* an unmatchable pattern is simply not shared */ }
+        return out;
+      });
+      const found = [];
+      // The scaffold first: it is the largest single thing the two can share.
+      if (rec.scaffold) {
+        const qmol = scaffoldQuery(mod, rec.scaffold);
+        if (qmol) {
+          const per = union(qmol); qmol.delete();
+          if (per.every(p => p.atoms.length))
+            found.push({ key: "scaffold", label: t("sim_marks_scaffold"),
+                         atoms: per.map(p => p.atoms), bonds: per.map(p => p.bonds) });
+        }
+      }
+      const patterns = (catalog && catalog.patterns) || {};
+      const shared = [];
+      for (const [key, spec] of Object.entries(patterns)) {
+        if (!spec.smarts) continue;
+        const qmol = mod.get_qmol(spec.smarts);
+        if (!qmol) continue;
+        const per = union(qmol); qmol.delete();
+        if (per.every(p => p.atoms.length))
+          shared.push({ key, spec, atoms: per.map(p => p.atoms), bonds: per.map(p => p.bonds) });
+      }
+      const parents = new Set(shared.map(s => s.spec.parent).filter(Boolean));
+      for (const s of shared) {
+        if (parents.has(s.key)) continue;
+        found.push({ key: s.key, atoms: s.atoms, bonds: s.bonds,
+          label: s.spec["label_" + getLang()] || s.spec.label_en || s.key });
+      }
+      /* One shared pattern needs no "All" beside it — it is all of it. Returning a nameless
+         placeholder here was the bug behind a pair marked green under a caption saying nothing
+         was shared: the placeholder was painted but never listed, so the marks had no name and
+         the count said none. Nothing shared now returns nothing. */
+      if (found.length < 2) return found;
+      // Everything at once, so the reader sees the whole overlap before picking it apart.
+      const all = { key: "all", label: t("sim_marks_all"),
+        atoms: mols.map((m, i) => [...new Set(found.flatMap(f => f.atoms[i]))]),
+        bonds: mols.map((m, i) => [...new Set(found.flatMap(f => f.bonds[i]))]) };
+      return [all].concat(found);
+    }
+    function comparison(rec, qSmiles) {
+      const box = el("div", { class: "sim-compare" });
+      try {
+        const { parts, shared } = drawPair(rec, 200, 150, qSmiles);
+        const note = shared ? t("sim_compare_shared") : t("sim_compare_none");
+        for (const part of parts) {
+          if (!part) continue;
+          const cell = el("figure", { class: "sim-figure", role: "button", tabindex: "0",
+            title: t("sim_compare_enlarge"),
+            onclick: () => openCompare(rec, qSmiles) });
+          cell.innerHTML = part.svg;
+          cell.appendChild(el("figcaption", { text: part.label }));
+          cell.addEventListener("keydown", e => {
+            if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openCompare(rec, qSmiles); } });
+          box.appendChild(cell);
+        }
+        box.appendChild(el("p", { class: "sim-compare-note", text: note }));
+        // The rail is too narrow to name what the two share; the enlarged pair does, and
+        // without this line there is nothing to say so.
+        box.appendChild(el("p", { class: "sim-compare-note sim-compare-more",
+          text: t("sim_compare_enlarge") }));
+      } catch (error) { box.appendChild(el("p", { class: "muted small", text: t("sim_compare_failed") })); }
+      return box;
+    }
+
   async function run(prefix) {
     const query = input.value.trim();
     clear(results);
     if (!query) { status.textContent = ""; if (onResults) onResults(null); return; }
     status.textContent = (prefix || "") + t("sim_working");
     try {
-      const [mod, payloadFp] = await Promise.all([
+      const [loaded, payloadFp] = await Promise.all([
         getRdkit(),
         fingerprints ? Promise.resolve(fingerprints) : L.loadLigandFingerprints()]);
+      mod = loaded;
       fingerprints = payloadFp;
       const mol = mod.get_mol(query);
       if (!mol || !mol.is_valid || !mol.is_valid()) {
@@ -292,258 +559,10 @@ export function createSimilarityPanel(options) {
       status.textContent = (prefix || "") +
         (scored.length ? t("sim_found", { n: scored.length }) : t("sim_none"));
       const handOver = hits => onResults({ query, hits });
-      /* What the two molecules have in common, drawn rather than asserted. The hit's
-         Bemis-Murcko scaffold is matched into both structures and those atoms are highlighted:
-         it is the shared ring system, not a maximum common substructure, and the caption says
-         so. Where the scaffold does not match the query the pair is still drawn, unmarked. */
-      function drawPair(rec, width, height) {
-        const pattern = rec.scaffold ? scaffoldQuery(mod, rec.scaffold) : null;
-        const prepared = [[query, t("sim_compare_query")], [rec.smiles, rec.ccd]]
-          .map(([smiles, label]) => {
-            const m = mod.get_mol(smiles);
-            if (!m || !m.is_valid || !m.is_valid()) { if (m) m.delete(); return null; }
-            let found = { atoms: [], bonds: [] };
-            if (pattern) { try { found = JSON.parse(m.get_substruct_match(pattern)) || found; }
-                           catch (e) { found = { atoms: [], bonds: [] }; } }
-            return { mol: m, label, found, matched: (found.atoms || []).length > 0 };
-          });
-        /* The pattern is the hit's own Bemis-Murcko scaffold, so it always covers most of the
-           hit — that is what a scaffold is. Marking it there while the query carries no match
-           painted four fifths of one molecule green and none of the other, which reads as a
-           similarity map and is not one: the score comes from the whole-molecule fingerprint,
-           not from the marked atoms. The highlight means "this is what the two share", so it is
-           drawn only when both actually carry it, and otherwise the pair is drawn plain and the
-           caption says why. */
-        const shared = prepared.every(p => p && p.matched);
-        /* The enlarged pair is redrawn rather than scaled up: RDKit lays a molecule out for the
-           box it is given, and stretching the 200px drawing would thin the bonds and leave the
-           labels at thumbnail proportions. Stereo annotation stays off in both, so the large
-           drawing is the small one, only bigger. */
-        const parts = prepared.map(p => {
-          if (!p) return null;
-          const svg = p.mol.get_svg_with_highlights(JSON.stringify({
-            width, height, bondLineWidth: width > 300 ? 2 : 1, addStereoAnnotation: false,
-            atoms: shared ? p.found.atoms || [] : [], bonds: shared ? p.found.bonds || [] : [],
-            highlightColour: [0.62, 0.85, 0.72] }));
-          p.mol.delete();
-          return { svg, label: p.label };
-        });
-        if (pattern) pattern.delete();
-        return { parts, shared };
-      }
-      /* One image holding both molecules, so what leaves the browser is the comparison and not
-         two drawings the reader has to put side by side again. RDKit hands back a complete SVG
-         document each time; nesting them keeps each one's own coordinate system intact. */
-      function pairSvg(parts, width, height) {
-        const pad = 14, cap = 22;
-        const w = width * parts.length + pad * (parts.length + 1);
-        const h = height + cap + pad * 2;
-        const esc = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
-                                  .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-        let body = "";
-        parts.forEach((part, i) => {
-          const x = pad + i * (width + pad);
-          body += part.svg.replace(/^[\s\S]*?(?=<svg)/, "").replace("<svg", `<svg x="${x}" y="${pad}"`);
-          body += `<text x="${x + width / 2}" y="${pad + height + 15}" text-anchor="middle" `
-                + `font-family="system-ui,sans-serif" font-size="13" fill="#444">${esc(part.label)}</text>`;
-        });
-        return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" `
-             + `viewBox="0 0 ${w} ${h}"><rect width="100%" height="100%" fill="#ffffff"/>`
-             + body + `</svg>`;
-      }
-      function downloadPairSvg(parts, name, width, height) {
-        downloadBlob(name + ".svg",
-          new Blob([pairSvg(parts, width, height)], { type: "image/svg+xml;charset=utf-8" }));
-      }
-      // Rasterised at three times the drawing size, matching the viewer's own snapshot factor,
-      // so the image is usable in a figure rather than only on screen.
-      function downloadPairPng(parts, name, width, height) {
-        const url = URL.createObjectURL(
-          new Blob([pairSvg(parts, width, height)], { type: "image/svg+xml;charset=utf-8" }));
-        const image = new Image();
-        image.onload = () => {
-          const canvas = el("canvas");
-          canvas.width = image.width * 3; canvas.height = image.height * 3;
-          const ctx = canvas.getContext("2d");
-          ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-          ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-          URL.revokeObjectURL(url);
-          canvas.toBlob(blob => blob && downloadBlob(name + ".png", blob), "image/png");
-        };
-        image.onerror = () => URL.revokeObjectURL(url);
-        image.src = url;
-      }
-      /* Selecting either drawing opens both at a size worth reading, with the pair downloadable
-         as one image. The thumbnails are 200px because the rail is narrow; that is enough to see
-         that two molecules differ and not enough to see how. */
-      async function openCompare(rec) {
-        const width = 430, height = 350;
-        const catalog = await L.loadChemistryCatalog().catch(() => null);
-        const mols = [[query, t("sim_compare_query")], [rec.smiles, rec.ccd]].map(([smiles, label]) => {
-          const mol = mod.get_mol(smiles);
-          if (!mol || !mol.is_valid || !mol.is_valid()) { if (mol) mol.delete(); return null; }
-          return { mol, label };
-        });
-        if (mols.some(m => !m)) { for (const m of mols) if (m) m.mol.delete(); return; }
-        const marks = sharedMarks(rec, mols, catalog);
-        let chosen = 0;
-
-        const name = "compare_" + rec.ccd;
-        const opener = document.activeElement;
-        const overlay = el("div", { class: "sim-lightbox", role: "dialog", "aria-modal": "true",
-          "aria-label": t("sim_compare_open") });
-        const close = () => {
-          document.removeEventListener("keydown", onKey);
-          overlay.remove();
-          document.body.classList.remove("modal-open");
-          for (const m of mols) m.mol.delete();
-          if (opener && opener.focus) opener.focus();
-        };
-        const onKey = e => { if (e.key === "Escape") { e.preventDefault(); close(); } };
-        const closeButton = el("button", { class: "btn close", type: "button",
-          "aria-label": t("sim_compare_close"), text: "✕", onclick: close });
-        const figures = el("div", { class: "sim-lightbox-figures" });
-        const chips = el("div", { class: "sim-marks" });
-
-        const parts = () => renderMarked(mols, marks[chosen], width, height);
-        function paint() {
-          clear(figures);
-          for (const part of parts()) {
-            const cell = el("figure", { class: "sim-lightbox-figure" });
-            cell.innerHTML = part.svg;
-            cell.appendChild(el("figcaption", { text: part.label }));
-            figures.appendChild(cell);
-          }
-          for (const button of chips.querySelectorAll(".sim-mark")) {
-            const on = Number(button.dataset.mark) === chosen;
-            button.classList.toggle("active", on);
-            button.setAttribute("aria-pressed", on ? "true" : "false");
-          }
-        }
-        /* What the two molecules actually have in common, named and markable one at a time.
-           Before this the panel marked a shared ring system or nothing at all, which left a
-           reader looking at a 20% score with no way to see where the 20% was. */
-        if (marks.length) {
-          chips.appendChild(el("span", { class: "muted small", text: t("sim_marks_title") }));
-          marks.forEach((mark, i) => {
-            chips.appendChild(el("button", { class: "sim-mark", type: "button", "data-mark": String(i),
-              text: mark.label, onclick: () => { chosen = i; paint(); } }));
-          });
-        } else {
-          chips.appendChild(el("span", { class: "muted small", text: t("sim_marks_empty") }));
-        }
-        overlay.appendChild(el("div", { class: "sim-lightbox-inner" }, [
-          el("header", { class: "sim-lightbox-head" }, [
-            el("h2", { text: t("sim_compare_open") + " — " + rec.ccd }),
-            el("button", { class: "btn small", type: "button", text: t("sim_compare_png"),
-              onclick: () => downloadPairPng(parts(), name, width, height) }),
-            el("button", { class: "btn small", type: "button", text: t("sim_compare_svg"),
-              onclick: () => downloadPairSvg(parts(), name, width, height) }),
-            closeButton ]),
-          figures, chips,
-          /* Not the thumbnail's caption: that one says what the green is, and here the green
-             is whatever chip is selected. What stays true is what the scaffold option means,
-             or why there is not one. */
-          el("p", { class: "sim-lightbox-note", text: marks.some(m => m.key === "scaffold")
-            ? t("sim_scaffold_present") : t("sim_scaffold_absent") }),
-          el("p", { class: "sim-lightbox-note", text: t("sim_marks_note") })]));
-        paint();
-        overlay.addEventListener("click", e => { if (e.target === overlay) close(); });
-        document.addEventListener("keydown", onKey);
-        document.body.classList.add("modal-open");
-        document.body.appendChild(overlay);
-        closeButton.focus();
-      }
-      function renderMarked(mols, mark, width, height) {
-        return mols.map((m, i) => ({
-          label: m.label,
-          svg: m.mol.get_svg_with_highlights(JSON.stringify({
-            width, height, bondLineWidth: width > 300 ? 2 : 1, addStereoAnnotation: false,
-            atoms: (mark && mark.atoms[i]) || [], bonds: (mark && mark.bonds[i]) || [],
-            highlightColour: [0.62, 0.85, 0.72] })) }));
-      }
-      /* The pieces both molecules carry, from the atlas's own SMARTS catalogue — the same 39
-         patterns the chemistry filters are built on, so what is marked here is what the facet
-         lists elsewhere already name. A pattern is kept only when it matches both molecules,
-         and dropped when a more specific child of it also matches, so an amide is not also
-         reported as a carbonyl. */
-      function sharedMarks(rec, mols, catalog) {
-        const union = qmol => mols.map(m => {
-          let out = { atoms: [], bonds: [] };
-          try {
-            for (const hit of JSON.parse(m.mol.get_substruct_matches(qmol)) || []) {
-              out.atoms = out.atoms.concat(hit.atoms || []);
-              out.bonds = out.bonds.concat(hit.bonds || []);
-            }
-          } catch (e) { /* an unmatchable pattern is simply not shared */ }
-          return out;
-        });
-        const found = [];
-        // The scaffold first: it is the largest single thing the two can share.
-        if (rec.scaffold) {
-          const qmol = scaffoldQuery(mod, rec.scaffold);
-          if (qmol) {
-            const per = union(qmol); qmol.delete();
-            if (per.every(p => p.atoms.length))
-              found.push({ key: "scaffold", label: t("sim_marks_scaffold"),
-                           atoms: per.map(p => p.atoms), bonds: per.map(p => p.bonds) });
-          }
-        }
-        const patterns = (catalog && catalog.patterns) || {};
-        const shared = [];
-        for (const [key, spec] of Object.entries(patterns)) {
-          if (!spec.smarts) continue;
-          const qmol = mod.get_qmol(spec.smarts);
-          if (!qmol) continue;
-          const per = union(qmol); qmol.delete();
-          if (per.every(p => p.atoms.length))
-            shared.push({ key, spec, atoms: per.map(p => p.atoms), bonds: per.map(p => p.bonds) });
-        }
-        const parents = new Set(shared.map(s => s.spec.parent).filter(Boolean));
-        for (const s of shared) {
-          if (parents.has(s.key)) continue;
-          found.push({ key: s.key, atoms: s.atoms, bonds: s.bonds,
-            label: s.spec["label_" + getLang()] || s.spec.label_en || s.key });
-        }
-        /* One shared pattern needs no "All" beside it — it is all of it. Returning a nameless
-           placeholder here was the bug behind a pair marked green under a caption saying nothing
-           was shared: the placeholder was painted but never listed, so the marks had no name and
-           the count said none. Nothing shared now returns nothing. */
-        if (found.length < 2) return found;
-        // Everything at once, so the reader sees the whole overlap before picking it apart.
-        const all = { key: "all", label: t("sim_marks_all"),
-          atoms: mols.map((m, i) => [...new Set(found.flatMap(f => f.atoms[i]))]),
-          bonds: mols.map((m, i) => [...new Set(found.flatMap(f => f.bonds[i]))]) };
-        return [all].concat(found);
-      }
-      function comparison(rec) {
-        const box = el("div", { class: "sim-compare" });
-        try {
-          const { parts, shared } = drawPair(rec, 200, 150);
-          const note = shared ? t("sim_compare_shared") : t("sim_compare_none");
-          for (const part of parts) {
-            if (!part) continue;
-            const cell = el("figure", { class: "sim-figure", role: "button", tabindex: "0",
-              title: t("sim_compare_enlarge"),
-              onclick: () => openCompare(rec) });
-            cell.innerHTML = part.svg;
-            cell.appendChild(el("figcaption", { text: part.label }));
-            cell.addEventListener("keydown", e => {
-              if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openCompare(rec); } });
-            box.appendChild(cell);
-          }
-          box.appendChild(el("p", { class: "sim-compare-note", text: note }));
-          // The rail is too narrow to name what the two share; the enlarged pair does, and
-          // without this line there is nothing to say so.
-          box.appendChild(el("p", { class: "sim-compare-note sim-compare-more",
-            text: t("sim_compare_enlarge") }));
-        } catch (error) { box.appendChild(el("p", { class: "muted small", text: t("sim_compare_failed") })); }
-        return box;
-      }
       if (onResults) {
         // The caller draws them; the strip inside a query panel is the wrong place to work in.
         handOver(scored.map(hit => ({ ccd: hit.rec.ccd, score: hit.score, rec: hit.rec,
-          openCompare: () => openCompare(hit.rec) })));
+          openCompare: () => openCompare(hit.rec, query) })));
         return;
       }
       for (const hit of scored) {
@@ -578,7 +597,7 @@ export function createSimilarityPanel(options) {
           let drawn = false;
           details.addEventListener("toggle", () => {
             if (!details.open || drawn) return;
-            drawn = true; details.appendChild(comparison(hit.rec));
+            drawn = true; details.appendChild(comparison(hit.rec, query));
           });
           results.appendChild(details);
         }
@@ -655,44 +674,32 @@ export function createSimilarityPanel(options) {
     placeholder: t("sim_batch_placeholder"), spellcheck: "false" });
   const batchStatus = el("p", { class: "sim-status muted small" });
   const batchActions = el("div", { class: "sim-batch-actions" });
-  let batchResult = null;
-  const csvButton = el("button", { class: "btn small", type: "button", text: t("export_csv"),
-    disabled: true, onclick: () => {
-      download("similarity_batch.csv", toCSV(BATCH_COLUMNS, batchResult.rows, {
-        release: L.getManifest().data_version || "",
-        queries: batchResult.queries.length, rows: batchResult.rows.length,
-        ranking: "Tanimoto over Morgan fingerprints, radius 2, 2048 bits",
-        shared: "catalogue patterns present in both the query and the hit; a matched pattern's "
-                + "parent is not listed as well" })); } });
-  const xlsxButton = el("button", { class: "btn small", type: "button", text: t("export_xlsx"),
-    disabled: true, onclick: () => {
-      /* Two sheets: the hits, and what was asked. The second is what makes the first
-         reproducible — a table of results with no record of its queries is not one. */
-      downloadXLSX("similarity_batch.xlsx", [
-        { name: "Hits", columns: BATCH_COLUMNS, rows: batchResult.rows },
-        { name: "Queries", columns: [
-          { key: "label", label: "query" }, { key: "smiles", label: "smiles" },
-          { key: "hits", label: "hits", get: r => batchResult.rows.filter(x => x.query_smiles === r.smiles).length },
-          { key: "status", label: "status",
-            get: r => batchResult.failed.some(f => f.smiles === r.smiles) ? "not parsed" : "ok" }],
-          rows: batchResult.queries }]); } });
   const runButton = el("button", { class: "btn small", type: "button", text: t("sim_batch_run"),
     onclick: async () => {
-      batchResult = null; csvButton.disabled = true; xlsxButton.disabled = true;
       batchStatus.textContent = t("sim_batch_working", { done: 0, total: 0 });
+      let result;
       try {
-        batchResult = await runBatch({ text: batchInput.value, onProgress: (done, total) => {
+        mod = await getRdkit();
+        result = await runBatch({ text: batchInput.value, onProgress: (done, total) => {
           batchStatus.textContent = t("sim_batch_working", { done, total }); } });
       } catch (error) { batchStatus.textContent = t("sim_failed"); return; }
-      if (!batchResult.queries.length) { batchStatus.textContent = t("sim_batch_empty"); return; }
-      batchStatus.textContent = t("sim_batch_done", { queries: batchResult.queries.length,
-        rows: batchResult.rows.length })
-        + (batchResult.failed.length ? " " + t("sim_batch_failed",
-            { n: batchResult.failed.length, list: batchResult.failed.map(f => f.label).join(", ") }) : "");
-      csvButton.disabled = !batchResult.rows.length;
-      xlsxButton.disabled = !batchResult.rows.length;
+      if (!result.queries.length) { batchStatus.textContent = t("sim_batch_empty"); return; }
+      batchStatus.textContent = t("sim_batch_done", { queries: result.queries.length,
+        rows: result.rows.length })
+        + (result.failed.length ? " " + t("sim_batch_failed",
+            { n: result.failed.length, list: result.failed.map(f => f.label).join(", ") }) : "");
+      /* A batch drives the page exactly as a single query does. Keeping its results in this box
+         meant two query mechanisms competing for one listing, with only one of them winning and
+         nothing on screen saying which — so the box showed one set of molecules while the banner
+         named another. The single-query field is cleared for the same reason. */
+      if (onResults) {
+        input.value = "";
+        onResults({ batch: result, queries: result.queries.length,
+          hits: bestPerHit(result).map(h => ({ ...h,
+            openCompare: () => openCompare(h.rec, h.querySmiles) })) });
+      }
     } });
-  batchActions.appendChild(runButton); batchActions.appendChild(csvButton); batchActions.appendChild(xlsxButton);
+  batchActions.appendChild(runButton);
   exampleOnTab(batchInput, t("sim_batch_example"));
   batchBox.appendChild(batchInput);
   batchBox.appendChild(batchActions);

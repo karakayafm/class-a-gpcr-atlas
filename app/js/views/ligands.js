@@ -34,7 +34,7 @@ import * as L from "../data/loader.js";
 import { navigate, buildHash } from "../core/router.js";
 import { plainName, familyDisplayName } from "./names.js";
 import { metricHelp } from "./views.js";
-import { createSimilarityPanel, getRdkit } from "./chemsearch.js";
+import { createSimilarityPanel, getRdkit, BATCH_COLUMNS } from "./chemsearch.js";
 
 const CARD_PAGE = 60;
 
@@ -219,7 +219,9 @@ export async function ligandExplorer(root, initialLigand) {
   let simResult = null;
   querySlot.appendChild(createSimilarityPanel({ onResults: payload => {
     simResult = payload && payload.hits && payload.hits.length
-      ? { query: payload.query, byCcd: new Map(payload.hits.map(h => [h.ccd, h])) } : null;
+      ? { query: payload.query, batch: payload.batch || null,
+          queries: payload.queries || 1,
+          byCcd: new Map(payload.hits.map(h => [h.ccd, h])) } : null;
     shown = CARD_PAGE; selected = null;
     draw();
     if (simResult) resultHead.scrollIntoView({ block: "start", behavior: "smooth" });
@@ -737,9 +739,16 @@ export async function ligandExplorer(root, initialLigand) {
 
     clear(resultHead); clear(grid); clear(more); clear(queryBanner);
     if (simResult) {
-      queryBanner.appendChild(el("span", { class: "lx-banner-mark", text: t("lx_query_active") }));
-      queryBanner.appendChild(el("code", { class: "lx-banner-query", text: simResult.query }));
-      queryBanner.appendChild(el("span", { class: "muted small", text: t("lx_query_ranked") }));
+      if (simResult.batch) {
+        queryBanner.appendChild(el("span", { class: "lx-banner-mark", text: t("lx_batch_active") }));
+        queryBanner.appendChild(el("span", { class: "lx-banner-query",
+          text: t("lx_batch_queries", { n: simResult.queries }) }));
+        queryBanner.appendChild(el("span", { class: "muted small", text: t("lx_batch_ranked") }));
+      } else {
+        queryBanner.appendChild(el("span", { class: "lx-banner-mark", text: t("lx_query_active") }));
+        queryBanner.appendChild(el("code", { class: "lx-banner-query", text: simResult.query }));
+        queryBanner.appendChild(el("span", { class: "muted small", text: t("lx_query_ranked") }));
+      }
       queryBanner.appendChild(el("button", { class: "btn small", type: "button",
         text: t("lx_query_clear"), onclick: () => {
           simResult = null; shown = CARD_PAGE; selected = null;
@@ -749,6 +758,10 @@ export async function ligandExplorer(root, initialLigand) {
           if (status) status.textContent = "";
           const alt = wrap.querySelector(".sim-alt");
           if (alt) clear(alt);
+          const batch = wrap.querySelector(".sim-batch-input");
+          if (batch) batch.value = "";
+          const batchStatus = wrap.querySelector(".sim-batch .sim-status");
+          if (batchStatus) batchStatus.textContent = "";
           draw();
         } }));
     }
@@ -802,6 +815,28 @@ export async function ligandExplorer(root, initialLigand) {
     }
   }
 
+  /* A batch is a different table from a listing: one row per query and hit, with what the two
+     share. It is exported from the same buttons, because a second pair of download controls in the
+     query box is a second place to look for the same thing. */
+  function exportBatch(xlsx) {
+    const batch = simResult.batch;
+    const meta = { release: L.getManifest().data_version || "",
+      queries: batch.queries.length, rows: batch.rows.length,
+      ranking: "Tanimoto over Morgan fingerprints, radius 2, 2048 bits",
+      shared: "catalogue patterns present in both the query and the hit; a matched pattern's "
+              + "parent is not listed as well" };
+    if (!xlsx) { download("similarity_batch.csv", toCSV(BATCH_COLUMNS, batch.rows, meta)); return; }
+    downloadXLSX("similarity_batch.xlsx", [
+      { name: "Hits", columns: BATCH_COLUMNS, rows: batch.rows },
+      { name: "Queries", columns: [
+        { key: "label", label: "query" }, { key: "smiles", label: "smiles" },
+        { key: "hits", label: "hits",
+          get: r => batch.rows.filter(x => x.query_smiles === r.smiles).length },
+        { key: "status", label: "status",
+          get: r => batch.failed.some(f => f.smiles === r.smiles) ? "not parsed" : "ok" }],
+        rows: batch.queries }]);
+  }
+
   function exportRows(rows, xlsx) {
     // Whatever the page is showing, including the query's ranking when there is one.
     const cols = [
@@ -818,6 +853,7 @@ export async function ligandExplorer(root, initialLigand) {
       { key: "mw", label: "mw", get: r => r.chem?.descriptors?.mw ?? "" },
       { key: "mollogp", label: "mollogp", get: r => r.chem?.descriptors?.mollogp ?? "" },
       { key: "inchikey", label: "inchikey", get: r => r.chem?.inchikey ?? "" }];
+    if (simResult && simResult.batch) { exportBatch(xlsx); return; }
     const meta = { release: L.getManifest().data_version || "", rows: rows.length,
       unit: "one row per ligand entity; role counts are distinct receptors",
       ...(simResult ? { query: simResult.query,
