@@ -47,16 +47,21 @@ function tanimoto(a, b) {
   return either === 0 ? 0 : both / either;
 }
 
-/* Tab fills an empty field with a worked example and runs it. The gesture is only bound while the
-   field is empty, so Tab still moves focus the moment there is anything to move on from, and each
-   field says it offers this rather than leaving it to be discovered. */
-function exampleOnTab(field, example, run) {
+/* Tab fills an empty field with a worked example. It does not run it: the example is there to be
+   read and edited, and a query that starts on its own turns a keystroke meant to show the format
+   into one that produces a result the reader did not ask for. Focus stays in the field, so Enter
+   runs it and a second Tab moves on.
+
+   The gesture is only bound while the field is empty, so Tab goes back to moving focus the moment
+   there is anything to move on from, and each field says it offers this rather than leaving it to
+   be discovered. */
+function exampleOnTab(field, example) {
   field.addEventListener("keydown", event => {
     if (event.key !== "Tab" || event.shiftKey || event.altKey || event.ctrlKey || event.metaKey) return;
     if (field.value.trim()) return;
     event.preventDefault();
     field.value = example;
-    run();
+    field.setSelectionRange(field.value.length, field.value.length);
   });
 }
 
@@ -585,9 +590,9 @@ export function createSimilarityPanel(options) {
   // of that entry stop being offered.
   const runTyped = () => { clear(alternatives); run(); };
   input.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); runTyped(); } });
-  exampleOnTab(input, t("sim_example_smiles"), runTyped);
+  exampleOnTab(input, t("sim_example_smiles"));
   pdbInput.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); fromPdb(); } });
-  exampleOnTab(pdbInput, t("sim_pdb_placeholder"), fromPdb);
+  exampleOnTab(pdbInput, t("sim_pdb_placeholder"));
   body.appendChild(el("label", { class: "sim-label" }, [
     document.createTextNode(t("sim_smiles_label") + " "),
     el("span", { class: "sim-tab-hint", text: t("sim_tab_hint") })]));
@@ -688,7 +693,7 @@ export function createSimilarityPanel(options) {
       xlsxButton.disabled = !batchResult.rows.length;
     } });
   batchActions.appendChild(runButton); batchActions.appendChild(csvButton); batchActions.appendChild(xlsxButton);
-  exampleOnTab(batchInput, t("sim_batch_example"), () => runButton.click());
+  exampleOnTab(batchInput, t("sim_batch_example"));
   batchBox.appendChild(batchInput);
   batchBox.appendChild(batchActions);
   batchBox.appendChild(batchStatus);
