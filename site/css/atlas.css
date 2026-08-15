@@ -164,14 +164,8 @@ body.modal-open { overflow:hidden; }
   border-color:var(--accent); color:var(--accent-ink); }
 .explorer-layout { display:grid; grid-template-columns:360px minmax(0,1fr); gap:16px; align-items:start; }
 /* Ligand mode adds a third column for the chemistry filters, on the far right. */
-.explorer-layout.with-chemistry { grid-template-columns:340px minmax(0,1fr) 320px; }
 /* A warm, low-saturation amber so the filter column reads as a distinct surface without
    competing with the result list or the detail panel beside it. */
-.chemistry-rail { background:var(--chem-panel); border:1px solid var(--chem-line); border-radius:12px;
-  position:sticky; top:112px; padding:10px 14px; max-height:calc(100vh - 130px); overflow-y:auto;
-  scrollbar-gutter:stable; }
-.chemistry-rail .rail-chemistry { margin:0; }
-.chemistry-rail .chem-details > summary { font-size:12px; }
 .explorer-rail,.structure-detail { background:var(--panel); border:1px solid var(--line); border-radius:12px; }
 /* No clipping here: the rail hosts help popovers that must be able to reach past its edge,
    and overflow:hidden was cutting them off mid-sentence. The inner list keeps its own rounded
@@ -376,14 +370,10 @@ body.modal-open { overflow:hidden; }
 .legend-swatch.selected { background:#ef72aa; }.legend-swatch.motif-ligand { background:#eaa300; }
 .legend-swatch.motif-activation { background:#9986ed; }.legend-swatch.covalent { background:#f28c00; }
 .viewer-hint { color:var(--muted); font-size:10.5px; }
-@media (max-width:1400px) { .explorer-layout.with-chemistry { grid-template-columns:340px minmax(0,1fr); }
-  .chemistry-rail { grid-column:1 / -1; position:static; max-height:none; } }
-/* .with-chemistry is named again here: it is two classes, so it outranks a bare
-   .explorer-layout rule no matter which media query wins. */
 /* minmax(0,…) rather than a bare 1fr: a grid item's automatic minimum is its min-content
    width, so a single 1fr track cannot shrink past the widest select in the rail and the whole
    page picked up a horizontal scrollbar below this width. */
-@media (max-width:900px) { .explorer-layout, .explorer-layout.with-chemistry {
+@media (max-width:900px) { .explorer-layout {
     grid-template-columns:minmax(0,1fr); }
   .explorer-rail { position:static; min-width:0; }
   .result-list { height:360px; } }
@@ -580,19 +570,11 @@ td.eff-warning_only { color:var(--muted); }
   border-radius:8px; padding:10px 12px; font-size:12.5px; }
 
 /* Ligand chemistry filters and the unassessable panel. */
-.rail-chemistry { margin:10px 0; }
-/* The column scrolls internally, so the top-level heading is pinned: without it the reader
-   scrolls past the only control that closes the panel and has to scroll back up to find it. */
-.chemistry-rail .chem-details > summary { position:sticky; top:0; z-index:2;
-  background:var(--chem-panel); margin:-10px -14px 0; padding:10px 14px;
-  border-bottom:1px solid var(--line); box-shadow:0 4px 8px -6px rgba(0,0,0,.35); }
-.chem-details > summary, .chem-facet > summary { cursor:pointer; font-size:12px;
+.chem-facet > summary { cursor:pointer; font-size:12px;
   letter-spacing:.3px; color:var(--muted); text-transform:uppercase; padding:4px 0;
   display:flex; align-items:center; gap:6px; }
 /* A visible affordance instead of the default marker, which was easy to miss. */
-.chem-details > summary::before { content:"▸"; font-size:10px; transition:transform .12s ease; }
-.chem-details[open] > summary::before { transform:rotate(90deg); }
-.chem-details > summary::marker, .chem-facet > summary::marker { content:""; }
+.chem-facet > summary::marker { content:""; }
 /* The facet rows open the filter lists, and a small leading triangle was not reading as
    something to press. They are drawn as pressable rows instead: a bordered surface, a hover
    and focus state, and a chevron on the trailing edge that turns when the row opens. */
@@ -612,11 +594,9 @@ td.eff-warning_only { color:var(--muted); }
 .chem-facet-count { flex:none; margin-left:auto; padding:1px 7px; border-radius:999px;
   background:var(--chip); color:var(--muted); font-size:11px; font-weight:600;
   font-variant-numeric:tabular-nums; letter-spacing:0; }
-.chemistry-rail .chem-details > summary { color:var(--ink); font-weight:650; font-size:12.5px; }
 /* Patterns the current selection can no longer reach stay listed but recede. */
 .chem-check.is-empty { opacity:.45; }
 .chem-check.is-empty .chem-count { font-style:italic; }
-.chem-body { display:grid; gap:8px; padding:4px 0 8px; }
 .chem-facet { border-top:0; }
 /* Reserve the scrollbar track so it never sits on top of the right-aligned counts. */
 .chem-checks { display:grid; gap:2px; max-height:210px; overflow-y:auto; padding:4px 0;
@@ -643,9 +623,6 @@ td.eff-warning_only { color:var(--muted); }
    descriptor sliders between them are long enough that a single control at either end is out of
    reach from the other. Right-aligned so the pair sits on one edge rather than drifting. */
 .chem-reset-row { display:flex; justify-content:flex-end; margin:8px 0; }
-.chem-reset:disabled { opacity:.45; cursor:default; }
-.chem-reset:disabled:hover { border-color:var(--line); }
-
 .sim-input { width:100%; min-width:0; box-sizing:border-box; font-family:ui-monospace,SFMono-Regular,
   Menlo,monospace; font-size:11.5px; }
 .sim-run { margin-top:6px; }
@@ -653,13 +630,6 @@ td.eff-warning_only { color:var(--muted); }
 /* Tall enough that an opened comparison is not cut in half by the scroll box it sits in. */
 .sim-results { display:grid; gap:3px; max-height:min(60vh,520px); overflow-y:auto;
   scrollbar-gutter:stable; margin-top:6px; }
-.sim-hit { display:grid; grid-template-columns:auto auto minmax(0,1fr); gap:8px; align-items:baseline;
-  text-align:left; padding:5px 7px; border:1px solid var(--line); border-radius:7px;
-  background:var(--panel); color:var(--ink); cursor:pointer; font-size:12px; }
-.sim-hit:hover { border-color:var(--accent); }
-.sim-score { font-variant-numeric:tabular-nums; font-weight:700; min-width:3.2em; }
-.sim-ccd { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11.5px; }
-.sim-name { color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .chem-check .chem-count { margin-left:auto; color:var(--muted); font-size:11px;
   font-variant-numeric:tabular-nums; }
 .chem-range { display:flex; align-items:center; gap:5px; flex-wrap:wrap; margin:4px 0; font-size:12px; }
@@ -667,7 +637,6 @@ td.eff-warning_only { color:var(--muted); }
 .chem-range-value { margin-left:auto; font-size:12px; font-weight:650; font-variant-numeric:tabular-nums; }
 .chem-sliders { flex:1 0 100%; display:grid; gap:2px; }
 .chem-sliders input[type=range] { width:100%; accent-color:var(--accent); margin:0; }
-.chem-coverage { flex:1 0 100%; color:var(--muted); font-size:11px; }
 .unassessable { margin-top:8px; }
 .unassessable-box { border:1px solid var(--missing-line); border-radius:8px;
   background:var(--missing-bg); padding:7px 10px; }
@@ -783,16 +752,6 @@ td.eff-warning_only { color:var(--muted); }
 .sim-alt-pick:hover { border-color:var(--accent); color:var(--accent); }
 /* Two rows now: the hit, then what selecting it does. The second row is the affordance — before
    it, the row's only clue that it led anywhere was the cursor and a tooltip. */
-.sim-hit { grid-template-columns:auto auto minmax(0,1fr) auto; text-decoration:none;
-  row-gap:3px; align-items:center; }
-.sim-where { flex:none; color:var(--muted); font-size:11px; white-space:nowrap; }
-.sim-open { grid-column:1/-1; display:flex; align-items:center; gap:6px; color:var(--muted);
-  font-size:10.5px; }
-.sim-open-pdb { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:10.5px;
-  padding:0 5px; border-radius:4px; background:var(--chip); color:var(--ink); }
-.sim-hit:hover .sim-open { color:var(--accent); }
-.sim-hit:hover .sim-open-pdb { background:var(--accent); color:var(--accent-ink); }
-
 /* Family label on a motif card: it identifies where the structure lives and is read as often as
    the receptor name, so it is set at the same size rather than as a footnote. */
 .motif-item .result-line small { font-size:12px; color:var(--accent); }
@@ -856,30 +815,6 @@ td.eff-warning_only { color:var(--muted); }
    bordered cards it read as loose text with no owner. Indenting it under its own hit and running
    a rule down the left binds the two; the extra space below separates it from the next hit. The
    chevron says the line opens something rather than being a label. */
-.sim-compare-wrap { margin:0 0 4px 16px; border-left:2px solid var(--line); }
-.sim-compare-wrap + .sim-hit { margin-top:7px; }
-.sim-compare-wrap[open] { border-left-color:var(--accent); }
-.sim-compare-wrap > summary { display:flex; align-items:center; gap:6px; cursor:pointer;
-  font-size:11px; font-weight:650; color:var(--accent); padding:4px 8px; }
-.sim-compare-wrap > summary::marker { content:""; }
-.sim-compare-wrap > summary::-webkit-details-marker { display:none; }
-.sim-compare-wrap > summary::before { content:""; flex:none; width:6px; height:6px;
-  border-right:1.5px solid currentColor; border-bottom:1.5px solid currentColor;
-  transform:translateY(-1px) rotate(-45deg); transition:transform .12s ease; }
-.sim-compare-wrap[open] > summary::before { transform:translateY(-2px) rotate(45deg); }
-.sim-compare-wrap > summary:hover { text-decoration:underline; }
-.sim-compare-wrap > summary:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
-.sim-compare { display:flex; flex-wrap:wrap; gap:8px; padding:2px 8px 8px; }
-.sim-figure { margin:0; flex:1 1 45%; min-width:0; text-align:center;
-  border:1px solid var(--line); border-radius:8px; background:#fff; padding:4px; cursor:zoom-in; }
-.sim-figure:hover { border-color:var(--accent); }
-.sim-figure:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
-.sim-figure svg { max-width:100%; height:auto; }
-.sim-figure figcaption { font-size:10.5px; color:var(--muted); padding-top:2px;
-  overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.sim-compare-note { flex:1 1 100%; margin:2px 0 0; font-size:10.5px; line-height:1.5;
-  color:var(--muted); }
-
 /* Both molecules at a readable size, and the pair as one downloadable image. Its own overlay
    rather than the 3D modal: that one is built around a WebGL canvas and a side panel, and
    borrowing it to hold two drawings would mean carrying its layout for nothing. The drawings keep
@@ -900,7 +835,6 @@ td.eff-warning_only { color:var(--muted); }
   max-width:78ch; }
 /* One shared piece marked at a time, named. The row wraps rather than scrolls: a reader needs to
    see how many things the two have in common before choosing between them. */
-.sim-compare-more { color:var(--accent); }
 .sim-marks { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-top:12px; }
 .sim-mark { padding:2px 9px; border:1px solid var(--line); border-radius:999px;
   background:var(--panel); color:var(--ink); cursor:pointer; font-size:11.5px; }
@@ -915,8 +849,6 @@ td.eff-warning_only { color:var(--muted); }
    column of rows the structure views use. The difference is deliberate: the two pages were
    indistinguishable when they shared a layout, and a reader could not tell which question they
    were looking at the answer to. */
-.ligand-explorer .lx-lead { max-width:88ch; line-height:1.6; color:var(--muted); font-size:12.5px; }
-.lx-stats { margin:14px 0 4px; }
 .lx-query { margin:14px 0 6px; }
 /* The similarity search opens the page here instead of sitting in a rail, so it is given the
    width to be read as the entry point it is. It keeps its green: the tint is what separates a

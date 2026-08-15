@@ -4,7 +4,6 @@ import { t, siteClassLabel, siteClassDefinition, stateLabel, warnLabel, transduc
   ligandClassLabel, biologicalTypeLabel, methodLabel, getLang } from "../core/i18n.js";
 import { el, clear, fmt, pct, paginate, debounce } from "../components/dom.js";
 import { plainName, familyDisplayName } from "./names.js";
-import { createSimilarityPanel } from "./chemsearch.js";
 // Re-exported: these were defined here before they had a second caller, and the app
 // shell and the viewer import them from this module.
 export { plainName, familyDisplayName };
@@ -598,14 +597,12 @@ export async function overview(root, slug) {
    across all families; otherwise it lists one family. Panel rows carry their own family_slug,
    so anything family-scoped (pocket detail, evidence, sources) is resolved per row. */
 export async function structures(root, slug, onOpen3D, initialSite, initialPdb, opts) {
-  const { panelSlug = null, ligandSlug = null } = opts || {};
-  const panelMode = !!panelSlug, ligandMode = !!ligandSlug;
-  // Chemistry filters belong to the ligand view. In the family and transducer explorers the
-  // question is which receptors and complexes exist, and a chemistry sidebar there only
-  // crowded the receptor-oriented filters it sat among.
-  const chemMode = ligandMode;
-  const d = ligandMode ? await L.loadLigandStructures(ligandSlug)
-          : panelMode ? await L.loadPanelStructures(panelSlug)
+  /* Families and transducer panels. The ligand class this view once served has its own view now,
+     whose unit is the compound rather than the deposition; nothing routes here for it, so the
+     chemistry rail and the branches that fed it are gone rather than left unreachable. */
+  const { panelSlug = null } = opts || {};
+  const panelMode = !!panelSlug;
+  const d = panelMode ? await L.loadPanelStructures(panelSlug)
           : await L.loadFamilyFile(slug, "structures.json");
   const famOf = row => row.family_slug || slug;
   const wrap = el("section", { class: "view" });
@@ -655,24 +652,6 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
   // Every filter change goes through here, so none can be added that redraws without
   // recording itself in the route.
   function refilter() { writeFilters(); drawList(); drawDetail(); }
-  // Chemistry payloads are fetched on first use; until then no chemistry filter can be active.
-  let chemistry = null, chemistryCatalog = null;
-  function activeChemistry() {
-    // A chemistry filter can now arrive from the route, before the payload it needs has been
-    // fetched. Applying it against an empty map would answer "no structure matches", which is
-    // not the same statement as "not known yet". The filter waits for the payload; the list is
-    // redrawn when it lands.
-    if (!chemistry) return { biologicalType: filters.biologicalType, functionalGroups: [],
-                             ringSystems: [], scaffolds: [], ranges: [], needsChemistry: false,
-                             any: !!filters.biologicalType };
-    const ranges = Object.entries(filters.ranges).filter(([, r]) => r && (r[0] != null || r[1] != null));
-    const needsChemistry = filters.functionalGroups.length > 0 || filters.ringSystems.length > 0
-      || filters.scaffolds.length > 0 || ranges.length > 0;
-    return { biologicalType: filters.biologicalType,
-             functionalGroups: filters.functionalGroups, ringSystems: filters.ringSystems,
-             scaffolds: filters.scaffolds, ranges, needsChemistry,
-             any: needsChemistry || !!filters.biologicalType };
-  }
   let selected = d.structures.find(x => x.pdb_id === String(initialPdb || "").toUpperCase()) ||
     d.structures.find(x => x.pdb_id === "9IJE") || d.structures[0];
   let revealInitialSelection = !!initialPdb;
@@ -684,8 +663,7 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
   const median = contactCounts.slice().sort((a,b) => a-b)[Math.floor(contactCounts.length / 2)] || 0;
 
   wrap.appendChild(el("section", { class: "atlas-intro" }, [
-    el("div", {}, [el("h2", { text: ligandMode ? ligandClassLabel(d.ligand_class)
-      : panelMode ? transducerLabel(d.panel)
+    el("div", {}, [el("h2", { text: panelMode ? transducerLabel(d.panel)
       : familyDisplayName(family ? family.name : slug) })]),
     el("div", { class: "summary-strip" }, [
       summaryMetric(d.count, t("structures")), summaryMetric(receptorNames.size, t("receptors")),
@@ -716,34 +694,11 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
 
   /* Ligand mode gets its own strip along the pharmacology axis, mirroring how the transducer
      strip works: pick a class, browse every structure in it regardless of family. */
-  if (ligandMode) {
-    const strip=el("div", { class:"family-panel-strip", "aria-label":t("nav_ligands") });
-    const classes=(L.getManifest().ligand_files) || {};
-    (async () => {
-      let index;
-      try { index=await L.loadGlobal("ligand_classes.json"); }
-      catch (error) { return; }
-      for (const entry of index.classes || []) {
-        if (!classes[entry.slug]) continue;
-        const active=entry.slug===ligandSlug;
-        const button=el("button", { class:"panel-tab family-panel-tab"+(active?" active":""),
-          "data-panel":entry.slug, "aria-pressed":active?"true":"false",
-          onclick:()=>navigate({ view:"ligands", ligand:entry.slug }) }, [
-            el("span", { class:"tab-label", text:ligandClassLabel(entry.label) }),
-            countBadge(entry.structures)
-          ]);
-        strip.appendChild(button);
-      }
-    })();
-    wrap.appendChild(strip);
-  }
-
   const ALL_PANELS=["Gs","Gi/o","Gq/11","G12/13","arrestin","transducer_free"];
   // A single-family offline export only carries the panels that family appears in, so the strip
   // must not offer a panel whose payload was never bundled.
   const availablePanels=L.getManifest().panel_files || {};
-  const transducerPanels=ligandMode ? []
-    : panelMode ? ALL_PANELS.filter(x => availablePanels[panelSlugOf(x)])
+  const transducerPanels = panelMode ? ALL_PANELS.filter(x => availablePanels[panelSlugOf(x)])
     : ALL_PANELS;
   const panelStrip=el("div", { class:"family-panel-strip", "aria-label":t("transducer") });
   for (const panel of transducerPanels) {
@@ -772,14 +727,10 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
   }
   wrap.appendChild(panelStrip);
 
-  /* In ligand mode the chemistry filters get their own column on the far right, so the left
-     rail keeps its role as the result list and the detail panel stays in the middle. */
-  const layout = el("div", { class: "explorer-layout" + (chemMode ? " with-chemistry" : "") });
+  const layout = el("div", { class: "explorer-layout" });
   const rail = el("aside", { class: "explorer-rail" });
   const detail = el("section", { class: "structure-detail", "aria-live": "polite" });
-  const chemRail = el("aside", { class: "chemistry-rail" });
   layout.appendChild(rail); layout.appendChild(detail);
-  if (chemMode) layout.appendChild(chemRail);
   wrap.appendChild(layout);
 
   const filterGrid = el("div", { class: "filter-grid" });
@@ -836,10 +787,6 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
   const listHead = el("div", { class: "result-head" });
   const resultList = el("div", { class: "result-list" });
   const unknownBox = el("div", { class: "unassessable" });
-  // Chemistry is a filter, so it belongs with the other filters rather than under the
-  // result list. The element is created later; insert it here to keep that order.
-  const chemSlot = el("div", { class: "chem-slot" });
-  if (chemMode) chemRail.appendChild(chemSlot);
   rail.appendChild(listHead); rail.appendChild(resultList); rail.appendChild(unknownBox);
 
   /* Ligands a chemistry filter could not judge. Collapsed by default so it does not compete
@@ -884,8 +831,7 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
      generated from an identical row set. */
   /* The buttons read only "CSV"/"XLSX", so each carries an accessible name describing the
      dataset it downloads — otherwise a screen reader announces six identical controls. */
-  const exportName = ligandMode ? "ligand-" + ligandSlug
-    : panelMode ? "panel-" + panelSlug : slug;
+  const exportName = panelMode ? "panel-" + panelSlug : slug;
   function exportRow(labelKey, csvName, xlsxName, onCsv, onXlsx) {
     return el("div", { class: "export-row" }, [
       el("span", { class: "export-label" }, [
@@ -905,251 +851,6 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
       action({ structures: parts.flatMap(part => part.structures || []) });
     } catch (error) { window.alert(L.errorMessage(error)); }
   }
-  /* Chemistry filters. The payload is fetched the first time this section is opened; before
-     that no chemistry filter can be active, so the landing path never pays for it. */
-  const chemBox = el("div", { class: "rail-chemistry" });
-  const chemDetails = el("details", { class: "chem-details" });
-  chemDetails.appendChild(el("summary", { text: t("chem_heading") }));
-  const chemBody = el("div", { class: "chem-body" }, [el("p", { class: "muted small", text: t("chem_prompt") })]);
-  chemDetails.appendChild(chemBody);
-  chemBox.appendChild(chemDetails);
-  // Above the chemistry filters: a reader arriving with a molecule should meet this first.
-  if (chemMode) chemSlot.appendChild(createSimilarityPanel());
-  chemSlot.appendChild(chemBox);
-
-  // The chemistry column exists for these filters, so it opens with the view rather than
-  // hiding behind a disclosure the reader has to find first.
-  if (chemMode) chemDetails.open = true;
-  let chemLoaded = false;
-  const loadChemistry = async () => {
-    if (!chemDetails.open || chemLoaded) return;
-    chemLoaded = true;
-    clear(chemBody); chemBody.appendChild(el("p", { class: "muted small", text: t("loading") }));
-    try {
-      const [payload, catalog] = await Promise.all([L.loadLigandChemistry(), L.loadChemistryCatalog()]);
-      chemistry = new Map((payload.records || []).map(r => [r.ccd, r]));
-      chemistryCatalog = catalog;
-      buildChemistryControls(payload, catalog);
-      // Filters carried in the route were held back until now; the list still shows the set
-      // from before the payload arrived.
-      drawList(); drawDetail();
-    } catch (error) {
-      clear(chemBody); chemBody.appendChild(el("p", { class: "notice", text: L.errorMessage(error) }));
-    }
-  };
-  chemDetails.addEventListener("toggle", loadChemistry);
-  if (chemMode) loadChemistry();
-
-  const countNodes = new Map();
-  let coverageNodes = [];
-
-  /* Recount every facet against the rows currently shown. Patterns that can no longer be
-     reached drop to zero and are dimmed rather than removed, so the reader can see that the
-     option exists but the current selection excludes it. */
-  function refreshFacetCounts(rows) {
-    if (!chemistry || !countNodes.size) return;
-    const counts = new Map();
-    let assessable = 0;
-    for (const structure of rows) {
-      for (const observation of structure.observations || []) {
-        const code = componentOf(observation);
-        const record = code ? chemistry.get(code) : null;
-        if (!record || record.parse_status === "failed") continue;
-        assessable += 1;
-        for (const facet of ["functional_groups", "ring_systems"]) {
-          for (const name of record.facets[facet] || []) {
-            counts.set(name, (counts.get(name) || 0) + 1);
-          }
-        }
-      }
-    }
-    for (const [name, node] of countNodes) {
-      const value = counts.get(name) || 0;
-      node.countSpan.textContent = String(value);
-      node.row.classList.toggle("is-empty", value === 0 && !node.row.querySelector("input").checked);
-    }
-    for (const node of coverageNodes) {
-      const covered = rows.reduce((n, structure) => n + (structure.observations || [])
-        .filter(observation => {
-          const code = componentOf(observation);
-          const record = code ? chemistry.get(code) : null;
-          return record && record.descriptors && record.descriptors[node.field] != null;
-        }).length, 0);
-      node.el.textContent = t("chem_coverage", { covered, total: assessable });
-    }
-  }
-
-  const rangeResets = [];
-
-  /* Clearing the chemistry filters was reachable only from the foot of the panel, below every
-     facet list and all nine descriptor sliders — a long scroll from the checkbox that was just
-     ticked. The same control is offered at the head as well. Both report how many filters are
-     in force and go inert when none are, so neither reads as a live button over an empty set. */
-  const chemResetButtons = [];
-  function chemistryActiveCount() {
-    return (filters.biologicalType ? 1 : 0)
-      + (filters.functionalGroups || []).length + (filters.ringSystems || []).length
-      + (filters.scaffolds || []).length
-      + Object.values(filters.ranges || {}).filter(Boolean).length;
-  }
-  function syncChemReset() {
-    const n = chemistryActiveCount();
-    for (const button of chemResetButtons) {
-      button.disabled = n === 0;
-      button.textContent = n ? t("chem_reset") + " (" + n + ")" : t("chem_reset");
-    }
-  }
-
-  function buildChemistryControls(payload, catalog) {
-    clear(chemBody);
-    countNodes.clear(); coverageNodes = []; rangeResets.length = 0;
-    chemResetButtons.length = 0;
-    const resetAll = () => {
-      filters.biologicalType = ""; filters.functionalGroups = []; filters.ringSystems = [];
-      filters.scaffolds = [];
-      filters.ranges = {};
-      for (const input of chemBody.querySelectorAll("input[type=checkbox]")) input.checked = false;
-      for (const reset of rangeResets) reset();
-      typeSelect.value = "";
-      refilter();
-    };
-    const resetButton = () => {
-      const button = el("button", { class: "btn small chem-reset", type: "button",
-        text: t("chem_reset"), onclick: resetAll });
-      chemResetButtons.push(button);
-      return button;
-    };
-    chemBody.appendChild(el("p", { class: "muted small", text:
-      t("chem_provenance", { rdkit: payload.rdkit_version, catalog: payload.catalog_version }) }));
-    chemBody.appendChild(el("div", { class: "chem-reset-row" }, [resetButton()]));
-
-    // Biological type reads a field every ligand has, so peptides are answerable here.
-    const types = Array.from(new Set(d.structures.flatMap(x =>
-      (x.observations || []).map(o => o.biological_type).filter(Boolean)))).sort();
-    const typeSelect = el("select", { onchange: e => {
-      filters.biologicalType = e.target.value; refilter(); } });
-    typeSelect.appendChild(el("option", { value: "", text: t("all") }));
-    for (const value of types)
-      typeSelect.appendChild(el("option", { value, text: biologicalTypeLabel(value) }));
-    chemBody.appendChild(el("label", { class: "filter-field" }, [
-      el("span", { text: t("chem_biological_type") }), typeSelect ]));
-
-    /* Counts are recomputed against whatever is currently on screen, not against the whole
-       corpus. A static number would claim, say, 549 carbonyl ligands whether the reader had
-       narrowed to lipids or not, which tells them nothing about what is still reachable. */
-    const present = { functional_groups: new Map(), ring_systems: new Map(), scaffolds: new Map() };
-    // Only the scaffolds two or more components share can group anything; the index says which
-    // those are, and the note under the list accounts for everything left out.
-    const scaffoldIndex = payload.scaffold_index || {};
-    const shared = new Set((scaffoldIndex.scaffolds || []).map(row => row.smiles));
-    for (const record of payload.records || []) {
-      if (!record.pharmacological_instances) continue;
-      for (const facet of ["functional_groups", "ring_systems"]) {
-        for (const name of record.facets[facet] || []) {
-          present[facet].set(name, (present[facet].get(name) || 0) + record.pharmacological_instances);
-        }
-      }
-      if (record.scaffold && shared.has(record.scaffold)) {
-        present.scaffolds.set(record.scaffold,
-          (present.scaffolds.get(record.scaffold) || 0) + record.pharmacological_instances);
-      }
-    }
-    const facetBox = (facet, key, labelKey, note) => {
-      const entries = [...present[facet].entries()].sort((a, b) => b[1] - a[1]);
-      if (!entries.length) return;
-      const box = el("details", { class: "chem-facet" });
-      box.appendChild(el("summary", {}, [el("span", { text: t(labelKey) }),
-        el("span", { class: "chem-facet-count", text: String(entries.length) })]));
-      const list = el("div", { class: "chem-checks" });
-      for (const [name, count] of entries) {
-        const spec = (catalog.patterns || {})[name] || {};
-        const input = el("input", { type: "checkbox", value: name,
-          checked: (filters[key] || []).includes(name), onchange: e => {
-          const set = new Set(filters[key]);
-          if (e.target.checked) set.add(name); else set.delete(name);
-          filters[key] = [...set]; refilter(); } });
-        const countSpan = el("span", { class: "chem-count", text: String(count) });
-        const row = el("label", { class: "chem-check", "data-pattern": name }, [ input,
-          el("span", { text: spec["label_" + getLang()] || spec.label_en || name }), countSpan ]);
-        countNodes.set(name, { countSpan, row });
-        list.appendChild(row);
-      }
-      box.appendChild(list);
-      if (note) box.appendChild(note);
-      chemBody.appendChild(box);
-    };
-    facetBox("functional_groups", "functionalGroups", "chem_functional_groups");
-    facetBox("ring_systems", "ringSystems", "chem_ring_systems");
-    facetBox("scaffolds", "scaffolds", "chem_scaffolds", el("p", { class:"chem-facet-note",
-      text: t("chem_scaffold_note", { unique: scaffoldIndex.components_with_unique_scaffold || 0,
-                                      acyclic: scaffoldIndex.components_acyclic || 0 }) }));
-
-    /* Every descriptor carries its own coverage: how many ligand instances actually have that
-       value. Applying one global percentage to all of them would misstate each one. */
-    const withDescriptors = (payload.records || []).filter(r => r.descriptors && r.pharmacological_instances);
-    const totalInstances = (payload.records || [])
-      .reduce((n, r) => n + (r.pharmacological_instances || 0), 0);
-    const rangeBox = el("details", { class: "chem-facet" });
-    rangeBox.appendChild(el("summary", { text: t("chem_descriptors") }));
-    for (const [field, labelKey, step] of [["mw", "chem_mw", 10], ["mollogp", "chem_logp", 0.5],
-      ["tpsa", "chem_tpsa", 5], ["hbd", "chem_hbd", 1], ["hba", "chem_hba", 1],
-      ["rotatable_bonds", "chem_rotb", 1], ["heavy_atoms", "chem_heavy", 1],
-      ["aromatic_rings", "chem_arom", 1], ["fraction_csp3", "chem_fsp3", 0.05]]) {
-      const values = withDescriptors.map(r => r.descriptors[field]).filter(v => v != null);
-      if (!values.length) continue;
-      const covered = withDescriptors
-        .filter(r => r.descriptors[field] != null)
-        .reduce((n, r) => n + r.pharmacological_instances, 0);
-      const lo = Math.min(...values), hi = Math.max(...values);
-      /* Two sliders rather than typed numbers: dragging shows the result count moving, which
-         is how a reader finds where a property actually separates the set. The pair is kept
-         ordered so the low handle can never pass the high one. */
-      const low = Math.floor(lo), high = Math.ceil(hi);
-      const decimals = step < 1 ? 2 : 0;
-      const minInput = el("input", { type: "range", min: String(low), max: String(high),
-        step: String(step), value: String(low), "aria-label": t(labelKey) + " min" });
-      const maxInput = el("input", { type: "range", min: String(low), max: String(high),
-        step: String(step), value: String(high), "aria-label": t(labelKey) + " max" });
-      const readout = el("span", { class: "chem-range-value" });
-      const apply = () => {
-        let a = Number(minInput.value), b = Number(maxInput.value);
-        if (a > b) { [a, b] = [b, a]; minInput.value = String(a); maxInput.value = String(b); }
-        readout.textContent = a.toFixed(decimals) + " – " + b.toFixed(decimals);
-        // A range spanning the whole observed span is not a filter; leaving it null keeps
-        // ligands whose descriptor is missing from being judged against it.
-        filters.ranges[field] = (a <= low && b >= high) ? null : [a, b];
-        refilter();
-      };
-      const live = debounce(apply, 90);
-      minInput.addEventListener("input", live); maxInput.addEventListener("input", live);
-      readout.textContent = low.toFixed(decimals) + " – " + high.toFixed(decimals);
-      /* Clearing a range input by setting value to "" lands a slider on its midpoint, which
-         collapsed both handles together and read as a filter of one value. Reset puts each
-         handle back on its own end instead. */
-      rangeResets.push(() => {
-        minInput.value = String(low); maxInput.value = String(high);
-        readout.textContent = low.toFixed(decimals) + " – " + high.toFixed(decimals);
-        filters.ranges[field] = null;
-      });
-      const coverageNode = el("span", { class: "chem-coverage",
-        text: t("chem_coverage", { covered, total: totalInstances }) });
-      coverageNodes.push({ field, el: coverageNode });
-      rangeBox.appendChild(el("div", { class: "chem-range" }, [
-        el("span", { class: "chem-range-label", text: t(labelKey) }), readout,
-        el("div", { class: "chem-sliders" }, [minInput, maxInput]),
-        coverageNode
-      ]));
-    }
-    chemBody.appendChild(rangeBox);
-
-    chemBody.appendChild(el("div", { class: "chem-reset-row" }, [resetButton()]));
-    syncChemReset();
-  }
-
-  /* The structural-similarity query and the comparison it opens now live in their own module,
-     because the ligand explorer opens with the same question and two copies of a fingerprint
-     search are not something to keep in step by hand. */
-
   /* Contact-frequency threshold. It hides pocket positions the panel rarely touches, which is a
      different question from the ≥75% markers: the markers annotate, this filters. */
   const thresholdValue = el("span", { class: "threshold-value", text: "0%" });
@@ -1212,27 +913,10 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
       (a.resolution || 99) - (b.resolution || 99) || a.pdb_id.localeCompare(b.pdb_id));
   }
 
-  /* Split the base set three ways. `matches` feeds the result list and the headline count;
-     `unknown` is surfaced separately so nothing disappears without being accounted for. */
+  /* Chemistry filtering moved out with the rail that drove it. The three-way split it needed —
+     matched, unmatched, unassessable — went with it; what is left is the filtered set. */
   function partition() {
-    const active = activeChemistry();
-    const base = baseFiltered();
-    if (!active.any) return { match: base, unknown: [], ligandMatches: 0, ligandUnknown: [] };
-    const match = [], unknown = [], ligandUnknown = [];
-    let ligandMatches = 0;
-    for (const structure of base) {
-      const verdict = structureChemistryState(structure, chemistry, active);
-      if (verdict.state === CHEM_MATCH) { match.push(structure); ligandMatches += verdict.matches.length; }
-      else if (verdict.state === CHEM_UNKNOWN) {
-        unknown.push(structure);
-        for (const observation of verdict.unknown) {
-          const code = componentOf(observation);
-          ligandUnknown.push({ structure, observation,
-            reason: unassessableReason(observation, code && chemistry ? chemistry.get(code) : null) });
-        }
-      }
-    }
-    return { match, unknown, ligandMatches, ligandUnknown };
+    return { match: baseFiltered(), unknown: [], ligandMatches: 0, ligandUnknown: [] };
   }
 
   function filtered() { return partition().match; }
@@ -1254,8 +938,6 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
     const representatives = was ? rows.length : partition().match.length;
     filters.representativeOnly = was;
     repCount.textContent = String(representatives);
-    refreshFacetCounts(rows);
-    syncChemReset();
     let selectedItem = null;
     for (const x of rows) {
       const o = observationFor(x);
