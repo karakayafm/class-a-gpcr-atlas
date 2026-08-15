@@ -2371,18 +2371,43 @@ export async function motifSearch(root) {
      of the positions are kept and ranked by how many, and each one says which position failed and
      what it carries instead. A structure matching none is not an answer to the question and is
      left out. */
+  /* Generic numbering is two numbers, and comparing it as text puts 3x51 before 3x50 and 7x49
+     before 6x51. Sorted on the pair, so a reader reads a motif in the order it runs. */
+  const positionOrder = position => {
+    const parts = /^(\d+)x(\d+)$/.exec(position);
+    return parts ? Number(parts[1]) * 1000 + Number(parts[2]) : Number.MAX_SAFE_INTEGER;
+  };
+
+  /* Picks are grouped by position before they are tested. A position carries one residue, so two
+     residues chosen at the same position is a question about either of them, not both: choosing D
+     and E at 3x49 asked for a residue that is D and E at once, which nothing can be, and the
+     complete-match count could only ever be zero. Within a position the choice is a union; across
+     positions every one still has to hold. */
+  function wantedFrom(picks) {
+    const groups = new Map();
+    for (const pick of picks) {
+      const key = pick.position + "|" + pick.kind;
+      if (!groups.has(key))
+        groups.set(key, { position: pick.position, kind: pick.kind, residues: new Set() });
+      if (pick.residue) groups.get(key).residues.add(pick.residue);
+    }
+    return [...groups.values()].sort((a, b) =>
+      positionOrder(a.position) - positionOrder(b.position) || a.kind.localeCompare(b.kind));
+  }
+
   function matching(picks) {
     const rows = Object.entries(payload.structures)
       .filter(([, s]) => state.scope === "class_a" || s.f === state.scope);
     if (!picks.length) return rows.map(([pdb, s]) => ({ pdb, s, per: [], hits: 0, total: 0 }));
+    const wanted = wantedFrom(picks);
     return rows.map(([pdb, s]) => {
-      const per = picks.map(pick => {
-        const ch = s.s[posIndex.get(pick.position)];
+      const per = wanted.map(group => {
+        const ch = s.s[posIndex.get(group.position)];
         const mutated = ch >= "a" && ch <= "z";
-        const ok = pick.kind === "mutation" ? mutated : ch.toUpperCase() === pick.residue;
-        return { pick, ok, carried: ch.toUpperCase(), swap: (s.m || {})[pick.position] || "" };
+        const ok = group.kind === "mutation" ? mutated : group.residues.has(ch.toUpperCase());
+        return { group, ok, carried: ch.toUpperCase(), swap: (s.m || {})[group.position] || "" };
       });
-      return { pdb, s, per, hits: per.filter(x => x.ok).length, total: picks.length };
+      return { pdb, s, per, hits: per.filter(x => x.ok).length, total: wanted.length };
     }).filter(r => r.hits > 0)
       .sort((a, b) => b.hits - a.hits || a.pdb.localeCompare(b.pdb));
   }
@@ -2469,7 +2494,8 @@ export async function motifSearch(root) {
         text: t("motif_complete_n", { n: complete, total: active.picks.length }) }));
     }
     if (active.picks.length) listHead.appendChild(el("span", { class: "muted small",
-      text: active.picks.map(x => x.position + (x.kind === "mutation" ? "!" : x.residue)).join(" + ") }));
+      text: wantedFrom(active.picks).map(g => g.position + (g.kind === "mutation" ? "!"
+        : " " + [...g.residues].sort().join("/"))).join(" + ") }));
     if (active.picks.length) list.appendChild(el("p", { class: "muted small motif-partial-note",
       text: t("motif_partial_note") }));
     if (active.bad.length) listHead.appendChild(el("span", { class: "motif-bad",
@@ -2485,11 +2511,12 @@ export async function motifSearch(root) {
          than left for the reader to work out by comparing letters. */
       const detail = el("span", { class: "motif-detail" });
       for (const cell of per) {
+        const asked = cell.group.kind === "mutation" ? t("motif_mutated")
+          : [...cell.group.residues].sort().join(" / ");
         detail.appendChild(el("span", { class: "motif-cell" + (cell.ok ? "" : " miss"),
-          title: cell.ok ? t("motif_cell_match") : t("motif_cell_miss", {
-            wanted: cell.pick.kind === "mutation" ? t("motif_mutated") : cell.pick.residue,
-            carried: cell.carried }),
-          text: cell.pick.position + " " + cell.carried + (cell.swap ? " \u2192 " + cell.swap : "") }));
+          title: cell.ok ? t("motif_cell_match", { wanted: asked })
+                         : t("motif_cell_miss", { wanted: asked, carried: cell.carried }),
+          text: cell.group.position + " " + cell.carried + (cell.swap ? " \u2192 " + cell.swap : "") }));
       }
       const item = el("button", { class: "result-item motif-item", type: "button",
         onclick: () => navigate({ family: s.f, view: "structures", pdb }) }, [
