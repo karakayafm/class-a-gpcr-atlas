@@ -251,7 +251,7 @@ export function createSimilarityPanel() {
         /* What the two molecules actually have in common, named and markable one at a time.
            Before this the panel marked a shared ring system or nothing at all, which left a
            reader looking at a 20% score with no way to see where the 20% was. */
-        if (marks.length > 1) {
+        if (marks.length) {
           chips.appendChild(el("span", { class: "muted small", text: t("sim_marks_title") }));
           marks.forEach((mark, i) => {
             chips.appendChild(el("button", { class: "sim-mark", type: "button", "data-mark": String(i),
@@ -333,8 +333,11 @@ export function createSimilarityPanel() {
           found.push({ key: s.key, atoms: s.atoms, bonds: s.bonds,
             label: s.spec["label_" + getLang()] || s.spec.label_en || s.key });
         }
-        if (found.length < 2) return found.length ? found : [{ key: "none", label: "",
-          atoms: [[], []], bonds: [[], []] }];
+        /* One shared pattern needs no "All" beside it — it is all of it. Returning a nameless
+           placeholder here was the bug behind a pair marked green under a caption saying nothing
+           was shared: the placeholder was painted but never listed, so the marks had no name and
+           the count said none. Nothing shared now returns nothing. */
+        if (found.length < 2) return found;
         // Everything at once, so the reader sees the whole overlap before picking it apart.
         const all = { key: "all", label: t("sim_marks_all"),
           atoms: mols.map((m, i) => [...new Set(found.flatMap(f => f.atoms[i]))]),

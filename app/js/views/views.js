@@ -65,7 +65,7 @@ function siteClassChip(id, count, familySlug) {
     if (e.key === "Enter" || e.key === " ") openFiltered(e);
   });
   const wrap = el("span", { class:"sitechip-wrap" }, [filterLink, button, tip]);
-  const show = () => { tip.hidden=false; button.setAttribute("aria-expanded", "true"); };
+  const show = () => { tip.hidden=false; button.setAttribute("aria-expanded", "true"); placeHelp(tip); };
   const hide = () => { if (!pinned) { tip.hidden=true; button.setAttribute("aria-expanded", "false"); } };
   wrap.addEventListener("mouseenter", show);
   wrap.addEventListener("mouseleave", hide);
@@ -85,6 +85,15 @@ function siteClassChip(id, count, familySlug) {
 
 // Exported: the ligand explorer needs the same affordance, and a second implementation of a
 // popover is a second set of focus and escape bugs.
+/* The popover opens upward, which is right almost everywhere: these markers sit in table headers
+   and beside chips with the page above them. On a view heading there is nothing above, and it
+   opened off the top of the window. It flips below when it would not fit, and only then. */
+function placeHelp(tip) {
+  tip.classList.remove("is-below");
+  const box = tip.getBoundingClientRect();
+  if (box.top < 8) tip.classList.add("is-below");
+}
+
 export function metricHelp(text) {
   const tipId = "metric-help-" + Math.random().toString(36).slice(2, 8);
   const tip = el("span", { class:"site-help-popover", id:tipId, role:"tooltip", hidden:true, text });
@@ -92,7 +101,7 @@ export function metricHelp(text) {
   const button = el("button", { class:"site-help-button", type:"button", text:"?",
     "aria-label":text, "aria-describedby":tipId, "aria-expanded":"false" });
   const wrap = el("span", { class:"metric-help-wrap" }, [button, tip]);
-  const show = () => { tip.hidden=false; button.setAttribute("aria-expanded", "true"); };
+  const show = () => { tip.hidden=false; button.setAttribute("aria-expanded", "true"); placeHelp(tip); };
   const hide = () => { if (!pinned) { tip.hidden=true; button.setAttribute("aria-expanded", "false"); } };
   wrap.addEventListener("mouseenter", show); wrap.addEventListener("mouseleave", hide);
   button.addEventListener("focus", show); button.addEventListener("blur", hide);

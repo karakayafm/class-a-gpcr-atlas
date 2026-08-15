@@ -94,6 +94,10 @@ dl.kv.wide dd { text-align:left; }
   box-shadow:0 8px 24px rgba(10,20,30,.18); font-size:12px; line-height:1.4; font-weight:400; }
 .site-help-popover::after { content:""; position:absolute; left:18px; top:100%; border:6px solid transparent;
   border-top-color:var(--line); }
+/* Flipped below its marker when there is no room above; the tail turns over with it. */
+.site-help-popover.is-below { bottom:auto; top:calc(100% + 7px); }
+.site-help-popover.is-below::after { top:auto; bottom:100%;
+  border-top-color:transparent; border-bottom-color:var(--line); }
 .site-help-popover[hidden] { display:none; }
 .muted { color:var(--muted); } .small { font-size:12.5px; }
 .notice { background:var(--warn-bg); color:var(--warn-ink); border-radius:8px; padding:8px 12px; }
