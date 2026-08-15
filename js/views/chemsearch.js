@@ -6,12 +6,11 @@
 // call it. Nothing in it is specific to either: it loads its own payloads, draws with the
 // vendored RDKit build, and returns a node.
 import { t, getLang } from "../core/i18n.js";
-import { el, clear, debounce } from "../components/dom.js";
+import { el, clear } from "../components/dom.js";
 import { downloadBlob, toCSV, download } from "../components/csv.js";
 import { downloadXLSX } from "../components/xlsx.js";
 import * as L from "../data/loader.js";
-import { buildHash } from "../core/router.js";
-import { plainName, familyDisplayName } from "./names.js";
+import { plainName } from "./names.js";
 
 /* Structural-similarity search. It sits above the chemistry filters because it is the entry
    point a reader arrives with a molecule for, and it is answered differently from everything
@@ -229,7 +228,8 @@ export const batchColumns = () => [
    comparison, so the RDKit work stays here and only the presentation moves. Without the option
    the panel renders its own list, which is what the structure view still wants. */
 export function createSimilarityPanel(options) {
-  const onResults = options && options.onResults;
+  // Required: the panel computes, the caller displays.
+  const onResults = (options && options.onResults) || (() => {});
   const box = el("details", { class: "sim-panel", open: true });
   box.appendChild(el("summary", {}, [el("span", { text: t("sim_title") })]));
   const body = el("div", { class: "sim-body" });
@@ -508,35 +508,11 @@ export function createSimilarityPanel(options) {
         bonds: mols.map((m, i) => [...new Set(found.flatMap(f => f.bonds[i]))]) };
       return [all].concat(found);
     }
-    function comparison(rec, qSmiles) {
-      const box = el("div", { class: "sim-compare" });
-      try {
-        const { parts, shared } = drawPair(rec, 200, 150, qSmiles);
-        const note = shared ? t("sim_compare_shared") : t("sim_compare_none");
-        for (const part of parts) {
-          if (!part) continue;
-          const cell = el("figure", { class: "sim-figure", role: "button", tabindex: "0",
-            title: t("sim_compare_enlarge"),
-            onclick: () => openCompare(rec, qSmiles) });
-          cell.innerHTML = part.svg;
-          cell.appendChild(el("figcaption", { text: part.label }));
-          cell.addEventListener("keydown", e => {
-            if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openCompare(rec, qSmiles); } });
-          box.appendChild(cell);
-        }
-        box.appendChild(el("p", { class: "sim-compare-note", text: note }));
-        // The rail is too narrow to name what the two share; the enlarged pair does, and
-        // without this line there is nothing to say so.
-        box.appendChild(el("p", { class: "sim-compare-note sim-compare-more",
-          text: t("sim_compare_enlarge") }));
-      } catch (error) { box.appendChild(el("p", { class: "muted small", text: t("sim_compare_failed") })); }
-      return box;
-    }
 
   async function run(prefix) {
     const query = input.value.trim();
     clear(results);
-    if (!query) { status.textContent = ""; if (onResults) onResults(null); return; }
+    if (!query) { status.textContent = ""; onResults(null); return; }
     status.textContent = (prefix || "") + t("sim_working");
     try {
       const [loaded, payloadFp] = await Promise.all([
@@ -547,7 +523,7 @@ export function createSimilarityPanel(options) {
       const mol = mod.get_mol(query);
       if (!mol || !mol.is_valid || !mol.is_valid()) {
         if (mol) mol.delete();
-        status.textContent = t("sim_invalid"); if (onResults) onResults(null); return;
+        status.textContent = t("sim_invalid"); onResults(null); return;
       }
       const bits = mol.get_morgan_fp_as_uint8array(
         JSON.stringify({ radius: payloadFp.radius, nBits: payloadFp.bits }));
@@ -558,51 +534,12 @@ export function createSimilarityPanel(options) {
         .sort((a, b) => b.score - a.score).slice(0, 20);
       status.textContent = (prefix || "") +
         (scored.length ? t("sim_found", { n: scored.length }) : t("sim_none"));
-      const handOver = hits => onResults({ query, hits });
-      if (onResults) {
-        // The caller draws them; the strip inside a query panel is the wrong place to work in.
-        handOver(scored.map(hit => ({ ccd: hit.rec.ccd, score: hit.score, rec: hit.rec,
-          openCompare: () => openCompare(hit.rec, query) })));
-        return;
-      }
-      for (const hit of scored) {
-        const place = hit.rec.seen_in[0];
-        /* A hit opens where its structures are, in a new tab, so the list the reader was working
-           with is still there when they come back. It lands on a named deposition rather than on
-           the filtered list: the row said "1 structures" without ever saying which one, so the
-           identifier the reader would have gone looking for was the one thing missing. The
-           pipeline puts the sharpest structure of the family first, and that is the one opened. */
-        // Straight into the 3D panel, which is what the line under the row promises. Every
-        // structure in this release carries a viewer bundle, so the route holds for all of them.
-        const href = "#" + buildHash({ family: place.family, view: "3d",
-                                       pdb: place.pdb_id, q: hit.rec.ccd }).slice(1);
-        // Across every family it appears in, not just the first — the count read as the total.
-        const total = (hit.rec.seen_in || []).reduce((n, x) => n + (x.structures || 0), 0);
-        const family = familyDisplayName(
-          (L.getManifest().families || []).find(f => f.slug === place.family)?.name || place.family);
-        results.appendChild(el("a", { class: "sim-hit", href, target: "_blank", rel: "noopener",
-          title: t("sim_open_hint", { family }) }, [
-          el("span", { class: "sim-score", text: Math.round(hit.score * 100) + "%" }),
-          el("span", { class: "sim-ccd", text: hit.rec.ccd }),
-          el("span", { class: "sim-name", text: plainName(hit.rec.name || "") }),
-          el("span", { class: "sim-where", text: total + " " + t("structures_short") }),
-          // The affordance was carried only by the cursor and a tooltip, which is to say by
-          // nothing a reader scanning the list would see.
-          el("span", { class: "sim-open" }, [
-            el("code", { class: "sim-open-pdb", text: place.pdb_id }),
-            el("span", { text: t("sim_open_pocket") })])]));
-        if (hit.rec.smiles) {
-          const details = el("details", { class: "sim-compare-wrap" });
-          details.appendChild(el("summary", { text: t("sim_compare_open") }));
-          let drawn = false;
-          details.addEventListener("toggle", () => {
-            if (!details.open || drawn) return;
-            drawn = true; details.appendChild(comparison(hit.rec, query));
-          });
-          results.appendChild(details);
-        }
-      }
-    } catch (error) { status.textContent = t("sim_failed"); if (onResults) onResults(null); }
+      /* The hits go to the view that asked for them. There is no fallback list here: the strip
+         this panel used to draw belonged to a chemistry rail that no longer exists, and a second
+         way of showing the same results is a second thing to keep in step. */
+      onResults({ query, hits: scored.map(hit => ({ ccd: hit.rec.ccd, score: hit.score,
+        rec: hit.rec, openCompare: () => openCompare(hit.rec, query) })) });
+    } catch (error) { status.textContent = t("sim_failed"); onResults(null); }
   }
 
   // A query typed as SMILES is no longer the one taken from an entry, so the other components
@@ -699,7 +636,7 @@ export function createSimilarityPanel(options) {
          meant two query mechanisms competing for one listing, with only one of them winning and
          nothing on screen saying which — so the box showed one set of molecules while the banner
          named another. The single-query field is cleared for the same reason. */
-      if (onResults) {
+      {
         input.value = "";
         onResults({ batch: result, queries: result.queries.length,
           hits: bestPerHit(result).map(h => ({ ...h,
