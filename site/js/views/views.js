@@ -2513,10 +2513,16 @@ export async function motifSearch(root) {
         { key: "family", label: t("col_family"), get: r => nameOf.get(r.s.f) || r.s.f },
         { key: "matched", label: t("col_positions_matched"), get: r => r.hits },
         { key: "asked", label: t("col_positions_asked"), get: r => r.total },
-        // The positions themselves, in the order the motif runs.
-        ...wanted.map((group, i) => ({ key: "pos_" + group.position, label: group.position,
-          get: r => { const cell = r.per[i];
-            return cell ? cell.carried + (cell.swap ? " \u2192 " + cell.swap : "") : ""; } }))];
+        /* The positions themselves, in the order the motif runs. Two columns each rather than one:
+           the wild-type residue and, separately, what the construct carries instead. Writing them
+           as "R → K" put two values and a non-ASCII arrow in one cell, which is the packing the
+           rest of this table exists to avoid and a character a spreadsheet may not read back. The
+           substitution column is empty where the construct was not engineered. */
+        ...wanted.flatMap((group, i) => [
+          { key: "pos_" + group.position, label: group.position,
+            get: r => (r.per[i] || {}).carried || "" },
+          { key: "eng_" + group.position, label: group.position + "_" + t("col_engineered"),
+            get: r => (r.per[i] || {}).swap || "" }])];
       const meta = () => ({ release: L.getManifest().data_version || "",
         scope: state.scope, rows: rows.length,
         asked: wanted.map(g => g.position + " " + (g.kind === "mutation" ? "!"

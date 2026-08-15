@@ -958,8 +958,25 @@ export async function ligandExplorer(root, initialLigand) {
       }
       contexts.push(...byContext.values());
     }
+    const measured = [];
+    for (const entry of rows)
+      for (const row of affinityRows(entry))
+        measured.push({ entry, ...row });
     downloadXLSX(stem + ".xlsx", [
       { name: "Ligands", columns: cols, rows },
+      /* One measurement per row. The Ligands sheet packs these into "receptor:value(n)" so that a
+         single-file reader has them at all; here each number is its own cell. */
+      { name: "Affinity", columns: [
+        { key: "name", label: col("name"), get: r => r.entry.name },
+        { key: "components", label: col("components"), get: r => r.entry.components.join("+") },
+        { key: "receptor", label: col("receptor"), get: r => r.receptor },
+        { key: "type", label: col("affinity_type"), get: r => r.type },
+        { key: "median_nm", label: col("affinity_median_nm"), get: r => r.median_nm },
+        { key: "min_nm", label: col("affinity_min_nm"), get: r => r.min_nm },
+        { key: "max_nm", label: col("affinity_max_nm"), get: r => r.max_nm },
+        { key: "n", label: col("affinity_n"), get: r => r.n },
+        { key: "pmids", label: col("pmids"), get: r => (r.pmids || []).join(" ") }],
+        rows: measured },
       { name: "Contexts", columns: [
         { key: "name", label: col("name"), get: r => r.entry.name },
         { key: "components", label: col("components"), get: r => r.entry.components.join("+") },
