@@ -94,6 +94,10 @@ dl.kv.wide dd { text-align:left; }
   box-shadow:0 8px 24px rgba(10,20,30,.18); font-size:12px; line-height:1.4; font-weight:400; }
 .site-help-popover::after { content:""; position:absolute; left:18px; top:100%; border:6px solid transparent;
   border-top-color:var(--line); }
+/* Flipped below its marker when there is no room above; the tail turns over with it. */
+.site-help-popover.is-below { bottom:auto; top:calc(100% + 7px); }
+.site-help-popover.is-below::after { top:auto; bottom:100%;
+  border-top-color:transparent; border-bottom-color:var(--line); }
 .site-help-popover[hidden] { display:none; }
 .muted { color:var(--muted); } .small { font-size:12.5px; }
 .notice { background:var(--warn-bg); color:var(--warn-ink); border-radius:8px; padding:8px 12px; }
@@ -198,7 +202,7 @@ body.modal-open { overflow:hidden; }
 .rep-count { padding:1px 7px; border-radius:999px; background:var(--chip); color:var(--muted);
   font-variant-numeric:tabular-nums; font-size:11px; }
 .result-head { display:flex; align-items:center; justify-content:space-between; padding:9px 12px;
-  border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+  gap:14px; flex-wrap:wrap; border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
 /* minmax(0,…) with min-width:0 on the cards: a grid item cannot otherwise shrink below its
    min-content width, and a long unbroken ligand name would push the list sideways instead of
    being clipped by the ellipsis the name already asks for. */
@@ -777,8 +781,17 @@ td.eff-warning_only { color:var(--muted); }
   background:var(--panel); color:var(--ink); cursor:pointer; font-size:11px;
   font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
 .sim-alt-pick:hover { border-color:var(--accent); color:var(--accent); }
-.sim-hit { grid-template-columns:auto auto minmax(0,1fr) auto; text-decoration:none; }
+/* Two rows now: the hit, then what selecting it does. The second row is the affordance — before
+   it, the row's only clue that it led anywhere was the cursor and a tooltip. */
+.sim-hit { grid-template-columns:auto auto minmax(0,1fr) auto; text-decoration:none;
+  row-gap:3px; align-items:center; }
 .sim-where { flex:none; color:var(--muted); font-size:11px; white-space:nowrap; }
+.sim-open { grid-column:1/-1; display:flex; align-items:center; gap:6px; color:var(--muted);
+  font-size:10.5px; }
+.sim-open-pdb { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:10.5px;
+  padding:0 5px; border-radius:4px; background:var(--chip); color:var(--ink); }
+.sim-hit:hover .sim-open { color:var(--accent); }
+.sim-hit:hover .sim-open-pdb { background:var(--accent); color:var(--accent-ink); }
 
 /* Family label on a motif card: it identifies where the structure lives and is read as often as
    the receptor name, so it is set at the same size rather than as a footnote. */
@@ -896,3 +909,292 @@ td.eff-warning_only { color:var(--muted); }
 .sim-mark:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
 @media (max-width:720px) { .sim-lightbox { padding:8px; }
   .sim-lightbox-figure { flex:1 1 100%; } }
+
+/* ---------------------------------------------------------------- ligand explorer */
+/* This page's result is a compound, so its list is a grid of molecules rather than the single
+   column of rows the structure views use. The difference is deliberate: the two pages were
+   indistinguishable when they shared a layout, and a reader could not tell which question they
+   were looking at the answer to. */
+.ligand-explorer .lx-lead { max-width:88ch; line-height:1.6; color:var(--muted); font-size:12.5px; }
+.lx-stats { margin:14px 0 4px; }
+.lx-query { margin:14px 0 6px; }
+/* The similarity search opens the page here instead of sitting in a rail, so it is given the
+   width to be read as the entry point it is. It keeps its green: the tint is what separates a
+   thing you ask a question with from the filters and results around it, and on a white page at
+   full width it needs that more than it did in the rail, not less. Only the padding changes. */
+.lx-query .sim-panel { padding:10px 14px 4px; }
+/* The panel was built for a 300px rail, where one control per line is the only option. With the
+   page's width the two ways in — a SMILES you type and a deposition you name — sit side by side
+   as the alternatives they are, and everything they produce runs full width beneath them. */
+.lx-query .sim-body { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:2px 22px;
+  align-items:end; }
+.lx-query .sim-label { grid-column:1; }
+.lx-query .sim-input { grid-column:1; }
+.lx-query .sim-run { grid-column:2; grid-row:2; margin:0; }
+.lx-query .sim-or { grid-column:1; margin-top:10px; }
+/* 2: the file control belongs under the line that offers it, not out in the second column. */
+.lx-query .sim-file { grid-column:1; justify-self:start; }
+.lx-query .sim-pdb-row { grid-column:1/-1; }
+.lx-query .sim-status, .lx-query .sim-alt, .lx-query .sim-results, .lx-query .sim-note {
+  grid-column:1/-1; }
+.lx-query .sim-results { max-height:min(42vh,380px); }
+/* A 700px measure left the notes stuck to the left of a 1400px panel, reading as a mistake rather
+   than as restraint. They flow into as many columns as fit at a readable width instead, so the
+   line length stays short and the block fills the box it is in. */
+/* Single column at a reading measure. Folded away inside the disclosure, it no longer has a wide
+   empty panel beside it to look stranded in. */
+.lx-query .sim-note { max-width:90ch; }
+
+.lx-roles { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:14px 0 10px; }
+.lx-role-tab { display:inline-flex; align-items:center; gap:7px; padding:4px 11px; cursor:pointer;
+  border:1px solid var(--line); border-radius:999px; background:var(--panel); color:var(--ink);
+  font-size:12px; }
+.lx-role-tab:hover { border-color:var(--accent); }
+.lx-role-tab.active { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+.lx-role-tab .tab-count { font-size:11px; opacity:.85; }
+.lx-role-tab.active .tab-count { background:rgba(255,255,255,.2); }
+
+.lx-layout { display:grid; grid-template-columns:290px minmax(0,1fr); gap:16px; align-items:start; }
+/* The rail is taller than the viewport once every facet is open, and sticky alone meant the
+   last groups — method, transducer — could only be reached by scrolling the whole page past the
+   results. It scrolls within itself instead, so the filters stay whole while the list moves. */
+.lx-rail { display:grid; gap:8px; align-content:start; position:sticky; top:8px;
+  max-height:calc(100vh - 24px); overflow-y:auto; overscroll-behavior:contain;
+  scrollbar-gutter:stable; padding-right:4px; }
+.lx-facet > summary { justify-content:space-between; }
+.lx-evidence > summary { cursor:pointer; font-size:12px; letter-spacing:.04em;
+  text-transform:uppercase; color:var(--muted); padding:8px 10px; border:1px solid var(--line);
+  border-radius:8px; }
+.lx-evidence[open] > summary { border-color:var(--accent); color:var(--accent); }
+.lx-evidence > div { display:grid; gap:8px; padding-top:8px; }
+.lx-search { width:100%; box-sizing:border-box; }
+
+.lx-head { border-radius:8px 8px 0 0; gap:10px; }
+/* One choice of format, so the two sit together rather than being pushed to opposite ends by the
+   head's space-between. */
+.lx-exports { display:flex; gap:6px; margin-left:auto; }
+/* auto-fill, not auto-fit: a single result keeps a card's width instead of stretching to the
+   full row, which read as a different kind of object. */
+.lx-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:10px;
+  padding:12px 0; }
+.lx-card { display:flex; flex-direction:column; gap:5px; padding:9px; text-align:left;
+  border:1px solid var(--line); border-radius:10px; background:var(--panel); color:var(--ink);
+  cursor:pointer; font:inherit; }
+.lx-card:hover { border-color:var(--accent); }
+.lx-card.active { border-color:var(--accent); box-shadow:0 0 0 1px var(--accent) inset; }
+.lx-card:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+/* The depiction keeps a white ground in either theme: it is a chemical drawing, and inverting it
+   would change what the colours mean. */
+.lx-art { display:flex; align-items:center; justify-content:center; min-height:140px;
+  border-radius:7px; background:#fff; overflow:hidden; }
+.lx-art svg { max-width:100%; height:auto; }
+.lx-art-none { padding:10px; text-align:center; font-size:11px; line-height:1.45; color:#666; }
+.lx-card-name { font-weight:650; font-size:12.5px; line-height:1.35; overflow:hidden;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+.lx-card-id code { font-size:11.5px; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+.lx-card-roles { display:flex; flex-wrap:wrap; gap:4px; }
+.lx-role { padding:1px 7px; border-radius:999px; background:var(--chip); color:var(--muted);
+  font-size:10.5px; white-space:nowrap; }
+.lx-tag { padding:1px 7px; border-radius:999px; background:var(--chip); color:var(--muted);
+  font-size:10.5px; }
+.lx-card-counts { font-size:10.5px; color:var(--muted); }
+.lx-more { display:flex; justify-content:center; padding-bottom:12px; }
+
+.lx-detail { border-top:1px solid var(--line); padding-top:14px; margin-top:6px; }
+.lx-detail:empty { border-top:0; padding:0; }
+.lx-detail-head { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.lx-detail-head h3 { margin:0; font-size:16px; }
+.lx-detail-head .btn { margin-left:auto; }
+.lx-detail-ccd { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12px;
+  padding:2px 8px; border-radius:6px; background:var(--chip); }
+.lx-detail-body { display:grid; grid-template-columns:auto minmax(0,1fr); gap:18px;
+  align-items:start; margin:12px 0; }
+.lx-detail-art { margin:0; display:flex; align-items:center; justify-content:center;
+  min-width:260px; min-height:200px; background:#fff; border:1px solid var(--line);
+  border-radius:10px; padding:6px; }
+.lx-facts { display:grid; grid-template-columns:auto minmax(0,1fr); gap:5px 14px; margin:0;
+  font-size:12.5px; align-content:start; }
+.lx-facts dt { color:var(--muted); font-size:11px; letter-spacing:.04em; }
+.lx-facts dd { margin:0; }
+.lx-chips { display:flex; flex-wrap:wrap; align-items:center; gap:5px; margin:6px 0 12px; }
+.lx-contexts .lx-pdbs { display:flex; flex-wrap:wrap; gap:4px; }
+.lx-pdb { padding:1px 7px; border:1px solid var(--line); border-radius:6px; cursor:pointer;
+  background:var(--panel); color:var(--accent); font-size:11.5px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+.lx-pdb:hover { border-color:var(--accent); background:var(--accent); color:var(--accent-ink); }
+
+@media (max-width:980px) {
+  .lx-layout { grid-template-columns:minmax(0,1fr); }
+  .lx-rail { position:static; }
+  .lx-query .sim-body { grid-template-columns:minmax(0,1fr); }
+  .lx-detail-body { grid-template-columns:minmax(0,1fr); }
+  .lx-detail-art { min-width:0; }
+}
+.lx-check-label { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.lx-facet .chem-check { display:flex; align-items:center; gap:7px; }
+.lx-card-props { font-size:10.5px; color:var(--muted);
+  font-variant-numeric:tabular-nums; }
+.lx-xrefs { margin-top:10px; }
+.lx-xref { padding:2px 9px; border:1px solid var(--line); border-radius:999px; font-size:11px;
+  color:var(--accent); text-decoration:none; background:var(--panel); }
+.lx-xref:hover { border-color:var(--accent); background:var(--accent); color:var(--accent-ink); }
+.lx-affinity-note { max-width:86ch; line-height:1.55; margin-top:6px; }
+/* The affinity table is the one table on this page whose numbers come from outside the atlas, so
+   its header carries a tint of its own rather than the grey every other header uses. The rows keep
+   the panel ground: the values are what is being read, and tinting them too would make the whole
+   block decoration. */
+:root { --aff-head:#e4ecf6; --aff-head-ink:#1f3f66; --aff-head-line:#c3d4e8; }
+:root[data-theme="dark"] { --aff-head:#182335; --aff-head-ink:#9dbde2; --aff-head-line:#2b3d56; }
+/* Written against `table.data.lx-affinity`, not `.lx-affinity`: the shared `table.data thead th`
+   rule is the more specific of the two and would otherwise keep its grey. */
+table.data.lx-affinity { border-color:var(--aff-head-line); }
+table.data.lx-affinity thead th { background:var(--aff-head); color:var(--aff-head-ink);
+  border-bottom-color:var(--aff-head-line); }
+.lx-affinity td strong { font-variant-numeric:tabular-nums; }
+.lx-pmids { display:flex; flex-wrap:wrap; gap:4px; }
+.lx-pmid { padding:1px 6px; border:1px solid var(--line); border-radius:6px; font-size:11px;
+  color:var(--accent); text-decoration:none; font-variant-numeric:tabular-nums; }
+.lx-pmid:hover { border-color:var(--accent); background:var(--accent); color:var(--accent-ink); }
+
+.lx-card-aff { color:var(--accent); font-weight:650; }
+
+.sim-file { width:100%; max-width:46ch; box-sizing:border-box; font-size:11.5px; }
+.lx-pdb { display:inline-block; text-decoration:none; }
+/* A query supersedes the default listing, so the page says so where the list begins. */
+.lx-banner { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+.lx-banner:empty { display:none; }
+.lx-banner { padding:8px 12px; margin-bottom:-1px; border:1px solid var(--sim-line);
+  border-radius:8px 8px 0 0; background:var(--sim-panel); }
+.lx-banner-mark { font-size:11px; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
+  color:var(--sim-ink); }
+.lx-banner-query { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11.5px;
+  padding:2px 8px; border-radius:6px; background:var(--panel); max-width:60ch;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.lx-banner .btn { margin-left:auto; }
+/* The score leads the card under a query: it is the answer to what was asked. */
+.lx-card-hit { display:flex; align-items:center; gap:8px; }
+.lx-card-score { font-size:14px; font-variant-numeric:tabular-nums; color:var(--sim-ink); }
+/* It was a pale outline against a white card and read as a caption. It is the action the card
+   exists to offer under a query, so it is drawn as one. */
+.lx-card-compare { margin-left:auto; padding:2px 9px; border:1px solid var(--accent);
+  border-radius:999px; background:var(--accent); color:var(--accent-ink); cursor:pointer;
+  font-size:10.5px; font-weight:650; white-space:nowrap; }
+.lx-card-compare:hover { filter:brightness(1.08); }
+.lx-card-compare:focus-visible { outline:2px solid var(--ink); outline-offset:2px; }
+/* The same action in the detail, where there is room to say what it compares against. */
+.lx-detail-compare { display:flex; align-items:center; gap:10px; margin:2px 0 12px; }
+.lx-detail-score { font-size:15px; font-weight:700; font-variant-numeric:tabular-nums;
+  color:var(--sim-ink); }
+.lx-role-tab.is-empty { opacity:.4; }
+.lx-card-pocket { display:flex; align-items:center; gap:6px; font-size:10.5px; color:var(--muted);
+  text-decoration:none; }
+.lx-card-pocket code { padding:0 5px; border-radius:4px; background:var(--chip); color:var(--ink);
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+.lx-card-pocket:hover { color:var(--accent); }
+.lx-card-pocket:hover code { background:var(--accent); color:var(--accent-ink); }
+/* Several queries at once: a different job from the one the panel opens with, so it is folded
+   away rather than competing with the single query above it. */
+.sim-batch { grid-column:1/-1; margin-top:10px; border-top:1px solid var(--sim-line); padding-top:8px; }
+.sim-batch > summary { cursor:pointer; font-size:11.5px; font-weight:650; color:var(--sim-ink);
+  padding:2px 0; }
+.sim-batch-input { width:100%; box-sizing:border-box; margin-top:6px; resize:vertical;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11px; line-height:1.5; }
+.sim-batch-actions { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+.sim-tab-hint { font-weight:400; text-transform:none; letter-spacing:0; opacity:.75; font-size:10.5px; }
+
+/* The descriptor sliders are the tallest thing in the rail and are read by scanning, not by
+   dwelling, so each one is given a line rather than three. */
+.lx-facet .chem-range { display:grid; grid-template-columns:1fr auto; gap:1px 8px; margin:2px 0 6px; }
+.lx-facet .chem-range-label { grid-column:1; font-size:11px; }
+.lx-facet .chem-range-value { grid-column:2; font-size:11px; }
+.lx-facet .chem-sliders { grid-column:1/-1; gap:0; }
+.lx-facet .chem-sliders input[type=range] { height:14px; }
+
+/* Which query a card answers. Colour and name together: eight hues alone are more than a reader
+   can hold, and colour by itself is not a distinction everyone can make. */
+.lx-card { position:relative; }
+.lx-card-query { position:absolute; top:6px; right:6px; display:inline-flex; align-items:center;
+  gap:5px; max-width:60%; padding:1px 7px 1px 5px; border-radius:999px; font-size:10px;
+  background:color-mix(in srgb, var(--query-colour) 14%, var(--panel));
+  border:1px solid color-mix(in srgb, var(--query-colour) 45%, transparent);
+  color:var(--query-colour); }
+.lx-query-dot { flex:none; width:7px; height:7px; border-radius:50%; background:var(--query-colour); }
+.lx-query-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.lx-batch-legend { display:flex; flex-wrap:wrap; gap:5px; }
+.lx-batch-legend .lx-card-query { position:static; max-width:none; }
+:root[data-theme="dark"] .lx-card-query { color:color-mix(in srgb, var(--query-colour) 55%, #fff); }
+.sim-batch-feeds { display:grid; gap:4px; margin-top:8px; }
+.sim-batch-pdb { width:100%; max-width:34ch; box-sizing:border-box;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace; text-transform:uppercase; }
+/* Beside the molecule: which depositions show this compound acting as what. */
+.lx-detail-body { grid-template-columns:auto auto minmax(0,1fr); }
+.lx-detail-roles { display:grid; gap:10px; align-content:start; min-width:0; }
+.lx-role-group { display:flex; flex-wrap:wrap; align-items:center; gap:5px; }
+.lx-role-caption { font-size:11px; color:var(--muted); }
+.lx-role-pdbs { flex:1 1 100%; display:flex; flex-wrap:wrap; gap:4px; }
+/* The links take their role's colour, the same one the mode pills use everywhere else. */
+.lx-pdb.mode-agonist { color:#075c3f; border-color:#16845f; }
+.lx-pdb.mode-partial { color:#087c57; border-color:#41b98f; }
+.lx-pdb.mode-antagonist { color:#9a5100; border-color:#e79a3b; }
+.lx-pdb.mode-inverse { color:#a52d35; border-color:#dc6870; }
+.lx-pdb.mode-agonist:hover { background:#16845f; border-color:#16845f; color:#fff; }
+.lx-pdb.mode-partial:hover { background:#41b98f; border-color:#41b98f; color:#fff; }
+.lx-pdb.mode-antagonist:hover { background:#e79a3b; border-color:#e79a3b; color:#3a2400; }
+.lx-pdb.mode-inverse:hover { background:#dc6870; border-color:#dc6870; color:#fff; }
+@media (max-width:1100px) { .lx-detail-body { grid-template-columns:minmax(0,1fr); } }
+/* The native file button draws its own label in the browser's language, which left "Browse..."
+   in English on a Turkish page. The input keeps its place in the tab order and its focus ring;
+   only its rendering is replaced by a label of ours, whose words come from the dictionary. */
+.sim-file-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.sim-file { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden;
+  clip:rect(0 0 0 0); white-space:nowrap; border:0; }
+.sim-file-button { cursor:pointer; }
+.sim-file:focus-visible + .sim-file-button { outline:2px solid var(--accent); outline-offset:2px; }
+.sim-file-name { font-size:11px; color:var(--muted); overflow:hidden; text-overflow:ellipsis;
+  white-space:nowrap; max-width:32ch; }
+/* A partial motif match: the score, and which positions failed. */
+.motif-score { flex:none; padding:1px 7px; border-radius:999px; font-size:10.5px; font-weight:700;
+  font-variant-numeric:tabular-nums; background:var(--chip); color:var(--muted); }
+.motif-score.full { background:var(--accent); color:var(--accent-ink); }
+.motif-detail { display:inline-flex; flex-wrap:wrap; gap:4px; }
+.motif-cell { padding:0 6px; border-radius:5px; background:var(--chip); font-size:10.5px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+/* A failed position is the reason the row is here, so it is marked rather than left to be
+   spotted by comparing letters. */
+.motif-cell.miss { background:#fff0f1; color:#a52d35; border:1px solid #dc6870; }
+:root[data-theme="dark"] .motif-cell.miss { background:#2a1a1c; color:#e0868c; border-color:#7a3b40; }
+.motif-item .result-ligand { display:flex; flex-wrap:wrap; align-items:center; gap:6px; }
+.motif-partial-note { padding:8px 12px; margin:0; border-bottom:1px solid var(--line); }
+/* The motif result is a link now, so it has to keep the look the button had. */
+a.result-item { display:block; text-decoration:none; color:inherit; }
+a.result-item:focus-visible { outline:2px solid var(--accent); outline-offset:-2px; }
+
+/* The card's lines were set solid against each other; each is a separate fact and reads as one. */
+.lx-card-props, .lx-card-counts { line-height:1.6; }
+.lx-card-counts { margin-top:1px; }
+
+/* The rail's search is the way into the list by name, and it looked like any other field. */
+.lx-search { padding:7px 10px; font-size:13px; border:1px solid var(--line); border-radius:8px;
+  background:var(--panel); }
+.lx-search:focus { border-color:var(--accent);
+  outline:2px solid color-mix(in srgb, var(--accent) 30%, transparent); outline-offset:0; }
+.lx-search::placeholder { color:var(--muted); opacity:.85; }
+/* The column dictionary. A definition is read across, so the tables are set narrower than the
+   prose around them and the column name is held to its own width. */
+.guide-columns-head { margin-top:28px; }
+/* The definitions are a reference table rather than prose, so they are given more width than the
+   reading measure the rest of the guide is set to. */
+.guide-file, .guide-columns-note, .guide-columns-head + p { max-width:112ch; width:112ch;
+  max-width:min(112ch, calc(100vw - 96px)); }
+.guide-file h4 { margin:0 0 4px; font-size:14px; }
+.guide-column-table { margin:8px 0 0; font-size:12.5px; }
+.guide-column-table th:first-child, .guide-column-table td:first-child { width:22ch; }
+.guide-column-table code { font-size:11.5px; word-break:break-word; }
+.guide-column-table td { line-height:1.5; }
+.guide-columns-note { margin-top:16px; padding:10px 12px; border-radius:8px; background:var(--chip);
+  font-size:12px; line-height:1.6; max-width:96ch; }
+
+.sim-about { grid-column:1/-1; margin-top:10px; border-top:1px solid var(--sim-line); padding-top:6px; }
+.sim-about > summary { cursor:pointer; font-size:11.5px; font-weight:650; color:var(--sim-ink);
+  padding:2px 0; }
+.sim-about .sim-note:first-of-type { margin-top:6px; }

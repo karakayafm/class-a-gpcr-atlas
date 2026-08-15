@@ -1,0 +1,939 @@
+{
+ "coverage": {
+  "components_total": 578,
+  "components_with_values": 23,
+  "pairs": 63,
+  "receptors_with_values": 29,
+  "rows_scanned": 93712
+ },
+ "records": {
+  "3C0": [
+   {
+    "limits_excluded": 0,
+    "max_nm": 1.15,
+    "median_nm": 0.5505,
+    "min_nm": 0.403,
+    "n": 22,
+    "pmids": [
+     "24133207"
+    ],
+    "receptor": "acm3_rat",
+    "type": "Kd"
+   }
+  ],
+  "91Q": [
+   {
+    "limits_excluded": 0,
+    "max_nm": 62.6,
+    "median_nm": 62.6,
+    "min_nm": 62.6,
+    "n": 1,
+    "pmids": [
+     "20126400"
+    ],
+    "receptor": "5ht1a_human",
+    "type": "Ki"
+   },
+   {
+    "limits_excluded": 0,
+    "max_nm": 305.0,
+    "median_nm": 305.0,
+    "min_nm": 305.0,
+    "n": 1,
+    "pmids": [
+     "20126400"
+    ],
+    "receptor": "5ht1b_human",
+    "type": "Ki"
+   },
+   {
+    "limits_excluded": 0,
+    "max_nm": 18.6,
+    "median_nm": 18.6,
+    "min_nm": 18.6,
+    "n": 1,
+    "pmids": [
+     "20126400"
+    ],
+    "receptor": "5ht1d_human",
+    "type": "Ki"
+   },
+   {
+    "limits_excluded": 0,
+    "max_nm": 44.3,
+    "median_nm": 44.3,
+    "min_nm": 44.3,
+    "n": 1,
+    "pmids": [
+     "20126400"
+    ],
+    "receptor": "5ht1e_human",
+    "type": "Ki"
+   },
+   {
+    "limits_excluded": 0,
+    "max_nm": 161.5,
+    "median_nm": 25.51,
+    "min_nm": 21.0,
+    "n": 3,
+    "pmids": [
+     "20126400"
+    ],
+    "receptor": "5ht2a_human",
+    "type": "EC50"
+   },
+   {
+    "limits_excluded": 0,
+    "max_nm": 339.6,
+    "median_nm": 339.6,
+    "min_nm": 339.6,
+    "n": 1,
+    "pmids": [
+     "20126400"
+    ],
+    "receptor": "5ht2a_human",
+    "type": "Ki"
+   },
+   {
+    "limits_excluded": 0,
+    "max_nm": 4.7,
+    "median_nm": 4.7,
+    "min_nm": 4.7,
+    "n": 1,
+    "pmids": [
+     "20126400"
+    ],
+    "receptor": "5ht2b_human",
+    "type": "Ki"
+   },
+   {
+    "limits_excluded": 0,
+    "max_nm": 21.77,
+    "median_nm": 12.31,
+    "min_nm": 1.952,
+    "n": 4,
+    "pmids": [
+     "20126400"
+    ],
+    "receptor": "5ht2c_human",
+    "type": "EC50"
+   },
+   {
+    "limits_excluded": 0,
+    "max_nm": 141.2,
+    "median_nm": 141.2,
+    "min_nm": 141.2,
+    "n": 1,
+    "pmids": [
+     "20126400"
+    ],
+    "receptor": "5ht2c_human",
+    "type": "Ki"
+   },
+   {
+    "limits_excluded": 0,
+    "max_nm": 69.9,
+    "median_nm": 69.9,
+    "min_nm": 69.9,
+    "n": 1,
+    "pmids": [
+     "20126400"
+    ],
+    "receptor": "5ht5a_human",
+    "type": "Ki"
+   },
+   {
+    "limits_excluded": 0,
+    "max_nm": 71.7,
+    "median_nm": 71.7,
+    "min_nm": 71.7,
+    "n": 1,
+    "pmids": [
+     "20126400"
+    ],
+    "receptor": "5ht6r_human",
+    "type": "Ki"
+   },
+   {
+    "limits_excluded": 0,
+    "max_nm": 71.6,
+    "median_nm": 71.6,
+    "min_nm": 71.6,
+    "n": 1,
+    "pmids": [
+     "20126400"
+    ],
+    "receptor": "5ht7r_human",
+    "type": "Ki"
+   },
+   {
+    "limits_excluded": 0,
+    "max_nm": 2044.0,
+    "median_nm": 2044.0,
+    "min_nm": 2044.0,
+    "n": 1,
+    "pmids": [
+     "20126400"
+    ],
+    "receptor": "ada2a_human",
+    "type": "Ki"
+   },
+   {
+    "limits_excluded": 0,
+    "max_nm": 1271.0,
+    "median_nm": 1271.0,
+    "min_nm": 1271.0,
+    "n": 1,
+    "pmids": [
+     "20126400"
+    ],
+    "receptor": "ada2b_human",
+    "type": "Ki"
+   },
+   {
+    "limits_excluded": 0,
+    "max_nm": 4404.0,
+    "median_nm": 4404.0,
+    "min_nm": 4404.0,
+    "n": 1,
+    "pmids": [
+     "20126400"
+    ],
+    "receptor": "ada2c_human",
+    "type": "Ki"
+   },
+   {
+    "limits_excluded": 0,
+    "max_nm": 19.9,
+    "median_nm": 19.9,
+    "min_nm": 19.9,
+    "n": 1,
+    "pmids": [
+     "20126400"
+    ],
+    "receptor": "drd1_human",
+    "type": "Ki"
+   }
+  ],
+  "A1D67": [
+   {
+    "limits_excluded": 0,
+    "max_nm": 5012.0,
+    "median_nm": 5012.0,
+    "min_nm": 5012.0,
+    "n": 1,
+    "pmids": [
+     "15947036"
+    ],
+    "receptor": "hrh4_human",
+    "type": "Ki"
+   }
+  ],
+  "A1D9D": [
+   {
+    "limits_excluded": 0,
+    "max_nm": 2.3,
+    "median_nm": 2.3,
+    "min_nm": 2.3,
+    "n": 1,
+    "pmids": [
+     "18293908"
+    ],
+    "receptor": "cnr1_human",
+    "type": "Ki"
+   },
+   {
+    "limits_excluded": 0,
+    "max_nm": 112.0,
+    "median_nm": 112.0,
+    "min_nm": 112.0,
+    "n": 1,
+    "pmids": [
+     "18293908"
+    ],
+    "receptor": "cnr2_human",
+    "type": "Ki"
+   }
+  ],
+  "A1L11": [
+   {
+    "limits_excluded": 0,
+    "max_nm": 1.9,
+    "median_nm": 1.9,
+    "min_nm": 1.9,
+    "n": 1,
+    "pmids": [
+     "16469866"
+    ],
+    "receptor": "5ht2a_human",
+    "type": "IC50"
+   },
+   {
+    "limits_excluded": 0,
+    "max_nm": 0.5,
+    "median_nm": 0.5,
+    "min_nm": 0.5,
+    "n": 1,
+    "pmids": [
+     "16469866"
+    ],
+    "receptor": "5ht2a_human",
+    "type": "Ki"
+   },
+   {
+    "limits_excluded": 0,
+    "max_nm": 91.0,
+    "median_nm": 91.0,
+    "min_nm": 91.0,
+    "n": 1,
+    "pmids": [
+     "16469866"
+    ],
+    "receptor": "5ht2c_human",
+    "type": "IC50"
+   },
+   {
+    "limits_excluded": 0,
+    "max_nm": 1.6,
+    "median_nm": 1.6,
+    "min_nm": 1.6,
+    "n": 1,
+    "pmids": [
+     "16469866"
+    ],
+    "receptor": "5ht2c_human",
+    "type": "Ki"
+   }
+  ],
+  "A1LXY": [
+   {
+    "limits_excluded": 0,
+    "max_nm": 5100.0,
+    "median_nm": 5100.0,
+    "min_nm": 5100.0,
+    "n": 1,
+    "pmids": [
+     "28288109"
+    ],
+    "receptor": "mrgx2_human",
+    "type": "EC50"
+   }
+  ],
+  "A1LY3": [
+   {
+    "limits_excluded": 0,
+    "max_nm": 13.0,
+    "median_nm": 13.0,
+    "min_nm": 13.0,
+    "n": 1,
+    "pmids": [
+     "15947036"
+    ],
+    "receptor": "hrh3_human",
+    "type": "Ki"
+   },
+   {
+    "limits_excluded": 0,
+    "max_nm": 50.0,
+    "median_nm": 50.0,
+    "min_nm": 50.0,
+    "n": 1,
+    "pmids": [
+     "15947036"
+    ],
+    "receptor": "hrh4_human",
+    "type": "Ki"
+   }
+  ],
+  "A1LY4": [
+   {
+    "limits_excluded": 0,
+    "max_nm": 0.501,
+    "median_nm": 0.454,
+    "min_nm": 0.407,
+    "n": 2,
+    "pmids": [
+     "15947036",
+     "18433114"
+    ],
+    "receptor": "hrh3_human",
+    "type": "Ki"
+   },
+   {
+    "limits_excluded": 0,
+    "max_nm": 20.0,
+    "median_nm": 20.0,
+    "min_nm": 20.0,
+    "n": 1,
+    "pmids": [
+     "15947036"
+    ],
+    "receptor": "hrh4_human",
+    "type": "Ki"
+   }
+  ],
+  "E2J": [
+   {
+    "limits_excluded": 0,
+    "max_nm": 0.069,
+    "median_nm": 0.069,
+    "min_nm": 0.069,
+    "n": 1,
+    "pmids": [
+     "16469866"
+    ],
+    "receptor": "5ht2a_human",
+    "type": "IC50"
+   },
+   {
+    "limits_excluded": 0,
+    "max_nm": 0.083,
+    "median_nm": 0.083,
+    "min_nm": 0.083,
+    "n": 1,
+    "pmids": [
+     "16469866"
+    ],
+    "receptor": "5ht2a_human",
+    "type": "Ki"
+   },
+   {
+    "limits_excluded": 0,
+    "max_nm": 3.0,
+    "median_nm": 3.0,
+    "min_nm": 3.0,
+    "n": 1,
+    "pmids": [
+     "16469866"
+    ],
+    "receptor": "5ht2b_human",
+    "type": "IC50"
+   },
+   {
+    "limits_excluded": 0,
+    "max_nm": 4.5,
+    "median_nm": 4.5,
+    "min_nm": 4.5,
+    "n": 1,
+    "pmids": [
+     "16469866"
+    ],
+    "receptor": "5ht2c_human",
+    "type": "IC50"
+   },
+   {
+    "limits_excluded": 0,
+    "max_nm": 0.44,
+    "median_nm": 0.44,
+    "min_nm": 0.44,
+    "n": 1,
+    "pmids": [
+     "16469866"
+    ],
+    "receptor": "5ht2c_human",
+    "type": "Ki"
+   }
+  ],
+  "FUI": [
+   {
+    "limits_excluded": 0,
+    "max_nm": 44.0,
+    "median_nm": 44.0,
+    "min_nm": 44.0,
+    "n": 1,
+    "pmids": [
+     "17920884"
+    ],
+    "receptor": "fpr2_human",
+    "type": "EC50"
+   }
+  ],
+  "GMJ": [
+   {
+    "limits_excluded": 0,
+    "max_nm": 2.92,
+    "median_nm": 2.46,
+    "min_nm": 2.0,
+    "n": 2,
+    "pmids": [
+     "17649988",
+     "23488743"
+    ],
+    "receptor": "drd2_human",
+    "type": "Ki"
+   }
+  ],
+  "HSM": [
+   {
+    "limits_excluded": 0,
+    "max_nm": 10.0,
+    "median_nm": 10.0,
+    "min_nm": 10.0,
+    "n": 1,
+    "pmids": [
+     "15947036"
+    ],
+    "receptor": "hrh3_human",
+    "type": "Ki"
+   },
+   {
+    "limits_excluded": 0,
+    "max_nm": 16.0,
+    "median_nm": 16.0,
+    "min_nm": 16.0,
+    "n": 1,
+    "pmids": [
+     "15947036"
+    ],
+    "receptor": "hrh4_human",
+    "type": "Ki"
+   }
+  ],
+  "ITF": [
+   {
+    "limits_excluded": 0,
+    "max_nm": 2.0,
+    "median_nm": 2.0,
+    "min_nm": 2.0,
+    "n": 1,
+    "pmids": [
+     "15947036"
+    ],
+    "receptor": "hrh3_human",
+    "type": "Ki"
+   },
+   {
+    "limits_excluded": 0,
+    "max_nm": 6.0,
+    "median_nm": 6.0,
+    "min_nm": 6.0,
+    "n": 1,
+    "pmids": [
+     "15947036"
+    ],
+    "receptor": "hrh4_human",
+    "type": "Ki"
+   }
+  ],
+  "NIO": [
+   {
+    "limits_excluded": 0,
+    "max_nm": 1000.0,
+    "median_nm": 1000.0,
+    "min_nm": 1000.0,
+    "n": 1,
+    "pmids": [
+     "17994679"
+    ],
+    "receptor": "hcar2_human",
+    "type": "EC50"
+   },
+   {
+    "limits_excluded": 0,
+    "max_nm": 140.0,
+    "median_nm": 140.0,
+    "min_nm": 140.0,
+    "n": 1,
+    "pmids": [
+     "17994679"
+    ],
+    "receptor": "hcar2_human",
+    "type": "IC50"
+   }
+  ],
+  "Q6N": [
+   {
+    "limits_excluded": 0,
+    "max_nm": 0.4,
+    "median_nm": 0.4,
+    "min_nm": 0.4,
+    "n": 1,
+    "pmids": [
+     "28032980"
+    ],
+    "receptor": "ntr1_human",
+    "type": "Kd"
+   }
+  ],
+  "SIP": [
+   {
+    "limits_excluded": 0,
+    "max_nm": 0.093,
+    "median_nm": 0.093,
+    "min_nm": 0.093,
+    "n": 1,
+    "pmids": [
+     "17649988"
+    ],
+    "receptor": "drd2_human",
+    "type": "Kd"
+   },
+   {
+    "limits_excluded": 0,
+    "max_nm": 1.08,
+    "median_nm": 1.08,
+    "min_nm": 1.08,
+    "n": 1,
+    "pmids": [
+     "27232055"
+    ],
+    "receptor": "drd2_human",
+    "type": "Ki"
+   },
+   {
+    "limits_excluded": 0,
+    "max_nm": 0.48,
+    "median_nm": 0.48,
+    "min_nm": 0.48,
+    "n": 1,
+    "pmids": [
+     "27232055"
+    ],
+    "receptor": "drd3_human",
+    "type": "Ki"
+   }
+  ],
+  "SRO": [
+   {
+    "limits_excluded": 0,
+    "max_nm": 10.0,
+    "median_nm": 3.0,
+    "min_nm": 1.2,
+    "n": 3,
+    "pmids": [
+     "23488743",
+     "25048712",
+     "27543433"
+    ],
+    "receptor": "5ht1a_human",
+    "type": "Ki"
+   },
+   {
+    "limits_excluded": 0,
+    "max_nm": 12.0,
+    "median_nm": 12.0,
+    "min_nm": 12.0,
+    "n": 1,
+    "pmids": [
+     "19334715"
+    ],
+    "receptor": "5ht4r_human",
+    "type": "EC50"
+   },
+   {
+    "limits_excluded": 0,
+    "max_nm": 1049.0,
+    "median_nm": 1049.0,
+    "min_nm": 1049.0,
+    "n": 1,
+    "pmids": [
+     "19334715"
+    ],
+    "receptor": "5ht4r_human",
+    "type": "Ki"
+   },
+   {
+    "limits_excluded": 0,
+    "max_nm": 70.0,
+    "median_nm": 70.0,
+    "min_nm": 70.0,
+    "n": 1,
+    "pmids": [],
+    "receptor": "5ht6r_human",
+    "type": "Ki"
+   }
+  ],
+  "VCL": [
+   {
+    "limits_excluded": 0,
+    "max_nm": 3.0,
+    "median_nm": 1.6695,
+    "min_nm": 0.339,
+    "n": 2,
+    "pmids": [
+     "15947036",
+     "18433114"
+    ],
+    "receptor": "hrh3_human",
+    "type": "Ki"
+   },
+   {
+    "limits_excluded": 0,
+    "max_nm": 8.0,
+    "median_nm": 8.0,
+    "min_nm": 8.0,
+    "n": 1,
+    "pmids": [
+     "15947036"
+    ],
+    "receptor": "hrh4_human",
+    "type": "Ki"
+   }
+  ],
+  "WPT": [
+   {
+    "limits_excluded": 0,
+    "max_nm": 79.0,
+    "median_nm": 79.0,
+    "min_nm": 79.0,
+    "n": 1,
+    "pmids": [
+     "17240142"
+    ],
+    "receptor": "ffar1_human",
+    "type": "EC50"
+   }
+  ],
+  "YFW": [
+   {
+    "limits_excluded": 0,
+    "max_nm": 1.9,
+    "median_nm": 1.9,
+    "min_nm": 1.9,
+    "n": 1,
+    "pmids": [
+     "20126400"
+    ],
+    "receptor": "5ht1a_human",
+    "type": "Ki"
+   },
+   {
+    "limits_excluded": 0,
+    "max_nm": 74.0,
+    "median_nm": 74.0,
+    "min_nm": 74.0,
+    "n": 1,
+    "pmids": [
+     "20126400"
+    ],
+    "receptor": "5ht1b_human",
+    "type": "Ki"
+   },
+   {
+    "limits_excluded": 0,
+    "max_nm": 6.3,
+    "median_nm": 6.3,
+    "min_nm": 6.3,
+    "n": 1,
+    "pmids": [
+     "20126400"
+    ],
+    "receptor": "5ht1d_human",
+    "type": "Ki"
+   },
+   {
+    "limits_excluded": 0,
+    "max_nm": 360.2,
+    "median_nm": 360.2,
+    "min_nm": 360.2,
+    "n": 1,
+    "pmids": [
+     "20126400"
+    ],
+    "receptor": "5ht1e_human",
+    "type": "Ki"
+   },
+   {
+    "limits_excluded": 0,
+    "max_nm": 2011.0,
+    "median_nm": 2011.0,
+    "min_nm": 2011.0,
+    "n": 1,
+    "pmids": [
+     "20126400"
+    ],
+    "receptor": "5ht2a_human",
+    "type": "Ki"
+   },
+   {
+    "limits_excluded": 0,
+    "max_nm": 3884.0,
+    "median_nm": 3884.0,
+    "min_nm": 3884.0,
+    "n": 1,
+    "pmids": [
+     "20126400"
+    ],
+    "receptor": "5ht2b_human",
+    "type": "Ki"
+   },
+   {
+    "limits_excluded": 0,
+    "max_nm": 538.0,
+    "median_nm": 538.0,
+    "min_nm": 538.0,
+    "n": 1,
+    "pmids": [
+     "20126400"
+    ],
+    "receptor": "5ht2c_human",
+    "type": "Ki"
+   },
+   {
+    "limits_excluded": 0,
+    "max_nm": 276.6,
+    "median_nm": 276.6,
+    "min_nm": 276.6,
+    "n": 1,
+    "pmids": [
+     "20126400"
+    ],
+    "receptor": "5ht5a_human",
+    "type": "Ki"
+   },
+   {
+    "limits_excluded": 0,
+    "max_nm": 70.0,
+    "median_nm": 52.75,
+    "min_nm": 35.5,
+    "n": 2,
+    "pmids": [
+     "20126400"
+    ],
+    "receptor": "5ht6r_human",
+    "type": "Ki"
+   },
+   {
+    "limits_excluded": 0,
+    "max_nm": 3.9,
+    "median_nm": 3.9,
+    "min_nm": 3.9,
+    "n": 1,
+    "pmids": [
+     "20126400"
+    ],
+    "receptor": "5ht7r_human",
+    "type": "Ki"
+   },
+   {
+    "limits_excluded": 0,
+    "max_nm": 1890.0,
+    "median_nm": 1890.0,
+    "min_nm": 1890.0,
+    "n": 1,
+    "pmids": [
+     "20126400"
+    ],
+    "receptor": "ada2a_human",
+    "type": "Ki"
+   },
+   {
+    "limits_excluded": 0,
+    "max_nm": 2640.0,
+    "median_nm": 2640.0,
+    "min_nm": 2640.0,
+    "n": 1,
+    "pmids": [
+     "20126400"
+    ],
+    "receptor": "ada2b_human",
+    "type": "Ki"
+   },
+   {
+    "limits_excluded": 0,
+    "max_nm": 508.1,
+    "median_nm": 508.1,
+    "min_nm": 508.1,
+    "n": 1,
+    "pmids": [
+     "20126400"
+    ],
+    "receptor": "ada2c_human",
+    "type": "Ki"
+   },
+   {
+    "limits_excluded": 0,
+    "max_nm": 79.5,
+    "median_nm": 79.5,
+    "min_nm": 79.5,
+    "n": 1,
+    "pmids": [
+     "20126400"
+    ],
+    "receptor": "drd1_human",
+    "type": "Ki"
+   },
+   {
+    "limits_excluded": 0,
+    "max_nm": 3562.0,
+    "median_nm": 3562.0,
+    "min_nm": 3562.0,
+    "n": 1,
+    "pmids": [
+     "20126400"
+    ],
+    "receptor": "drd2_human",
+    "type": "Ki"
+   },
+   {
+    "limits_excluded": 0,
+    "max_nm": 3120.0,
+    "median_nm": 3120.0,
+    "min_nm": 3120.0,
+    "n": 1,
+    "pmids": [
+     "20126400"
+    ],
+    "receptor": "drd4_human",
+    "type": "Ki"
+   }
+  ],
+  "YLX": [
+   {
+    "limits_excluded": 0,
+    "max_nm": 12.0,
+    "median_nm": 12.0,
+    "min_nm": 12.0,
+    "n": 1,
+    "pmids": [
+     "25048712"
+    ],
+    "receptor": "5ht1a_human",
+    "type": "Ki"
+   }
+  ],
+  "ZMA": [
+   {
+    "limits_excluded": 0,
+    "max_nm": 0.22,
+    "median_nm": 0.22,
+    "min_nm": 0.22,
+    "n": 2,
+    "pmids": [
+     "18307292",
+     "18307293"
+    ],
+    "receptor": "aa2ar_human",
+    "type": "Kd"
+   }
+  ],
+  "ZOT": [
+   {
+    "limits_excluded": 0,
+    "max_nm": 0.5,
+    "median_nm": 0.5,
+    "min_nm": 0.5,
+    "n": 1,
+    "pmids": [
+     "19836247"
+    ],
+    "receptor": "5ht2a_human",
+    "type": "Ki"
+   }
+  ]
+ },
+ "schema": "binding_affinity",
+ "schema_version": "1.0.0",
+ "source": {
+  "attribution": "Data from BindingDB (https://www.bindingdb.org), CC BY 3.0.",
+  "licence": "CC BY 3.0",
+  "licence_basis": "BindingDB states two licences for its contents: data imported from ChEMBL under CC BY-SA 3.0, and data curated by BindingDB staff under CC BY 3.0. Only the staff-curated subset is fetched. The ChEMBL-derived subset is a separate download and is never retrieved.",
+  "licence_statement_url": "https://www.bindingdb.org/rwd/bind/info.jsp",
+  "name": "BindingDB",
+  "release": "202608",
+  "retrieved": "2026-08-15",
+  "sha256": "2529b1c572aa7b298e57355e251c9a9572b82dd35f97259d5e3866ee69bfada5",
+  "subset": "BindingDB-curated articles",
+  "url": "https://www.bindingdb.org/rwd/bind/downloads/BindingDB_BindingDB_Articles_202608_tsv.zip"
+ }
+}

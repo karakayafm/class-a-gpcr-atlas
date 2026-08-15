@@ -17,6 +17,12 @@ export function downloadBlob(name, blob) {
   a.href = u; a.download = name; document.body.appendChild(a); a.click();
   setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(u); }, 0);
 }
+/* Written with a byte-order mark. The tables carry Greek letters in receptor names — beta-2,
+   kappa, mu — and Turkish characters in the headings when the interface is in Turkish. Without the
+   mark Excel on Windows reads a UTF-8 file as ANSI and turns every one of them into mojibake,
+   which is the state a reader would then try to clean up by hand. The cost is that a naive
+   pandas.read_csv keeps the mark on the first heading unless it is told encoding="utf-8-sig";
+   that is one argument against a whole file of corrupted names. */
 export function download(name, text) {
-  downloadBlob(name, new Blob([text], { type: "text/csv;charset=utf-8" }));
+  downloadBlob(name, new Blob(["\ufeff", text], { type: "text/csv;charset=utf-8" }));
 }
