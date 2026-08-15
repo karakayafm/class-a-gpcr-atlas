@@ -1160,3 +1160,6 @@ table.data.lx-affinity thead th { background:var(--aff-head); color:var(--aff-he
 :root[data-theme="dark"] .motif-cell.miss { background:#2a1a1c; color:#e0868c; border-color:#7a3b40; }
 .motif-item .result-ligand { display:flex; flex-wrap:wrap; align-items:center; gap:6px; }
 .motif-partial-note { padding:8px 12px; margin:0; border-bottom:1px solid var(--line); }
+/* The motif result is a link now, so it has to keep the look the button had. */
+a.result-item { display:block; text-decoration:none; color:inherit; }
+a.result-item:focus-visible { outline:2px solid var(--accent); outline-offset:-2px; }

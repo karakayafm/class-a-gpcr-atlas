@@ -2563,8 +2563,13 @@ export async function motifSearch(root) {
                          : t("motif_cell_miss", { wanted: asked, carried: cell.carried }),
           text: cell.group.position + " " + cell.carried + (cell.swap ? " \u2192 " + cell.swap : "") }));
       }
-      const item = el("button", { class: "result-item motif-item", type: "button",
-        onclick: () => navigate({ family: s.f, view: "structures", pdb }) }, [
+      /* A link, opening in a new tab. Selecting a result used to navigate the same tab to the
+         structure view, which discarded the motif query and every chip chosen to build it — work
+         a reader would have to redo to look at a second hit. The query stays where it is now, and
+         the structure opens beside it. */
+      const item = el("a", { class: "result-item motif-item", target: "_blank", rel: "noopener",
+        href: "#" + buildHash({ family: s.f, view: "structures", pdb }).slice(1),
+        title: t("lx_open_structure", { pdb }) }, [
         el("div", { class: "result-line" }, [
           el("strong", { text: pdb }),
           el("span", { title: plainName(s.n), text: plainName(s.n) }),
