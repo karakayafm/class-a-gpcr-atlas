@@ -793,9 +793,15 @@ export function createSimilarityPanel(options) {
     el("div", { class: "sim-pdb-row" }, [batchPdb, batchPdbButton])]));
   batchBox.appendChild(batchActions);
   batchBox.appendChild(batchStatus);
-  batchBox.appendChild(el("p", { class: "sim-note", text: t("sim_batch_note") }));
   body.appendChild(batchBox);
-  body.appendChild(el("p", { class: "sim-note", text: t("sim_note") }));
+  /* Both notes together, folded away. They are reference text a reader needs once, and every
+     attempt to lay them out across the foot of a wide panel — narrow measure, two columns, three —
+     read worse than the last. The guide carries the same ground in full. */
+  const about = el("details", { class: "sim-about" });
+  about.appendChild(el("summary", { text: t("sim_about") }));
+  about.appendChild(el("p", { class: "sim-note", text: t("sim_note") }));
+  about.appendChild(el("p", { class: "sim-note", text: t("sim_batch_note") }));
+  body.appendChild(about);
   box.appendChild(body);
   return box;
 }
