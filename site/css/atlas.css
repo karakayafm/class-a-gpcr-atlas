@@ -777,8 +777,17 @@ td.eff-warning_only { color:var(--muted); }
   background:var(--panel); color:var(--ink); cursor:pointer; font-size:11px;
   font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
 .sim-alt-pick:hover { border-color:var(--accent); color:var(--accent); }
-.sim-hit { grid-template-columns:auto auto minmax(0,1fr) auto; text-decoration:none; }
+/* Two rows now: the hit, then what selecting it does. The second row is the affordance — before
+   it, the row's only clue that it led anywhere was the cursor and a tooltip. */
+.sim-hit { grid-template-columns:auto auto minmax(0,1fr) auto; text-decoration:none;
+  row-gap:3px; align-items:center; }
 .sim-where { flex:none; color:var(--muted); font-size:11px; white-space:nowrap; }
+.sim-open { grid-column:1/-1; display:flex; align-items:center; gap:6px; color:var(--muted);
+  font-size:10.5px; }
+.sim-open-pdb { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:10.5px;
+  padding:0 5px; border-radius:4px; background:var(--chip); color:var(--ink); }
+.sim-hit:hover .sim-open { color:var(--accent); }
+.sim-hit:hover .sim-open-pdb { background:var(--accent); color:var(--accent-ink); }
 
 /* Family label on a motif card: it identifies where the structure lives and is read as often as
    the receptor name, so it is set at the same size rather than as a footnote. */
@@ -1017,3 +1026,5 @@ td.eff-warning_only { color:var(--muted); }
 .lx-pmid { padding:1px 6px; border:1px solid var(--line); border-radius:6px; font-size:11px;
   color:var(--accent); text-decoration:none; font-variant-numeric:tabular-nums; }
 .lx-pmid:hover { border-color:var(--accent); background:var(--accent); color:var(--accent-ink); }
+
+.lx-card-aff { color:var(--accent); font-weight:650; }

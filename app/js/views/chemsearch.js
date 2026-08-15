@@ -367,17 +367,28 @@ export function createSimilarityPanel() {
       }
       for (const hit of scored) {
         const place = hit.rec.seen_in[0];
-        // A hit opens where its structures are, in a new tab, so the list the reader was
-        // working with is still there when they come back.
+        /* A hit opens where its structures are, in a new tab, so the list the reader was working
+           with is still there when they come back. It lands on a named deposition rather than on
+           the filtered list: the row said "1 structures" without ever saying which one, so the
+           identifier the reader would have gone looking for was the one thing missing. The
+           pipeline puts the sharpest structure of the family first, and that is the one opened. */
         const href = "#" + buildHash({ family: place.family, view: "structures",
-                                       q: hit.rec.ccd }).slice(1);
+                                       pdb: place.pdb_id, q: hit.rec.ccd }).slice(1);
+        // Across every family it appears in, not just the first — the count read as the total.
+        const total = (hit.rec.seen_in || []).reduce((n, x) => n + (x.structures || 0), 0);
+        const family = familyDisplayName(
+          (L.getManifest().families || []).find(f => f.slug === place.family)?.name || place.family);
         results.appendChild(el("a", { class: "sim-hit", href, target: "_blank", rel: "noopener",
-          title: t("sim_open_hint", { family: familyDisplayName(
-            (L.getManifest().families || []).find(f => f.slug === place.family)?.name || place.family) }) }, [
+          title: t("sim_open_hint", { family }) }, [
           el("span", { class: "sim-score", text: Math.round(hit.score * 100) + "%" }),
           el("span", { class: "sim-ccd", text: hit.rec.ccd }),
           el("span", { class: "sim-name", text: plainName(hit.rec.name || "") }),
-          el("span", { class: "sim-where", text: place.structures + " " + t("structures_short") })]));
+          el("span", { class: "sim-where", text: total + " " + t("structures_short") }),
+          // The affordance was carried only by the cursor and a tooltip, which is to say by
+          // nothing a reader scanning the list would see.
+          el("span", { class: "sim-open" }, [
+            el("code", { class: "sim-open-pdb", text: place.pdb_id }),
+            el("span", { text: t("sim_open_pocket") })])]));
         if (hit.rec.smiles) {
           const details = el("details", { class: "sim-compare-wrap" });
           details.appendChild(el("summary", { text: t("sim_compare_open") }));

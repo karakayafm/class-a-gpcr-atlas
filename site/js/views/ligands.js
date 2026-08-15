@@ -38,6 +38,17 @@ const CARD_PAGE = 60;
 
 /* Affinities run from picomolar to millimolar. Fixed decimals would print 0.00 at one end and
    eleven digits at the other, so the precision follows the magnitude. */
+/* The strongest median a compound has, and the receptor it was measured at. "Strongest" is the
+   lowest concentration, and binding constants are preferred over functional ones because Ki and
+   Kd measure the same thing whereas an IC50 depends on the assay it came from. */
+function strongestOf(rows) {
+  if (!rows || !rows.length) return null;
+  const rank = { Ki: 0, Kd: 0, IC50: 1, EC50: 1 };
+  const best = rows.slice().sort((a, b) =>
+    (rank[a.type] ?? 2) - (rank[b.type] ?? 2) || a.median_nm - b.median_nm)[0];
+  return { ...best, receptors: new Set(rows.map(r => r.receptor)).size };
+}
+
 function fmtNm(value) {
   if (value == null) return "—";
   if (value < 1) return value.toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
@@ -134,6 +145,8 @@ export async function ligandExplorer(root, initialLigand) {
   wrap.appendChild(el("p", { class: "lx-lead", text: t("lx_lead") }));
 
   const all = [...index.ligands.values()];
+  const strongest = entry => entry.components.length === 1 && affinity
+    ? strongestOf((affinity.records || {})[entry.components[0]]) : null;
   const chemOf = entry => entry.components.length === 1 ? chemistry.get(entry.components[0]) : null;
   for (const entry of all) entry.chem = chemOf(entry);
 
@@ -428,10 +441,27 @@ export async function ligandExplorer(root, initialLigand) {
         title: t("lx_role_contexts", { role, n: contexts }),
         text: role + " · " + contexts }));
     node.appendChild(roles);
+    /* Weight and lipophilicity, then the strongest reported affinity where there is one. TPSA
+       fills that third slot only when there is not: a measured constant is what a reader came for,
+       and a polar surface area is what can be said when nobody has published one. The chip names
+       the receptor it belongs to, because an affinity with no target attached is not a fact about
+       anything — the full table is in the detail. */
     const d = (entry.chem && entry.chem.descriptors) || null;
-    if (d) node.appendChild(el("div", { class: "lx-card-props", title: t("lx_props_hint"), text:
-      "MW " + Math.round(d.mw) + " · logP " + (d.mollogp != null ? d.mollogp.toFixed(1) : "—") +
-      " · TPSA " + (d.tpsa != null ? Math.round(d.tpsa) : "—") }));
+    const best = strongest(entry);
+    if (d || best) {
+      const parts = [];
+      if (d) parts.push("MW " + Math.round(d.mw));
+      if (d && d.mollogp != null) parts.push("logP " + d.mollogp.toFixed(1));
+      if (!best && d && d.tpsa != null) parts.push("TPSA " + Math.round(d.tpsa));
+      const line = el("div", { class: "lx-card-props", title: t("lx_props_hint"),
+        text: parts.join(" · ") });
+      if (best) {
+        line.appendChild(el("span", { class: "lx-card-aff",
+          title: t("lx_card_aff_hint", { receptor: best.receptor, n: best.n, receptors: best.receptors }),
+          text: " · " + best.type + " " + fmtNm(best.median_nm) + " nM" }));
+      }
+      node.appendChild(line);
+    }
     node.appendChild(el("div", { class: "lx-card-counts", text:
       t("lx_card_counts", { receptors: entry.receptors.size, families: entry.families.size,
                             structures: entry.structures.size }) }));
