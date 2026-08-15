@@ -33,8 +33,14 @@ import { downloadXLSX } from "../components/xlsx.js";
 import * as L from "../data/loader.js";
 import { navigate, buildHash } from "../core/router.js";
 import { plainName, familyDisplayName } from "./names.js";
-import { metricHelp } from "./views.js";
-import { createSimilarityPanel, getRdkit, BATCH_COLUMNS } from "./chemsearch.js";
+import { metricHelp, modeClass } from "./views.js";
+import { createSimilarityPanel, getRdkit, batchColumns } from "./chemsearch.js";
+
+/* One colour per query in a batch, so a card says at a glance which query found it. The label
+   travels with the colour rather than the colour standing alone: eight hues are not eight things
+   anyone can hold in mind, and colour on its own is not a distinction every reader can make. */
+const QUERY_COLOURS = ["#2f6f8f", "#b4632a", "#6a7f2c", "#7a4f9e",
+                       "#a83a5b", "#2e7d5b", "#8a6d1f", "#4a5b8c"];
 
 const CARD_PAGE = 60;
 
@@ -186,6 +192,12 @@ export async function ligandExplorer(root, initialLigand) {
   const all = [...index.ligands.values()];
   const hitOf = entry => simResult && entry.components.length === 1
     ? simResult.byCcd.get(entry.components[0]) : null;
+  // Assigned in the order the queries were written, so the colours do not move between runs.
+  const queryIndex = new Map();
+  const queryColour = label => {
+    if (!queryIndex.has(label)) queryIndex.set(label, queryIndex.size);
+    return QUERY_COLOURS[queryIndex.get(label) % QUERY_COLOURS.length];
+  };
   const scoreOf = entry => { const h = hitOf(entry); return h ? h.score : 0; };
   const strongest = entry => entry.components.length === 1 && affinity
     ? strongestOf((affinity.records || {})[entry.components[0]]) : null;
@@ -320,10 +332,10 @@ export async function ligandExplorer(root, initialLigand) {
   if (affinity) checkGroup("lx_affinity_filter", filters.affinity, affinityTypes,
     v => v === "any" ? t("lx_affinity_any") : v, true);
   checkGroup("lx_biological_type", filters.biologicalTypes, e => e.biologicalTypes,
-    biologicalTypeLabel, true);
+    biologicalTypeLabel);
   checkGroup("lx_site_class", filters.siteClasses, e => e.siteClasses, siteClassLabel);
   checkGroup("chem_functional_groups", filters.functionalGroups,
-    e => facetOf(e, "functional_groups"), patternLabel);
+    e => facetOf(e, "functional_groups"), patternLabel, true);
   checkGroup("chem_ring_systems", filters.ringSystems, e => facetOf(e, "ring_systems"), patternLabel);
   /* Scaffolds group compounds; a scaffold only one compound carries groups nothing, so as in the
      chemistry rail this lists only the ones two or more share. The label is the scaffold SMILES
@@ -501,6 +513,13 @@ export async function ligandExplorer(root, initialLigand) {
     else art.appendChild(el("span", { class: "lx-art-none", text: t(noDepictionKey(entry)) }));
     node.appendChild(art);
     const hit = hitOf(entry);
+    if (hit && hit.queryLabel && simResult.batch) {
+      node.appendChild(el("span", { class: "lx-card-query",
+        style: "--query-colour:" + queryColour(hit.queryLabel),
+        title: t("lx_card_query", { query: hit.queryLabel }) }, [
+        el("span", { class: "lx-query-dot" }),
+        el("span", { class: "lx-query-name", text: hit.queryLabel })]));
+    }
     if (hit) {
       const badge = el("div", { class: "lx-card-hit" }, [
         el("strong", { class: "lx-card-score", text: Math.round(hit.score * 100) + "%" }),
@@ -594,6 +613,38 @@ export async function ligandExplorer(root, initialLigand) {
       [...entry.biologicalTypes].map(biologicalTypeLabel).join(", "));
     fact(t("lx_site_class"), [...entry.siteClasses].map(siteClassLabel).join(", "));
     body.appendChild(facts);
+
+    /* The space beside the molecule, answering the question the detail is usually opened with:
+       which depositions show this compound acting as what. The contact table below gives the same
+       observations one receptor at a time; this groups them the other way round, by role, which is
+       how a reader who came here from a role filter is already thinking.
+
+       Plain links, so the browser's own conventions apply: a click opens the pocket in a new tab
+       and goes there, a middle click opens it behind and leaves this page where it is. Each role
+       takes the colour it has everywhere else in the atlas. */
+    const byRole = new Map();
+    for (const row of entry.observations) {
+      if (!byRole.has(row.role)) byRole.set(row.role, new Map());
+      byRole.get(row.role).set(row.structure.pdb_id, row.structure);
+    }
+    if (byRole.size) {
+      const roles = el("div", { class: "lx-detail-roles" });
+      for (const [role, structures] of [...byRole.entries()].sort((a, b) => b[1].size - a[1].size)) {
+        const group = el("div", { class: "lx-role-group" });
+        group.appendChild(el("span", { class: "mode-pill" + modeClass(role), text: role }));
+        group.appendChild(el("span", { class: "lx-role-caption",
+          text: t("lx_role_structures", { role, n: structures.size }) }));
+        const list = el("div", { class: "lx-role-pdbs" });
+        for (const [pdb, structure] of [...structures.entries()].sort())
+          list.appendChild(el("a", { class: "lx-pdb" + modeClass(role), text: pdb,
+            target: "_blank", rel: "noopener",
+            title: t("lx_open_structure", { pdb }) + " · " + (structure.receptor_entry_name || ""),
+            href: "#" + buildHash({ family: structure.family_slug, view: "3d", pdb }).slice(1) }));
+        group.appendChild(list);
+        roles.appendChild(group);
+      }
+      body.appendChild(roles);
+    }
     detail.appendChild(body);
 
     /* Under a query the detail offers the same comparison the card does. Opening a ligand to look
@@ -743,6 +794,15 @@ export async function ligandExplorer(root, initialLigand) {
         queryBanner.appendChild(el("span", { class: "lx-banner-mark", text: t("lx_batch_active") }));
         queryBanner.appendChild(el("span", { class: "lx-banner-query",
           text: t("lx_batch_queries", { n: simResult.queries }) }));
+        const legend = el("span", { class: "lx-batch-legend" });
+        for (const query of simResult.batch.queries) {
+          if (simResult.batch.failed.some(f => f.smiles === query.smiles)) continue;
+          legend.appendChild(el("span", { class: "lx-card-query",
+            style: "--query-colour:" + queryColour(query.label), title: query.smiles }, [
+            el("span", { class: "lx-query-dot" }),
+            el("span", { class: "lx-query-name", text: query.label })]));
+        }
+        queryBanner.appendChild(legend);
         queryBanner.appendChild(el("span", { class: "muted small", text: t("lx_batch_ranked") }));
       } else {
         queryBanner.appendChild(el("span", { class: "lx-banner-mark", text: t("lx_query_active") }));
@@ -815,6 +875,14 @@ export async function ligandExplorer(root, initialLigand) {
     }
   }
 
+  const affinityRows = entry => (affinity && entry.components.length === 1
+    ? (affinity.records || {})[entry.components[0]] : null) || [];
+  /* Column headings follow the interface language. These files are read by people, in a project
+     whose whole interface is bilingual; a Turkish reader should not have to translate a header to
+     use their own download. The release and the query stay in the '#' lines, so a file is still
+     traceable whichever language wrote it. */
+  const col = key => t("col_" + key);
+
   /* A batch is a different table from a listing: one row per query and hit, with what the two
      share. It is exported from the same buttons, because a second pair of download controls in the
      query box is a second place to look for the same thing. */
@@ -825,14 +893,14 @@ export async function ligandExplorer(root, initialLigand) {
       ranking: "Tanimoto over Morgan fingerprints, radius 2, 2048 bits",
       shared: "catalogue patterns present in both the query and the hit; a matched pattern's "
               + "parent is not listed as well" };
-    if (!xlsx) { download("similarity_batch.csv", toCSV(BATCH_COLUMNS, batch.rows, meta)); return; }
+    if (!xlsx) { download("similarity_batch.csv", toCSV(batchColumns(), batch.rows, meta)); return; }
     downloadXLSX("similarity_batch.xlsx", [
-      { name: "Hits", columns: BATCH_COLUMNS, rows: batch.rows },
+      { name: "Hits", columns: batchColumns(), rows: batch.rows },
       { name: "Queries", columns: [
-        { key: "label", label: "query" }, { key: "smiles", label: "smiles" },
-        { key: "hits", label: "hits",
+        { key: "label", label: col("query") }, { key: "smiles", label: col("smiles") },
+        { key: "hits", label: col("hits"),
           get: r => batch.rows.filter(x => x.query_smiles === r.smiles).length },
-        { key: "status", label: "status",
+        { key: "status", label: col("status"),
           get: r => batch.failed.some(f => f.smiles === r.smiles) ? "not parsed" : "ok" }],
         rows: batch.queries }]);
   }
@@ -840,23 +908,43 @@ export async function ligandExplorer(root, initialLigand) {
   function exportRows(rows, xlsx) {
     // Whatever the page is showing, including the query's ranking when there is one.
     const cols = [
-      ...(simResult ? [{ key: "similarity", label: "tanimoto_similarity",
+      ...(simResult ? [{ key: "similarity", label: col("similarity"),
         get: r => scoreOf(r).toFixed(4) }] : []),
-      { key: "name", label: "ligand_name" },
-      { key: "components", label: "chemical_components", get: r => r.components.join("+") },
+      { key: "name", label: col("name") },
+      { key: "components", label: col("components"), get: r => r.components.join("+") },
       /* Named for its unit. "roles_by_receptor_context" left a reader to work out that the number
          beside a role counts receptors — and the note that says so is a # line the spreadsheet
          hides. A role's count and the receptors column do not add up, because a receptor can carry
          two roles, so the header has to carry the unit itself. */
-      { key: "roles", label: "roles_receptor_counts",
+      { key: "roles", label: col("roles_receptor_counts"),
         get: r => roleSummary(r).map(x => x.role + ":" + x.contexts).join("; ") },
-      { key: "receptors", label: "receptors", get: r => r.receptors.size },
-      { key: "families", label: "families", get: r => r.families.size },
-      { key: "structures", label: "structures", get: r => r.structures.size },
-      { key: "pdb_ids", label: "pdb_ids", get: r => [...r.structures].sort().join(" ") },
-      { key: "mw", label: "mw", get: r => r.chem?.descriptors?.mw ?? "" },
-      { key: "mollogp", label: "mollogp", get: r => r.chem?.descriptors?.mollogp ?? "" },
-      { key: "inchikey", label: "inchikey", get: r => r.chem?.inchikey ?? "" }];
+      /* The counts alone say a compound is an inverse agonist at three receptors without saying
+         which three, and a reader cannot recover it from a row. Named here so the CSV answers the
+         question on its own; the workbook's Contexts sheet has the same thing one row at a time. */
+      { key: "roles_named", label: col("roles_by_receptor"),
+        get: r => [...r.roles.entries()]
+          .sort((a, b) => b[1].size - a[1].size)
+          .map(([role, receptors]) => role + ": " + [...receptors].sort().join(", "))
+          .join(" | ") },
+      { key: "receptors", label: col("receptors"), get: r => r.receptors.size },
+      { key: "families", label: col("families"), get: r => r.families.size },
+      { key: "structures", label: col("structures"), get: r => r.structures.size },
+      { key: "pdb_ids", label: col("pdb_ids"), get: r => [...r.structures].sort().join(" ") },
+      { key: "mw", label: col("mw"), get: r => r.chem?.descriptors?.mw ?? "" },
+      { key: "mollogp", label: col("mollogp"), get: r => r.chem?.descriptors?.mollogp ?? "" },
+      { key: "tpsa", label: col("tpsa"), get: r => r.chem?.descriptors?.tpsa ?? "" },
+      { key: "inchikey", label: col("inchikey"), get: r => r.chem?.inchikey ?? "" },
+      /* The reported constants, one column per measure. Each carries the receptor it was measured
+         at, because a value with no target attached is not a fact about anything — the same reason
+         the roles column names its receptors. Empty where nothing is published: the release covers
+         23 of 578 components, and a blank is not a zero. */
+      ...["Ki", "Kd", "IC50", "EC50"].map(type => ({
+        key: "aff_" + type, label: col("affinity") + "_" + type.toLowerCase() + "_nm",
+        get: r => affinityRows(r).filter(x => x.type === type)
+          .map(x => x.receptor + ":" + x.median_nm + (x.n > 1 ? "(n=" + x.n + ")" : ""))
+          .join("; ") })),
+      { key: "aff_source", label: col("affinity_source"),
+        get: r => affinityRows(r).length ? "BindingDB" : "" }];
     if (simResult && simResult.batch) { exportBatch(xlsx); return; }
     const meta = { release: L.getManifest().data_version || "", rows: rows.length,
       unit: "one row per ligand entity; a role's count is distinct receptors, so roles may sum above the receptors column when one receptor carries two roles",
@@ -883,15 +971,15 @@ export async function ligandExplorer(root, initialLigand) {
     downloadXLSX(stem + ".xlsx", [
       { name: "Ligands", columns: cols, rows },
       { name: "Contexts", columns: [
-        { key: "name", label: "ligand_name", get: r => r.entry.name },
-        { key: "components", label: "chemical_components", get: r => r.entry.components.join("+") },
-        { key: "receptor", label: "receptor" },
-        { key: "family", label: "family", get: r => familyDisplayName(r.family || "") },
-        { key: "role", label: "role" },
-        { key: "sites", label: "binding_site_classes",
+        { key: "name", label: col("name"), get: r => r.entry.name },
+        { key: "components", label: col("components"), get: r => r.entry.components.join("+") },
+        { key: "receptor", label: col("receptor") },
+        { key: "family", label: col("family"), get: r => familyDisplayName(r.family || "") },
+        { key: "role", label: col("role") },
+        { key: "sites", label: col("sites"),
           get: r => [...r.sites].map(siteClassLabel).join("; ") },
-        { key: "structures", label: "structures", get: r => r.pdbs.size },
-        { key: "pdb_ids", label: "pdb_ids", get: r => [...r.pdbs].sort().join(" ") }],
+        { key: "structures", label: col("structures"), get: r => r.pdbs.size },
+        { key: "pdb_ids", label: col("pdb_ids"), get: r => [...r.pdbs].sort().join(" ") }],
         rows: contexts }]);
   }
 

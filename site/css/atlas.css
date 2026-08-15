@@ -932,6 +932,8 @@ td.eff-warning_only { color:var(--muted); }
 .lx-query .sim-input { grid-column:1; }
 .lx-query .sim-run { grid-column:2; grid-row:2; margin:0; }
 .lx-query .sim-or { grid-column:1; margin-top:10px; }
+/* 2: the file control belongs under the line that offers it, not out in the second column. */
+.lx-query .sim-file { grid-column:1; justify-self:start; }
 .lx-query .sim-pdb-row { grid-column:1/-1; }
 .lx-query .sim-status, .lx-query .sim-alt, .lx-query .sim-results, .lx-query .sim-note {
   grid-column:1/-1; }
@@ -1094,3 +1096,44 @@ table.data.lx-affinity thead th { background:var(--aff-head); color:var(--aff-he
   font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11px; line-height:1.5; }
 .sim-batch-actions { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
 .sim-tab-hint { font-weight:400; text-transform:none; letter-spacing:0; opacity:.75; font-size:10.5px; }
+
+/* The descriptor sliders are the tallest thing in the rail and are read by scanning, not by
+   dwelling, so each one is given a line rather than three. */
+.lx-facet .chem-range { display:grid; grid-template-columns:1fr auto; gap:1px 8px; margin:2px 0 6px; }
+.lx-facet .chem-range-label { grid-column:1; font-size:11px; }
+.lx-facet .chem-range-value { grid-column:2; font-size:11px; }
+.lx-facet .chem-sliders { grid-column:1/-1; gap:0; }
+.lx-facet .chem-sliders input[type=range] { height:14px; }
+
+/* Which query a card answers. Colour and name together: eight hues alone are more than a reader
+   can hold, and colour by itself is not a distinction everyone can make. */
+.lx-card { position:relative; }
+.lx-card-query { position:absolute; top:6px; right:6px; display:inline-flex; align-items:center;
+  gap:5px; max-width:60%; padding:1px 7px 1px 5px; border-radius:999px; font-size:10px;
+  background:color-mix(in srgb, var(--query-colour) 14%, var(--panel));
+  border:1px solid color-mix(in srgb, var(--query-colour) 45%, transparent);
+  color:var(--query-colour); }
+.lx-query-dot { flex:none; width:7px; height:7px; border-radius:50%; background:var(--query-colour); }
+.lx-query-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.lx-batch-legend { display:flex; flex-wrap:wrap; gap:5px; }
+.lx-batch-legend .lx-card-query { position:static; max-width:none; }
+:root[data-theme="dark"] .lx-card-query { color:color-mix(in srgb, var(--query-colour) 55%, #fff); }
+.sim-batch-feeds { display:grid; gap:4px; margin-top:8px; }
+.sim-batch-pdb { width:100%; max-width:34ch; box-sizing:border-box;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace; text-transform:uppercase; }
+/* Beside the molecule: which depositions show this compound acting as what. */
+.lx-detail-body { grid-template-columns:auto auto minmax(0,1fr); }
+.lx-detail-roles { display:grid; gap:10px; align-content:start; min-width:0; }
+.lx-role-group { display:flex; flex-wrap:wrap; align-items:center; gap:5px; }
+.lx-role-caption { font-size:11px; color:var(--muted); }
+.lx-role-pdbs { flex:1 1 100%; display:flex; flex-wrap:wrap; gap:4px; }
+/* The links take their role's colour, the same one the mode pills use everywhere else. */
+.lx-pdb.mode-agonist { color:#075c3f; border-color:#16845f; }
+.lx-pdb.mode-partial { color:#087c57; border-color:#41b98f; }
+.lx-pdb.mode-antagonist { color:#9a5100; border-color:#e79a3b; }
+.lx-pdb.mode-inverse { color:#a52d35; border-color:#dc6870; }
+.lx-pdb.mode-agonist:hover { background:#16845f; border-color:#16845f; color:#fff; }
+.lx-pdb.mode-partial:hover { background:#41b98f; border-color:#41b98f; color:#fff; }
+.lx-pdb.mode-antagonist:hover { background:#e79a3b; border-color:#e79a3b; color:#3a2400; }
+.lx-pdb.mode-inverse:hover { background:#dc6870; border-color:#dc6870; color:#fff; }
+@media (max-width:1100px) { .lx-detail-body { grid-template-columns:minmax(0,1fr); } }

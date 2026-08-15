@@ -205,23 +205,23 @@ function bestPerHit(result) {
   return [...best.values()].sort((a, b) => b.score - a.score);
 }
 
-export const BATCH_COLUMNS = [
-  { key: "query_label", label: "query" },
-  { key: "query_smiles", label: "query_smiles" },
-  { key: "rank", label: "rank" },
-  { key: "ccd", label: "component" },
-  { key: "name", label: "component_name" },
-  { key: "similarity", label: "tanimoto", get: r => r.similarity.toFixed(4) },
-  { key: "shared_scaffold", label: "shares_hit_scaffold", get: r => r.shared_scaffold ? "yes" : "no" },
-  { key: "hit_scaffold", label: "hit_bemis_murcko_scaffold" },
-  { key: "shared_functional_groups", label: "shared_functional_groups",
+export const batchColumns = () => [
+  { key: "query_label", label: t("col_query") },
+  { key: "query_smiles", label: t("col_query_smiles") },
+  { key: "rank", label: t("col_rank") },
+  { key: "ccd", label: t("col_component") },
+  { key: "name", label: t("col_component_name") },
+  { key: "similarity", label: t("col_tanimoto"), get: r => r.similarity.toFixed(4) },
+  { key: "shared_scaffold", label: t("col_shares_hit_scaffold"), get: r => r.shared_scaffold ? "yes" : "no" },
+  { key: "hit_scaffold", label: t("col_hit_scaffold") },
+  { key: "shared_functional_groups", label: t("col_shared_functional_groups"),
     get: r => r.shared_functional_groups.join("; ") },
-  { key: "shared_ring_systems", label: "shared_ring_systems",
+  { key: "shared_ring_systems", label: t("col_shared_ring_systems"),
     get: r => r.shared_ring_systems.join("; ") },
-  { key: "shared_pattern_count", label: "shared_pattern_count" },
-  { key: "structures", label: "structures" },
-  { key: "families", label: "families" },
-  { key: "example_pdb", label: "example_pdb" },
+  { key: "shared_pattern_count", label: t("col_shared_pattern_count") },
+  { key: "structures", label: t("col_structures") },
+  { key: "families", label: t("col_families") },
+  { key: "example_pdb", label: t("col_example_pdb") },
 ];
 
 /* `onResults` lets a view take the hits over and render them itself. The panel keeps the query
@@ -667,7 +667,7 @@ export function createSimilarityPanel(options) {
   /* Several queries at once. Kept behind a disclosure because it answers a different need from
      the one the panel opens with: not "show me what this resembles" but "give me the table for
      these twenty and let me keep it". */
-  const batchBox = el("details", { class: "sim-batch" });
+  const batchBox = el("details", { class: "sim-batch", open: true });
   batchBox.appendChild(el("summary", {}, [document.createTextNode(t("sim_batch_title") + " "),
     el("span", { class: "sim-tab-hint", text: t("sim_tab_hint") })]));
   const batchInput = el("textarea", { class: "sim-batch-input", rows: "5",
@@ -701,7 +701,82 @@ export function createSimilarityPanel(options) {
     } });
   batchActions.appendChild(runButton);
   exampleOnTab(batchInput, t("sim_batch_example"));
+
+  /* Two more ways to fill the box, because a set of queries rarely starts life as typed SMILES.
+     Both append lines rather than replacing what is there, so a reader can build a list from a
+     folder of molfiles, a handful of depositions and their own typing at once. */
+  const appendLines = lines => {
+    const existing = batchInput.value.replace(/\s+$/, "");
+    batchInput.value = (existing ? existing + "\n" : "") + lines.join("\n") + "\n";
+    batchInput.scrollTop = batchInput.scrollHeight;
+  };
+  const batchFiles = el("input", { type: "file", class: "sim-file", multiple: true,
+    accept: ".sdf,.mol,.mdl,.sd,chemical/x-mdl-molfile,chemical/x-mdl-sdfile" });
+  batchFiles.addEventListener("change", async () => {
+    const files = [...(batchFiles.files || [])];
+    if (!files.length) return;
+    batchStatus.textContent = t("sim_working");
+    const added = [], failed = [];
+    try {
+      mod = await getRdkit();
+      for (const file of files) {
+        if (/\.mol2$/i.test(file.name)) { failed.push(file.name); continue; }
+        const text = await file.text();
+        // Every record of an SDF, not just the first: a file of twenty molecules is twenty queries.
+        const records = text.split(/^\$\$\$\$/m).map(x => x.trim()).filter(Boolean);
+        records.forEach((record, i) => {
+          const molecule = mod.get_mol(record);
+          if (!molecule || !molecule.is_valid || !molecule.is_valid()) {
+            if (molecule) molecule.delete();
+            failed.push(file.name + (records.length > 1 ? " #" + (i + 1) : "")); return;
+          }
+          const named = /^\s*(\S.*)$/.exec(record);
+          const label = records.length > 1 && named && !named[1].startsWith("$")
+            ? named[1].trim().slice(0, 40) : file.name.replace(/\.[^.]+$/, "");
+          added.push(molecule.get_smiles() + "  " + (label || file.name));
+          molecule.delete();
+        });
+      }
+    } catch (error) { batchStatus.textContent = t("sim_batch_file_failed"); return; }
+    if (added.length) appendLines(added);
+    batchStatus.textContent = t("sim_batch_files_added", { n: added.length })
+      + (failed.length ? " " + t("sim_batch_files_skipped", { list: failed.join(", ") }) : "");
+    batchFiles.value = "";
+  });
+
+  const batchPdb = el("input", { type: "text", class: "sim-batch-pdb", spellcheck: "false",
+    placeholder: t("sim_batch_pdb_placeholder") });
+  const batchPdbButton = el("button", { class: "btn small", type: "button",
+    text: t("sim_batch_pdb_run"), onclick: async () => {
+      const codes = batchPdb.value.toUpperCase().split(/[^0-9A-Z]+/).filter(x => x.length === 4);
+      if (!codes.length) { batchStatus.textContent = t("sim_pdb_invalid"); return; }
+      batchStatus.textContent = t("sim_working");
+      try {
+        const payloadFp = fingerprints || (fingerprints = await L.loadLigandFingerprints());
+        const chemistry = await L.loadLigandChemistry();
+        const smilesOf = new Map((chemistry.records || []).map(r => [r.ccd, r.raw_smiles]));
+        const added = [], missing = [];
+        for (const code of codes) {
+          // Every component of the entry that the atlas holds a structure for, not just one:
+          // naming a deposition is naming its ligands, and which of them is the query is the
+          // reader's choice, not a coin toss.
+          const components = ((payloadFp.by_structure || {})[code] || []).filter(x => smilesOf.get(x));
+          if (!components.length) { missing.push(code); continue; }
+          for (const component of components)
+            added.push(smilesOf.get(component) + "  " + code + ":" + component);
+        }
+        if (added.length) appendLines(added);
+        batchStatus.textContent = t("sim_batch_pdb_added", { n: added.length, codes: codes.length })
+          + (missing.length ? " " + t("sim_batch_pdb_missing", { list: missing.join(", ") }) : "");
+        batchPdb.value = "";
+      } catch (error) { batchStatus.textContent = t("sim_failed"); }
+    } });
+
   batchBox.appendChild(batchInput);
+  batchBox.appendChild(el("div", { class: "sim-batch-feeds" }, [
+    el("label", { class: "sim-label", text: t("sim_batch_files_label") }), batchFiles,
+    el("label", { class: "sim-label", text: t("sim_batch_pdb_label") }),
+    el("div", { class: "sim-pdb-row" }, [batchPdb, batchPdbButton])]));
   batchBox.appendChild(batchActions);
   batchBox.appendChild(batchStatus);
   batchBox.appendChild(el("p", { class: "sim-note", text: t("sim_batch_note") }));
