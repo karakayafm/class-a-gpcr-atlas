@@ -97,15 +97,24 @@ export async function ligandExplorer(root, initialLigand) {
   wrap.appendChild(status);
 
   let index, chemistry, catalog;
+  const xrefs = new Map();
   try {
     const classes = Object.keys(L.getManifest().ligand_files || {});
-    const [payloads, chem, cat] = await Promise.all([
+    const families = (L.getManifest().families || []).map(f => f.slug);
+    const [payloads, chem, cat, xrefFiles] = await Promise.all([
       Promise.all(classes.map(slug => L.loadLigandStructures(slug))),
       L.loadLigandChemistry(),
-      L.loadChemistryCatalog().catch(() => ({ patterns: {} }))]);
+      L.loadChemistryCatalog().catch(() => ({ patterns: {} })),
+      /* Cross-references are per family; a compound seen in two of them has the same identifiers
+         in both, so the first one wins and a missing file costs only its own links. */
+      Promise.all(families.map(slug => L.loadLigandXrefs(slug).catch(() => null)))]);
     index = buildIndex(payloads);
     chemistry = new Map((chem.records || []).map(r => [r.ccd, r]));
     catalog = cat;
+    for (const file of xrefFiles) {
+      for (const record of (file && file.records) || [])
+        if (!xrefs.has(record.ccd)) xrefs.set(record.ccd, record);
+    }
   } catch (error) {
     clear(status); status.className = "notice"; status.textContent = L.errorMessage(error); return wrap;
   }
@@ -407,6 +416,10 @@ export async function ligandExplorer(root, initialLigand) {
         title: t("lx_role_contexts", { role, n: contexts }),
         text: role + " · " + contexts }));
     node.appendChild(roles);
+    const d = (entry.chem && entry.chem.descriptors) || null;
+    if (d) node.appendChild(el("div", { class: "lx-card-props", title: t("lx_props_hint"), text:
+      "MW " + Math.round(d.mw) + " · logP " + (d.mollogp != null ? d.mollogp.toFixed(1) : "—") +
+      " · TPSA " + (d.tpsa != null ? Math.round(d.tpsa) : "—") }));
     node.appendChild(el("div", { class: "lx-card-counts", text:
       t("lx_card_counts", { receptors: entry.receptors.size, families: entry.families.size,
                             structures: entry.structures.size }) }));
@@ -457,6 +470,29 @@ export async function ligandExplorer(root, initialLigand) {
       chips.appendChild(el("span", { class: "muted small", text: t("lx_chemistry_facets") }));
       for (const name of groupsFound) chips.appendChild(el("span", { class: "lx-tag", text: patternLabel(name) }));
       detail.appendChild(chips);
+    }
+
+    /* Where the pharmacology is. This release carries no affinity or potency value: what ChEMBL
+       and GtoPdb publish is content under CC BY-SA, and the release's position that their
+       share-alike terms are not engaged rests on carrying none of it. So the reader is sent to
+       the entry rather than shown a number that would change the licence of everything here.
+       See SOURCE_DATA_LICENSES.md. */
+    const xref = entry.components.length === 1 ? xrefs.get(entry.components[0]) : null;
+    if (xref) {
+      const links = el("div", { class: "lx-chips lx-xrefs" });
+      links.appendChild(el("span", { class: "muted small", text: t("lx_pharmacology_at") }));
+      for (const [source, label] of [["gtopdb", "db_label_gtopdb"], ["chembl", "db_label_chembl"],
+        ["pubchem", "db_label_pubchem"]]) {
+        const ref = xref[source];
+        if (!ref || !ref.url) continue;
+        links.appendChild(el("a", { class: "lx-xref", href: ref.url, target: "_blank",
+          rel: "noopener", title: t("lx_xref_hint", { basis: ref.basis || "", date: ref.retrieved || "" }),
+          text: t(label) + " " + ref.id + (ref.approximate ? " ≈" : "") }));
+      }
+      if (links.childNodes.length > 1) {
+        detail.appendChild(links);
+        detail.appendChild(el("p", { class: "muted small lx-affinity-note", text: t("lx_affinity_note") }));
+      }
     }
 
     /* Roles, spelled out per receptor. This is the table that a single role label on the card

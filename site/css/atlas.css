@@ -1005,3 +1005,10 @@ td.eff-warning_only { color:var(--muted); }
 }
 .lx-check-label { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .lx-facet .chem-check { display:flex; align-items:center; gap:7px; }
+.lx-card-props { font-size:10.5px; color:var(--muted);
+  font-variant-numeric:tabular-nums; }
+.lx-xrefs { margin-top:10px; }
+.lx-xref { padding:2px 9px; border:1px solid var(--line); border-radius:999px; font-size:11px;
+  color:var(--accent); text-decoration:none; background:var(--panel); }
+.lx-xref:hover { border-color:var(--accent); background:var(--accent); color:var(--accent-ink); }
+.lx-affinity-note { max-width:86ch; line-height:1.55; margin-top:6px; }
