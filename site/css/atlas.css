@@ -1012,3 +1012,8 @@ td.eff-warning_only { color:var(--muted); }
   color:var(--accent); text-decoration:none; background:var(--panel); }
 .lx-xref:hover { border-color:var(--accent); background:var(--accent); color:var(--accent-ink); }
 .lx-affinity-note { max-width:86ch; line-height:1.55; margin-top:6px; }
+.lx-affinity td strong { font-variant-numeric:tabular-nums; }
+.lx-pmids { display:flex; flex-wrap:wrap; gap:4px; }
+.lx-pmid { padding:1px 6px; border:1px solid var(--line); border-radius:6px; font-size:11px;
+  color:var(--accent); text-decoration:none; font-variant-numeric:tabular-nums; }
+.lx-pmid:hover { border-color:var(--accent); background:var(--accent); color:var(--accent-ink); }

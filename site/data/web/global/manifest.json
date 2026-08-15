@@ -1,1 +1,355 @@
-{"atlas_title":"Class A GPCR Atlas","data_freeze_phase":"phase4+enrichment","data_version":"phase4-freeze-1.0.0+enrichment-1.0.4","enrichment_freeze_hash":"14fd211a3e4561b56752f31e5707a2b9be08aceb8de2c89bc593f1fd49457f0e","families":[{"family_id":"001_001","manifest_bytes":4450,"manifest_sha256":"e28c551de7e8cc2ed4a25fe75b76868b15b1ac963246103975f054d62222dddd","manifest_url":"families/ca-001-001/manifest.json","name":"Aminergic receptors","payload_bytes":7852220,"slug":"ca-001-001"},{"family_id":"001_002","manifest_bytes":4448,"manifest_sha256":"4627a60b444e0dc068cd4b7f670b4d915699c260bc729f0921b410ee62e53c70","manifest_url":"families/ca-001-002/manifest.json","name":"Peptide receptors","payload_bytes":11873711,"slug":"ca-001-002"},{"family_id":"001_004","manifest_bytes":3856,"manifest_sha256":"acbbe347ece87b07810ad09954929a421dafb1c0b41374a9ececf50b6f57ccde","manifest_url":"families/ca-001-004/manifest.json","name":"Lipid receptors","payload_bytes":4433176,"slug":"ca-001-004"},{"family_id":"001_010","manifest_bytes":4442,"manifest_sha256":"2feffd449edfb28b1d1be49c82a8c4a19a04f3b0c90478b370fc2725887c3d6b","manifest_url":"families/ca-001-010/manifest.json","name":"Orphan receptors","payload_bytes":3727201,"slug":"ca-001-010"},{"family_id":"001_006","manifest_bytes":3792,"manifest_sha256":"4a8f1ae0edb40f408a50dbec665c2072ea733d0d7f39073b4d92db4a71f57c5d","manifest_url":"families/ca-001-006/manifest.json","name":"Nucleotide receptors","payload_bytes":2233045,"slug":"ca-001-006"},{"family_id":"001_003","manifest_bytes":3856,"manifest_sha256":"a6943e407b30b9acb2d265806763c3623f462551fa57b86d809b355f1b8d366f","manifest_url":"families/ca-001-003/manifest.json","name":"Protein receptors","payload_bytes":3181655,"slug":"ca-001-003"},{"family_id":"001_009","manifest_bytes":3789,"manifest_sha256":"433fdb8b3039b99bf853a7fd3d7e070c9db480f5b08b8fb5fa21846377a64189","manifest_url":"families/ca-001-009/manifest.json","name":"Sensory receptors","payload_bytes":1695114,"slug":"ca-001-009"},{"family_id":"001_008","manifest_bytes":3213,"manifest_sha256":"794e5254ead71c872929f9e307ab33ac6ee322ec18336bad71d0a79194d82b94","manifest_url":"families/ca-001-008/manifest.json","name":"Alicarboxylic acid receptors","payload_bytes":1122374,"slug":"ca-001-008"},{"family_id":"001_005","manifest_bytes":3200,"manifest_sha256":"5c72f0a3409745e6b64d5434b16bd1cf4162e8fbeb3c9d57649f1385b224a5df","manifest_url":"families/ca-001-005/manifest.json","name":"Melatonin receptors","payload_bytes":708978,"slug":"ca-001-005"},{"family_id":"001_007","manifest_bytes":3197,"manifest_sha256":"c7310f091c4d73da77aa0a4cd9505ed4630546ead32d61321373ce0a4163ebc3","manifest_url":"families/ca-001-007/manifest.json","name":"Steroid receptors","payload_bytes":644925,"slug":"ca-001-007"},{"family_id":"001_011","manifest_bytes":3242,"manifest_sha256":"76359aea18d1344fb3138f51f7e134d16654d188a0423680997dbd6314f9434d","manifest_url":"families/ca-001-011/manifest.json","name":"Other","payload_bytes":543063,"slug":"ca-001-011"}],"family_count":11,"global_files":{"chemistry_catalog.json":{"bytes":9275,"sha256":"c678596b8eb0b7ec3a93aebd254ae1aa07acdc1d8ab1fbc6ade1aac6a8d681c2","url":"global/chemistry_catalog.json"},"cross_family_summary.json":{"bytes":1117,"sha256":"662e751dcdf7dc6fd494e56dba9d4943e2a5e1144b62afa0fe5bdff433240409","url":"global/cross_family_summary.json"},"landing.json":{"bytes":6855,"sha256":"8baf40057d69a0bb1692324892e8348c713543219d7713d8809a8e521f2a50ff","url":"global/landing.json"},"ligand_chemistry.json":{"bytes":435371,"sha256":"17ee69a4338ad5b6f0d1947aef918769d4836de27598be19e4735d9ffbdb7a8e","url":"global/ligand_chemistry.json"},"ligand_chemistry_audit.json":{"bytes":1564,"sha256":"139f7074088dcd24a2dde6613f358d964a2fe8f2898d51dbc33f084ffe963dc8","url":"global/ligand_chemistry_audit.json"},"ligand_classes.json":{"bytes":784,"sha256":"a9062e7fd81ed982f16131c3ab469ac71056e3b85cc03430c44284ce291d622a","url":"global/ligand_classes.json"},"ligand_fingerprints.json":{"bytes":378160,"sha256":"4cc66856054ad9aa95514abd769c04a3dafe2730ed07256ac801e5d8294a81e8","url":"global/ligand_fingerprints.json"},"motif_catalogue.json":{"bytes":4943,"sha256":"fcc38f1b2a64a227b0be05e57a984d77a4e7adb4bbb3812ba3a9f1ddc6745304","url":"global/motif_catalogue.json"},"motif_search.json":{"bytes":182854,"sha256":"8e69c7932c2a55ce20016cb8229ce753aafc36d7f43768d3f956e9a5f8d7fc26","url":"global/motif_search.json"},"panels.json":{"bytes":3087986,"sha256":"7d60e8980657f5202dd346c53d09f6c85014215b519d0998b2e4aa9746ae4243","url":"global/panels.json"},"references.json":{"bytes":4743,"sha256":"1863219154da69bc7d4fb01a656e4883c05bdfb2e7b1bc10515d3a4ff5d0775e","url":"global/references.json"},"release_metadata.json":{"bytes":1384,"sha256":"a7313e2c595c2e279ae339707975de6f63f167df4e364b931c11b0cc30df45bb","url":"global/release_metadata.json"},"search_index.json":{"bytes":277148,"sha256":"cffff96a3b0934da1f14bf529e6227b8ebc3034bd53be84e9e2c42601dc3bb37","url":"global/search_index.json"},"site_class_positions.json":{"bytes":2157298,"sha256":"035b46f584575d9cb3d824c5389a82ecca904a5a3ed0d8711a6cdd0bb2d6ae19","url":"global/site_class_positions.json"},"sources.json":{"bytes":8533,"sha256":"bb0481df652572c2a7d6d4cf39b85d3a9d1bb89d49f151e4b10e10d5846e5968","url":"global/sources.json"}},"licence_gates":[{"gate":"DERIVED_DATA_REVIEW_STATUS","label":"Derived-data redistribution","note":"The copyright holder's decision on what this project redistributes from its sources. The material for it is docs/DERIVED_DATA_REVIEW_PACKET.md.","status":"pending"},{"gate":"STABLE_CURATED_RELEASE_GATE","label":"Stable curated release","note":"A stable release may not be called fully curated or independently validated until the outstanding review decisions are taken and the contact rule is reference-tested beyond the single cell it was validated in.","status":"pending"}],"ligand_files":{"ago-pam":{"bytes":5007,"sha256":"f4a705aaa1116f57c93338de7f92b8a56c3e839d9e13e8cb954c1c925704fa85","url":"ligands/ago-pam/structures.json"},"agonist":{"bytes":1608129,"sha256":"81d50ed81bd42b2e04014f373b5f31e46f18ee217a1c73209fceeb7e0a61ed17","url":"ligands/agonist/structures.json"},"agonist--partial":{"bytes":35056,"sha256":"6fd03faa4376083037235c44c63c7fa9c143f6af5835e65bd847fc5736640066","url":"ligands/agonist--partial/structures.json"},"allosteric-agonist":{"bytes":15333,"sha256":"3e102abe8725ef1047c2465ef064ba6dad675a06eb570b58fea601b6f4274611","url":"ligands/allosteric-agonist/structures.json"},"allosteric-antagonist":{"bytes":14847,"sha256":"b52a994c998c4ca2d27ba423fec38b22a8336cedf12700e5f99dce169979c43c","url":"ligands/allosteric-antagonist/structures.json"},"antagonist":{"bytes":444671,"sha256":"81acfba9ba9439c8fbb7823b04c20c72dd68b4851a54060f8695f3f126ad5e50","url":"ligands/antagonist/structures.json"},"cofactor":{"bytes":2582,"sha256":"900841f6b4a52fac380a56dc31c7f05ba0421604efde38bcb4de68f79279b63b","url":"ligands/cofactor/structures.json"},"inverse-agonist":{"bytes":107188,"sha256":"127161d8d774bb8d6d662e7e7a28e7aeb983a64dca7a249a8bc6e9a6429d48f2","url":"ligands/inverse-agonist/structures.json"},"nam":{"bytes":19191,"sha256":"9c71c0727e58a6f0fc858e29e7fd6ce77038b353c3f9dc7ceb7f3c9429bf7991","url":"ligands/nam/structures.json"},"not-specified":{"bytes":15600,"sha256":"825f1e248d86074804e38256eaa939c1f0770d9126a73e06f4935bcbfab3faea","url":"ligands/not-specified/structures.json"},"pam":{"bytes":72056,"sha256":"1039c9e74ef09a83aec3a538367a9a790137e2831818947f11229e9abd13e932","url":"ligands/pam/structures.json"},"unknown":{"bytes":15566,"sha256":"a74725064c493b2ef14bb531bd947b8178959989b785db2044cdefa9addb9a14","url":"ligands/unknown/structures.json"}},"panel_files":{"arrestin":{"bytes":32865,"sha256":"2f0b5a0a05cffa17056c547a0c201aa2decf9fd91b939ef4bcad31af9a44da99","url":"panels/arrestin/structures.json"},"g12-13":{"bytes":11573,"sha256":"820a18e101ac57485af70a744a09b82c964d1d76b66abf0379b3cc478e2c34da","url":"panels/g12-13/structures.json"},"gi-o":{"bytes":715857,"sha256":"d649095fa366e4a9d5f4a92d8fd989a25b967aecb0ca089421f7873eb699611c","url":"panels/gi-o/structures.json"},"gq-11":{"bytes":208010,"sha256":"9c15de92286f226efdb635788197b1a538a535264119cd9697e11e616a4ca746","url":"panels/gq-11/structures.json"},"gs":{"bytes":424339,"sha256":"cd3c6eb255e9cb6a3dcf08a05dfc8b77a504558c5a32ed5ec89532632187c43c","url":"panels/gs/structures.json"},"transducer-free":{"bytes":968365,"sha256":"6ccdf77332950d6fbd880653d682878df630becf94535b53256be286b43fe0af","url":"panels/transducer-free/structures.json"}},"phase":5,"phase4_manifest_hash":"5c3f1f8fd4083a01fd242c8b2d237e65d6a4adb61d1680ee86c2ad95fd0f6e76","pre_release":true,"review_warning_count":0,"review_warning_unit":"canonical_review_item","schema":"global_manifest.schema.json","schema_version":"5.0.0","schema_versions":{"payloads":"5.0.0"},"source_versions":{"GPCRdb":{"licence":"Data CC BY 4.0","retrieved":"2026-08-03/04","used_for":"generic numbering, structure state, ligand annotation"},"GtoPdb":{"licence_status":"owner_provided_official_verification","used":false},"RCSB PDB":{"licence":"CC0 1.0","retrieved":"2026-08-04","used_for":"coordinates, entities, struct_conn, assemblies"},"UniProt":{"licence":"CC BY 4.0 (verified 2026-08-04)","used_for":"accessions relayed from RCSB"},"frozen aminergic dataset":{"modified":false,"used":"read-only regression reference"}},"structure_bundle_base":"structures/","supported_languages":["tr","en"],"supported_themes":["grey","dark"],"totals":{"aggregate_records_phase4":183984,"aggregate_records_represented":183984,"aggregation_units":727,"structures":1358},"version":"5.0.0-pre"}
+{
+ "atlas_title": "Class A GPCR Atlas",
+ "data_freeze_phase": "phase4+enrichment",
+ "data_version": "phase4-freeze-1.0.0+enrichment-1.0.4",
+ "enrichment_freeze_hash": "14fd211a3e4561b56752f31e5707a2b9be08aceb8de2c89bc593f1fd49457f0e",
+ "families": [
+  {
+   "family_id": "001_001",
+   "manifest_bytes": 4450,
+   "manifest_sha256": "e28c551de7e8cc2ed4a25fe75b76868b15b1ac963246103975f054d62222dddd",
+   "manifest_url": "families/ca-001-001/manifest.json",
+   "name": "Aminergic receptors",
+   "payload_bytes": 7852220,
+   "slug": "ca-001-001"
+  },
+  {
+   "family_id": "001_002",
+   "manifest_bytes": 4448,
+   "manifest_sha256": "4627a60b444e0dc068cd4b7f670b4d915699c260bc729f0921b410ee62e53c70",
+   "manifest_url": "families/ca-001-002/manifest.json",
+   "name": "Peptide receptors",
+   "payload_bytes": 11873711,
+   "slug": "ca-001-002"
+  },
+  {
+   "family_id": "001_004",
+   "manifest_bytes": 3856,
+   "manifest_sha256": "acbbe347ece87b07810ad09954929a421dafb1c0b41374a9ececf50b6f57ccde",
+   "manifest_url": "families/ca-001-004/manifest.json",
+   "name": "Lipid receptors",
+   "payload_bytes": 4433176,
+   "slug": "ca-001-004"
+  },
+  {
+   "family_id": "001_010",
+   "manifest_bytes": 4442,
+   "manifest_sha256": "2feffd449edfb28b1d1be49c82a8c4a19a04f3b0c90478b370fc2725887c3d6b",
+   "manifest_url": "families/ca-001-010/manifest.json",
+   "name": "Orphan receptors",
+   "payload_bytes": 3727201,
+   "slug": "ca-001-010"
+  },
+  {
+   "family_id": "001_006",
+   "manifest_bytes": 3792,
+   "manifest_sha256": "4a8f1ae0edb40f408a50dbec665c2072ea733d0d7f39073b4d92db4a71f57c5d",
+   "manifest_url": "families/ca-001-006/manifest.json",
+   "name": "Nucleotide receptors",
+   "payload_bytes": 2233045,
+   "slug": "ca-001-006"
+  },
+  {
+   "family_id": "001_003",
+   "manifest_bytes": 3856,
+   "manifest_sha256": "a6943e407b30b9acb2d265806763c3623f462551fa57b86d809b355f1b8d366f",
+   "manifest_url": "families/ca-001-003/manifest.json",
+   "name": "Protein receptors",
+   "payload_bytes": 3181655,
+   "slug": "ca-001-003"
+  },
+  {
+   "family_id": "001_009",
+   "manifest_bytes": 3789,
+   "manifest_sha256": "433fdb8b3039b99bf853a7fd3d7e070c9db480f5b08b8fb5fa21846377a64189",
+   "manifest_url": "families/ca-001-009/manifest.json",
+   "name": "Sensory receptors",
+   "payload_bytes": 1695114,
+   "slug": "ca-001-009"
+  },
+  {
+   "family_id": "001_008",
+   "manifest_bytes": 3213,
+   "manifest_sha256": "794e5254ead71c872929f9e307ab33ac6ee322ec18336bad71d0a79194d82b94",
+   "manifest_url": "families/ca-001-008/manifest.json",
+   "name": "Alicarboxylic acid receptors",
+   "payload_bytes": 1122374,
+   "slug": "ca-001-008"
+  },
+  {
+   "family_id": "001_005",
+   "manifest_bytes": 3200,
+   "manifest_sha256": "5c72f0a3409745e6b64d5434b16bd1cf4162e8fbeb3c9d57649f1385b224a5df",
+   "manifest_url": "families/ca-001-005/manifest.json",
+   "name": "Melatonin receptors",
+   "payload_bytes": 708978,
+   "slug": "ca-001-005"
+  },
+  {
+   "family_id": "001_007",
+   "manifest_bytes": 3197,
+   "manifest_sha256": "c7310f091c4d73da77aa0a4cd9505ed4630546ead32d61321373ce0a4163ebc3",
+   "manifest_url": "families/ca-001-007/manifest.json",
+   "name": "Steroid receptors",
+   "payload_bytes": 644925,
+   "slug": "ca-001-007"
+  },
+  {
+   "family_id": "001_011",
+   "manifest_bytes": 3242,
+   "manifest_sha256": "76359aea18d1344fb3138f51f7e134d16654d188a0423680997dbd6314f9434d",
+   "manifest_url": "families/ca-001-011/manifest.json",
+   "name": "Other",
+   "payload_bytes": 543063,
+   "slug": "ca-001-011"
+  }
+ ],
+ "family_count": 11,
+ "global_files": {
+  "binding_affinity.json": {
+   "bytes": 15780,
+   "sha256": "6e6ea24ccacff42c179c36c4c08df096b44ec784e63aed5b5cc2d0d82322f2a7",
+   "url": "global/binding_affinity.json"
+  },
+  "chemistry_catalog.json": {
+   "bytes": 9275,
+   "sha256": "c678596b8eb0b7ec3a93aebd254ae1aa07acdc1d8ab1fbc6ade1aac6a8d681c2",
+   "url": "global/chemistry_catalog.json"
+  },
+  "cross_family_summary.json": {
+   "bytes": 1117,
+   "sha256": "662e751dcdf7dc6fd494e56dba9d4943e2a5e1144b62afa0fe5bdff433240409",
+   "url": "global/cross_family_summary.json"
+  },
+  "landing.json": {
+   "bytes": 6855,
+   "sha256": "8baf40057d69a0bb1692324892e8348c713543219d7713d8809a8e521f2a50ff",
+   "url": "global/landing.json"
+  },
+  "ligand_chemistry.json": {
+   "bytes": 435371,
+   "sha256": "17ee69a4338ad5b6f0d1947aef918769d4836de27598be19e4735d9ffbdb7a8e",
+   "url": "global/ligand_chemistry.json"
+  },
+  "ligand_chemistry_audit.json": {
+   "bytes": 1564,
+   "sha256": "139f7074088dcd24a2dde6613f358d964a2fe8f2898d51dbc33f084ffe963dc8",
+   "url": "global/ligand_chemistry_audit.json"
+  },
+  "ligand_classes.json": {
+   "bytes": 784,
+   "sha256": "a9062e7fd81ed982f16131c3ab469ac71056e3b85cc03430c44284ce291d622a",
+   "url": "global/ligand_classes.json"
+  },
+  "ligand_fingerprints.json": {
+   "bytes": 378160,
+   "sha256": "4cc66856054ad9aa95514abd769c04a3dafe2730ed07256ac801e5d8294a81e8",
+   "url": "global/ligand_fingerprints.json"
+  },
+  "motif_catalogue.json": {
+   "bytes": 4943,
+   "sha256": "fcc38f1b2a64a227b0be05e57a984d77a4e7adb4bbb3812ba3a9f1ddc6745304",
+   "url": "global/motif_catalogue.json"
+  },
+  "motif_search.json": {
+   "bytes": 182854,
+   "sha256": "8e69c7932c2a55ce20016cb8229ce753aafc36d7f43768d3f956e9a5f8d7fc26",
+   "url": "global/motif_search.json"
+  },
+  "panels.json": {
+   "bytes": 3087986,
+   "sha256": "7d60e8980657f5202dd346c53d09f6c85014215b519d0998b2e4aa9746ae4243",
+   "url": "global/panels.json"
+  },
+  "references.json": {
+   "bytes": 4743,
+   "sha256": "1863219154da69bc7d4fb01a656e4883c05bdfb2e7b1bc10515d3a4ff5d0775e",
+   "url": "global/references.json"
+  },
+  "release_metadata.json": {
+   "bytes": 1384,
+   "sha256": "a7313e2c595c2e279ae339707975de6f63f167df4e364b931c11b0cc30df45bb",
+   "url": "global/release_metadata.json"
+  },
+  "search_index.json": {
+   "bytes": 277148,
+   "sha256": "cffff96a3b0934da1f14bf529e6227b8ebc3034bd53be84e9e2c42601dc3bb37",
+   "url": "global/search_index.json"
+  },
+  "site_class_positions.json": {
+   "bytes": 2157298,
+   "sha256": "035b46f584575d9cb3d824c5389a82ecca904a5a3ed0d8711a6cdd0bb2d6ae19",
+   "url": "global/site_class_positions.json"
+  },
+  "sources.json": {
+   "bytes": 11031,
+   "sha256": "17a6e314f2c6cdca4d3fbd572d417d107fe7fd3bc201948f81fe9474f302094b",
+   "url": "global/sources.json"
+  }
+ },
+ "licence_gates": [
+  {
+   "gate": "DERIVED_DATA_REVIEW_STATUS",
+   "label": "Derived-data redistribution",
+   "note": "The copyright holder's decision on what this project redistributes from its sources. The material for it is docs/DERIVED_DATA_REVIEW_PACKET.md.",
+   "status": "pending"
+  },
+  {
+   "gate": "STABLE_CURATED_RELEASE_GATE",
+   "label": "Stable curated release",
+   "note": "A stable release may not be called fully curated or independently validated until the outstanding review decisions are taken and the contact rule is reference-tested beyond the single cell it was validated in.",
+   "status": "pending"
+  }
+ ],
+ "ligand_files": {
+  "ago-pam": {
+   "bytes": 5007,
+   "sha256": "f4a705aaa1116f57c93338de7f92b8a56c3e839d9e13e8cb954c1c925704fa85",
+   "url": "ligands/ago-pam/structures.json"
+  },
+  "agonist": {
+   "bytes": 1608129,
+   "sha256": "81d50ed81bd42b2e04014f373b5f31e46f18ee217a1c73209fceeb7e0a61ed17",
+   "url": "ligands/agonist/structures.json"
+  },
+  "agonist--partial": {
+   "bytes": 35056,
+   "sha256": "6fd03faa4376083037235c44c63c7fa9c143f6af5835e65bd847fc5736640066",
+   "url": "ligands/agonist--partial/structures.json"
+  },
+  "allosteric-agonist": {
+   "bytes": 15333,
+   "sha256": "3e102abe8725ef1047c2465ef064ba6dad675a06eb570b58fea601b6f4274611",
+   "url": "ligands/allosteric-agonist/structures.json"
+  },
+  "allosteric-antagonist": {
+   "bytes": 14847,
+   "sha256": "b52a994c998c4ca2d27ba423fec38b22a8336cedf12700e5f99dce169979c43c",
+   "url": "ligands/allosteric-antagonist/structures.json"
+  },
+  "antagonist": {
+   "bytes": 444671,
+   "sha256": "81acfba9ba9439c8fbb7823b04c20c72dd68b4851a54060f8695f3f126ad5e50",
+   "url": "ligands/antagonist/structures.json"
+  },
+  "cofactor": {
+   "bytes": 2582,
+   "sha256": "900841f6b4a52fac380a56dc31c7f05ba0421604efde38bcb4de68f79279b63b",
+   "url": "ligands/cofactor/structures.json"
+  },
+  "inverse-agonist": {
+   "bytes": 107188,
+   "sha256": "127161d8d774bb8d6d662e7e7a28e7aeb983a64dca7a249a8bc6e9a6429d48f2",
+   "url": "ligands/inverse-agonist/structures.json"
+  },
+  "nam": {
+   "bytes": 19191,
+   "sha256": "9c71c0727e58a6f0fc858e29e7fd6ce77038b353c3f9dc7ceb7f3c9429bf7991",
+   "url": "ligands/nam/structures.json"
+  },
+  "not-specified": {
+   "bytes": 15600,
+   "sha256": "825f1e248d86074804e38256eaa939c1f0770d9126a73e06f4935bcbfab3faea",
+   "url": "ligands/not-specified/structures.json"
+  },
+  "pam": {
+   "bytes": 72056,
+   "sha256": "1039c9e74ef09a83aec3a538367a9a790137e2831818947f11229e9abd13e932",
+   "url": "ligands/pam/structures.json"
+  },
+  "unknown": {
+   "bytes": 15566,
+   "sha256": "a74725064c493b2ef14bb531bd947b8178959989b785db2044cdefa9addb9a14",
+   "url": "ligands/unknown/structures.json"
+  }
+ },
+ "panel_files": {
+  "arrestin": {
+   "bytes": 32865,
+   "sha256": "2f0b5a0a05cffa17056c547a0c201aa2decf9fd91b939ef4bcad31af9a44da99",
+   "url": "panels/arrestin/structures.json"
+  },
+  "g12-13": {
+   "bytes": 11573,
+   "sha256": "820a18e101ac57485af70a744a09b82c964d1d76b66abf0379b3cc478e2c34da",
+   "url": "panels/g12-13/structures.json"
+  },
+  "gi-o": {
+   "bytes": 715857,
+   "sha256": "d649095fa366e4a9d5f4a92d8fd989a25b967aecb0ca089421f7873eb699611c",
+   "url": "panels/gi-o/structures.json"
+  },
+  "gq-11": {
+   "bytes": 208010,
+   "sha256": "9c15de92286f226efdb635788197b1a538a535264119cd9697e11e616a4ca746",
+   "url": "panels/gq-11/structures.json"
+  },
+  "gs": {
+   "bytes": 424339,
+   "sha256": "cd3c6eb255e9cb6a3dcf08a05dfc8b77a504558c5a32ed5ec89532632187c43c",
+   "url": "panels/gs/structures.json"
+  },
+  "transducer-free": {
+   "bytes": 968365,
+   "sha256": "6ccdf77332950d6fbd880653d682878df630becf94535b53256be286b43fe0af",
+   "url": "panels/transducer-free/structures.json"
+  }
+ },
+ "phase": 5,
+ "phase4_manifest_hash": "5c3f1f8fd4083a01fd242c8b2d237e65d6a4adb61d1680ee86c2ad95fd0f6e76",
+ "pre_release": true,
+ "review_warning_count": 0,
+ "review_warning_unit": "canonical_review_item",
+ "schema": "global_manifest.schema.json",
+ "schema_version": "5.0.0",
+ "schema_versions": {
+  "payloads": "5.0.0"
+ },
+ "source_versions": {
+  "GPCRdb": {
+   "licence": "Data CC BY 4.0",
+   "retrieved": "2026-08-03/04",
+   "used_for": "generic numbering, structure state, ligand annotation"
+  },
+  "GtoPdb": {
+   "licence_status": "owner_provided_official_verification",
+   "used": false
+  },
+  "RCSB PDB": {
+   "licence": "CC0 1.0",
+   "retrieved": "2026-08-04",
+   "used_for": "coordinates, entities, struct_conn, assemblies"
+  },
+  "UniProt": {
+   "licence": "CC BY 4.0 (verified 2026-08-04)",
+   "used_for": "accessions relayed from RCSB"
+  },
+  "bindingdb": {
+   "licence": "CC BY 3.0",
+   "release": "202608",
+   "retrieved": "2026-08-15",
+   "sha256": "2529b1c572aa7b298e57355e251c9a9572b82dd35f97259d5e3866ee69bfada5",
+   "subset": "BindingDB-curated articles"
+  },
+  "frozen aminergic dataset": {
+   "modified": false,
+   "used": "read-only regression reference"
+  }
+ },
+ "structure_bundle_base": "structures/",
+ "supported_languages": [
+  "tr",
+  "en"
+ ],
+ "supported_themes": [
+  "grey",
+  "dark"
+ ],
+ "totals": {
+  "aggregate_records_phase4": 183984,
+  "aggregate_records_represented": 183984,
+  "aggregation_units": 727,
+  "structures": 1358
+ },
+ "version": "5.0.0-pre"
+}

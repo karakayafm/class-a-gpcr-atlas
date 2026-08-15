@@ -36,6 +36,15 @@ import { createSimilarityPanel, getRdkit } from "./chemsearch.js";
 
 const CARD_PAGE = 60;
 
+/* Affinities run from picomolar to millimolar. Fixed decimals would print 0.00 at one end and
+   eleven digits at the other, so the precision follows the magnitude. */
+function fmtNm(value) {
+  if (value == null) return "—";
+  if (value < 1) return value.toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
+  if (value < 100) return value.toFixed(1).replace(/\.0$/, "");
+  return Math.round(value).toLocaleString();
+}
+
 /* One entry per ligand entity. `key` distinguishes the two kinds so a peptide named after a
    component code could never collide with the component itself. */
 function entityKey(observation) {
@@ -98,6 +107,7 @@ export async function ligandExplorer(root, initialLigand) {
 
   let index, chemistry, catalog;
   const xrefs = new Map();
+  let affinity = null;
   try {
     const classes = Object.keys(L.getManifest().ligand_files || {});
     const families = (L.getManifest().families || []).map(f => f.slug);
@@ -108,6 +118,8 @@ export async function ligandExplorer(root, initialLigand) {
       /* Cross-references are per family; a compound seen in two of them has the same identifiers
          in both, so the first one wins and a missing file costs only its own links. */
       Promise.all(families.map(slug => L.loadLigandXrefs(slug).catch(() => null)))]);
+    // Optional: a release built without the enrichment step simply shows no affinity section.
+    affinity = await L.loadBindingAffinity().catch(() => null);
     index = buildIndex(payloads);
     chemistry = new Map((chem.records || []).map(r => [r.ccd, r]));
     catalog = cat;
@@ -489,10 +501,48 @@ export async function ligandExplorer(root, initialLigand) {
           rel: "noopener", title: t("lx_xref_hint", { basis: ref.basis || "", date: ref.retrieved || "" }),
           text: t(label) + " " + ref.id + (ref.approximate ? " ≈" : "") }));
       }
-      if (links.childNodes.length > 1) {
-        detail.appendChild(links);
-        detail.appendChild(el("p", { class: "muted small lx-affinity-note", text: t("lx_affinity_note") }));
+      if (links.childNodes.length > 1) detail.appendChild(links);
+    }
+
+    /* Reported affinity, where BindingDB's staff-curated subset has any. It is deliberately not
+       folded into the context table above: that table is what this atlas observed in a structure,
+       and this is what someone else measured in an assay, usually on a different construct and
+       sometimes a different species. Keeping them apart is the point. Values are given as a
+       median over the measurements with their range and the papers they came from, because a
+       single number would hide that assays disagree. */
+    const measured = affinity && entry.components.length === 1
+      ? (affinity.records || {})[entry.components[0]] : null;
+    if (measured && measured.length) {
+      detail.appendChild(el("h4", { text: t("lx_affinity_heading") }));
+      const table = el("table", { class: "data compact lx-affinity" });
+      table.appendChild(el("thead", {}, el("tr", {}, [t("lx_receptor"), t("lx_affinity_type"),
+        t("lx_affinity_value"), t("lx_affinity_n"), t("lx_affinity_papers")]
+        .map(x => el("th", {}, x)))));
+      const body = el("tbody");
+      for (const row of measured) {
+        const spread = row.n > 1 && row.min_nm !== row.max_nm
+          ? fmtNm(row.min_nm) + " – " + fmtNm(row.max_nm) : "";
+        const papers = el("td", { class: "lx-pmids" });
+        for (const pmid of row.pmids)
+          papers.appendChild(el("a", { class: "lx-pmid", target: "_blank", rel: "noopener",
+            href: "https://pubmed.ncbi.nlm.nih.gov/" + pmid + "/", text: pmid }));
+        body.appendChild(el("tr", {}, [
+          el("td", {}, [el("strong", { text: row.receptor })]),
+          el("td", { text: row.type }),
+          el("td", {}, [el("strong", { text: fmtNm(row.median_nm) + " nM" }),
+            spread ? el("span", { class: "muted small", text: " (" + spread + ")" })
+                   : document.createTextNode("")]),
+          el("td", { text: String(row.n) }),
+          papers]));
       }
+      table.appendChild(body);
+      detail.appendChild(table);
+      detail.appendChild(el("p", { class: "muted small lx-affinity-note",
+        text: t("lx_affinity_measured_note") }));
+    } else if (entry.components.length === 1 && affinity) {
+      detail.appendChild(el("p", { class: "muted small lx-affinity-note", text:
+        t("lx_affinity_none", { with: affinity.coverage.components_with_values,
+                                total: affinity.coverage.components_total }) }));
     }
 
     /* Roles, spelled out per receptor. This is the table that a single role label on the card

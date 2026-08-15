@@ -1996,7 +1996,8 @@ export async function sources() {
   const roleBody = el("tbody");
   // Coordinates first, then annotation, pharmacology, chemistry, and the bundled viewer last —
   // the order the data actually flows through the pipeline. Unlisted sources fall in alphabetically.
-  const ORDER = ["rcsb", "gpcrdb", "gtopdb", "chembl", "pubchem", "unichem", "uniprot", "ngl"];
+  const ORDER = ["rcsb", "gpcrdb", "gtopdb", "chembl", "bindingdb", "pubchem", "unichem",
+    "uniprot", "ngl"];
   const rank = key => { const i = ORDER.indexOf(key); return i < 0 ? ORDER.length : i; };
   for (const key of Object.keys(roles).sort((a, b) => rank(a) - rank(b) || a.localeCompare(b))) {
     const s = roles[key];

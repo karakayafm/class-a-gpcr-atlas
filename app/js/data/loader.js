@@ -84,6 +84,10 @@ export function loadLigandChemistry() { return loadGlobalChecked("ligand_chemist
 export function loadChemistryCatalog() { return loadGlobalChecked("chemistry_catalog.json"); }
 export function loadLigandFingerprints() { return loadGlobalChecked("ligand_fingerprints.json"); }
 export function loadMotifSearch() { return loadGlobalChecked("motif_search.json"); }
+/* Reported affinity, from the one BindingDB subset whose licence allows redistribution.
+   It covers a small share of the components, so callers show it where it exists and state
+   the coverage rather than implying a value is missing when none was ever published. */
+export function loadBindingAffinity() { return loadGlobalChecked("binding_affinity.json"); }
 
 /* Per-pharmacology-class structure list: every structure carrying a ligand of that class,
    across families. */

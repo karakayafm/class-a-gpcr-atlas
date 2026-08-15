@@ -15,6 +15,9 @@ node_modules/
 # Working data that is not part of the publication package
 data/cache/
 data/raw/
+# Enrichment intermediates. The published payload under site/data/web is the artefact;
+# the step that produces it re-runs from the cache and its intermediate is not shipped.
+data/intermediate/
 releases/
 reports/
 curation/packets/
