@@ -1064,3 +1064,11 @@ td.eff-warning_only { color:var(--muted); }
   font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
 .lx-card-pocket:hover { color:var(--accent); }
 .lx-card-pocket:hover code { background:var(--accent); color:var(--accent-ink); }
+/* Several queries at once: a different job from the one the panel opens with, so it is folded
+   away rather than competing with the single query above it. */
+.sim-batch { grid-column:1/-1; margin-top:10px; border-top:1px solid var(--sim-line); padding-top:8px; }
+.sim-batch > summary { cursor:pointer; font-size:11.5px; font-weight:650; color:var(--sim-ink);
+  padding:2px 0; }
+.sim-batch-input { width:100%; box-sizing:border-box; margin-top:6px; resize:vertical;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11px; line-height:1.5; }
+.sim-batch-actions { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }

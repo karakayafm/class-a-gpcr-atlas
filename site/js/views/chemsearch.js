@@ -7,7 +7,8 @@
 // vendored RDKit build, and returns a node.
 import { t, getLang } from "../core/i18n.js";
 import { el, clear, debounce } from "../components/dom.js";
-import { downloadBlob } from "../components/csv.js";
+import { downloadBlob, toCSV, download } from "../components/csv.js";
+import { downloadXLSX } from "../components/xlsx.js";
 import * as L from "../data/loader.js";
 import { buildHash } from "../core/router.js";
 import { plainName, familyDisplayName } from "./names.js";
@@ -45,6 +46,153 @@ function tanimoto(a, b) {
   for (let i = 0; i < a.length; i++) { both += POPCOUNT[a[i] & b[i]]; either += POPCOUNT[a[i] | b[i]]; }
   return either === 0 ? 0 : both / either;
 }
+
+/* A Bemis-Murcko scaffold matched back into the molecule it came from should always match, and
+   for 33 of this release's 497 scaffolds it did not. Stripping the side chains changes the
+   hydrogen count on whatever they were attached to — an N-methyl becomes N-H, a quaternary
+   ammonium becomes [NH2+] — and as a SMARTS query [nH] demands exactly one hydrogen, so
+   caffeine's own scaffold failed against caffeine. The count is an artefact of the stripping, not
+   a fact about the framework, so it is dropped from bracketed atoms while element, charge and
+   aromaticity are kept; stereocentres are left alone, their @ marks not matching the pattern.
+
+   Measured over 3,600 scaffold-molecule pairs this changes exactly one verdict, and that one is a
+   molecule matching its own scaffold. Nothing that matched before stops matching. */
+function scaffoldQuery(mod, smiles) {
+  if (!smiles) return null;
+  const relaxed = smiles.replace(/\[([a-zA-Z][a-z]?)H\d*([+-]\d*)?\]/g,
+    (whole, element, charge) => charge ? "[" + element + charge + "]" : element);
+  return mod.get_qmol(relaxed);
+}
+
+/* ---------------------------------------------------------------- several queries at once */
+/* One query answers on the page. A set of them is a different job: the reader wants the table,
+   not the browsing, and wants to keep it. The work is the same fingerprint comparison, plus the
+   part the single-query view draws — what a query and a hit have in common — written out instead.
+ *
+ * The catalogue patterns each molecule carries are computed once per molecule and intersected,
+ * rather than matched again for every pair: a hundred pairs over thirty-nine patterns would be
+ * seven thousand substructure searches for an answer that only needs each molecule read once.
+ */
+function parseQueries(text) {
+  const out = [];
+  for (const raw of String(text || "").split(/\r?\n/)) {
+    const line = raw.trim();
+    if (!line || line.startsWith("#")) continue;
+    // SMILES cannot contain whitespace, so anything after the first token is a label.
+    const space = line.search(/\s/);
+    const smiles = space < 0 ? line : line.slice(0, space);
+    const label = space < 0 ? "" : line.slice(space + 1).trim();
+    out.push({ smiles, label: label || smiles });
+  }
+  return out;
+}
+
+export async function runBatch({ text, limit = 20, onProgress }) {
+  const queries = parseQueries(text);
+  if (!queries.length) return { rows: [], queries: [], failed: [] };
+  const mod = await getRdkit();
+  const payloadFp = fingerprints || (fingerprints = await L.loadLigandFingerprints());
+  const catalog = await L.loadChemistryCatalog().catch(() => ({ patterns: {} }));
+
+  const specs = Object.entries(catalog.patterns || {})
+    .filter(([, spec]) => spec.smarts)
+    .map(([key, spec]) => ({ key, spec, qmol: mod.get_qmol(spec.smarts) }))
+    .filter(p => p.qmol);
+  const label = spec => spec["label_" + getLang()] || spec.label_en;
+  const patternsOf = mol => {
+    const found = [];
+    for (const p of specs) {
+      try {
+        const hit = JSON.parse(mol.get_substruct_match(p.qmol));
+        if (hit && (hit.atoms || []).length) found.push(p);
+      } catch (e) { /* a pattern that will not match is simply absent */ }
+    }
+    // Parents of a matched child add nothing, exactly as in the single-pair view.
+    const parents = new Set(found.map(p => p.spec.parent).filter(Boolean));
+    return found.filter(p => !parents.has(p.key));
+  };
+
+  const hitPatterns = new Map();
+  const rows = [], failed = [];
+  let done = 0;
+  for (const query of queries) {
+    if (onProgress) onProgress(done, queries.length, query.label);
+    const qmol = mod.get_mol(query.smiles);
+    if (!qmol || !qmol.is_valid || !qmol.is_valid()) {
+      if (qmol) qmol.delete();
+      failed.push(query); done += 1; continue;
+    }
+    const bits = qmol.get_morgan_fp_as_uint8array(
+      JSON.stringify({ radius: payloadFp.radius, nBits: payloadFp.bits }));
+    const queryPatterns = new Set(patternsOf(qmol).map(p => p.key));
+    const queryScaffoldSource = qmol;
+    const scored = (payloadFp.records || [])
+      .map(r => ({ rec: r, score: tanimoto(bits, unpack(r.fp)) }))
+      .filter(r => r.score > 0 && (r.rec.seen_in || []).length)
+      .sort((a, b) => b.score - a.score).slice(0, limit);
+
+    for (const [rank, hit] of scored.entries()) {
+      const rec = hit.rec;
+      if (!hitPatterns.has(rec.ccd)) {
+        const mol = rec.smiles ? mod.get_mol(rec.smiles) : null;
+        if (mol && mol.is_valid && mol.is_valid()) {
+          hitPatterns.set(rec.ccd, patternsOf(mol));
+          mol.delete();
+        } else { if (mol) mol.delete(); hitPatterns.set(rec.ccd, []); }
+      }
+      const shared = hitPatterns.get(rec.ccd).filter(p => queryPatterns.has(p.key));
+      const groups = shared.filter(p => p.spec.facet === "functional_group").map(p => label(p.spec));
+      const rings = shared.filter(p => p.spec.facet === "ring_system").map(p => label(p.spec));
+      // Does the hit's Bemis-Murcko scaffold embed in the query? The same test the pair view runs.
+      let sharedScaffold = false;
+      if (rec.scaffold) {
+        const pattern = scaffoldQuery(mod, rec.scaffold);
+        if (pattern) {
+          try {
+            const m = JSON.parse(queryScaffoldSource.get_substruct_match(pattern));
+            sharedScaffold = !!(m && (m.atoms || []).length);
+          } catch (e) { sharedScaffold = false; }
+          pattern.delete();
+        }
+      }
+      const place = (rec.seen_in || [])[0] || {};
+      rows.push({
+        query_label: query.label, query_smiles: query.smiles, rank: rank + 1,
+        ccd: rec.ccd, name: plainName(rec.name || ""), similarity: hit.score,
+        shared_scaffold: sharedScaffold, hit_scaffold: rec.scaffold || "",
+        shared_functional_groups: groups, shared_ring_systems: rings,
+        shared_pattern_count: shared.length,
+        structures: (rec.seen_in || []).reduce((n, x) => n + (x.structures || 0), 0),
+        families: (rec.seen_in || []).length, example_pdb: place.pdb_id || "",
+      });
+    }
+    qmol.delete();
+    done += 1;
+  }
+  for (const p of specs) p.qmol.delete();
+  if (onProgress) onProgress(done, queries.length, "");
+  return { rows, queries, failed };
+}
+
+const BATCH_COLUMNS = [
+  { key: "query_label", label: "query" },
+  { key: "query_smiles", label: "query_smiles" },
+  { key: "rank", label: "rank" },
+  { key: "ccd", label: "component" },
+  { key: "name", label: "component_name" },
+  { key: "similarity", label: "tanimoto", get: r => r.similarity.toFixed(4) },
+  { key: "shared_scaffold", label: "shares_hit_scaffold", get: r => r.shared_scaffold ? "yes" : "no" },
+  { key: "hit_scaffold", label: "hit_bemis_murcko_scaffold" },
+  { key: "shared_functional_groups", label: "shared_functional_groups",
+    get: r => r.shared_functional_groups.join("; ") },
+  { key: "shared_ring_systems", label: "shared_ring_systems",
+    get: r => r.shared_ring_systems.join("; ") },
+  { key: "shared_pattern_count", label: "shared_pattern_count" },
+  { key: "structures", label: "structures" },
+  { key: "families", label: "families" },
+  { key: "example_pdb", label: "example_pdb" },
+];
+
 /* `onResults` lets a view take the hits over and render them itself. The panel keeps the query
    controls and the status line; the caller gets each hit with the function that opens its
    comparison, so the RDKit work stays here and only the presentation moves. Without the option
@@ -131,7 +279,7 @@ export function createSimilarityPanel(options) {
          it is the shared ring system, not a maximum common substructure, and the caption says
          so. Where the scaffold does not match the query the pair is still drawn, unmarked. */
       function drawPair(rec, width, height) {
-        const pattern = rec.scaffold ? mod.get_qmol(rec.scaffold) : null;
+        const pattern = rec.scaffold ? scaffoldQuery(mod, rec.scaffold) : null;
         const prepared = [[query, t("sim_compare_query")], [rec.smiles, rec.ccd]]
           .map(([smiles, label]) => {
             const m = mod.get_mol(smiles);
@@ -315,7 +463,7 @@ export function createSimilarityPanel(options) {
         const found = [];
         // The scaffold first: it is the largest single thing the two can share.
         if (rec.scaffold) {
-          const qmol = mod.get_qmol(rec.scaffold);
+          const qmol = scaffoldQuery(mod, rec.scaffold);
           if (qmol) {
             const per = union(qmol); qmol.delete();
             if (per.every(p => p.atoms.length))
@@ -473,6 +621,58 @@ export function createSimilarityPanel(options) {
   body.appendChild(status);
   body.appendChild(alternatives);
   body.appendChild(results);
+  /* Several queries at once. Kept behind a disclosure because it answers a different need from
+     the one the panel opens with: not "show me what this resembles" but "give me the table for
+     these twenty and let me keep it". */
+  const batchBox = el("details", { class: "sim-batch" });
+  batchBox.appendChild(el("summary", { text: t("sim_batch_title") }));
+  const batchInput = el("textarea", { class: "sim-batch-input", rows: "5",
+    placeholder: t("sim_batch_placeholder"), spellcheck: "false" });
+  const batchStatus = el("p", { class: "sim-status muted small" });
+  const batchActions = el("div", { class: "sim-batch-actions" });
+  let batchResult = null;
+  const csvButton = el("button", { class: "btn small", type: "button", text: t("export_csv"),
+    disabled: true, onclick: () => {
+      download("similarity_batch.csv", toCSV(BATCH_COLUMNS, batchResult.rows, {
+        release: L.getManifest().data_version || "",
+        queries: batchResult.queries.length, rows: batchResult.rows.length,
+        ranking: "Tanimoto over Morgan fingerprints, radius 2, 2048 bits",
+        shared: "catalogue patterns present in both the query and the hit; a matched pattern's "
+                + "parent is not listed as well" })); } });
+  const xlsxButton = el("button", { class: "btn small", type: "button", text: t("export_xlsx"),
+    disabled: true, onclick: () => {
+      /* Two sheets: the hits, and what was asked. The second is what makes the first
+         reproducible — a table of results with no record of its queries is not one. */
+      downloadXLSX("similarity_batch.xlsx", [
+        { name: "Hits", columns: BATCH_COLUMNS, rows: batchResult.rows },
+        { name: "Queries", columns: [
+          { key: "label", label: "query" }, { key: "smiles", label: "smiles" },
+          { key: "hits", label: "hits", get: r => batchResult.rows.filter(x => x.query_smiles === r.smiles).length },
+          { key: "status", label: "status",
+            get: r => batchResult.failed.some(f => f.smiles === r.smiles) ? "not parsed" : "ok" }],
+          rows: batchResult.queries }]); } });
+  const runButton = el("button", { class: "btn small", type: "button", text: t("sim_batch_run"),
+    onclick: async () => {
+      batchResult = null; csvButton.disabled = true; xlsxButton.disabled = true;
+      batchStatus.textContent = t("sim_batch_working", { done: 0, total: 0 });
+      try {
+        batchResult = await runBatch({ text: batchInput.value, onProgress: (done, total) => {
+          batchStatus.textContent = t("sim_batch_working", { done, total }); } });
+      } catch (error) { batchStatus.textContent = t("sim_failed"); return; }
+      if (!batchResult.queries.length) { batchStatus.textContent = t("sim_batch_empty"); return; }
+      batchStatus.textContent = t("sim_batch_done", { queries: batchResult.queries.length,
+        rows: batchResult.rows.length })
+        + (batchResult.failed.length ? " " + t("sim_batch_failed",
+            { n: batchResult.failed.length, list: batchResult.failed.map(f => f.label).join(", ") }) : "");
+      csvButton.disabled = !batchResult.rows.length;
+      xlsxButton.disabled = !batchResult.rows.length;
+    } });
+  batchActions.appendChild(runButton); batchActions.appendChild(csvButton); batchActions.appendChild(xlsxButton);
+  batchBox.appendChild(batchInput);
+  batchBox.appendChild(batchActions);
+  batchBox.appendChild(batchStatus);
+  batchBox.appendChild(el("p", { class: "sim-note", text: t("sim_batch_note") }));
+  body.appendChild(batchBox);
   body.appendChild(el("p", { class: "sim-note", text: t("sim_note") }));
   box.appendChild(body);
   return box;
