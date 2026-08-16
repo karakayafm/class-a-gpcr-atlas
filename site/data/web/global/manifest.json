@@ -121,6 +121,11 @@
    "sha256": "662e751dcdf7dc6fd494e56dba9d4943e2a5e1144b62afa0fe5bdff433240409",
    "url": "global/cross_family_summary.json"
   },
+  "generic_numbering.json": {
+   "bytes": 37583,
+   "sha256": "337288ed389eb46b1295eb3a57454735cf44ade0594e57c17eaa4ff2059f30d7",
+   "url": "global/generic_numbering.json"
+  },
   "landing.json": {
    "bytes": 6855,
    "sha256": "8baf40057d69a0bb1692324892e8348c713543219d7713d8809a8e521f2a50ff",
