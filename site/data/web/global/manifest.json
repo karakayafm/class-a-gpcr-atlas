@@ -161,6 +161,11 @@
    "sha256": "7d60e8980657f5202dd346c53d09f6c85014215b519d0998b2e4aa9746ae4243",
    "url": "global/panels.json"
   },
+  "pocket_search.json": {
+   "bytes": 1077692,
+   "sha256": "2435c9760d9503ac8d48dcf7bff6e5b787efee9da010f264996f875be747080a",
+   "url": "global/pocket_search.json"
+  },
   "references.json": {
    "bytes": 4743,
    "sha256": "1863219154da69bc7d4fb01a656e4883c05bdfb2e7b1bc10515d3a4ff5d0775e",
