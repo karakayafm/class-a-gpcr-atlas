@@ -93,20 +93,75 @@ function placeHelp(tip) {
   if (box.top < 8) tip.classList.add("is-below");
 }
 
+/* The popover is rendered into <body> and positioned as a fixed element against the marker's
+   client rect, rather than absolutely inside its own wrapper.
+
+   It has to be, because `table.data` carries `border-radius` with `overflow:hidden` to clip the
+   sticky header's background, and an ancestor with a non-visible overflow clips absolutely
+   positioned descendants. The popover opens upward out of the table's top edge, so every marker
+   in a table header had its explanation cut away — everywhere in the atlas, not only here. A
+   scroll box or a bounded aside around the table clips it a second time.
+
+   Only the element that carries the text moves: the button stays where it was, keeps its
+   aria-describedby link to the popover, and the popover keeps role="tooltip", so the
+   accessibility tree is unchanged. It is attached on open and detached on close, so a redraw
+   cannot leave orphans behind in <body>. */
 export function metricHelp(text) {
   const tipId = "metric-help-" + Math.random().toString(36).slice(2, 8);
-  const tip = el("span", { class:"site-help-popover", id:tipId, role:"tooltip", hidden:true, text });
-  let pinned = false;
+  const tip = el("span", { class:"site-help-popover is-floating", id:tipId, role:"tooltip",
+    hidden:true, text });
+  let pinned = false, open = false;
   const button = el("button", { class:"site-help-button", type:"button", text:"?",
     "aria-label":text, "aria-describedby":tipId, "aria-expanded":"false" });
-  const wrap = el("span", { class:"metric-help-wrap" }, [button, tip]);
-  const show = () => { tip.hidden=false; button.setAttribute("aria-expanded", "true"); placeHelp(tip); };
-  const hide = () => { if (!pinned) { tip.hidden=true; button.setAttribute("aria-expanded", "false"); } };
+  const wrap = el("span", { class:"metric-help-wrap" }, [button]);
+
+  const place = () => {
+    // A redraw can take the marker out of the document while its popover is open.
+    if (!button.isConnected) { close(); return; }
+    const b = button.getBoundingClientRect();
+    const t = tip.getBoundingClientRect();
+    const margin = 8;
+    // Above by preference, below when there is no room — the same rule as before, now measured
+    // against the viewport instead of an ancestor that may be scrolled out of view.
+    const above = b.top - t.height - margin;
+    const top = above >= margin ? above : Math.min(b.bottom + margin,
+      window.innerHeight - t.height - margin);
+    const left = Math.max(margin, Math.min(b.left, window.innerWidth - t.width - margin));
+    tip.style.top = Math.max(margin, top) + "px";
+    tip.style.left = left + "px";
+  };
+  const onOutside = e => { if (!tip.contains(e.target) && !wrap.contains(e.target)) close(); };
+  const show = () => {
+    if (!tip.isConnected) document.body.appendChild(tip);
+    tip.hidden = false; open = true;
+    button.setAttribute("aria-expanded", "true");
+    place();
+    // `true` for capture: the marker may sit inside a scrolling table or aside, and those scroll
+    // events do not bubble.
+    window.addEventListener("scroll", place, true);
+    window.addEventListener("resize", place);
+    document.addEventListener("pointerdown", onOutside);
+  };
+  const close = () => {
+    pinned = false; open = false;
+    tip.hidden = true;
+    button.setAttribute("aria-expanded", "false");
+    window.removeEventListener("scroll", place, true);
+    window.removeEventListener("resize", place);
+    document.removeEventListener("pointerdown", onOutside);
+    if (tip.isConnected) tip.remove();
+  };
+  const hide = () => { if (!pinned) close(); };
   wrap.addEventListener("mouseenter", show); wrap.addEventListener("mouseleave", hide);
   button.addEventListener("focus", show); button.addEventListener("blur", hide);
   button.addEventListener("click", e => {
-    e.preventDefault(); e.stopPropagation(); pinned = !pinned;
-    if (pinned) show(); else { tip.hidden=true; button.setAttribute("aria-expanded", "false"); }
+    e.preventDefault(); e.stopPropagation();
+    if (pinned) { close(); return; }
+    pinned = true; if (!open) show();
+  });
+  // Escape closes a pinned popover without moving focus off the marker.
+  button.addEventListener("keydown", e => {
+    if (e.key === "Escape" && open) { e.stopPropagation(); close(); button.focus(); }
   });
   return wrap;
 }

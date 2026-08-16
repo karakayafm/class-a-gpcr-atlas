@@ -1135,3 +1135,11 @@ a.result-item:focus-visible { outline:2px solid var(--accent); outline-offset:-2
 .sim-about > summary { cursor:pointer; font-size:11.5px; font-weight:650; color:var(--sim-ink);
   padding:2px 0; }
 .sim-about .sim-note:first-of-type { margin-top:6px; }
+
+/* The floating variant of the help popover. It lives in <body> and is positioned against the
+   marker's client rect, so no ancestor's overflow can clip it — see metricHelp() for why that is
+   necessary. The arrow is dropped: with the box flipping above or below and clamped to the
+   viewport, an arrow would frequently point at nothing. */
+.site-help-popover.is-floating { position:fixed; left:0; top:0; right:auto; bottom:auto;
+  width:min(420px,90vw); max-width:none; z-index:80; }
+.site-help-popover.is-floating::after { display:none; }
