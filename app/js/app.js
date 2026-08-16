@@ -7,6 +7,7 @@ import * as L from "./data/loader.js";
 import { el, clear } from "./components/dom.js";
 import * as V from "./views/views.js";
 import { ligandExplorer } from "./views/ligands.js";
+import * as MQ from "./views/motifquery.js";
 import * as VIEW from "./viewer/viewer.js";
 
 const MAIN = () => document.getElementById("main");
@@ -571,6 +572,11 @@ function buildViewerSide(meta) {
 /* ------------------------------------------------------------------ render */
 async function render(r) {
   const manifest = L.getManifest();
+  // The motif query panel keeps its whole state in the address. A route change confined to that
+  // panel's own keys is handed to the mounted panel, because re-rendering the view would take
+  // the query input out of the document and the caret with it — which is what stopped the panel
+  // from being addressable in the first place.
+  if (MQ.canUpdateInPlace(r)) { MQ.applyRoute(r); buildChrome(manifest); setStatus(""); return; }
   buildChrome(manifest);
   setStatus(t("loading"));
   const main = MAIN();
@@ -596,7 +602,9 @@ async function render(r) {
       // a second copy of that page and counted a compound once per deposition. It now has its own
       // view, whose unit is the ligand; the class filter it replaced still exists in Structures.
       case "ligands": node = await ligandExplorer(main, r.ligand); break;
-      case "motifsearch": node = await V.motifSearch(main); break;
+      // Rebuilt as its own module: the panel scores receptors rather than filtering depositions,
+      // and its state is restored from the route rather than from a closure.
+      case "motifsearch": node = await MQ.motifQuery(main, r); break;
       case "evidence": node = await V.evidence(main, r.family, r.open === "1"); break;
       case "contacts": case "interfaces": case "motifs": case "compare":
         navigate(r.family ? { family: r.family, view: "structures" } : { view: "landing" }, true); return;

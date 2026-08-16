@@ -84,6 +84,12 @@ export function loadLigandChemistry() { return loadGlobalChecked("ligand_chemist
 export function loadChemistryCatalog() { return loadGlobalChecked("chemistry_catalog.json"); }
 export function loadLigandFingerprints() { return loadGlobalChecked("ligand_fingerprints.json"); }
 export function loadMotifSearch() { return loadGlobalChecked("motif_search.json"); }
+/* The pocket half of the same index: the positions a ligand is in contact with, in the
+   motif_search schema so one panel reads both. Fetched only when that scope is chosen. */
+export function loadPocketSearch() { return loadGlobalChecked("pocket_search.json"); }
+/* Ballesteros-Weinstein labels for the positions both pools use. A side file rather than an
+   edit to either payload: motif_search.json is frozen, and a label is not worth reissuing it. */
+export function loadGenericNumbering() { return loadGlobalChecked("generic_numbering.json"); }
 /* Reported affinity, from the one BindingDB subset whose licence allows redistribution.
    It covers a small share of the components, so callers show it where it exists and state
    the coverage rather than implying a value is missing when none was ever published. */
