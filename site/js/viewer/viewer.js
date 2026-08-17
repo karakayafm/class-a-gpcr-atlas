@@ -8,8 +8,16 @@ import * as LC from "./lifecycle.js";
 let comp = null, meta = null, current = null, reps = {};
 let ligandMode = "cartoon";
 let viewerBackground = "black";
+/* Every generic-numbered residue of the receptor chain, not only the ligand's contact shell.
+   The coordinates always held the whole chain; what was missing was the table saying which
+   residue carries which generic number, so a position outside the pocket could be named in the
+   motif panel and then not clicked on here. Loaded on demand — a reader who stays in the pocket
+   never fetches it — so an empty table means "not asked for yet" or "not available for this
+   structure", and the panel says which. */
+let residueTable = [];
 const selectedResidues = new Set();
 const selectedMotifs = new Set();
+const HELICES = ["TM1", "TM2", "TM3", "TM4", "TM5", "TM6", "TM7"];
 const POLYMER = { extracellular_polymer_interface: 1, tethered_ligand_interface: 1 };
 const MOTIF_SPECS = {
   PIF_connector: { positions:["3x40","5x50","6x44"], expected:{
@@ -234,7 +242,69 @@ function labelCanvas(host, pdb) {
 }
 
 export function close() { LC.destroyStage(); comp = null; meta = null; current = null; reps = {};
-  selectedResidues.clear(); selectedMotifs.clear(); }
+  residueTable = []; selectedResidues.clear(); selectedMotifs.clear(); }
+
+/* ------------------------------------------------- the receptor beyond the pocket */
+export function setResidueTable(rows) { residueTable = Array.isArray(rows) ? rows : []; }
+export function hasResidueTable() { return residueTable.length > 0; }
+
+/* Grouped for the panel: one list per helix, in position order, for the chain on screen. H8 and
+   the resolved loop residues are kept in a group of their own rather than dropped — they are as
+   real as the helical ones, they just are not one of the seven columns the panel draws. */
+export function receptorSegments() {
+  const chain = activeReceptorChain();
+  const rows = residueTable.filter(r => !chain || r.c === chain);
+  /* Which of these the ligand is already in contact with. Marked rather than listed separately:
+     the pocket list and this one then describe the same residues the same way, and a reader can
+     see at a glance which of the positions they are browsing the pocket panel would have shown. */
+  const contacts = new Set();
+  const o = obs();
+  for (const r of (o && o.contact_receptor_details) || [])
+    contacts.add(residueKey(r.auth_asym_id, r.auth_seq_id));
+  for (const [c, seq] of (o && o.contact_receptor_residues) || [])
+    contacts.add(residueKey(c, seq));
+  const groups = new Map();
+  for (const r of rows) {
+    const key = HELICES.indexOf(r.s) >= 0 ? r.s : "other";
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(Object.assign({ contact:contacts.has(residueKey(r.c, r.n)) }, r));
+  }
+  const out = HELICES.filter(h => groups.has(h)).map(h => ({ segment:h, helix:true,
+    residues:groups.get(h) }));
+  if (groups.has("other")) out.push({ segment:"other", helix:false, residues:groups.get("other") });
+  return out;
+}
+
+/* The whole bundle rather than the pocket. Used when a reader opens a structure to look at a
+   position the ligand never touches: framing the pocket would put it off screen.
+
+   Framed on the receptor's own residues, not on its chain. A crystallisation construct puts the
+   fusion partner on the same auth chain — 6E59 carries the receptor at 28-320 and a BRIL domain
+   at 1001-1196 — so framing the chain fits a bounding sphere around both, leaves the receptor at
+   a third of the viewport and shrinks the residue labels to a few pixels. The generic-numbered
+   residues are exactly the receptor, which is what the reader asked to see. */
+export function frameReceptor() {
+  if (!comp) return;
+  frame(receptorFrameSelection());
+}
+
+function receptorFrameSelection() {
+  const chain = activeReceptorChain();
+  const numbers = residueTable.filter(r => !chain || r.c === chain)
+    .map(r => parseInt(r.n, 10)).filter(n => Number.isFinite(n)).sort((a, b) => a - b);
+  if (!numbers.length) return receptorSelection();
+  // Collapsed into runs so the selection stays short. A structure resolved in many fragments
+  // falls back to its span rather than emitting a selection string of unbounded length.
+  const runs = [];
+  for (const n of numbers) {
+    const last = runs[runs.length - 1];
+    if (last && n <= last[1] + 1) last[1] = Math.max(last[1], n);
+    else runs.push([n, n]);
+  }
+  const suffix = chain ? ":" + chain : "";
+  if (runs.length > 24) return numbers[0] + "-" + numbers[numbers.length - 1] + suffix;
+  return runs.map(([a, b]) => (a === b ? a : a + "-" + b) + suffix).join(" or ");
+}
 export function meta_() { return meta; }
 export function currentObservation() { return current; }
 export function setObservation(id) { if (!comp) { current = id; return; } current = id; applyDefaults(); }
@@ -302,9 +372,30 @@ function oneLetter(name) { return ({ ALA:"A",ARG:"R",ASN:"N",ASP:"D",CYS:"C",GLN
   GLY:"G",HIS:"H",ILE:"I",LEU:"L",LYS:"K",MET:"M",PHE:"F",PRO:"P",SER:"S",THR:"T",
   TRP:"W",TYR:"Y",VAL:"V" })[String(name || "").toUpperCase()] || "?"; }
 
+/* A selected residue outside the ligand's contact shell has no entry in the observation, so the
+   label map had nothing to say about it and it was drawn as an unnamed stick. The whole-receptor
+   table covers exactly those, and the observation still wins where both describe a residue —
+   it carries the distance and the contact type, which the table does not. */
+function selectedDetails() {
+  const o = obs();
+  const out = [], seen = new Set();
+  for (const r of (o && o.contact_receptor_details) || []) {
+    const key = residueKey(r.auth_asym_id, r.auth_seq_id);
+    if (selectedResidues.has(key)) { out.push(r); seen.add(key); }
+  }
+  for (const r of residueTable) {
+    const key = residueKey(r.c, r.n);
+    if (!selectedResidues.has(key) || seen.has(key)) continue;
+    seen.add(key);
+    out.push({ auth_asym_id:r.c, auth_seq_id:r.n, generic_position:r.p, one_letter:r.a });
+  }
+  return out;
+}
+
 function labelTextFor(details) {
   const wanted = new Map((details || []).filter(r => r.generic_position).map(r =>
-    [residueKey(r.auth_asym_id, r.auth_seq_id), oneLetter(r.residue_name || r.residue_identity) + genericShort(r.generic_position)]));
+    [residueKey(r.auth_asym_id, r.auth_seq_id),
+     (r.one_letter || oneLetter(r.residue_name || r.residue_identity)) + genericShort(r.generic_position)]));
   const text = {};
   if (!comp || !wanted.size) return text;
   try {
@@ -440,18 +531,21 @@ function selectionInView(selection, margin) {
   return seen > 0 && inside;
 }
 
+/* The two picked-selection labels are drawn at a fixed pixel size while the contact labels keep
+   scaling with the scene. They mark something the reader just clicked, and the whole-receptor view
+   is far enough out that an Angstrom-sized label there is about four pixels tall — the residue
+   appeared but its name did not. Fixed size keeps a pick readable at every distance. */
 function redrawSelections() {
   dropRep("picked_residues"); dropRep("picked_labels"); dropRep("picked_motifs"); dropRep("picked_motif_labels");
   if (selectedResidues.size) {
     const s = Array.from(selectedResidues).join(" or ");
-    const o = obs(), details = ((o && o.contact_receptor_details) || []).filter(r =>
-      selectedResidues.has(residueKey(r.auth_asym_id, r.auth_seq_id)));
+    const o = obs(), details = selectedDetails();
     const pickedSele = heavyAtomsWithContactHydrogens(s, ligandSelection(o));
     addRep("picked_residues", "ball+stick", { sele:pickedSele, colorScheme:"element",
       colorValue:0xef72aa, scale:1.15 });
     addRep("picked_labels", "label", { sele: "(" + s + ") and .CA", labelType: "text",
       labelText:labelTextFor(details), color: "white", backgroundColor: "#12151a",
-      backgroundOpacity:0.75, showBackground:true, fixedSize:false, labelSize:2.2, radius:0.85, zOffset:2 });
+      backgroundOpacity:0.75, showBackground:true, fixedSize:true, labelSize:14, radius:0.85, zOffset:2 });
   }
   if (selectedMotifs.size) {
     const residues = Array.from(selectedMotifs).flatMap(residuesForMotif);
@@ -461,7 +555,7 @@ function redrawSelections() {
         colorValue:0x32b56b, scale:1.18, aspectRatio:2.1 });
       addRep("picked_motif_labels", "label", { sele: "(" + s + ") and .CA", labelType: "text",
         labelText:labelTextFor(residues), color:"white", backgroundColor:"#17683b",
-        backgroundOpacity:0.78, showBackground:true, fixedSize:false, labelSize:2.2, radius:0.8, zOffset:2 });
+        backgroundOpacity:0.78, showBackground:true, fixedSize:true, labelSize:14, radius:0.8, zOffset:2 });
     }
   }
 }

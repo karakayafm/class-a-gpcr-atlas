@@ -12,6 +12,12 @@ import * as VIEW from "./viewer/viewer.js";
 
 const MAIN = () => document.getElementById("main");
 let lastFamily = null, modalOpener = null;
+/* Which residue list the side panel is showing: the ligand's contact shell, or the whole
+   receptor. Kept here rather than in the viewer because it is a property of the panel, not of
+   the scene — the viewer draws exactly what is selected either way. Reset per structure, and
+   deliberately outside buildViewerSide so a redraw (reset view, clear selection, language
+   change) does not throw a reader back to the pocket. */
+let wholeReceptor = false;
 
 function setStatus(msg) {
   const s = document.getElementById("status");
@@ -195,8 +201,9 @@ function setBackgroundInert(on) {
   }
 }
 
-async function openModal(pdb, observationId, focusResidue) {
+async function openModal(pdb, observationId, focusResidue, opts) {
   const m = ensureModal();
+  wholeReceptor = !!(opts && opts.whole);
   modalOpener = document.activeElement;
   m.hidden = false;
   document.body.classList.add("modal-open");
@@ -213,12 +220,36 @@ async function openModal(pdb, observationId, focusResidue) {
   updateModalTitle(meta);
   if (focusResidue && !VIEW.isResidueSelected(focusResidue.chain, focusResidue.seq))
     VIEW.toggleResidue(focusResidue.chain, focusResidue.seq);
+  // Opening straight into the whole receptor is one fetch and one reframe; both are skipped on
+  // the ordinary path, so a reader who came for the pocket pays nothing for this.
+  if (wholeReceptor) { await ensureResidueTable(meta); VIEW.frameReceptor(); }
   buildViewerSide(meta);
   buildObservationSwitch(meta);
   const note = VIEW.statusMessage();
   st.textContent = note; st.hidden = !note;
   document.getElementById("modal-close").focus();
-  const r = parseRoute(); navigate(Object.assign({}, r, { pdb, observation: VIEW.currentObservation(), view: "3d" }), true);
+  const r = parseRoute(); navigate(Object.assign({}, r, { pdb, observation: VIEW.currentObservation(),
+    view: "3d", whole: wholeReceptor ? "1" : null }), true);
+}
+
+/* Fetched once per structure and kept by the loader's cache, so toggling the list back and forth
+   is not a second request. A structure whose residue mapping the pipeline could not resolve has
+   no file; the panel then says so rather than showing seven empty columns. */
+async function syncWholeReceptor(want) {
+  const meta = VIEW.meta_();
+  if (!meta || want === wholeReceptor) return;
+  if (want) await ensureResidueTable(meta);
+  wholeReceptor = want;
+  if (want) VIEW.frameReceptor(); else VIEW.focusPocket();
+  buildViewerSide(meta);
+}
+
+async function ensureResidueTable(meta) {
+  if (VIEW.hasResidueTable()) return true;
+  let table = null;
+  try { table = await L.loadReceptorResidues(meta.pdb_id); } catch (e) { table = null; }
+  VIEW.setResidueTable(table && table.residues);
+  return VIEW.hasResidueTable();
 }
 function updateModalTitle(meta) {
   const title = document.getElementById("modal-title");
@@ -460,6 +491,28 @@ function buildViewerSide(meta) {
     onclick: () => { VIEW.resetView(); buildViewerSide(meta); } }));
   ctrl.appendChild(el("button", { class: "viewer-tool", text: t("v_snapshot"),
     onclick: () => VIEW.snapshot() }));
+  /* The switch between the two residue lists. It sits with the other quick controls because that
+     is where a reader is already looking when they decide the pocket is not the thing they came
+     for; the framing follows, because a position on the intracellular end of TM6 is off screen
+     while the camera is still on the ligand. */
+  const wholeButton = el("button", { class:"viewer-tool viewer-tool-whole",
+    "aria-pressed": wholeReceptor ? "true" : "false",
+    text: wholeReceptor ? t("v_back_to_pocket") : t("v_whole_receptor"),
+    onclick: async () => {
+      const next = !wholeReceptor;
+      if (next) {
+        wholeButton.disabled = true;
+        wholeButton.textContent = t("v_whole_loading");
+        await ensureResidueTable(meta);
+        wholeButton.disabled = false;
+      }
+      wholeReceptor = next;
+      if (wholeReceptor) VIEW.frameReceptor(); else VIEW.focusPocket();
+      buildViewerSide(meta);
+      const r = parseRoute();
+      if (r.view === "3d") navigate(Object.assign({}, r, { whole: wholeReceptor ? "1" : null }), true);
+    } });
+  ctrl.appendChild(wholeButton);
   side.appendChild(ctrl);
   if (ligandPanel) side.appendChild(ligandPanel);
   side.appendChild(surfacePanel);
@@ -525,7 +578,9 @@ function buildViewerSide(meta) {
     onclick: () => { VIEW.clearSelections(); buildViewerSide(meta); } }));
 
   const contacts = VIEW.contactResidues();
-  if (contacts.length) {
+  if (wholeReceptor) {
+    buildReceptorColumns(contactSection, meta);
+  } else if (contacts.length) {
     contactSection.appendChild(el("h4", { class: "viewer-section-title", text: t("v_contact_list") }));
     contactSection.appendChild(el("p", { class: "muted small", text: t("v_click_hint") }));
     const list = el("div", { class: "residue-picker" });
@@ -567,6 +622,71 @@ function buildViewerSide(meta) {
     side.appendChild(el("p", { class: "muted small", text:
       (document.documentElement.lang === "tr" ? meta.auxiliary_note_tr : meta.auxiliary_note_en) ||
       meta.auxiliary_note_en }));
+}
+
+/* The whole receptor, as seven columns — one helix each, read from the extracellular end down,
+   which is the order the positions themselves are numbered in. A column rather than a single long
+   list because the question a reader brings here is almost always about one helix ("what is along
+   TM3?"), and a flat list of two hundred and fifty buttons answers it only by scrolling.
+
+   Clicking a position draws that residue and labels it; clicking again takes it away. That is the
+   same control the pocket list already offered, so the two lists behave identically and only their
+   contents differ. */
+function buildReceptorColumns(container, meta) {
+  container.appendChild(el("h4", { class:"viewer-section-title", text:t("v_whole_list") }));
+  const segments = VIEW.receptorSegments();
+  if (!segments.length) {
+    container.appendChild(el("p", { class:"notice small", text:t("v_whole_unavailable") }));
+    return;
+  }
+  const helices = segments.filter(s => s.helix);
+  const other = segments.find(s => !s.helix);
+  container.appendChild(el("p", { class:"muted small", text:t("v_whole_hint") }));
+  const residueButton = row => {
+    const selected = VIEW.isResidueSelected(row.c, row.n);
+    const mutated = !!row.w;
+    const title = [
+      row.a + row.p,
+      row.c + ":" + row.n,
+      row.contact ? t("v_whole_is_contact") : null,
+      mutated ? t("v_whole_mutated", { wild:row.w, construct:row.a }) : null
+    ].filter(Boolean).join(" · ");
+    const b = el("button", {
+      class:"tm-residue" + (selected ? " selected" : "") + (row.contact ? " is-contact" : "") +
+        (mutated ? " is-mutated" : ""),
+      "aria-pressed":selected ? "true" : "false", title,
+      "aria-label":title,
+      onclick:() => {
+        const on = VIEW.toggleResidue(row.c, row.n);
+        b.classList.toggle("selected", on);
+        b.setAttribute("aria-pressed", on ? "true" : "false");
+      } }, [
+      el("strong", { class:"tm-residue-aa", text:row.a }),
+      el("span", { class:"tm-residue-pos", text:row.p })]);
+    return b;
+  };
+  const grid = el("div", { class:"tm-columns" });
+  for (const g of helices) {
+    const list = el("div", { class:"tm-column-list" });
+    for (const row of g.residues) list.appendChild(residueButton(row));
+    grid.appendChild(el("div", { class:"tm-column" }, [
+      el("div", { class:"tm-column-head" }, [
+        el("span", { class:"tm-column-name", text:g.segment }),
+        el("span", { class:"tm-column-count", text:String(g.residues.length) })]),
+      list]));
+  }
+  container.appendChild(grid);
+  // H8 and the resolved loop residues are as real as the helical ones; they are simply not one of
+  // the seven columns, so they get a disclosure of their own instead of being dropped.
+  if (other) {
+    const list = el("div", { class:"tm-other-list" });
+    for (const row of other.residues) list.appendChild(residueButton(row));
+    // Open, like the seven columns beside it. A reader who asked for the whole receptor asked for
+    // this part of it too; closing it by default would hide the only H8 and loop positions there
+    // are behind a disclosure they have no reason to suspect.
+    container.appendChild(el("details", { class:"tm-other", open:true }, [
+      el("summary", { text:t("v_segment_other") + " (" + other.residues.length + ")" }), list]));
+  }
 }
 
 /* ------------------------------------------------------------------ render */
@@ -628,7 +748,11 @@ async function render(r) {
     if (r.view === "3d" && r.pdb) {
       const m = document.getElementById("modal");
       const already = m && !m.hidden && VIEW.meta_() && VIEW.meta_().pdb_id === r.pdb;
-      if (!already) await openModal(r.pdb, r.observation);
+      if (!already) await openModal(r.pdb, r.observation, null, { whole: r.whole === "1" });
+      /* The address can change while the modal stays open — Back and Forward between the two
+         residue lists do exactly that, and so does editing the hash by hand. Without this the
+         panel kept whatever the last click left behind and the address quietly lied about it. */
+      else await syncWholeReceptor(r.whole === "1");
     }
   } catch (e) {
     fatal(L.errorMessage(e));

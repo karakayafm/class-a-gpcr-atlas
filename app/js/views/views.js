@@ -1052,8 +1052,16 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
       el("div", {}, [el("div", { class: "detail-title" }, [el("strong", { text: x.pdb_id }),
         el("span", { text: ligandText })]),
         el("p", { class: "muted", text: plainName(x.receptor_name || "—") + " · " + x.receptor_entry_name })]),
-      el("button", { class: "btn btn-primary", text: t("open_binding_site"),
-        onclick: () => onOpen3D(x.pdb_id, o.observation_id) })
+      /* Two ways in, because they are two different questions. The pocket is where most readers
+         start, so it keeps the primary button; the whole receptor is for the reader who came with
+         a position the ligand never touches — which the pocket view cannot show at all, and used
+         to leave them with nothing to click. */
+      el("div", { class: "detail-open-actions" }, [
+        el("button", { class: "btn btn-primary", text: t("open_binding_site"),
+          onclick: () => onOpen3D(x.pdb_id, o.observation_id) }),
+        el("button", { class: "btn", text: t("open_whole_structure"),
+          title: t("open_whole_structure_hint"),
+          onclick: () => onOpen3D(x.pdb_id, o.observation_id, null, { whole: true }) })])
     ]));
     if (x.superseded) detail.appendChild(supersededNotice(x));
     detail.appendChild(el("div", { class: "detail-tags" }, [

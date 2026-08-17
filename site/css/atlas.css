@@ -342,6 +342,47 @@ body.modal-open { overflow:hidden; }
 .residue-distance { color:#92979e; font-size:11px; text-align:right; }
 .residue-button:hover,.motif-button:hover { border-color:var(--accent); }
 .residue-button.selected { background:#ef72aa; color:#171019; border-color:#ef72aa; }
+/* The whole receptor, seven columns wide inside a 340px panel. Each button is two short lines —
+   the residue over its position — because side by side they would not fit seven times over, and
+   the column is scanned vertically anyway. The columns scroll together horizontally on a narrow
+   panel rather than being allowed to squeeze the letters out of legibility. */
+.tm-columns { display:grid; grid-auto-flow:column; grid-auto-columns:minmax(40px,1fr);
+  gap:4px; overflow-x:auto; overflow-y:hidden; padding-bottom:4px; scrollbar-gutter:stable; }
+.tm-column { min-width:0; display:flex; flex-direction:column; }
+.tm-column-head { display:flex; align-items:baseline; justify-content:center; gap:3px;
+  padding:3px 0 4px; border-bottom:1px solid var(--line); margin-bottom:3px; }
+.tm-column-name { font-size:11px; font-weight:600; color:var(--ink); }
+.tm-column-count { font-size:9px; color:var(--muted); }
+.tm-column-list { display:flex; flex-direction:column; gap:2px; max-height:340px;
+  overflow-y:auto; padding-right:2px; }
+.tm-other { margin-top:10px; }
+.tm-other > summary { cursor:pointer; font-size:12px; color:var(--muted); }
+.tm-other-list { display:flex; flex-wrap:wrap; gap:3px; margin-top:6px; }
+.tm-residue { display:flex; flex-direction:column; align-items:center; gap:0; min-width:0;
+  background:var(--panel); color:var(--ink); border:1px solid var(--line); border-radius:5px;
+  padding:3px 2px; cursor:pointer; font-family:inherit; line-height:1.15; }
+.tm-residue .tm-residue-aa { font-size:12px; font-weight:600; }
+.tm-residue .tm-residue-pos { font-size:9px; color:var(--muted); letter-spacing:-0.2px; }
+.tm-residue:hover { border-color:var(--accent); }
+/* Same pink the scene paints a picked residue with, so the list and the structure agree. */
+.tm-residue.selected { background:#ef72aa; color:#171019; border-color:#ef72aa; }
+.tm-residue.selected .tm-residue-pos { color:#3d2130; }
+/* Filled, not outlined. A one-pixel border was the whole marking and it read as noise against
+   the panel; the card carries the state better than its edge does. The colour is the blue the
+   contacting side chains are already drawn in, so the list and the scene name the same residues
+   the same way — as the pink fill already does for a pick. */
+.tm-residue.is-contact:not(.selected) { background:#8ab8e8; border-color:#5b93cd; }
+.tm-residue.is-contact:not(.selected) .tm-residue-aa { color:#10202c; }
+.tm-residue.is-contact:not(.selected) .tm-residue-pos { color:#254257; }
+/* Dashed inset outline, exactly as the motif heat map marks an engineered position: the construct
+   was mutated here, so the letter is not the receptor's own. An outline rather than a border
+   because it has to sit on top of a fill without displacing it. On a plain card it follows the
+   theme's warning ink; on the two filled cards it cannot, because those fills are the same in
+   both themes and the dark theme's light amber disappears on them. */
+.tm-residue.is-mutated { outline:2px dashed var(--warn-ink); outline-offset:-3px; }
+.tm-residue.is-mutated.is-contact, .tm-residue.is-mutated.selected { outline-color:#5c3900; }
+.tm-other-list .tm-residue { flex-direction:row; align-items:baseline; gap:3px; padding:3px 5px; }
+.detail-open-actions { display:flex; flex-direction:column; gap:6px; align-items:stretch; }
 .motif-group-title { color:var(--muted); font-size:10px; margin:8px 0 4px; }
 .motif-group-title::before { content:""; display:inline-block; width:8px; height:8px; border-radius:2px; margin-right:6px; }
 .motif-group-title.group-ligand::before { background:#eaa300; }.motif-group-title.group-activation::before { background:#9986ed; }
@@ -1361,7 +1402,7 @@ a.result-item:focus-visible { outline:2px solid var(--accent); outline-offset:-2
 
 /* Pocket-only controls: hidden outright for the microswitch pool rather than disabled, because a
    binding site class means nothing to a set of positions that is not about ligands. */
-.mq-pocket-only[hidden] { display:none; }
+.mq-pocket-only[hidden], .mq-freq-field[hidden] { display:none; }
 .mq-positions summary .muted { font-weight:400; }
 
 /* Dual numbering. The label is GPCRdb's own combined form, so both schemes are on screen at once

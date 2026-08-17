@@ -87,6 +87,10 @@ export function loadMotifSearch() { return loadGlobalChecked("motif_search.json"
 /* The pocket half of the same index: the positions a ligand is in contact with, in the
    motif_search schema so one panel reads both. Fetched only when that scope is chosen. */
 export function loadPocketSearch() { return loadGlobalChecked("pocket_search.json"); }
+/* The third pool: every generic position, not only the ones a ligand touches or the ones that
+   move on activation. Same schema again, so the panel switches to it with a control and no code.
+   1.5 MB, so it is fetched only when that scope is chosen. */
+export function loadReceptorSearch() { return loadGlobalChecked("receptor_search.json"); }
 /* Ballesteros-Weinstein labels for the positions both pools use. A side file rather than an
    edit to either payload: motif_search.json is frozen, and a label is not worth reissuing it. */
 export function loadGenericNumbering() { return loadGlobalChecked("generic_numbering.json"); }
@@ -175,6 +179,15 @@ export async function loadOverlay(path) {
   catch (e) { d = null; }
   touch(famCache, key, d); lru(famCache, MAX_FAMILY_ENTRIES * 4);
   return d;
+}
+
+/* Every generic-numbered residue of one structure's receptor chain, for the whole-receptor view.
+   An overlay rather than part of the bundle: the bundle is fetched every time a structure opens,
+   and this is wanted only when a reader asks to look outside the pocket. `loadOverlay` returns
+   null where the file does not exist, which is the honest answer for the handful of structures
+   whose residue mapping the pipeline could not resolve. */
+export function loadReceptorResidues(pdb) {
+  return loadOverlay("structures/" + pdb + "/receptor_residues.json");
 }
 
 export async function loadBundleMeta(pdb) {
