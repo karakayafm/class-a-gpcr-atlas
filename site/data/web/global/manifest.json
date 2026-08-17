@@ -171,6 +171,11 @@
    "sha256": "2435c9760d9503ac8d48dcf7bff6e5b787efee9da010f264996f875be747080a",
    "url": "global/pocket_search.json"
   },
+  "receptor_search.json": {
+   "bytes": 1528850,
+   "sha256": "66e1143392de5299e721d280dafae9ac0d6c29a6ff991d797b4393874ec4753c",
+   "url": "global/receptor_search.json"
+  },
   "references.json": {
    "bytes": 4743,
    "sha256": "1863219154da69bc7d4fb01a656e4883c05bdfb2e7b1bc10515d3a4ff5d0775e",
