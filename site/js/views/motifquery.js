@@ -1312,8 +1312,12 @@ export async function motifQuery(root, route) {
           title: s.alsoIn.join(", "),
           text: t("mq_pdb_same_profile", { n: s.alsoIn.length,
             list: s.alsoIn.slice(0, 6).join(", ") + (s.alsoIn.length > 6 ? " …" : "") }) }) : null,
-        // Secondary, and labelled as what it is. The panel never opens the viewer by itself.
-        el("a", { class: "mq-3d-link",
+        /* Secondary, and labelled as what it is. The panel never opens the viewer by itself.
+           A new tab, unlike the result rows: those carry their whole state in the address, so
+           following one and coming back costs nothing, while the viewer replaces the page with a
+           different kind of work and a reader looking at a structure usually still wants the
+           ranking they found it in. */
+        el("a", { class: "mq-3d-link", target: "_blank", rel: "noopener",
           href: "#" + buildHash({ family: s.record.f, view: "3d", pdb: s.pdb }).slice(1),
           title: t("mq_open_3d_hint", { pdb: s.pdb }), text: t("mq_open_3d") })]));
     }
