@@ -121,6 +121,11 @@
    "sha256": "662e751dcdf7dc6fd494e56dba9d4943e2a5e1144b62afa0fe5bdff433240409",
    "url": "global/cross_family_summary.json"
   },
+  "generic_numbering.json": {
+   "bytes": 37583,
+   "sha256": "337288ed389eb46b1295eb3a57454735cf44ade0594e57c17eaa4ff2059f30d7",
+   "url": "global/generic_numbering.json"
+  },
   "landing.json": {
    "bytes": 6855,
    "sha256": "8baf40057d69a0bb1692324892e8348c713543219d7713d8809a8e521f2a50ff",
@@ -160,6 +165,16 @@
    "bytes": 3087986,
    "sha256": "7d60e8980657f5202dd346c53d09f6c85014215b519d0998b2e4aa9746ae4243",
    "url": "global/panels.json"
+  },
+  "pocket_search.json": {
+   "bytes": 1077692,
+   "sha256": "2435c9760d9503ac8d48dcf7bff6e5b787efee9da010f264996f875be747080a",
+   "url": "global/pocket_search.json"
+  },
+  "receptor_search.json": {
+   "bytes": 1528850,
+   "sha256": "66e1143392de5299e721d280dafae9ac0d6c29a6ff991d797b4393874ec4753c",
+   "url": "global/receptor_search.json"
   },
   "references.json": {
    "bytes": 4743,

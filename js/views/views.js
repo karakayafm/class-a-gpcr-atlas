@@ -93,20 +93,75 @@ function placeHelp(tip) {
   if (box.top < 8) tip.classList.add("is-below");
 }
 
+/* The popover is rendered into <body> and positioned as a fixed element against the marker's
+   client rect, rather than absolutely inside its own wrapper.
+
+   It has to be, because `table.data` carries `border-radius` with `overflow:hidden` to clip the
+   sticky header's background, and an ancestor with a non-visible overflow clips absolutely
+   positioned descendants. The popover opens upward out of the table's top edge, so every marker
+   in a table header had its explanation cut away — everywhere in the atlas, not only here. A
+   scroll box or a bounded aside around the table clips it a second time.
+
+   Only the element that carries the text moves: the button stays where it was, keeps its
+   aria-describedby link to the popover, and the popover keeps role="tooltip", so the
+   accessibility tree is unchanged. It is attached on open and detached on close, so a redraw
+   cannot leave orphans behind in <body>. */
 export function metricHelp(text) {
   const tipId = "metric-help-" + Math.random().toString(36).slice(2, 8);
-  const tip = el("span", { class:"site-help-popover", id:tipId, role:"tooltip", hidden:true, text });
-  let pinned = false;
+  const tip = el("span", { class:"site-help-popover is-floating", id:tipId, role:"tooltip",
+    hidden:true, text });
+  let pinned = false, open = false;
   const button = el("button", { class:"site-help-button", type:"button", text:"?",
     "aria-label":text, "aria-describedby":tipId, "aria-expanded":"false" });
-  const wrap = el("span", { class:"metric-help-wrap" }, [button, tip]);
-  const show = () => { tip.hidden=false; button.setAttribute("aria-expanded", "true"); placeHelp(tip); };
-  const hide = () => { if (!pinned) { tip.hidden=true; button.setAttribute("aria-expanded", "false"); } };
+  const wrap = el("span", { class:"metric-help-wrap" }, [button]);
+
+  const place = () => {
+    // A redraw can take the marker out of the document while its popover is open.
+    if (!button.isConnected) { close(); return; }
+    const b = button.getBoundingClientRect();
+    const t = tip.getBoundingClientRect();
+    const margin = 8;
+    // Above by preference, below when there is no room — the same rule as before, now measured
+    // against the viewport instead of an ancestor that may be scrolled out of view.
+    const above = b.top - t.height - margin;
+    const top = above >= margin ? above : Math.min(b.bottom + margin,
+      window.innerHeight - t.height - margin);
+    const left = Math.max(margin, Math.min(b.left, window.innerWidth - t.width - margin));
+    tip.style.top = Math.max(margin, top) + "px";
+    tip.style.left = left + "px";
+  };
+  const onOutside = e => { if (!tip.contains(e.target) && !wrap.contains(e.target)) close(); };
+  const show = () => {
+    if (!tip.isConnected) document.body.appendChild(tip);
+    tip.hidden = false; open = true;
+    button.setAttribute("aria-expanded", "true");
+    place();
+    // `true` for capture: the marker may sit inside a scrolling table or aside, and those scroll
+    // events do not bubble.
+    window.addEventListener("scroll", place, true);
+    window.addEventListener("resize", place);
+    document.addEventListener("pointerdown", onOutside);
+  };
+  const close = () => {
+    pinned = false; open = false;
+    tip.hidden = true;
+    button.setAttribute("aria-expanded", "false");
+    window.removeEventListener("scroll", place, true);
+    window.removeEventListener("resize", place);
+    document.removeEventListener("pointerdown", onOutside);
+    if (tip.isConnected) tip.remove();
+  };
+  const hide = () => { if (!pinned) close(); };
   wrap.addEventListener("mouseenter", show); wrap.addEventListener("mouseleave", hide);
   button.addEventListener("focus", show); button.addEventListener("blur", hide);
   button.addEventListener("click", e => {
-    e.preventDefault(); e.stopPropagation(); pinned = !pinned;
-    if (pinned) show(); else { tip.hidden=true; button.setAttribute("aria-expanded", "false"); }
+    e.preventDefault(); e.stopPropagation();
+    if (pinned) { close(); return; }
+    pinned = true; if (!open) show();
+  });
+  // Escape closes a pinned popover without moving focus off the marker.
+  button.addEventListener("keydown", e => {
+    if (e.key === "Escape" && open) { e.stopPropagation(); close(); button.focus(); }
   });
   return wrap;
 }
@@ -997,8 +1052,16 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
       el("div", {}, [el("div", { class: "detail-title" }, [el("strong", { text: x.pdb_id }),
         el("span", { text: ligandText })]),
         el("p", { class: "muted", text: plainName(x.receptor_name || "—") + " · " + x.receptor_entry_name })]),
-      el("button", { class: "btn btn-primary", text: t("open_binding_site"),
-        onclick: () => onOpen3D(x.pdb_id, o.observation_id) })
+      /* Two ways in, because they are two different questions. The pocket is where most readers
+         start, so it keeps the primary button; the whole receptor is for the reader who came with
+         a position the ligand never touches — which the pocket view cannot show at all, and used
+         to leave them with nothing to click. */
+      el("div", { class: "detail-open-actions" }, [
+        el("button", { class: "btn btn-primary", text: t("open_binding_site"),
+          onclick: () => onOpen3D(x.pdb_id, o.observation_id) }),
+        el("button", { class: "btn", text: t("open_whole_structure"),
+          title: t("open_whole_structure_hint"),
+          onclick: () => onOpen3D(x.pdb_id, o.observation_id, null, { whole: true }) })])
     ]));
     if (x.superseded) detail.appendChild(supersededNotice(x));
     detail.appendChild(el("div", { class: "detail-tags" }, [
@@ -1953,323 +2016,9 @@ export async function cite(root, pdb, slug) {
   return wrap;
 }
 
-/* Motif explorer. The family views answer "what is in this structure"; this answers the reverse —
-   which structures carry a motif position, what residue each receptor has there, and where a
-   deposited construct was engineered away from it.
-
-   Two quantities are kept apart throughout, because merging them would report thermostabilising
-   constructs as biology: sequence variation between receptors, counted once per receptor, and
-   engineered mutation, counted per structure. */
-export async function motifSearch(root) {
-  clear(root);
-  const wrap = el("section", { class: "view" });
-  root.appendChild(wrap);
-  let payload;
-  try { payload = await L.loadMotifSearch(); }
-  catch (error) { wrap.appendChild(el("p", { class: "notice", text: L.errorMessage(error) })); return wrap; }
-
-  const families = (L.getManifest().families || []);
-  const nameOf = new Map(families.map(f => [f.slug, familyDisplayName(f.name)]));
-  // Several positions can be required at once — the question is usually "which structures have
-  // D at 2x50 *and* N at 7x49", not either alone.
-  const state = { motif: payload.motifs[0].motif_id, scope: "class_a", picks: [], query: "",
-                  colour: "" };
-  /* Side-chain classes, used to colour the result cards by the residue a structure carries at
-     the position under examination. The grouping is the conventional one; histidine is placed
-     with the basic residues although it is only partly charged at physiological pH, and glycine
-     and proline are kept apart because neither behaves like the class it would otherwise join. */
-  const RESIDUE_CLASS = {
-    A: "hydrophobic", V: "hydrophobic", L: "hydrophobic", I: "hydrophobic", M: "hydrophobic",
-    F: "aromatic", W: "aromatic", Y: "aromatic",
-    S: "polar", T: "polar", N: "polar", Q: "polar", C: "polar",
-    D: "acidic", E: "acidic",
-    K: "basic", R: "basic", H: "basic",
-    G: "glycine", P: "proline" };
-  const sameP = (a, b) => a.position === b.position && a.kind === b.kind && a.residue === b.residue;
-  const posIndex = new Map(payload.positions.map((p, i) => [p, i]));
-
-  wrap.appendChild(el("div", {}, [
-    el("h2", { text: t("nav_motifs") }),
-    el("p", { class: "muted", text: t("motif_intro") })]));
-
-  const controls = el("div", { class: "motif-controls" });
-  const scopeSelect = el("select", { onchange: e => { state.scope = e.target.value; draw(); } });
-  scopeSelect.appendChild(el("option", { value: "class_a", text: t("motif_scope_class_a") }));
-  for (const f of families)
-    scopeSelect.appendChild(el("option", { value: f.slug, text: familyDisplayName(f.name) }));
-  controls.appendChild(el("label", { class: "filter-field" }, [
-    el("span", { text: t("motif_scope") }), scopeSelect]));
-  const queryInput = el("input", { type: "text", class: "motif-query", spellcheck: "false",
-    placeholder: t("motif_query_placeholder") });
-  queryInput.addEventListener("input", debounce(() => { state.query = queryInput.value; draw(); }, 200));
-  controls.appendChild(el("label", { class: "filter-field motif-query-field" }, [
-    el("span", { text: t("motif_query") }), queryInput,
-    el("small", { class: "muted", text: t("motif_query_hint") })]));
-  // Colouring needs a position to read the residue from, so it applies to the first requirement
-  // in force; with none set there is nothing to colour by and the control says so.
-  const colourSelect = el("select", { onchange: e => { state.colour = e.target.value; draw(); } });
-  colourSelect.appendChild(el("option", { value: "", text: t("motif_colour_none") }));
-  colourSelect.appendChild(el("option", { value: "class", text: t("motif_colour_class") }));
-  controls.appendChild(el("label", { class: "filter-field" }, [
-    el("span", { text: t("motif_colour") }), colourSelect]));
-  wrap.appendChild(controls);
-
-  const strip = el("div", { class: "motif-strip" });
-  for (const m of payload.motifs) {
-    strip.appendChild(el("button", { class: "motif-tab", type: "button", "data-motif": m.motif_id,
-      onclick: () => { state.motif = m.motif_id; draw(); } }, [
-      el("span", { text: t("motif_" + m.motif_id) }),
-      el("span", { class: "tab-count", text: m.segments.join(" ") })]));
-  }
-  wrap.appendChild(strip);
-
-  const table = el("div", { class: "motif-table" });
-  const listHead = el("div", { class: "result-head" });
-  const list = el("div", { class: "result-list motif-list" });
-  wrap.appendChild(table); wrap.appendChild(listHead); wrap.appendChild(list);
-
-  /* Free-text specification: `2x50D, 7x49N` requires aspartate at 2x50 and asparagine at 7x49.
-     `2x50!` asks instead for a construct mutated at that position. Anything unrecognised is
-     reported rather than dropped, so a typo does not quietly widen the result. */
-  function parseQuery(text) {
-    const picks = [], bad = [];
-    for (const token of String(text || "").split(/[\s,;]+/).filter(Boolean)) {
-      const mutation = /^(\d+x\d+)\s*!$/.exec(token);
-      const residue = /^(\d+x\d+)\s*([A-Za-z])$/.exec(token);
-      if (mutation && posIndex.has(mutation[1])) picks.push({ position: mutation[1], kind: "mutation" });
-      else if (residue && posIndex.has(residue[1]))
-        picks.push({ position: residue[1], kind: "residue", residue: residue[2].toUpperCase() });
-      else bad.push(token);
-    }
-    return { picks, bad };
-  }
-  function activePicks() {
-    const parsed = parseQuery(state.query);
-    return { picks: state.picks.concat(parsed.picks), bad: parsed.bad };
-  }
-  /* Scored rather than filtered. Requiring every position to hold answered a four-position motif
-     with nothing at all the moment one of them varied, which is the case worth seeing: a reader
-     asking about a motif wants to know which part of it moved and where. Structures matching some
-     of the positions are kept and ranked by how many, and each one says which position failed and
-     what it carries instead. A structure matching none is not an answer to the question and is
-     left out. */
-  /* Generic numbering is two numbers, and comparing it as text puts 3x51 before 3x50 and 7x49
-     before 6x51. Sorted on the pair, so a reader reads a motif in the order it runs. */
-  const positionOrder = position => {
-    const parts = /^(\d+)x(\d+)$/.exec(position);
-    return parts ? Number(parts[1]) * 1000 + Number(parts[2]) : Number.MAX_SAFE_INTEGER;
-  };
-
-  /* Picks are grouped by position before they are tested. A position carries one residue, so two
-     residues chosen at the same position is a question about either of them, not both: choosing D
-     and E at 3x49 asked for a residue that is D and E at once, which nothing can be, and the
-     complete-match count could only ever be zero. Within a position the choice is a union; across
-     positions every one still has to hold. */
-  function wantedFrom(picks) {
-    const groups = new Map();
-    for (const pick of picks) {
-      const key = pick.position + "|" + pick.kind;
-      if (!groups.has(key))
-        groups.set(key, { position: pick.position, kind: pick.kind, residues: new Set() });
-      if (pick.residue) groups.get(key).residues.add(pick.residue);
-    }
-    return [...groups.values()].sort((a, b) =>
-      positionOrder(a.position) - positionOrder(b.position) || a.kind.localeCompare(b.kind));
-  }
-
-  function matching(picks) {
-    const rows = Object.entries(payload.structures)
-      .filter(([, s]) => state.scope === "class_a" || s.f === state.scope);
-    if (!picks.length) return rows.map(([pdb, s]) => ({ pdb, s, per: [], hits: 0, total: 0 }));
-    const wanted = wantedFrom(picks);
-    return rows.map(([pdb, s]) => {
-      const per = wanted.map(group => {
-        const ch = s.s[posIndex.get(group.position)];
-        const mutated = ch >= "a" && ch <= "z";
-        const ok = group.kind === "mutation" ? mutated : group.residues.has(ch.toUpperCase());
-        return { group, ok, carried: ch.toUpperCase(), swap: (s.m || {})[group.position] || "" };
-      });
-      return { pdb, s, per, hits: per.filter(x => x.ok).length, total: wanted.length };
-    }).filter(r => r.hits > 0)
-      .sort((a, b) => b.hits - a.hits || a.pdb.localeCompare(b.pdb));
-  }
-
-  function draw() {
-    for (const tab of strip.querySelectorAll(".motif-tab")) {
-      const on = tab.dataset.motif === state.motif;
-      tab.classList.toggle("active", on);
-      tab.setAttribute("aria-pressed", on ? "true" : "false");
-    }
-    const active = activePicks();
-    const motif = payload.motifs.find(m => m.motif_id === state.motif);
-    const variation = (payload.variation || {})[state.scope] || {};
-    const mutations = (payload.mutations || {})[state.scope] || {};
-    clear(table);
-    table.appendChild(el("p", { class: "muted small", text: t("motif_" + state.motif + "_note") }));
-    if (state.colour === "class") {
-      const legend = el("div", { class: "motif-legend" });
-      legend.appendChild(el("span", { class: "muted small", text: t("motif_legend") }));
-      for (const cls of ["hydrophobic", "aromatic", "polar", "acidic", "basic", "glycine", "proline"])
-        legend.appendChild(el("span", { class: "motif-legend-item aa-" + cls, text: t("aa_" + cls) }));
-      table.appendChild(legend);
-    }
-    const grid = el("table", { class: "data compact" });
-    /* The two right-hand columns count different things — receptors on the left, structures on
-       the right — and a reader comparing "A 2" against a result list of six has no way to see
-       that from the numbers. Both carry a note saying which unit they are in. */
-    const HEAD_HELP = { [t("motif_variation")]: "motif_variation_help",
-                        [t("motif_mutation")]: "motif_mutation_help" };
-    grid.appendChild(el("thead", {}, el("tr", {}, [t("motif_position"), t("motif_segment"),
-      t("motif_consensus"), t("motif_variation"), t("motif_mutation")]
-      .map(x => el("th", {}, HEAD_HELP[x]
-        ? [document.createTextNode(x + " "), metricHelp(t(HEAD_HELP[x]))]
-        : [document.createTextNode(x)])))));
-    const body = el("tbody");
-    for (const position of motif.positions) {
-      const v = variation[position], m = mutations[position];
-      const dist = el("span", { class: "motif-dist" });
-      if (v) {
-        for (const [residue, n] of v.by_receptor) {
-          const want = { position, kind: "residue", residue };
-          const on = state.picks.some(x => sameP(x, want));
-          const tint = state.colour === "class" ? " aa-" + (RESIDUE_CLASS[residue] || "other") : "";
-          dist.appendChild(el("button", { class: "motif-chip" + tint + (on ? " active" : ""),
-            type: "button",
-            title: t("motif_pick_hint_n", { n }),
-            onclick: () => { state.picks = on ? state.picks.filter(x => !sameP(x, want))
-                                              : state.picks.concat([want]); draw(); } },
-            [el("strong", { text: residue }), el("span", { class: "tab-count", text: String(n) })]));
-        }
-      }
-      const wantMut = { position, kind: "mutation" };
-      const mutOn = state.picks.some(x => sameP(x, wantMut));
-      body.appendChild(el("tr", {}, [
-        el("td", {}, [el("strong", { text: position })]),
-        el("td", { text: payload.segments[position] || "" }),
-        el("td", {}, [el("strong", { text: (v && v.consensus) || "—" }),
-          el("span", { class: "muted small",
-            text: v ? "  " + Math.round(v.divergent_receptor_share * 100) + "% " + t("motif_divergent") : "" })]),
-        el("td", {}, [dist]),
-        el("td", {}, m ? [el("button", { class: "motif-chip mutation" + (mutOn ? " active" : ""),
-            type: "button", title: t("motif_mutation_hint"),
-            onclick: () => { state.picks = mutOn ? state.picks.filter(x => !sameP(x, wantMut))
-                                                 : state.picks.concat([wantMut]); draw(); } },
-            [el("span", { text: m.structures + " " + t("structures_short") })])]
-          : [el("span", { class: "muted small", text: "—" })])]));
-    }
-    grid.appendChild(body);
-    table.appendChild(grid);
-
-    const rows = matching(active.picks);
-    clear(listHead); clear(list);
-    listHead.appendChild(el("strong", { text: rows.length + " " + t("results") }));
-    /* How many receptors those structures come from. The distribution above counts receptors and
-       this list counts structures, so a chip reading "A 2" answering with six results looks like
-       an error until the second number is on screen beside the first. */
-    if (active.picks.length) {
-      const receptors = new Set(rows.map(r => r.s.r)).size;
-      listHead.appendChild(el("span", { class: "muted small",
-        text: t("motif_receptors_n", { n: receptors }) }));
-      // How many carry the whole motif, said plainly, because the list no longer implies it.
-      const complete = rows.filter(r => r.hits === r.total).length;
-      listHead.appendChild(el("span", { class: "muted small",
-        text: t("motif_complete_n", { n: complete, total: active.picks.length }) }));
-    }
-    if (active.picks.length) listHead.appendChild(el("span", { class: "muted small",
-      text: wantedFrom(active.picks).map(g => g.position + (g.kind === "mutation" ? "!"
-        : " " + [...g.residues].sort().join("/"))).join(" + ") }));
-    if (active.picks.length) list.appendChild(el("p", { class: "muted small motif-partial-note",
-      text: t("motif_partial_note") }));
-    if (active.bad.length) listHead.appendChild(el("span", { class: "motif-bad",
-      text: t("motif_query_bad", { tokens: active.bad.join(", ") }) }));
-    /* One row per structure, one column per position asked for, and the residue that structure
-       carries in the cell. Folding the whole match into a single text column would hand back a
-       string to be split again before anything could be sorted or counted, which is the opposite
-       of what a table is for. */
-    if (active.picks.length) {
-      const wanted = wantedFrom(active.picks);
-      const columns = [
-        { key: "pdb", label: t("col_pdb_id"), get: r => r.pdb },
-        { key: "receptor", label: t("col_receptor"), get: r => r.s.r },
-        { key: "receptor_name", label: t("col_receptor_name"), get: r => plainName(r.s.n) },
-        { key: "family", label: t("col_family"), get: r => nameOf.get(r.s.f) || r.s.f },
-        { key: "matched", label: t("col_positions_matched"), get: r => r.hits },
-        { key: "asked", label: t("col_positions_asked"), get: r => r.total },
-        /* The positions themselves, in the order the motif runs. Two columns each rather than one:
-           the wild-type residue and, separately, what the construct carries instead. Writing them
-           as "R → K" put two values and a non-ASCII arrow in one cell, which is the packing the
-           rest of this table exists to avoid and a character a spreadsheet may not read back. The
-           substitution column is empty where the construct was not engineered. */
-        ...wanted.flatMap((group, i) => [
-          { key: "pos_" + group.position, label: group.position,
-            get: r => (r.per[i] || {}).carried || "" },
-          { key: "eng_" + group.position, label: group.position + "_" + t("col_engineered"),
-            get: r => (r.per[i] || {}).swap || "" }])];
-      const meta = () => ({ release: L.getManifest().data_version || "",
-        scope: state.scope, rows: rows.length,
-        asked: wanted.map(g => g.position + " " + (g.kind === "mutation" ? "!"
-          : [...g.residues].sort().join("/"))).join("; "),
-        unit: "one row per structure; a cell is the residue that structure carries at that "
-              + "position, with the engineered substitution after an arrow where there is one" });
-      const exports = el("div", { class: "lx-exports" }, [
-        el("button", { class: "btn small", type: "button", text: t("export_csv"),
-          onclick: () => download("motif_matches.csv", toCSV(columns, rows, meta())) }),
-        el("button", { class: "btn small", type: "button", text: t("export_xlsx"),
-          onclick: () => downloadXLSX("motif_matches.xlsx", [
-            { name: "Matches", columns, rows },
-            { name: "Positions", columns: [
-              { key: "position", label: t("col_position"), get: g => g.position },
-              { key: "segment", label: t("col_segment"), get: g => payload.segments[g.position] || "" },
-              { key: "asked", label: t("col_asked_for"),
-                get: g => g.kind === "mutation" ? t("motif_mutated") : [...g.residues].sort().join(" / ") },
-              { key: "consensus", label: t("col_consensus"),
-                get: g => (variation[g.position] || {}).consensus || "" }],
-              rows: wanted }]) })]);
-      listHead.appendChild(exports);
-    }
-    if (state.picks.length) listHead.appendChild(el("button", { class: "btn small", type: "button",
-      text: t("motif_clear_pick"), onclick: () => { state.picks = []; draw(); } }));
-    for (const row of rows.slice(0, 400)) {
-      const { pdb, s, per, hits, total } = row;
-      /* Position by position: what the structure carries there, and whether that is what was
-         asked for. Wild type and, where the construct was engineered, what it carries instead —
-         naming only one of the two left it ambiguous which the letter referred to. The positions
-         that failed are the reason a partial match is worth showing, so they are marked rather
-         than left for the reader to work out by comparing letters. */
-      const detail = el("span", { class: "motif-detail" });
-      for (const cell of per) {
-        const asked = cell.group.kind === "mutation" ? t("motif_mutated")
-          : [...cell.group.residues].sort().join(" / ");
-        detail.appendChild(el("span", { class: "motif-cell" + (cell.ok ? "" : " miss"),
-          title: cell.ok ? t("motif_cell_match", { wanted: asked })
-                         : t("motif_cell_miss", { wanted: asked, carried: cell.carried }),
-          text: cell.group.position + " " + cell.carried + (cell.swap ? " \u2192 " + cell.swap : "") }));
-      }
-      /* A link, opening in a new tab. Selecting a result used to navigate the same tab to the
-         structure view, which discarded the motif query and every chip chosen to build it — work
-         a reader would have to redo to look at a second hit. The query stays where it is now, and
-         the structure opens beside it. */
-      const item = el("a", { class: "result-item motif-item", target: "_blank", rel: "noopener",
-        href: "#" + buildHash({ family: s.f, view: "structures", pdb }).slice(1),
-        title: t("lx_open_structure", { pdb }) }, [
-        el("div", { class: "result-line" }, [
-          el("strong", { text: pdb }),
-          el("span", { title: plainName(s.n), text: plainName(s.n) }),
-          el("small", { text: nameOf.get(s.f) || s.f })]),
-        el("div", { class: "result-ligand" }, [
-          total ? el("span", { class: "motif-score" + (hits === total ? " full" : ""),
-            title: t("motif_score_hint", { hits, total }),
-            text: hits + "/" + total }) : document.createTextNode(""),
-          el("span", { text: s.r }), detail ])]);
-      list.appendChild(item);
-    }
-    if (rows.length > 400) list.appendChild(el("p", { class: "muted small",
-      text: t("motif_truncated", { shown: 400, total: rows.length })
-        + (active.picks.length ? " " + t("motif_truncated_export", { total: rows.length }) : "") }));
-  }
-  draw();
-  return wrap;
-}
+/* The motif explorer that lived here was rebuilt as views/motifquery.js: it scores
+   receptors rather than filtering depositions, and keeps its whole state in the route.
+   Removed rather than left in place, because nothing routed to it any more. */
 
 /* Guide. The methods page states what the pipeline does; this states what each panel is for,
    what question it answers and — the part a methods list cannot carry — how far the answer

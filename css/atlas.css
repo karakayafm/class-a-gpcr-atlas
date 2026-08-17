@@ -342,6 +342,47 @@ body.modal-open { overflow:hidden; }
 .residue-distance { color:#92979e; font-size:11px; text-align:right; }
 .residue-button:hover,.motif-button:hover { border-color:var(--accent); }
 .residue-button.selected { background:#ef72aa; color:#171019; border-color:#ef72aa; }
+/* The whole receptor, seven columns wide inside a 340px panel. Each button is two short lines —
+   the residue over its position — because side by side they would not fit seven times over, and
+   the column is scanned vertically anyway. The columns scroll together horizontally on a narrow
+   panel rather than being allowed to squeeze the letters out of legibility. */
+.tm-columns { display:grid; grid-auto-flow:column; grid-auto-columns:minmax(40px,1fr);
+  gap:4px; overflow-x:auto; overflow-y:hidden; padding-bottom:4px; scrollbar-gutter:stable; }
+.tm-column { min-width:0; display:flex; flex-direction:column; }
+.tm-column-head { display:flex; align-items:baseline; justify-content:center; gap:3px;
+  padding:3px 0 4px; border-bottom:1px solid var(--line); margin-bottom:3px; }
+.tm-column-name { font-size:11px; font-weight:600; color:var(--ink); }
+.tm-column-count { font-size:9px; color:var(--muted); }
+.tm-column-list { display:flex; flex-direction:column; gap:2px; max-height:340px;
+  overflow-y:auto; padding-right:2px; }
+.tm-other { margin-top:10px; }
+.tm-other > summary { cursor:pointer; font-size:12px; color:var(--muted); }
+.tm-other-list { display:flex; flex-wrap:wrap; gap:3px; margin-top:6px; }
+.tm-residue { display:flex; flex-direction:column; align-items:center; gap:0; min-width:0;
+  background:var(--panel); color:var(--ink); border:1px solid var(--line); border-radius:5px;
+  padding:3px 2px; cursor:pointer; font-family:inherit; line-height:1.15; }
+.tm-residue .tm-residue-aa { font-size:12px; font-weight:600; }
+.tm-residue .tm-residue-pos { font-size:9px; color:var(--muted); letter-spacing:-0.2px; }
+.tm-residue:hover { border-color:var(--accent); }
+/* Same pink the scene paints a picked residue with, so the list and the structure agree. */
+.tm-residue.selected { background:#ef72aa; color:#171019; border-color:#ef72aa; }
+.tm-residue.selected .tm-residue-pos { color:#3d2130; }
+/* Filled, not outlined. A one-pixel border was the whole marking and it read as noise against
+   the panel; the card carries the state better than its edge does. The colour is the blue the
+   contacting side chains are already drawn in, so the list and the scene name the same residues
+   the same way — as the pink fill already does for a pick. */
+.tm-residue.is-contact:not(.selected) { background:#8ab8e8; border-color:#5b93cd; }
+.tm-residue.is-contact:not(.selected) .tm-residue-aa { color:#10202c; }
+.tm-residue.is-contact:not(.selected) .tm-residue-pos { color:#254257; }
+/* Dashed inset outline, exactly as the motif heat map marks an engineered position: the construct
+   was mutated here, so the letter is not the receptor's own. An outline rather than a border
+   because it has to sit on top of a fill without displacing it. On a plain card it follows the
+   theme's warning ink; on the two filled cards it cannot, because those fills are the same in
+   both themes and the dark theme's light amber disappears on them. */
+.tm-residue.is-mutated { outline:2px dashed var(--warn-ink); outline-offset:-3px; }
+.tm-residue.is-mutated.is-contact, .tm-residue.is-mutated.selected { outline-color:#5c3900; }
+.tm-other-list .tm-residue { flex-direction:row; align-items:baseline; gap:3px; padding:3px 5px; }
+.detail-open-actions { display:flex; flex-direction:column; gap:6px; align-items:stretch; }
 .motif-group-title { color:var(--muted); font-size:10px; margin:8px 0 4px; }
 .motif-group-title::before { content:""; display:inline-block; width:8px; height:8px; border-radius:2px; margin-right:6px; }
 .motif-group-title.group-ligand::before { background:#eaa300; }.motif-group-title.group-activation::before { background:#9986ed; }
@@ -775,6 +816,12 @@ td.eff-warning_only { color:var(--muted); }
   --aa-basic:#c5e6ff;       --aa-basic-line:#64ace5;
   --aa-glycine:#e2e2e2;     --aa-glycine-line:#a8a8a8;
   --aa-proline:#ffe5d0;     --aa-proline-line:#e7a07e;
+  --mq-exact:#d6ecd6;       --mq-exact-line:#5f9e5f;    --mq-exact-ink:#20521f;
+  --mq-conservative:#fbeecb; --mq-conservative-line:#c9a227; --mq-conservative-ink:#6d5209;
+  --mq-mismatch:#fbdcdc;    --mq-mismatch-line:#c96a6a;  --mq-mismatch-ink:#7d2f2f;
+  --mq-uncovered:#eceef0;   --mq-uncovered-line:#c9ced3; --mq-uncovered-ink:#767c83;
+  --mq-add-bg:#3d6a99;      --mq-add-ink:#ffffff;        --mq-add-line:#2f5580;
+  --mq-link:#c8a02a;        --mq-link-bg:#fdf6e0;        --mq-link-ink:#7a5c00;
 }
 :root[data-theme="dark"] {
   --aa-hydrophobic:#453d1c; --aa-hydrophobic-line:#6d6029;
@@ -784,6 +831,12 @@ td.eff-warning_only { color:var(--muted); }
   --aa-basic:#1d415b;       --aa-basic-line:#0f699a;
   --aa-glycine:#3e3e3e;     --aa-glycine-line:#6f6f6f;
   --aa-proline:#63402c;     --aa-proline-line:#a06243;
+  --mq-exact:#1f3a24;       --mq-exact-line:#4a8a56;    --mq-exact-ink:#a9dcb1;
+  --mq-conservative:#3a2f14; --mq-conservative-line:#96762a; --mq-conservative-ink:#e8c979;
+  --mq-mismatch:#3a2224;    --mq-mismatch-line:#96565a;  --mq-mismatch-ink:#e3a5a8;
+  --mq-uncovered:#23272b;   --mq-uncovered-line:#3d444b; --mq-uncovered-ink:#8b949c;
+  --mq-add-bg:#4a72b8;      --mq-add-ink:#ffffff;        --mq-add-line:#6d95d4;
+  --mq-link:#c8a02a;        --mq-link-bg:#3a3116;        --mq-link-ink:#e8c979;
 }
 .aa-hydrophobic { background:var(--aa-hydrophobic); border-color:var(--aa-hydrophobic-line); }
 .aa-aromatic    { background:var(--aa-aromatic);    border-color:var(--aa-aromatic-line); }
@@ -1135,3 +1188,309 @@ a.result-item:focus-visible { outline:2px solid var(--accent); outline-offset:-2
 .sim-about > summary { cursor:pointer; font-size:11.5px; font-weight:650; color:var(--sim-ink);
   padding:2px 0; }
 .sim-about .sim-note:first-of-type { margin-top:6px; }
+
+/* ------------------------------------------------------------------ motif query panel.
+   Four match states, one colour each, used identically in the heatmap and in the detail table so
+   that a colour means the same thing wherever a reader meets it. Engineering is an outline rather
+   than a fifth colour: a cell has to say both whether it matched and whether the construct was
+   altered, and replacing the colour would hide the first to show the second. */
+.mq h3 { margin:18px 0 8px; font-size:15px; }
+.mq-strip { display:flex; flex-wrap:wrap; gap:14px; margin:10px 0 12px; align-items:start; }
+/* Tightened so the five controls hold one line at a normal window width: the frequency selector
+   wrapping to a row of its own separated it from the query field the mustard rule ties it to. */
+.mq-strip > .filter-field { min-width:150px; flex:0 1 auto; }
+.mq-query-field { flex:1 1 260px; min-width:240px; max-width:430px; }
+.mq-query-field small { margin-top:3px; font-size:10.5px; }
+.mq-spec { margin:0 0 14px; }
+.mq-spec-head { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:8px; }
+.mq-query-echo { background:var(--chip); border-radius:6px; padding:2px 8px; font-size:13px; }
+.mq-spec-table { max-width:900px; }
+.mq-num { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.mq-low td { background:var(--warn-bg); }
+.mq-flag { display:inline-block; margin-left:6px; padding:1px 6px; border-radius:999px;
+  background:var(--warn-bg); color:var(--warn-ink); font-size:10.5px; white-space:nowrap; }
+.mq-warn { margin-top:10px; }
+.mq-suggest { display:flex; align-items:center; flex-wrap:wrap; gap:6px; margin-top:8px; }
+.mq-positions { margin:0 0 16px; border:1px solid var(--line); border-radius:9px;
+  background:var(--panel); padding:8px 12px; }
+.mq-positions summary { cursor:pointer; color:var(--muted); font-size:12px; }
+.mq-positions table { margin-top:10px; }
+.mq-positions tr.mq-asked td, .mq-positions tr.mq-asked th { background:var(--band-near-bg); }
+
+/* Family ranking. CSS bars rather than a charting library: one number per row, and the library
+   would be a larger download than the whole payload it draws. */
+.mq-bars { display:grid; gap:5px; }
+.mq-bar-row { display:grid; grid-template-columns:minmax(120px,1.4fr) minmax(0,3fr) 56px 92px;
+  gap:10px; align-items:center; font-size:12.5px; }
+.mq-bar-label { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.mq-bar-track { position:relative; height:16px; background:var(--chip); border-radius:4px;
+  overflow:hidden; }
+.mq-bar-fill { position:absolute; inset:0 auto 0 0; background:var(--accent); border-radius:4px; }
+/* Anchored one pixel back so the marker is still visible when a family's best receptor is
+   at 100% and the track's overflow would otherwise clip it away. */
+.mq-bar-max { position:absolute; top:0; bottom:0; width:2px; background:var(--ink);
+  opacity:.55; }
+.mq-bar-value { text-align:right; font-variant-numeric:tabular-nums; }
+.mq-bar-count { color:var(--muted); font-size:11px; }
+
+.mq-layout { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:16px; align-items:start; }
+.mq-results { min-width:0; }
+/* Bounded like .result-list: several hundred receptors can score, and letting them all
+   extend the page pushed the heatmap below them where nobody would reach it. The header
+   stays put through table.data's sticky thead. */
+.mq-table-scroll { overflow:auto; max-height:min(58vh,560px); border:1px solid var(--line);
+  border-radius:9px; }
+.mq-table-scroll table.data { border:0; }
+.mq-table thead th { text-transform:uppercase; letter-spacing:.04em; font-size:10.5px; }
+.mq-table th button.mq-sort { background:none; border:0; padding:0; font:inherit; color:inherit;
+  cursor:pointer; display:inline-flex; align-items:center; gap:4px; text-align:left; }
+.mq-table th button.mq-sort:hover { color:var(--accent); }
+.mq-sort-arrow { font-size:10px; }
+.mq-table th.mq-sorted { color:var(--accent); }
+.mq-pick { background:none; border:0; padding:0; font:inherit; color:inherit; cursor:pointer;
+  display:grid; text-align:left; gap:1px; }
+.mq-pick:hover strong { color:var(--accent); }
+.mq-pick small { color:var(--muted); font-size:10.5px; }
+
+/* Heatmap: rows are receptors, columns are the positions asked for. A CSS grid, so the column
+   count follows the query without a layout library. */
+.mq-heat-controls { display:flex; align-items:end; gap:16px; flex-wrap:wrap; margin-bottom:8px; }
+.mq-heat-controls .filter-field { min-width:90px; }
+.mq-top-input { width:90px; }
+.mq-legend { display:flex; flex-wrap:wrap; gap:12px; align-items:center; }
+.mq-legend-item { display:inline-flex; align-items:center; gap:5px; color:var(--muted);
+  font-size:11px; }
+.mq-swatch { width:13px; height:13px; border-radius:3px; border:1px solid var(--line); }
+.mq-heat { display:grid; gap:2px; overflow-x:auto; padding-bottom:4px; }
+.mq-heat-corner { color:var(--muted); font-size:10px; text-transform:uppercase;
+  letter-spacing:.06em; align-self:end; padding-bottom:3px; }
+.mq-heat-head { display:grid; justify-items:center; gap:1px; font-size:11px; text-align:center; }
+.mq-heat-head small { color:var(--muted); font-size:10px; }
+.mq-heat-name { background:none; border:0; padding:2px 6px 2px 0; font:inherit; font-size:12px;
+  color:inherit; cursor:pointer; text-align:left; min-width:0; overflow:hidden;
+  text-overflow:ellipsis; white-space:nowrap; }
+.mq-heat-name:hover { color:var(--accent); }
+.mq-heat-name.selected { color:var(--accent); font-weight:650; }
+.mq-cell { display:grid; place-items:center; height:24px; border-radius:4px; font-size:11.5px;
+  font-weight:600; border:1px solid transparent; }
+.mq-exact  { background:var(--mq-exact);  border-color:var(--mq-exact-line);  color:var(--mq-exact-ink); }
+.mq-conservative { background:var(--mq-conservative); border-color:var(--mq-conservative-line);
+  color:var(--mq-conservative-ink); }
+.mq-mismatch { background:var(--mq-mismatch); border-color:var(--mq-mismatch-line);
+  color:var(--mq-mismatch-ink); }
+.mq-uncovered { background:var(--mq-uncovered); border-color:var(--mq-uncovered-line);
+  color:var(--mq-uncovered-ink); }
+/* Engineered: an outline over whichever state the cell is already in, never instead of it. */
+.mq-cell.mq-engineered { outline:2px dashed var(--warn-ink); outline-offset:-3px; }
+.mq-swatch.mq-engineered { outline:2px dashed var(--warn-ink); outline-offset:-3px; }
+
+.mq-detail { width:min(400px,92vw); position:sticky; top:12px; background:var(--panel);
+  border:1px solid var(--line); border-radius:10px; padding:12px 14px; max-height:calc(100vh - 28px);
+  overflow:auto; }
+/* Pinned to the top of the aside's own scroll box. The aside is capped at the viewport height and
+   scrolls internally when a receptor carries many depositions; the heading and the close button
+   were scrolling away with the content, so the panel lost both its label and the only way to
+   dismiss it. Negative margins carry the background across the aside's padding, so nothing shows
+   through beside it. */
+.mq-detail-head { display:flex; align-items:start; justify-content:space-between; gap:10px;
+  position:sticky; top:0; z-index:2; background:var(--panel);
+  margin:-12px -14px 8px; padding:12px 14px 8px; border-bottom:1px solid var(--line); }
+.mq-detail-head h3 { margin:0 0 4px; font-size:15px; }
+.mq-scores { display:grid; grid-template-columns:1fr auto; gap:3px 10px; margin:10px 0; }
+.mq-scores dt { color:var(--muted); font-size:11.5px; }
+.mq-scores dd { margin:0; text-align:right; font-variant-numeric:tabular-nums; font-weight:600; }
+.mq-detail-table { margin:8px 0; font-size:12px; }
+.mq-detail-table tr.mq-exact td { background:var(--mq-exact); }
+.mq-detail-table tr.mq-conservative td { background:var(--mq-conservative); }
+.mq-detail-table tr.mq-mismatch td { background:var(--mq-mismatch); }
+.mq-detail-table tr.mq-uncovered td { background:var(--mq-uncovered); color:var(--mq-uncovered-ink); }
+.mq-why { margin:8px 0; padding-left:18px; font-size:12px; }
+.mq-why li { margin:2px 0; }
+.mq-why li.mq-exact { color:var(--mq-exact-ink); background:none; }
+.mq-why li.mq-conservative { color:var(--mq-conservative-ink); background:none; }
+.mq-why li.mq-mismatch { color:var(--mq-mismatch-ink); background:none; }
+.mq-why li.mq-uncovered { color:var(--mq-uncovered-ink); background:none; }
+.mq-detail h4 { margin:12px 0 6px; font-size:12.5px; }
+.mq-pdb-list { display:grid; gap:6px; }
+.mq-pdb { display:grid; gap:2px; border:1px solid var(--line); border-radius:8px; padding:6px 9px;
+  font-size:11.5px; }
+.mq-pdb.rep { border-color:var(--accent); }
+.mq-pdb code { font-weight:650; font-size:12.5px; }
+.mq-3d-link { justify-self:start; margin-top:2px; font-size:11.5px; }
+@media (max-width:1100px) {
+  .mq-layout { grid-template-columns:minmax(0,1fr); }
+  .mq-detail { width:auto; position:static; max-height:none; }
+}
+
+/* The floating variant of the help popover. It lives in <body> and is positioned against the
+   marker's client rect, so no ancestor's overflow can clip it — see metricHelp() for why that is
+   necessary. The arrow is dropped: with the box flipping above or below and clamped to the
+   viewport, an arrow would frequently point at nothing. */
+.site-help-popover.is-floating { position:fixed; left:0; top:0; right:auto; bottom:auto;
+  width:min(420px,90vw); max-width:none; z-index:80; }
+.site-help-popover.is-floating::after { display:none; }
+
+/* ---------------------------------------------- split chips: read here, add there.
+   A motif card and a residue chip each offer two different actions, so each is a wrapper holding
+   two sibling buttons — never a button inside a button. Both halves are reachable by keyboard in
+   their own right and carry their own aria-label. */
+.motif-tab { padding:0; overflow:hidden; }
+.motif-tab-body, .motif-chip-body { display:inline-flex; align-items:center; gap:9px;
+  background:none; border:0; font:inherit; color:inherit; cursor:pointer; }
+/* A little taller than it was: the card now carries a stacked pair of actions, and at the old
+   height the plus and the minus were two marks in one small square rather than two buttons. */
+.motif-tab-body { padding:10px 10px 10px 13px; }
+.motif-tab-body:hover, .motif-chip-body:hover { color:var(--accent); }
+/* Only the split variant drops its padding; the plain chip is still a single button. */
+.motif-chip.split { padding:0; overflow:hidden; }
+.motif-chip-body { gap:5px; padding:2px 4px 2px 7px; font-size:inherit; }
+/* The add target: a muted blue field with a white glyph — 5.7:1 in the light theme and 4.8:1 in
+   the dark one, both past WCAG AA for text. It was a much darker navy, which at eight cards in a
+   row read as a row of holes punched in the page rather than as eight buttons. */
+.motif-tab-add, .motif-tab-remove, .motif-chip-add { flex:none; border:0; font:inherit;
+  font-weight:700; line-height:1; cursor:pointer; align-self:stretch; padding:0 9px; }
+/* Add above, remove below, split by a hairline so the pair reads as two targets. */
+.motif-tab-actions { display:flex; flex-direction:column; align-self:stretch; flex:none; }
+.motif-tab-actions button { flex:1; min-height:19px; display:grid; place-items:center;
+  padding:0 10px; }
+.motif-tab-remove { background:var(--mq-add-bg); color:var(--mq-add-ink);
+  border-left:1px solid var(--mq-add-line); border-top:1px solid var(--mq-add-line); }
+.motif-tab-add:disabled, .motif-tab-remove:disabled { opacity:.38; cursor:default; }
+.motif-tab-remove:not(:disabled):hover { filter:brightness(1.18); }
+/* The motif cards carry the emphatic version: eight of them, each a deliberate choice. */
+.motif-tab-add { background:var(--mq-add-bg); color:var(--mq-add-ink);
+  border-left:1px solid var(--mq-add-line); }
+/* The residue chips carry a quiet one. There are a hundred and twenty of them in the position
+   reference, and at that count the same navy field reads as a wall rather than as an action. */
+.motif-chip-add { padding:0 6px; font-size:12px; background:none; color:var(--muted);
+  border-left:1px solid var(--line); }
+.motif-chip-add:hover { background:var(--mq-add-bg); color:var(--mq-add-ink); }
+.motif-tab-add:hover { filter:brightness(1.18); }
+.motif-tab-add:focus-visible, .motif-chip-add:focus-visible,
+.motif-tab-body:focus-visible, .motif-chip-body:focus-visible {
+  outline:2px solid var(--accent); outline-offset:-2px; }
+.motif-chip.open { border-color:var(--accent); }
+.motif-chip.split.active .motif-chip-add { background:var(--mq-add-bg);
+  color:var(--mq-add-ink); border-left-color:var(--mq-add-line); }
+
+/* Search affordance inside the query field, costing the input no width. */
+.mq-query-box { position:relative; display:block; }
+.mq-query-box input { width:100%; padding-right:34px; }
+.mq-search { position:absolute; right:3px; top:50%; transform:translateY(-50%); width:26px;
+  height:26px; display:grid; place-items:center; background:none; border:0; border-radius:6px;
+  cursor:pointer; color:var(--muted); }
+.mq-search:hover { color:var(--accent); background:var(--chip); }
+.mq-search-glyph { position:relative; width:14px; height:14px; display:block; }
+.mq-search-ring { position:absolute; inset:0 4px 4px 0; border:1.8px solid currentColor;
+  border-radius:50%; }
+.mq-search-stem { position:absolute; right:0; bottom:0; width:6px; height:1.8px;
+  background:currentColor; transform:rotate(45deg); transform-origin:right center; }
+
+/* Residue -> family breakdown, opened from a chip in the position reference. */
+.mq-famdist-row td { background:var(--bg); }
+.mq-famdist { padding:4px 2px 8px; }
+.mq-famdist-head { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:0 0 6px; }
+.mq-famdist-table { max-width:620px; margin:0; font-size:12px; }
+.mq-famdist-table tr.mq-enriched td { background:var(--band-near-bg); }
+.mq-famtag { display:inline-flex; align-items:center; gap:5px; margin:1px 4px 1px 0;
+  padding:1px 7px; border:1px solid var(--line); border-radius:999px; background:var(--panel);
+  font-size:11px; white-space:nowrap; }
+.mq-uniq-toggle { display:inline-flex; align-items:center; gap:6px; font-size:11.5px;
+  color:var(--muted); cursor:pointer; }
+.mq-uniq-toggle input { margin:0; }
+.mq-pdb-same { font-style:italic; }
+
+/* Pocket-only controls: hidden outright for the microswitch pool rather than disabled, because a
+   binding site class means nothing to a set of positions that is not about ligands. */
+.mq-pocket-only[hidden], .mq-freq-field[hidden] { display:none; }
+.mq-positions summary .muted { font-weight:400; }
+
+/* Dual numbering. The label is GPCRdb's own combined form, so both schemes are on screen at once
+   and neither has to be inferred. Positions where they disagree carry a mark, because that is
+   where a number copied out of a paper lands on the wrong residue. */
+.mq-pos { display:inline-flex; align-items:baseline; gap:3px; white-space:nowrap; }
+/* A diverging position carries no visible mark at all. It is most of the pocket pool, and both
+   the glyph and the dashed rule under it read as damage rather than as information at that
+   density. The explanation is on the hover, where there is room to say which of the three cases
+   it is. `cursor:help` is the only hint that there is something to hover. */
+.mq-pos.diverges strong { cursor:help; }
+.mq-translated { margin:4px 0; padding:2px 8px; border-radius:999px; display:inline-block;
+  background:var(--band-near-bg); color:var(--ink); font-size:11.5px; }
+.mq-freq-note { display:block; margin-top:3px; }
+.mq-heat-head .mq-pos strong { font-size:10.5px; }
+
+/* Tie count beside the result head: how much the active column actually separated. */
+.mq-tie { display:inline-flex; align-items:center; gap:4px; padding:1px 8px; border-radius:999px;
+  background:var(--warn-bg); color:var(--warn-ink); font-size:11.5px; }
+.mq-translated { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.mq-table th.mq-sorted { color:var(--accent); }
+.mq-table th.mq-sorted .mq-sort-arrow { font-size:12px; }
+/* The active column also carries a tint, so the sort is visible without reading the arrow. */
+.mq-table th.mq-sorted { background:var(--band-near-bg); }
+
+/* Whole-row selection in the receptor table, with the affordance where the eye finishes. */
+.mq-row { cursor:pointer; }
+.mq-row:hover td, .mq-row:hover th { background:var(--chip); }
+.mq-row.selected td, .mq-row.selected th { background:var(--band-near-bg); }
+.mq-row.selected:hover td, .mq-row.selected:hover th { background:var(--band-near-bg); }
+.mq-pick strong { color:var(--accent); }
+.mq-row:hover .mq-pick strong { text-decoration:underline; }
+.mq-row-go { text-align:right; width:2.4em; padding-right:10px; }
+.mq-go { display:inline-grid; place-items:center; width:23px; height:23px; border-radius:50%;
+  background:var(--chip); color:var(--muted); transition:background .12s, color .12s; }
+.mq-go svg { display:block; width:13px; height:13px; fill:currentColor; }
+.mq-row:hover .mq-go { background:var(--accent); color:var(--accent-ink); }
+.mq-row.selected .mq-go { background:var(--accent); color:var(--accent-ink); }
+
+/* A family tag names a family; this is the way from it to the receptors that make it up. */
+/* A small card of its own, set into the row beside the family it belongs to. It was a bare
+   chevron at text weight and read as punctuation. Width is twice that of the +/- control on the
+   motif cards (31px -> 62px), height stays at that control's 19px so the row does not grow.
+   The field carries the green and the arrow is white, so the tray has to be the saturated green
+   rather than the pale one: white on `--mq-exact` is 1.25:1 and simply disappears, while on
+   `--mq-exact-line` it holds 3.21:1 in the light theme and 4.15:1 in the dark — past the 3:1
+   WCAG asks of a non-text control. */
+.mq-famtag-go { flex:none; width:62px; height:19px; padding:0 4px; margin-left:8px;
+  border-radius:5px; cursor:pointer; display:grid; place-items:center;
+  background:var(--mq-exact-line); border:1px solid var(--mq-exact-ink); }
+.mq-famtag-go svg { display:block; width:29px; height:auto; }
+.mq-famtag-go:hover { filter:brightness(1.08); }
+.mq-famtag-go:hover svg { transform:translateX(2px); }
+.mq-famtag-go svg { transition:transform .12s; }
+.mq-famtag-go:focus-visible { outline:2px solid var(--accent); outline-offset:1px; }
+
+/* Shown only while the query summary is off screen above and there is a query to return to. */
+.mq-backup { position:fixed; left:50%; transform:translateX(-50%); bottom:18px; z-index:60;
+  display:inline-flex; align-items:center; gap:7px; padding:8px 15px; border-radius:999px;
+  border:1px solid var(--line); background:var(--panel); color:var(--ink); cursor:pointer;
+  font:inherit; font-size:12.5px; box-shadow:0 4px 14px rgba(0,0,0,.16); }
+.mq-backup:hover { border-color:var(--accent); color:var(--accent); }
+.mq-backup[hidden] { display:none; }
+.mq-backup-arrow { font-size:15px; line-height:1; }
+.mq-tab-hint { color:var(--muted); }
+.mq-hidden-asked { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:6px; }
+
+/* ------------------------------------------------ motif panel: separating the header blocks.
+   The controls, the starting-point cards and the query summary were three different kinds of
+   thing stacked flush in one flat colour. Each gets its own surface so the eye can tell where
+   one ends and the next begins. */
+.mq-strip { position:relative; background:var(--panel); border:1px solid var(--line);
+  border-radius:10px; padding:12px 14px 14px; margin:10px 0 0; }
+/* Folded away by default; the disclosure matches the position reference below it. */
+.mq-band { margin:14px 0 16px; padding:9px 14px; background:var(--chip); border-radius:10px; }
+.mq-band-label { color:var(--muted); font-size:11px; cursor:pointer; }
+.mq-band[open] .mq-band-label { margin-bottom:10px; }
+.mq-band .motif-strip { margin:0; }
+
+/* The frequency selector explains why the reference below is not the whole pool, so it is the one
+   control that has to be found without being looked for. */
+.mq-freq-field select { border-color:var(--mq-link); background:var(--mq-link-bg); }
+.mq-freq-field > span { color:var(--mq-link-ink); }
+
+/* The query summary is the answer to what was just typed; it gets the room to be read. */
+.mq-spec-table { max-width:min(1240px, 100%); }
+.mq-famtag-row { display:flex; align-items:center; justify-content:space-between; gap:10px;
+  padding:1px 0; }
+.mq-famtag-go { font-size:19px; padding:0 2px; }
+.motif-tab-body.active { background:var(--accent); color:var(--accent-ink); }
+.motif-tab-body.active .tab-count { background:rgba(255,255,255,.24); color:inherit; }
