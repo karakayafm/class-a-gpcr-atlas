@@ -166,9 +166,10 @@ function positionLabel(position, payload, numbering, opts) {
       share: Math.round(info.minority * 100), variants });
   else if (info.variable)
     node.title = t("mq_bw_variable", { bw: info.bw, n: info.receptors, total: info.total });
-  // Nothing wrong with this position, but the label no longer carries the BW number, so the
-  // hover has to.
-  else if (info.bw) node.title = t("mq_bw_plain", { bw: info.bw, structure: position });
+  /* Where the two schemes agree there is no tooltip at all. One was written on the reasoning that
+     the label no longer carries the BW number so the hover should — but at an agreeing position
+     the BW number *is* the label with a dot for the x, so the note said 3.52 is 3x52 and they
+     agree, on most of the positions on screen. A hover that repeats its own anchor is noise. */
   if (opts && opts.segment) node.appendChild(el("span", { class: "muted small",
     text: " " + opts.segment }));
   return node;
