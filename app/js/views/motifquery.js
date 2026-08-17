@@ -70,7 +70,13 @@ const DEFAULT_SORT = "-exact", DEFAULT_TOP = 25;
 /* Two position sets, one panel. The microswitch payload is the positions that move on
    activation; the pocket payload is the positions a ligand touches. Same schema, so everything
    below — scoring, entropy, aggregation, the heatmap — is unchanged by the choice. */
-const POOLS = { motif: L.loadMotifSearch, pocket: L.loadPocketSearch };
+const POOLS = { motif: L.loadMotifSearch, pocket: L.loadPocketSearch,
+                receptor: L.loadReceptorSearch };
+/* Which pools carry a per-position threshold, and what the threshold means in each. The pocket
+   pool filters on how often a ligand touches the position; the whole-receptor pool filters on
+   how many receptors have the position at all. Different quantities, so they are named
+   differently on screen rather than sharing one label that would be wrong for one of them. */
+const FILTERED_POOLS = { pocket:"frequency", receptor:"coverage" };
 const DEFAULT_POOL = "motif", DEFAULT_CLASS = "canonical_7tm_pocket", DEFAULT_MIN_FREQ = 0.10;
 
 function stateFromRoute(route) {
@@ -103,9 +109,10 @@ function routeFromState(s, route) {
   if (s.top !== DEFAULT_TOP) r.top = String(s.top);
   if (!s.uniq) r.uniq = "0";
   if (s.pool !== DEFAULT_POOL) r.pool = s.pool;
-  // The pocket filter only means anything for the pocket pool, so it is only written for it.
-  if (s.pool === "pocket") {
-    if (s.siteClass !== DEFAULT_CLASS) r.class = s.siteClass;
+  // The site class only means anything for the pocket pool; the threshold means something for
+  // both filtered pools, so it is written whenever one of them is showing.
+  if (FILTERED_POOLS[s.pool]) {
+    if (s.pool === "pocket" && s.siteClass !== DEFAULT_CLASS) r.class = s.siteClass;
     if (s.minFreq !== DEFAULT_MIN_FREQ) r.minfreq = String(s.minFreq);
   }
   return r;
@@ -116,11 +123,16 @@ function routeFromState(s, route) {
    site class. Only what is *offered* is filtered — a position named in the query is still scored,
    because a filter is a way of reading the payload, not a restriction on what may be asked. */
 function activePositions(payload, state) {
-  if (state.pool !== "pocket" || !payload.position_meta) return payload.positions.slice();
+  const filter = FILTERED_POOLS[state.pool];
+  if (!filter || !payload.position_meta) return payload.positions.slice();
   return payload.positions.filter(p => {
     const meta = payload.position_meta[p];
-    const freq = meta && meta.frequency ? meta.frequency[state.siteClass] : undefined;
-    return freq !== undefined && freq >= state.minFreq;
+    if (!meta) return false;
+    // Coverage is a single number per position; contact frequency is one per binding site class,
+    // so it is read through whichever class the reader has chosen.
+    const value = filter === "coverage" ? meta.coverage
+      : (meta.frequency ? meta.frequency[state.siteClass] : undefined);
+    return value !== undefined && value >= state.minFreq;
   });
 }
 /* What a position is called, in both schemes. The pocket payload carries this inside
@@ -564,6 +576,7 @@ export async function motifQuery(root, route) {
   const poolSelect = el("select", { "aria-label": t("mq_pool") });
   poolSelect.appendChild(el("option", { value: "motif", text: t("mq_pool_motif") }));
   poolSelect.appendChild(el("option", { value: "pocket", text: t("mq_pool_pocket") }));
+  poolSelect.appendChild(el("option", { value: "receptor", text: t("mq_pool_receptor") }));
   poolSelect.addEventListener("change", () => update({ pool: poolSelect.value, hit: "" }));
   strip.appendChild(el("label", { class: "filter-field" }, [
     el("span", { text: t("mq_pool") }), poolSelect]));
@@ -582,9 +595,12 @@ export async function motifQuery(root, route) {
     el("span", {}, [document.createTextNode(t("mq_site_class") + " "),
       metricHelp(t("mq_site_class_help"))]), classSelect]);
   const freqNote = el("span", { class: "mq-freq-note" });
-  const freqField = el("label", { class: "filter-field mq-pocket-only mq-freq-field" }, [
-    el("span", {}, [document.createTextNode(t("mq_min_freq") + " "),
-      metricHelp(t("mq_min_freq_help"))]), freqSelect, freqNote]);
+  /* The threshold label is rebuilt per pool: the same control filters on contact frequency in one
+     and on receptor coverage in the other, and calling both "frequency" would have the reader
+     believing the whole-receptor pool counts something it does not. */
+  const freqCaption = el("span", {});
+  const freqField = el("label", { class: "filter-field mq-freq-field" }, [freqCaption, freqSelect,
+    freqNote]);
   strip.appendChild(classField); strip.appendChild(freqField);
   wrap.appendChild(strip);
   /* The cards get their own band with a caption. Sitting flush under the controls they read as a
@@ -947,8 +963,12 @@ export async function motifQuery(root, route) {
     clear(positionBox);
     positionBox.appendChild(el("summary", {}, [
       el("span", { text: t("mq_positions_open_n", { n: active.length }) }),
+      // Named after whichever threshold is doing the hiding, so the caption and the control
+      // above it are talking about the same quantity.
       hidden ? el("span", { class: "muted small",
-        text: " · " + t("mq_positions_hidden", { n: hidden }) }) : null].filter(Boolean)));
+        text: " · " + t(FILTERED_POOLS[state.pool] === "coverage"
+          ? "mq_positions_hidden_coverage" : "mq_positions_hidden", { n: hidden }) }) : null
+      ].filter(Boolean)));
     const table = el("table", { class: "data compact" });
     table.appendChild(el("thead", {}, el("tr", {}, [
       el("th", { text: t("motif_position") }), el("th", { text: t("motif_segment") }),
@@ -1341,7 +1361,21 @@ export async function motifQuery(root, route) {
     scopeSelect.value = state.scope;
     poolSelect.value = state.pool;
     const pocket = state.pool === "pocket";
-    classField.hidden = !pocket; freqField.hidden = !pocket;
+    const filter = FILTERED_POOLS[state.pool];
+    classField.hidden = !pocket; freqField.hidden = !filter;
+    clear(freqCaption);
+    if (filter) {
+      const caption = filter === "coverage" ? "mq_min_coverage" : "mq_min_freq";
+      freqCaption.appendChild(document.createTextNode(t(caption) + " "));
+      freqCaption.appendChild(metricHelp(t(caption + "_help")));
+      freqSelect.setAttribute("aria-label", t(caption));
+      // "any contact" is the right word for the pocket pool and the wrong one here: the
+      // whole-receptor threshold is not counting contacts at all.
+      freqSelect.options[0].textContent =
+        t(filter === "coverage" ? "mq_min_coverage_any" : "mq_min_freq_any");
+      freqSelect.value = String(state.minFreq);
+    }
+    if (filter === "coverage") clear(freqNote);
     if (pocket) {
       const classes = siteClassesOf(payload);
       const chosen = classes.includes(state.siteClass) ? state.siteClass : classes[0];
