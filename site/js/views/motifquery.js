@@ -1320,8 +1320,15 @@ export async function motifQuery(root, route) {
   }
 
   let lastSpec = null;
+  /* What the receptor list is a list *of*. Redrawing rebuilds the scroll box, which resets it to
+     the top; that is right when the query changed and wrong when the reader merely picked a row
+     forty rows down and watched the table jump away from them. Everything except the selection
+     goes into this signature, and the scroll position is carried over when it has not moved. */
+  const listSignature = st => [st.pool, st.scope, st.query, st.sort, st.uniq,
+                               st.siteClass, st.minFreq].join("\u0000");
   // The position subset currently on offer, recomputed by draw() before anything reads it.
   let active = [];
+  let drawnSignature = null;
   /* Which residue chip has its family breakdown open, as "position|residue". Kept out of the
      route deliberately: it is a glance at a distribution, not a query worth sharing. */
   let openDist = null;
@@ -1377,8 +1384,16 @@ export async function motifQuery(root, route) {
     }
     const agg = aggregate(payload, parsed.groups, posIndex, spec, state.scope);
     const rows = sortReceptors(agg.receptors, state.sort, nameOf, state.uniq);
+    const previousScroll = receptorBox.querySelector(".mq-table-scroll");
+    const keptScroll = previousScroll ? previousScroll.scrollTop : 0;
+    const sameList = drawnSignature === listSignature(state);
+    drawnSignature = listSignature(state);
     drawFamilies(agg);
     drawReceptors(agg, rows);
+    if (sameList && keptScroll) {
+      const rebuilt = receptorBox.querySelector(".mq-table-scroll");
+      if (rebuilt) rebuilt.scrollTop = keptScroll;
+    }
     drawHeatmap(rows, parsed);
     drawDetail(agg, parsed, rows);
   }
