@@ -36,6 +36,12 @@ export function setBackground(mode) {
   viewerBackground = mode === "white" ? "white" : "black";
   const stage = LC.getStage();
   if (stage) stage.setParameters({ backgroundColor:backgroundColor() });
+  /* The distance labels are legible against one background and not the other, so they follow the
+     switch rather than waiting for the next redraw. Rebuilt rather than repainted: going back to
+     white has to restore NGL's own per-interaction label colouring, and rebuilding restores it by
+     construction instead of by naming a value we would be guessing at. Only rebuilt if the lines
+     are on screen — if the reader turned them off, they stay off. */
+  if (reps.lines) addDisplayedInteractions();
 }
 
 function sel(residues) {
@@ -319,11 +325,19 @@ function addContactLabels() {
     backgroundOpacity:0.68, showBackground:true, fixedSize:false, labelSize:2.2, radius:0.8, zOffset:2 });
 }
 
+/* NGL colours a contact's distance label to match the interaction it belongs to, which is right
+   on the white background — a navy figure beside a navy hydrogen bond, an amber one beside an
+   amber stacking contact. On the black background the navy is all but invisible, so there the
+   labels are forced white and the lines keep carrying the interaction type. */
+function contactLabelColour() { return viewerBackground === "black" ? "white" : undefined; }
 function addInteractionLines(o=obs(), key="lines") {
   if (!o || !o.ligand_selection) return;
-  addRep(key, "contact", { sele:sel(o.contact_receptor_residues) + " or " +
+  const params = { sele:sel(o.contact_receptor_residues) + " or " +
     ligandSelection(o), maxHbondDist:3.6, maxHydrophobicDist:4.2,
-    maxPiStackingDist:5.5, labelVisible:true, labelUnit:"angstrom", labelSize:0.72 });
+    maxPiStackingDist:5.5, labelVisible:true, labelUnit:"angstrom", labelSize:0.72 };
+  const colour = contactLabelColour();
+  if (colour) params.labelColor = colour;
+  addRep(key, "contact", params);
 }
 
 function addDisplayedInteractions() {
