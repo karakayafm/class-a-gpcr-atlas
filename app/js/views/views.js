@@ -710,6 +710,16 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
   let selected = d.structures.find(x => x.pdb_id === String(initialPdb || "").toUpperCase()) ||
     d.structures.find(x => x.pdb_id === "9IJE") || d.structures[0];
   let revealInitialSelection = !!initialPdb;
+  /* An address that names a structure names it deliberately; the representative-only filter is a
+     browsing default, not an instruction. When they disagree the default gives way. They disagree
+     often: the motif panel links to the deposition it actually scored, and that is frequently not
+     the one chosen to represent its analysis unit — so following such a link used to land on the
+     family list with a different structure selected and no sign that the one asked for had been
+     filtered out. Only the default is relaxed. A reader who turned the filter off writes `rep=0`
+     and nothing here overrides a choice that was made. */
+  if (initialPdb && selected && selected.pdb_id === String(initialPdb).toUpperCase() &&
+      filters.representativeOnly && selected.analysis_unit_representative !== true)
+    filters.representativeOnly = false;
   const uniq = fn => Array.from(new Set(d.structures.flatMap(fn).filter(Boolean))).sort();
   const observed = d.structures.filter(x => x.observations.some(o => o.coordinate_status === "observed"));
   const ligandNames = new Set(observed.flatMap(x => x.observations.map(o => o.ligand_name).filter(Boolean)));
