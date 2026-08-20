@@ -38,6 +38,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+GPCRDB = ROOT / "data/raw/gpcrdb/receptor_residues.json"
 RESIDUES = ROOT / "data/intermediate/phase4/motif_residues.jsonl"
 STRUCTURES = ROOT / "data/intermediate/structures.normalized.jsonl"
 # Written to the intermediate tree and emitted by build_payloads, which registers it in the
@@ -54,6 +55,31 @@ def segment_of(position: str) -> str:
     """TM1–TM7 from a generic position; loop positions carry a two-part helix number."""
     head = position.split("x")[0]
     return "TM" + head if head.isdigit() and len(head) == 1 else head
+
+
+def short(generic):
+    """GPCRdb's combined form `5.42x43` carries both schemes; the pool keys on the second."""
+    if not generic or "x" not in str(generic):
+        return None
+    return str(generic).split(".")[0] + "x" + str(generic).split("x")[1]
+
+
+def positions_held(path, wanted):
+    """Which of the pool's positions each receptor's own sequence actually has.
+
+    The upstream residue table says `expected_but_unresolved` for a position it believes the
+    receptor should have and the coordinates did not resolve. For a handful of positions that
+    belief is wrong: forty-three rows, all at 6x30, name receptors whose TM6 starts at 6x31 or
+    later and which therefore have no 6x30 to be missing. Encoded as unresolved, those receptors
+    were reported as failing to cover a position they do not possess, which cost them coverage in
+    every query that asked for it — the ionic lock among them. GPCRdb is the authority on which
+    positions a receptor has, and the pocket and whole-receptor pools already ask it.
+    """
+    payload = json.loads(path.read_text(encoding="utf-8"))["receptors"]
+    held = {}
+    for receptor, residues in payload.items():
+        held[receptor] = {short(r.get("canonical_generic_number")) for r in residues} & wanted
+    return held
 
 
 def main() -> int:
@@ -74,6 +100,8 @@ def main() -> int:
     positions = sorted({r["generic_position"] for r in rows},
                        key=lambda p: (float(p.split("x")[0]), int(p.split("x")[1])))
     index = {p: i for i, p in enumerate(positions)}
+
+    held = positions_held(GPCRDB, set(positions))
 
     motifs = collections.defaultdict(set)
     for row in rows:
@@ -97,6 +125,12 @@ def main() -> int:
         if pdb not in family_of:
             continue
         status = row["observation_status"]
+        # A position the receptor does not have is not a position it is missing. The cell keeps the
+        # default — not applicable — and the row is counted nowhere, including the denominator of
+        # the engineered-mutation share, where it would otherwise dilute a real figure.
+        if status == "expected_but_unresolved" and \
+                position not in held.get(receptor_of[pdb], frozenset()):
+            continue
         wild = row.get("wild_type_residue_identity")
         is_mutation = bool(row.get("mutation_flag"))
         if status.startswith("observed") and wild:
