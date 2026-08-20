@@ -15,6 +15,12 @@ let viewerBackground = "black";
    never fetches it — so an empty table means "not asked for yet" or "not available for this
    structure", and the panel says which. */
 let residueTable = [];
+/* The positions a reader arrived with, carried over from the motif panel's query. Held apart from
+   the manual selection on purpose: they are not something clicked here and must survive the two
+   residue lists, so switching between the pocket and the whole receptor does not lose the reason
+   the reader opened the structure. */
+const queryResidues = new Set();
+let queryPositions = [];
 const selectedResidues = new Set();
 const selectedMotifs = new Set();
 const HELICES = ["TM1", "TM2", "TM3", "TM4", "TM5", "TM6", "TM7"];
@@ -50,6 +56,8 @@ export function setBackground(mode) {
      construction instead of by naming a value we would be guessing at. Only rebuilt if the lines
      are on screen — if the reader turned them off, they stay off. */
   if (reps.lines) addDisplayedInteractions();
+  // The carbon overlay is background-dependent for the same reason and is rebuilt with it.
+  if (reps.ligand) addDisplayedLigands();
 }
 
 function sel(residues) {
@@ -146,11 +154,17 @@ function addCovalentHighlight(o) {
     useCylinder:false, linewidth:5 });
 }
 
+/* The ligand under discussion is the subject of the picture, so its carbon skeleton is the
+   brightest thing in it — white against the dark receptor rather than NGL's default grey, which
+   sits at about the same value as the cartoon behind it. Which colour that is has to follow the
+   background: white carbons on the white background would be an invisible ligand. */
+function ligandCarbonColour() { return viewerBackground === "black" ? "#ffffff" : "#2b2f36"; }
+
+/* An overlay on the carbons only, not a recolour of the ligand: N, O, S and the halogens keep
+   their element colours, which is most of what makes a ligand readable as a chemical structure. */
 function addSelectedCarbonHighlight(key, type, selection, params={}) {
-  // In multi-ligand structures the observation selector also acts as a visual focus control.
-  // Overlay carbon atoms in white while leaving N/O/S/halogens in their normal element colours.
   addRep(key + "_selected_carbon", type, Object.assign({
-    sele:"(" + withoutHydrogen(selection) + ") and _C", color:"#ffffff", opacity:1
+    sele:"(" + withoutHydrogen(selection) + ") and _C", color:ligandCarbonColour(), opacity:1
   }, params));
 }
 
@@ -192,8 +206,13 @@ function addDisplayedLigands() {
   const ligands = ligandObservations();
   const ordered = ligands.slice().sort((a, b) =>
     (a === active ? -1 : 0) - (b === active ? -1 : 0));
+  /* Applied to the active ligand however many there are. It used to be conditional on there being
+     more than one, so the ordinary case — one ligand — was the one that never got it, and the
+     carbons stayed grey exactly where nothing else was competing for attention. Where a structure
+     does hold several, the others keep the default grey and the distinction the condition was
+     there to make still holds. */
   ordered.forEach((o, i) => addLigandRepresentation(o,
-    i ? "ligand_extra_" + i : "ligand", ligands.length > 1 && o === active));
+    i ? "ligand_extra_" + i : "ligand", o === active));
 }
 
 export function hasCovalentBond() {
@@ -210,6 +229,13 @@ export async function open(host, pdb, observationId, onStatus) {
   const NGL = window.NGL;
   if (!NGL) { onStatus(t("err_webgl")); return null; }
   onStatus(t("loading_structure"));
+  /* Cleared before the new structure loads, not only in close(). Opening a second structure while
+     the modal stays open — which changing the address does — left the previous structure's residue
+     table in place, and every position in it keyed by an auth_seq_id that means something else
+     here. It survived only because the chain letters usually differ and the chain filter emptied
+     the list; where two structures share a chain letter it would have drawn one receptor's
+     positions on another's coordinates. */
+  residueTable = []; queryResidues.clear(); queryPositions = [];
   try { meta = await loadBundleMeta(pdb); }
   catch (e) { onStatus(errorMessage(e)); return null; }
   let stage;
@@ -242,7 +268,35 @@ function labelCanvas(host, pdb) {
 }
 
 export function close() { LC.destroyStage(); comp = null; meta = null; current = null; reps = {};
-  residueTable = []; selectedResidues.clear(); selectedMotifs.clear(); }
+  residueTable = []; queryResidues.clear(); queryPositions = [];
+  selectedResidues.clear(); selectedMotifs.clear(); }
+
+/* Resolved through the residue table, so a position the structure does not resolve simply does not
+   appear rather than being drawn at the wrong atom. Returns how many of the asked-for positions
+   this structure actually has, which is what the panel reports. */
+export function setQueryPositions(positions) {
+  queryPositions = Array.isArray(positions) ? positions.filter(Boolean) : [];
+  queryResidues.clear();
+  const chain = activeReceptorChain();
+  const want = new Set(queryPositions);
+  for (const r of residueTable) {
+    if (chain && r.c !== chain) continue;
+    if (want.has(r.p)) queryResidues.add(residueKey(r.c, r.n));
+  }
+  redrawSelections();
+  return queryResidues.size;
+}
+export function queryPositionList() { return queryPositions.slice(); }
+export function hasQueryMarks() { return queryResidues.size > 0; }
+export function isQueryPosition(position) { return queryPositions.indexOf(position) >= 0; }
+/* The marks alone, so a reader who came with a query lands looking at it rather than at whatever
+   the default framing chose. Falls back to the receptor when nothing resolved. */
+export function frameQuery() {
+  if (!comp) return false;
+  if (!queryResidues.size) return false;
+  frame(Array.from(queryResidues).join(" or "));
+  return true;
+}
 
 /* ------------------------------------------------- the receptor beyond the pocket */
 export function setResidueTable(rows) { residueTable = Array.isArray(rows) ? rows : []; }
@@ -251,6 +305,9 @@ export function hasResidueTable() { return residueTable.length > 0; }
 /* Grouped for the panel: one list per helix, in position order, for the chain on screen. H8 and
    the resolved loop residues are kept in a group of their own rather than dropped — they are as
    real as the helical ones, they just are not one of the seven columns the panel draws. */
+/* The seven the panel draws, so a caller can tell which of them a structure has nothing for. */
+export function helixOrder() { return HELICES.slice(); }
+
 export function receptorSegments() {
   const chain = activeReceptorChain();
   const rows = residueTable.filter(r => !chain || r.c === chain);
@@ -267,7 +324,8 @@ export function receptorSegments() {
   for (const r of rows) {
     const key = HELICES.indexOf(r.s) >= 0 ? r.s : "other";
     if (!groups.has(key)) groups.set(key, []);
-    groups.get(key).push(Object.assign({ contact:contacts.has(residueKey(r.c, r.n)) }, r));
+    groups.get(key).push(Object.assign({ contact:contacts.has(residueKey(r.c, r.n)),
+      query:queryResidues.has(residueKey(r.c, r.n)) }, r));
   }
   const out = HELICES.filter(h => groups.has(h)).map(h => ({ segment:h, helix:true,
     residues:groups.get(h) }));
@@ -531,32 +589,63 @@ function selectionInView(selection, margin) {
   return seen > 0 && inside;
 }
 
-/* The two picked-selection labels are drawn at a fixed pixel size while the contact labels keep
-   scaling with the scene. They mark something the reader just clicked, and the whole-receptor view
-   is far enough out that an Angstrom-sized label there is about four pixels tall — the residue
-   appeared but its name did not. Fixed size keeps a pick readable at every distance. */
+/* Every label in the scene is sized in Angstroms and grows as the reader zooms in, the picked ones
+   included. A fixed pixel size was tried for them, to keep a pick named at the whole-receptor
+   framing where an Angstrom-sized label is a few pixels tall. It bought that at the cost of the
+   case readers actually use: zooming onto a residue then left its name at the same few pixels
+   while everything around it grew. The framing was the real fault there and is fixed at its own
+   source — the fusion partner no longer drags the camera back — so these behave exactly like the
+   contact labels beside them, which is also the behaviour a reader has already learned. */
 function redrawSelections() {
   dropRep("picked_residues"); dropRep("picked_labels"); dropRep("picked_motifs"); dropRep("picked_motif_labels");
-  if (selectedResidues.size) {
-    const s = Array.from(selectedResidues).join(" or ");
+  dropRep("query_residues"); dropRep("query_labels");
+  /* A residue can be reached three ways — clicked in a list, carried in from a query, or part of a
+     named motif — and the same residue is often reached twice: pick 7x50 in the whole-receptor
+     columns and NPxxY among the motifs, and it is in both. Each source used to draw its own stick
+     and its own label at the same alpha carbon, and because the two labels ask for slightly
+     different offsets they landed a few pixels apart, so the name read as two overlapping copies of
+     itself. Each residue is therefore claimed once, in order of how specific the act was: a residue
+     clicked on its own, then a motif chosen by name, then whatever the query brought in. */
+  const claimed = new Set();
+  const take = keys => { const out = keys.filter(k => !claimed.has(k)); for (const k of out) claimed.add(k); return out; };
+
+  const picked = take(Array.from(selectedResidues));
+  if (picked.length) {
+    const s = picked.join(" or ");
     const o = obs(), details = selectedDetails();
     const pickedSele = heavyAtomsWithContactHydrogens(s, ligandSelection(o));
     addRep("picked_residues", "ball+stick", { sele:pickedSele, colorScheme:"element",
       colorValue:0xef72aa, scale:1.15 });
     addRep("picked_labels", "label", { sele: "(" + s + ") and .CA", labelType: "text",
       labelText:labelTextFor(details), color: "white", backgroundColor: "#12151a",
-      backgroundOpacity:0.75, showBackground:true, fixedSize:true, labelSize:14, radius:0.85, zOffset:2 });
+      backgroundOpacity:0.75, showBackground:true, fixedSize:false, labelSize:2.2, radius:0.85, zOffset:2 });
   }
+
   if (selectedMotifs.size) {
     const residues = Array.from(selectedMotifs).flatMap(residuesForMotif);
-    const s = residues.map(r => residueKey(r.auth_asym_id, r.auth_seq_id)).join(" or ");
-    if (s) {
+    const byKey = new Map(residues.map(r => [residueKey(r.auth_asym_id, r.auth_seq_id), r]));
+    const keys = take(Array.from(byKey.keys()));
+    if (keys.length) {
+      const s = keys.join(" or ");
       addRep("picked_motifs", "ball+stick", { sele:withoutHydrogen(s), colorScheme:"uniform",
         colorValue:0x32b56b, scale:1.18, aspectRatio:2.1 });
       addRep("picked_motif_labels", "label", { sele: "(" + s + ") and .CA", labelType: "text",
-        labelText:labelTextFor(residues), color:"white", backgroundColor:"#17683b",
-        backgroundOpacity:0.78, showBackground:true, fixedSize:true, labelSize:14, radius:0.8, zOffset:2 });
+        labelText:labelTextFor(keys.map(k => byKey.get(k))), color:"white", backgroundColor:"#17683b",
+        backgroundOpacity:0.78, showBackground:true, fixedSize:false, labelSize:2.2, radius:0.8, zOffset:2 });
     }
+  }
+
+  const query = take(Array.from(queryResidues));
+  if (query.length) {
+    const sq = query.join(" or ");
+    const rows = residueTable.filter(r => query.indexOf(residueKey(r.c, r.n)) >= 0)
+      .map(r => ({ auth_asym_id:r.c, auth_seq_id:r.n, generic_position:r.p, one_letter:r.a }));
+    addRep("query_residues", "ball+stick", { sele:withoutHydrogen(sq), colorScheme:"uniform",
+      colorValue:0x32b56b, scale:1.18, aspectRatio:2.1 });
+    addRep("query_labels", "label", { sele:"(" + sq + ") and .CA", labelType:"text",
+      labelText:labelTextFor(rows), color:"white", backgroundColor:"#17683b",
+      backgroundOpacity:0.78, showBackground:true, fixedSize:false, labelSize:2.2,
+      radius:0.8, zOffset:2 });
   }
 }
 
