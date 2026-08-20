@@ -48,6 +48,8 @@ header.top h1 { font-size:17px; margin:0; font-weight:650; }
 .global-search-result strong { grid-row:1 / span 2; font-size:14px; }.global-search-result span { font-size:13px; }
 .global-search-result small { color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .global-search-message { margin:0; padding:9px; color:var(--muted); font-size:13px; }
+.search-superseded { display:grid; gap:7px; justify-items:start; }
+.search-superseded p { margin:0; }
 .spacer { flex:1; }
 select, input[type="search"] { background:var(--panel); color:var(--ink); border:1px solid var(--line);
   border-radius:6px; padding:5px 8px; font:inherit; }

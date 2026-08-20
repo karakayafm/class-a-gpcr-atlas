@@ -85,6 +85,45 @@ function buildChrome(manifest) {
   }
 }
 
+/* Answers for the two identifiers a search can legitimately carry and never match: a structure the
+   PDB withdrew, and the structure that replaced it. Returns null for anything else, so the ordinary
+   empty result is untouched. */
+async function supersessionFor(query) {
+  const q = String(query || "").trim().toUpperCase();
+  if (!/^[0-9A-Z]{4}$/.test(q)) return null;
+  let data = null;
+  try { data = await L.loadSupersessions(); } catch (e) { return null; }
+  const entries = (data && data.entries) || [];
+  const withdrawn = entries.find(e => e.pdb_id === q);
+  const replaces = entries.find(e => (e.replaced_by || []).includes(q));
+  const entry = withdrawn || replaces;
+  if (!entry) return null;
+  const replacement = (entry.replaced_by || [])[0] || "";
+  const line = withdrawn
+    ? t(entry.replacement_in_atlas ? "search_withdrawn_here" : "search_withdrawn_elsewhere",
+        { pdb: entry.pdb_id, date: entry.remove_date || "", replacement })
+    : t(entry.replacement_in_atlas ? "search_replacement_here" : "search_replacement_elsewhere",
+        { pdb: q, withdrawn: entry.pdb_id, date: entry.remove_date || "" });
+  const box = el("div", { class: "global-search-message search-superseded" },
+    [el("p", { text: line })]);
+  // Whichever of the two this atlas actually carries is offered as somewhere to go.
+  const offer = withdrawn && entry.replacement_in_atlas
+    ? { pdb: replacement, family: entry.replacement_family_slug }
+    : (entry.withdrawn_in_atlas ? { pdb: entry.pdb_id, family: entry.family_slug } : null);
+  if (offer && offer.family) box.appendChild(el("button", { class: "btn small", type: "button",
+    text: t("search_open_structure", { pdb: offer.pdb }),
+    onclick: () => {
+      const input = document.getElementById("global-search-input");
+      if (input) input.value = "";
+      const panel = document.getElementById("global-search-results");
+      if (panel) panel.hidden = true;
+      navigate({ family: offer.family, view: "structures", pdb: offer.pdb });
+    } }));
+  if (entry.source) box.appendChild(el("a", { class: "link small", href: entry.source,
+    target: "_blank", rel: "noopener", text: t("search_removal_record") }));
+  return box;
+}
+
 function setupGlobalSearch() {
   const input = document.getElementById("global-search-input");
   const panel = document.getElementById("global-search-results");
@@ -131,7 +170,16 @@ function setupGlobalSearch() {
       (hit.row.aliases || []).some(alias => String(alias).toLowerCase() === q));
     if (activateFirst) { openHit(exact || scored[0]); return; }
     clear(panel);
-    if (!scored.length) panel.appendChild(el("p", { class:"global-search-message", text:t("global_search_empty") }));
+    if (!scored.length) {
+      /* A withdrawn entry is kept out of the index on purpose — leading a reader to a retracted
+         structure is worse than not finding it — and where its replacement is here, the
+         replacement carries the old identifier and the search resolves it. Where the replacement
+         is *not* here, neither identifier matched anything and the reader got silence from an
+         atlas that knows exactly what happened to it. Now it says so. */
+      const note = await supersessionFor(q);
+      if (note) panel.appendChild(note);
+      else panel.appendChild(el("p", { class:"global-search-message", text:t("global_search_empty") }));
+    }
     for (const hit of scored.slice(0, 15)) {
       panel.appendChild(el("button", { class:"global-search-result", role:"option",
         onclick:() => openHit(hit) }, [
