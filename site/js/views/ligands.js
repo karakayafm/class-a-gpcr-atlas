@@ -631,6 +631,19 @@ export async function ligandExplorer(root, initialLigand) {
         group.appendChild(el("span", { class: "lx-role-caption",
           text: t("lx_role_structures", { n: structures.size }) + " · "
             + t(receptors === 1 ? "lx_role_receptors_one" : "lx_role_receptors", { n: receptors }) }));
+        /* Which family, named. The counts said how many receptors without saying whose, and the
+           only other place it appeared was the hover text of a PDB chip — so answering "what does
+           this compound bind" meant opening a structure to find out. Two names inline and the rest
+           behind a count, because a promiscuous ligand can span most of the atlas and the caption
+           has to stay a caption. */
+        const familyNames = [...new Set([...structures.values()]
+          .map(x => familyDisplayName(x.family_name || x.family_slug || ""))
+          .filter(Boolean))].sort((x, y) => x.localeCompare(y, getLang()));
+        if (familyNames.length) group.appendChild(el("span", { class: "lx-role-families",
+          title: familyNames.join(", "),
+          text: familyNames.length <= 2 ? familyNames.join(", ")
+            : familyNames.slice(0, 2).join(", ") + " " +
+              t("lx_role_families_more", { n: familyNames.length - 2 }) }));
         const list = el("div", { class: "lx-role-pdbs" });
         for (const [pdb, structure] of [...structures.entries()].sort())
           list.appendChild(el("a", { class: "lx-pdb" + modeClass(role), text: pdb,

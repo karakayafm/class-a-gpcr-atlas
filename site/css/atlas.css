@@ -355,6 +355,7 @@ body.modal-open { overflow:hidden; }
 .tm-column-count { font-size:9px; color:var(--muted); }
 .tm-column-list { display:flex; flex-direction:column; gap:2px; max-height:340px;
   overflow-y:auto; padding-right:2px; }
+.tm-missing { margin:8px 0 0; font-size:11.5px; }
 .tm-other { margin-top:10px; }
 .tm-other > summary { cursor:pointer; font-size:12px; color:var(--muted); }
 .tm-other-list { display:flex; flex-wrap:wrap; gap:3px; margin-top:6px; }
@@ -367,13 +368,32 @@ body.modal-open { overflow:hidden; }
 /* Same pink the scene paints a picked residue with, so the list and the structure agree. */
 .tm-residue.selected { background:#ef72aa; color:#171019; border-color:#ef72aa; }
 .tm-residue.selected .tm-residue-pos { color:#3d2130; }
-/* Filled, not outlined. A one-pixel border was the whole marking and it read as noise against
-   the panel; the card carries the state better than its edge does. The colour is the blue the
-   contacting side chains are already drawn in, so the list and the scene name the same residues
-   the same way — as the pink fill already does for a pick. */
-.tm-residue.is-contact:not(.selected) { background:#8ab8e8; border-color:#5b93cd; }
+/* Filled, not outlined — a one-pixel border was the whole marking and read as noise. The fill is
+   a tint rather than the saturated blue the side chains are drawn in: contacts are a third of the
+   cards, and at full strength the panel became a blue wall with the odd white gap. It only has to
+   say "this one", so the border carries the definition (3.2:1 against the panel, which the tint
+   alone would not reach) and the tint carries the grouping. */
+.tm-residue.is-contact:not(.selected) { background:#d9eaf8; border-color:#5b93cd; }
 .tm-residue.is-contact:not(.selected) .tm-residue-aa { color:#10202c; }
 .tm-residue.is-contact:not(.selected) .tm-residue-pos { color:#254257; }
+:root[data-theme="dark"] .tm-residue.is-contact:not(.selected) { background:#1e2f3f; }
+:root[data-theme="dark"] .tm-residue.is-contact:not(.selected) .tm-residue-aa { color:#cfe4f6; }
+:root[data-theme="dark"] .tm-residue.is-contact:not(.selected) .tm-residue-pos { color:#9fc0dc; }
+/* The positions the reader arrived with, carried over from the motif panel's query. Marked after
+   the contact tint deliberately: if a queried position also touches the ligand, what brought the
+   reader here is the query. Green because that is already what the scene paints a named set of
+   positions, and because it has to be told apart from the blue at a glance. */
+.tm-residue.is-query:not(.selected) { background:#d9f0df; border-color:#3f9c62; }
+.tm-residue.is-query:not(.selected) .tm-residue-aa { color:#0d2a17; }
+.tm-residue.is-query:not(.selected) .tm-residue-pos { color:#2c5a3d; }
+:root[data-theme="dark"] .tm-residue.is-query:not(.selected) { background:#1d3626; }
+:root[data-theme="dark"] .tm-residue.is-query:not(.selected) .tm-residue-aa { color:#cfeeda; }
+:root[data-theme="dark"] .tm-residue.is-query:not(.selected) .tm-residue-pos { color:#8fc4a4; }
+/* The one control whose label cannot say which state it is in: pressed it reads "back to the
+   binding-site list", which names where it goes, not where you are. The fill says where you are. */
+.viewer-tool-whole[aria-pressed="true"] { background:#dff3e3; border-color:#3f9c62; }
+:root[data-theme="dark"] .viewer-tool-whole[aria-pressed="true"] { background:#1e3527;
+  border-color:#4e9c6d; }
 /* Dashed inset outline, exactly as the motif heat map marks an engineered position: the construct
    was mutated here, so the letter is not the receptor's own. An outline rather than a border
    because it has to sit on top of a fill without displacing it. On a plain card it follows the
@@ -1121,6 +1141,10 @@ table.data.lx-affinity thead th { background:var(--aff-head); color:var(--aff-he
 .lx-detail-roles { display:grid; gap:10px; align-content:start; min-width:0; }
 .lx-role-group { display:flex; flex-wrap:wrap; align-items:center; gap:5px; }
 .lx-role-caption { font-size:11px; color:var(--muted); }
+/* The family reads as an answer rather than as more caption, so it carries the ink colour the
+   counts beside it deliberately do not. */
+.lx-role-families { font-size:11px; color:var(--ink); }
+.lx-role-families::before { content:"·"; color:var(--muted); margin-right:5px; }
 .lx-role-pdbs { flex:1 1 100%; display:flex; flex-wrap:wrap; gap:4px; }
 /* The links take their role's colour, the same one the mode pills use everywhere else. */
 .lx-pdb.mode-agonist { color:#075c3f; border-color:#16845f; }
@@ -1284,8 +1308,20 @@ a.result-item:focus-visible { outline:2px solid var(--accent); outline-offset:-2
 .mq-cell.mq-engineered { outline:2px dashed var(--warn-ink); outline-offset:-3px; }
 .mq-swatch.mq-engineered { outline:2px dashed var(--warn-ink); outline-offset:-3px; }
 
-.mq-detail { width:min(400px,92vw); position:sticky; top:12px; background:var(--panel);
-  border:1px solid var(--line); border-radius:10px; padding:12px 14px; max-height:calc(100vh - 28px);
+/* Offset past the masthead, which is itself sticky at top:0 and 53px tall with z-index 20. Pinned
+   at 12px this panel came to rest *under* it — the heading and the close button were painted over
+   by the header for the whole of the scroll, and only reappeared once the page scrolled back far
+   enough for the panel to sit in normal flow again. 53 + 12 for the same gap the old value meant
+   to leave. `.explorer-rail` already assumes the same masthead, at top:112px.
+
+   The cap then leaves room for two more things. Its own offset, and the page's trailing chrome —
+   the main element's bottom padding and what sits below it — because a sticky element is released
+   at the bottom of its containing block by being pushed *up*, head first. The results column ends
+   before the page's scroll does, so at the very bottom of a long result the last stretch of
+   scrolling would otherwise slide the heading off the top as well. Never taller than the room that
+   will still be there at the end, the panel is simply never pushed. */
+.mq-detail { width:min(400px,92vw); position:sticky; top:65px; background:var(--panel);
+  border:1px solid var(--line); border-radius:10px; padding:12px 14px; max-height:calc(100vh - 124px);
   overflow:auto; }
 /* Pinned to the top of the aside's own scroll box. The aside is capped at the viewport height and
    scrolls internally when a receptor carries many depositions; the heading and the close button
