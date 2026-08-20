@@ -18,7 +18,7 @@ export function buildHash(state) {
   // sort and the row count — so those keys are ordered too and a pasted address restores a panel
   // exactly. Ordering is cosmetic: an unlisted key is still emitted, just after these.
   const order = ["family", "view", "pool", "site", "motif", "scope", "class", "minfreq",
-                 "hit", "sort", "top", "uniq", "pdb", "observation", "whole", "receptor"];
+                 "hit", "sort", "top", "uniq", "pdb", "observation", "whole", "mark", "receptor"];
   const parts = [];
   for (const k of order) if (state[k] !== undefined && state[k] !== null && state[k] !== "")
     parts.push(encodeURIComponent(k) + "=" + encodeURIComponent(state[k]));

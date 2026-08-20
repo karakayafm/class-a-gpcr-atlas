@@ -223,13 +223,23 @@ async function openModal(pdb, observationId, focusResidue, opts) {
   // Opening straight into the whole receptor is one fetch and one reframe; both are skipped on
   // the ordinary path, so a reader who came for the pocket pays nothing for this.
   if (wholeReceptor) { await ensureResidueTable(meta); VIEW.frameReceptor(); }
+  /* Positions carried over from the motif panel. Applied after the table is loaded, because that
+     is what resolves a generic position to an atom, and framed on them: a reader who arrived by
+     asking about six positions came to look at those six, not at the default view. */
+  const marks = String((opts && opts.mark) || "").split(",").map(x => x.trim()).filter(Boolean);
+  if (marks.length) {
+    await ensureResidueTable(meta);
+    VIEW.setQueryPositions(marks);
+    VIEW.frameQuery();
+  }
   buildViewerSide(meta);
   buildObservationSwitch(meta);
   const note = VIEW.statusMessage();
   st.textContent = note; st.hidden = !note;
   document.getElementById("modal-close").focus();
   const r = parseRoute(); navigate(Object.assign({}, r, { pdb, observation: VIEW.currentObservation(),
-    view: "3d", whole: wholeReceptor ? "1" : null }), true);
+    view: "3d", whole: wholeReceptor ? "1" : null,
+    mark: marks.length ? marks.join(",") : null }), true);
 }
 
 /* Fetched once per structure and kept by the loader's cache, so toggling the list back and forth
@@ -285,8 +295,12 @@ function closeModal() {
   m.hidden = true;
   document.body.classList.remove("modal-open");
   setBackgroundInert(false);
-  const r = parseRoute(); delete r.pdb; delete r.observation;
+  /* The structure stays named in the address. The page behind is showing it — closing the viewer
+     is leaving the 3D view, not the structure — and dropping it left an address that no longer
+     described the page. The viewer's own keys do go, because nothing behind the modal reads them. */
+  const r = parseRoute(); delete r.observation; delete r.whole; delete r.mark;
     if (r.view === "3d") r.view = r.family ? "structures" : "landing";
+    if (!r.family) delete r.pdb;
   navigate(r, true);
   if (modalOpener && modalOpener.focus) modalOpener.focus();
   modalOpener = null;
@@ -642,18 +656,23 @@ function buildReceptorColumns(container, meta) {
   const helices = segments.filter(s => s.helix);
   const other = segments.find(s => !s.helix);
   container.appendChild(el("p", { class:"muted small", text:t("v_whole_hint") }));
+  // Said once, where a reader can act on it: the green cards are not something they clicked.
+  if (VIEW.hasQueryMarks())
+    container.appendChild(el("p", { class:"muted small tm-query-note",
+      text:t("v_whole_query_note", { n:VIEW.queryPositionList().length }) }));
   const residueButton = row => {
     const selected = VIEW.isResidueSelected(row.c, row.n);
     const mutated = !!row.w;
     const title = [
       row.a + row.p,
       row.c + ":" + row.n,
+      row.query ? t("v_whole_is_query") : null,
       row.contact ? t("v_whole_is_contact") : null,
       mutated ? t("v_whole_mutated", { wild:row.w, construct:row.a }) : null
     ].filter(Boolean).join(" · ");
     const b = el("button", {
       class:"tm-residue" + (selected ? " selected" : "") + (row.contact ? " is-contact" : "") +
-        (mutated ? " is-mutated" : ""),
+        (row.query ? " is-query" : "") + (mutated ? " is-mutated" : ""),
       "aria-pressed":selected ? "true" : "false", title,
       "aria-label":title,
       onclick:() => {
@@ -676,6 +695,15 @@ function buildReceptorColumns(container, meta) {
       list]));
   }
   container.appendChild(grid);
+  /* A helix with nothing to list is left out of the grid, and left out silently a reader cannot
+     tell "this structure does not resolve TM6" from "the atlas could not number it" — they had to
+     ask. It is the second: the residues are usually there in the coordinates, but the alignment
+     the generic numbering is derived from did not reach them, so there is no position to click.
+     Three structures out of 1346 are in this state, which is exactly why it needs saying: nobody
+     will have seen it before and nothing else on the page accounts for the gap. */
+  const absent = VIEW.helixOrder().filter(h => !helices.some(g => g.segment === h));
+  if (absent.length) container.appendChild(el("p", { class:"notice small tm-missing",
+    text:t("v_whole_missing_helices", { list: absent.join(", ") }) }));
   // H8 and the resolved loop residues are as real as the helical ones; they are simply not one of
   // the seven columns, so they get a disclosure of their own instead of being dropped.
   if (other) {
@@ -748,7 +776,8 @@ async function render(r) {
     if (r.view === "3d" && r.pdb) {
       const m = document.getElementById("modal");
       const already = m && !m.hidden && VIEW.meta_() && VIEW.meta_().pdb_id === r.pdb;
-      if (!already) await openModal(r.pdb, r.observation, null, { whole: r.whole === "1" });
+      if (!already) await openModal(r.pdb, r.observation, null,
+        { whole: r.whole === "1", mark: r.mark });
       /* The address can change while the modal stays open — Back and Forward between the two
          residue lists do exactly that, and so does editing the hash by hand. Without this the
          panel kept whatever the last click left behind and the address quietly lied about it. */
