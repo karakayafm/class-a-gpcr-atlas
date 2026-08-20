@@ -8,7 +8,7 @@ structures reporting what looks wrong.
 
 Please read the limitation the whole project turns on:
 
-> Research pre-release: This atlas is a technically validated beta covering Class A GPCR structures, ligand–receptor contacts, polymer ligand interfaces and core structural motifs. It provides no potency, affinity or functional pathway activity data. Some evidence records still require human review. Open records that affect identity or aggregation eligibility have been removed from public-beta pooled analyses by an issue-specific review gate. Reference testing of the contact rule and independent human validation vary by family and site class.
+> Research pre-release: This atlas is a technically validated beta covering Class A GPCR structures, ligand–receptor contacts, polymer ligand interfaces and core structural motifs. It provides no functional pathway activity data and no potency data of its own; reported affinities are relayed for 23 of its 578 components, from the one BindingDB subset whose licence permits redistribution. Some evidence records still require human review. Open records that affect identity or aggregation eligibility have been removed from public-beta pooled analyses by an issue-specific review gate. Reference testing of the contact rule and independent human validation vary by family and site class.
 
 ## What is most useful
 

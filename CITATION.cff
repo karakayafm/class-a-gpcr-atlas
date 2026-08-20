@@ -5,7 +5,7 @@ message: >-
   release also has a DOI of its own if you need to cite one exactly. This is a pre-release beta:
   it is not a curated or independently validated resource. The pipeline code and the web
   interface were developed with AI assistance (OpenAI Codex, Anthropic Claude Code); the
-  scientific decisions, curation and verification are the author's own, and no AI system is an
+  scientific decisions, curation and verification are the authors' own, and no AI system is an
   author of this work.
 title: "Class A GPCR Structure-Ligand Contact and Interface Atlas"
 abstract: >-
@@ -14,15 +14,25 @@ abstract: >-
   and 5.0 Angstrom computed from deposited coordinates, residue-level GPCRdb generic numbering,
   site-class-aware aggregation over 727 analysis units, and measurements over 8 core Class A
   motifs. Small-molecule pockets and receptor-polymer interfaces are treated as separate analysis
-  objects and never share a denominator. The atlas contains no potency, affinity or functional
-  pathway activity data. Scientific claims have not been reviewed by a human curator: 189 review
-  items remain open, and public-beta pooled summaries are review-gated.
+  objects and never share a denominator. Generic positions can be queried across all receptors at
+  three scopes: the 21 microswitch positions, the 230 positions a ligand contacts, and all 376
+  positions GPCRdb assigns a structure-based number to. The atlas carries no functional pathway
+  activity data and no potency data of its own; reported affinities are relayed for 23 of its 578
+  components, from the one BindingDB subset whose licence permits redistribution, and the interface
+  states that coverage rather than implying a value is missing where none was published. Scientific
+  claims have not been reviewed by a human curator: 189 review items remain open, and public-beta
+  pooled summaries are review-gated.
 type: software
 authors:
   - family-names: "Karakaya"
     given-names: "Muhammed Fatih"
     affiliation: "Cancer Signaling Laboratory, Boğaziçi University"
     email: "edu.mfatih@gmail.com"
+    orcid: "https://orcid.org/0000-0003-3331-8472"
+  - family-names: "Birgül İyison"
+    given-names: "Necla"
+    affiliation: "Boğaziçi University"
+    orcid: "https://orcid.org/0000-0003-3511-3139"
 version: "0.1.0-beta.2"
 date-released: "2026-08-12"
 doi: "10.5281/zenodo.21901790"
@@ -56,6 +66,11 @@ references:
     title: "UniProt"
     url: "https://www.uniprot.org/"
     notes: "Accessions relayed through RCSB polymer entity records. CC BY 4.0."
+  - type: database
+    title: "BindingDB"
+    url: "https://www.bindingdb.org/"
+    notes: >-
+      Reported binding affinities, from the curated article subset only. CC BY 3.0.
   - type: software
     title: "NGL Viewer"
     url: "https://github.com/nglviewer/ngl"
