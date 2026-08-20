@@ -87,6 +87,9 @@ export function loadMotifSearch() { return loadGlobalChecked("motif_search.json"
 /* The pocket half of the same index: the positions a ligand is in contact with, in the
    motif_search schema so one panel reads both. Fetched only when that scope is chosen. */
 export function loadPocketSearch() { return loadGlobalChecked("pocket_search.json"); }
+/* Withdrawn PDB entries and what replaced them. Fetched only when a search finds nothing, which
+   is the only moment it can say anything useful. */
+export function loadSupersessions() { return loadGlobalChecked("supersessions.json"); }
 /* The third pool: every generic position, not only the ones a ligand touches or the ones that
    move on activation. Same schema again, so the panel switches to it with a control and no code.
    1.5 MB, so it is fetched only when that scope is chosen. */

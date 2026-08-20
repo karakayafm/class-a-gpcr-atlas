@@ -200,6 +200,11 @@
    "bytes": 11031,
    "sha256": "17a6e314f2c6cdca4d3fbd572d417d107fe7fd3bc201948f81fe9474f302094b",
    "url": "global/sources.json"
+  },
+  "supersessions.json": {
+   "bytes": 926,
+   "sha256": "56d86ac57ae11a14117cca180f02958a7a1d4e4ebd6f0c372bbd8135c560c731",
+   "url": "global/supersessions.json"
   }
  },
  "licence_gates": [
