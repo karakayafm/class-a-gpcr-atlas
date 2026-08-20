@@ -27,7 +27,7 @@
  * The whole panel state lives in the URL, so a query survives reload, language change and
  * back-navigation. See stateFromRoute/routeFromState.
  */
-import { t, siteClassLabel } from "../core/i18n.js";
+import { t, siteClassLabel, getLang } from "../core/i18n.js";
 import { el, clear, pct, debounce } from "../components/dom.js";
 import { plainName, familyDisplayName, metricHelp } from "./views.js";
 import { toCSV, download } from "../components/csv.js";
@@ -490,8 +490,16 @@ let mounted = null;
 /* A route change confined to this panel's own keys is applied in place. Rebuilding the view
    would take the query input out of the document and with it the caret, which is the whole
    reason the old panel could not keep its state in the address. */
+/* The in-place path exists so a route change confined to this panel does not take the query input
+   out of the document and the caret with it. A language change is not that: half of this panel is
+   built once at mount — the heading, the intro, the control labels, and the family-name map the
+   specificity column reads from — and only what `draw()` rebuilds would follow the new language.
+   The result was a panel in two languages at once, with English column headings over Turkish
+   family names. So the mount records the language it was built in, and a change to it falls
+   through to a full re-render, which restores the query from the address anyway. */
 export function canUpdateInPlace(route) {
-  return !!(mounted && mounted.node.isConnected && route.view === "motifsearch");
+  return !!(mounted && mounted.node.isConnected && route.view === "motifsearch" &&
+            mounted.lang === getLang());
 }
 export function applyRoute(route) {
   if (!mounted) return;
@@ -1336,10 +1344,19 @@ export async function motifQuery(root, route) {
            A new tab, unlike the result rows: those carry their whole state in the address, so
            following one and coming back costs nothing, while the viewer replaces the page with a
            different kind of work and a reader looking at a structure usually still wants the
-           ranking they found it in. */
+           ranking they found it in.
+
+           Opened on the whole receptor, with the queried positions carried over and marked. The
+           pocket was the wrong place to land: half of what can be asked here is outside it, and a
+           reader who arrived by asking about 3x32-3x37 was being shown the one part of the
+           structure their question was not about. The positions travel as resolved structure-based
+           numbers rather than as the query text, so the viewer never has to re-parse or re-guess
+           a Ballesteros-Weinstein number the panel already resolved. */
         el("a", { class: "mq-3d-link", target: "_blank", rel: "noopener",
-          href: "#" + buildHash({ family: s.record.f, view: "3d", pdb: s.pdb }).slice(1),
-          title: t("mq_open_3d_hint", { pdb: s.pdb }), text: t("mq_open_3d") })]));
+          href: "#" + buildHash({ family: s.record.f, view: "3d", pdb: s.pdb, whole: "1",
+            mark: parsed.groups.map(g => g.position).join(",") || null }).slice(1),
+          title: t("mq_open_3d_hint", { pdb: s.pdb, n: parsed.groups.length }),
+          text: t("mq_open_3d") })]));
     }
     aside.appendChild(list);
   }
@@ -1362,7 +1379,8 @@ export async function motifQuery(root, route) {
     poolSelect.value = state.pool;
     const pocket = state.pool === "pocket";
     const filter = FILTERED_POOLS[state.pool];
-    classField.hidden = !pocket; freqField.hidden = !filter;
+    classField.hidden = !pocket || !(payload.pool && payload.pool.site_classes);
+    freqField.hidden = !filter;
     clear(freqCaption);
     if (filter) {
       const caption = filter === "coverage" ? "mq_min_coverage" : "mq_min_freq";
@@ -1376,12 +1394,18 @@ export async function motifQuery(root, route) {
       freqSelect.value = String(state.minFreq);
     }
     if (filter === "coverage") clear(freqNote);
-    if (pocket) {
+    /* Read once and guarded, because the state and the payload can disagree for a moment: the
+       route can name the pocket pool while the payload in hand is still the microswitch one, and a
+       fetch that is abandoned — a reload mid-flight is enough — leaves them that way. The class
+       list was already guarded; the denominator below it was not, so that moment threw and took
+       the whole panel down instead of drawing it without a control it has no data for. */
+    const siteMeta = (payload.pool && payload.pool.site_classes) || null;
+    if (pocket && siteMeta) {
       const classes = siteClassesOf(payload);
       const chosen = classes.includes(state.siteClass) ? state.siteClass : classes[0];
       clear(classSelect);
       for (const name of classes) {
-        const info = payload.pool.site_classes[name];
+        const info = siteMeta[name];
         classSelect.appendChild(el("option", { value: name, selected: name === chosen,
           text: siteClassLabel(name) + " (" + info.receptors + ")" }));
       }
@@ -1391,7 +1415,7 @@ export async function motifQuery(root, route) {
          receptors a single one already counts for 12.5%, so every slider position below that is
          the same filter wearing different numbers. Said plainly rather than left for the reader
          to work out from a dropdown they were not looking at. */
-      const denominator = (payload.pool.site_classes[chosen] || {}).receptors || 0;
+      const denominator = (siteMeta[chosen] || {}).receptors || 0;
       clear(freqNote);
       if (denominator && denominator < 20) {
         const one = 1 / denominator;
@@ -1456,7 +1480,7 @@ export async function motifQuery(root, route) {
     watch.observe(specBox);
   }
 
-  mounted = { node: wrap, setRoute };
+  mounted = { node: wrap, setRoute, lang: getLang() };
   draw();
   return wrap;
 }
