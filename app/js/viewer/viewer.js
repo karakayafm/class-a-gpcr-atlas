@@ -15,6 +15,10 @@ let viewerBackground = "black";
    never fetches it — so an empty table means "not asked for yet" or "not available for this
    structure", and the panel says which. */
 let residueTable = [];
+/* Whether the contact-label layer is on. Tracked rather than inferred from the representation,
+   because a selection can legitimately empty that layer — every contact residue picked — and an
+   absent representation would then be read as "the reader turned them off". */
+let contactLabelsOn = true;
 /* The positions a reader arrived with, carried over from the motif panel's query. Held apart from
    the manual selection on purpose: they are not something clicked here and must survive the two
    residue lists, so switching between the pocket and the whole receptor does not lose the reason
@@ -399,6 +403,7 @@ export function applyDefaults() {
         colorScheme:"element", colorValue:0x8ab8e8 }));
     addDisplayedInteractions();
     addCovalentHighlight(o);
+    contactLabelsOn = true;
     addContactLabels();
     frame(all.map(lig => "(" + ligandSelection(lig) + ") or (" +
       sel(lig.contact_receptor_residues) + ")").join(" or "));
@@ -465,8 +470,16 @@ function labelTextFor(details) {
   return text;
 }
 
-function addContactLabels() {
-  const o = obs(), details = o && o.contact_receptor_details || [];
+/* The contact labels are the one layer that is on without anyone asking for it, so it is the one
+   that has to give way. A residue that is both a ligand contact and a current selection was labelled
+   twice — once here and once by the selection — and since the two ask for slightly different label
+   offsets the name landed a few pixels from itself and read as a smeared double. Same text either
+   way, so dropping this one where a selection already names the residue loses nothing. */
+function addContactLabels(exclude) {
+  const o = obs();
+  const details = (o && o.contact_receptor_details || []).filter(r =>
+    !exclude || !exclude.has(residueKey(r.auth_asym_id, r.auth_seq_id)));
+  dropRep("motif_labels");
   if (!details.length) return;
   const s = details.map(r => residueKey(r.auth_asym_id, r.auth_seq_id)).join(" or ");
   addRep("motif_labels", "label", { sele:"(" + s + ") and .CA", labelType:"text",
@@ -596,6 +609,16 @@ function selectionInView(selection, margin) {
    while everything around it grew. The framing was the real fault there and is fixed at its own
    source — the fusion partner no longer drags the camera back — so these behave exactly like the
    contact labels beside them, which is also the behaviour a reader has already learned. */
+/* Every residue any layer is going to name, whatever the reason. redrawSelections builds the same
+   set as it goes, because it also needs the order; this is for callers that only need the answer. */
+function claimedResidues() {
+  const out = new Set(selectedResidues);
+  for (const r of Array.from(selectedMotifs).flatMap(residuesForMotif))
+    out.add(residueKey(r.auth_asym_id, r.auth_seq_id));
+  for (const key of queryResidues) out.add(key);
+  return out;
+}
+
 function redrawSelections() {
   dropRep("picked_residues"); dropRep("picked_labels"); dropRep("picked_motifs"); dropRep("picked_motif_labels");
   dropRep("query_residues"); dropRep("query_labels");
@@ -647,6 +670,9 @@ function redrawSelections() {
       backgroundOpacity:0.78, showBackground:true, fixedSize:false, labelSize:2.2,
       radius:0.8, zOffset:2 });
   }
+
+  // Rebuilt last, without whatever the layers above have just named.
+  if (contactLabelsOn) addContactLabels(claimed);
 }
 
 export function toggleResidue(chain, seq) {
@@ -738,7 +764,8 @@ export const toggles = {
     const m = (meta.motif_residues || []).filter(r => !activeChain || r.auth_asym_id === activeChain)
       .map(r => r.auth_seq_id + ":" + r.auth_asym_id);
     if (m.length) addRep("motifs", "licorice", { sele: m.join(" or "), color: "green" }); },
-  motifLabels(on) { if (!on) { dropRep("motif_labels"); return; } addContactLabels(); },
+  motifLabels(on) { contactLabelsOn = on;
+    if (!on) { dropRep("motif_labels"); return; } addContactLabels(claimedResidues()); },
   covalent(on) {
     if (!on) { dropRep("covalent_atoms"); dropRep("covalent_bond"); return; }
     addCovalentHighlight(obs());
