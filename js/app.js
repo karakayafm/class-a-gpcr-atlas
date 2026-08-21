@@ -5,6 +5,8 @@ import { parseRoute, navigate, onRoute, startRouter } from "./core/router.js";
 import * as ST from "./core/state.js";
 import * as L from "./data/loader.js";
 import { el, clear } from "./components/dom.js";
+import { toCSV, download } from "./components/csv.js";
+import { downloadXLSX } from "./components/xlsx.js";
 import * as V from "./views/views.js";
 import { ligandExplorer } from "./views/ligands.js";
 import * as MQ from "./views/motifquery.js";
@@ -575,12 +577,123 @@ function buildViewerSide(meta) {
       if (r.view === "3d") navigate(Object.assign({}, r, { whole: wholeReceptor ? "1" : null }), true);
     } });
   ctrl.appendChild(wholeButton);
+  /* Measurement is a mode, not an action: while it is on, a click in the scene picks an atom
+     instead of doing nothing, and the panel below reports what the picks add up to. */
+  const measureButton = el("button", { class:"viewer-tool viewer-tool-measure",
+    "aria-pressed": VIEW.isMeasuring() ? "true" : "false",
+    text: t("v_measure"), onclick: () => {
+      VIEW.setMeasureMode(!VIEW.isMeasuring(), () => paintMeasure());
+      paintMeasure();
+    } });
+  ctrl.appendChild(measureButton);
   side.appendChild(ctrl);
   if (ligandPanel) side.appendChild(ligandPanel);
   side.appendChild(surfacePanel);
   side.appendChild(el("div", { class: "viewer-actions" }, [
     el("button", { class: "btn", text: t("v_pocket"), onclick: () => VIEW.focusPocket() })
   ]));
+
+  /* Redrawn in place rather than by rebuilding the side panel, so picking an atom does not reset
+     the scroll position or the disclosure states around it. */
+  const measureSection = el("div", { class: "viewer-section measure-section", hidden: true });
+  function paintMeasure() {
+    const on = VIEW.isMeasuring();
+    measureButton.setAttribute("aria-pressed", on ? "true" : "false");
+    measureButton.classList.toggle("selected", on);
+    measureSection.hidden = !on;
+    clear(measureSection);
+    if (!on) return;
+    measureSection.appendChild(el("h4", { class:"viewer-section-title", text:t("v_measure_title") }));
+    const picks = VIEW.measureList();
+    const result = VIEW.measureResult();
+    const kept = VIEW.measureKeptList();
+    const format = r => r.unit === "angstrom"
+      ? r.value.toFixed(2) + " Å" : r.value.toFixed(1) + "°";
+    const atomsLine = atoms => atoms.map(a => a.residue + " " + (a.atomName || "?")).join(" — ");
+    /* Kept measurements first: they are answers, and they stay on screen while the next question
+       is being picked out. */
+    if (kept.length) {
+      const list = el("div", { class:"measure-kept" });
+      kept.forEach(r => list.appendChild(el("div", { class:"measure-kept-row" }, [
+        el("div", {}, [
+          el("span", { class:"measure-kind", text:t("v_measure_" + r.kind) }),
+          el("strong", { class:"measure-kept-value", text:r.value === null ? "—" : format(r) })]),
+        el("div", { class:"muted small", text:atomsLine(r.atoms) }),
+        el("button", { class:"measure-remove", type:"button", "aria-label":t("v_measure_remove"),
+          title:t("v_measure_remove"), text:"×", onclick:() => VIEW.measureRemoveKept(r.id) })])));
+      measureSection.appendChild(list);
+    }
+    measureSection.appendChild(el("p", { class:"muted small",
+      text: VIEW.measureFull() ? t("v_measure_full") : t("v_measure_hint") }));
+    if (picks.length) {
+      const list = el("ol", { class:"measure-picks" });
+      for (const p of picks) list.appendChild(el("li", {}, [
+        el("strong", { text:p.residue }),
+        el("span", { class:"muted", text:" · " + (p.atomName || "?") })]));
+      measureSection.appendChild(list);
+    }
+    if (result && result.value !== null) {
+      measureSection.appendChild(el("p", { class:"measure-value" }, [
+        el("span", { class:"measure-kind", text:t("v_measure_" + result.kind) }),
+        el("strong", { text:format(result) })]));
+    } else if (picks.length) {
+      measureSection.appendChild(el("p", { class:"muted small", text:t("v_measure_need_more") }));
+    }
+    const actions = el("div", { class:"measure-actions" });
+    if (result && result.value !== null) actions.appendChild(el("button",
+      { class:"btn small btn-primary", type:"button", text:t("v_measure_keep"),
+        title:t("v_measure_keep_hint"), onclick:() => VIEW.measureKeep() }));
+    if (picks.length) actions.appendChild(el("button", { class:"btn small", type:"button",
+      text:t("v_measure_undo"), onclick:() => VIEW.measureUndo() }));
+    if (picks.length || kept.length) actions.appendChild(el("button", { class:"btn small",
+      type:"button", text:t("v_measure_clear"), onclick:() => VIEW.measureClear() }));
+    /* Everything the panel is showing, in the order it is showing it: the kept measurements and,
+       if it resolves, the one still being picked. A reader who took a measurement wants it in a
+       notebook, not retyped. */
+    const exportable = kept.concat(result && result.value !== null
+      ? [Object.assign({ id:null, atoms:picks }, result)] : []);
+    if (exportable.length) {
+      const options = el("div", { class:"measure-download-options", hidden:true });
+      const cell = (r, i) => { const a = r.atoms[i];
+        return a ? a.chain + ":" + a.seq + " " + a.residue + " " + (a.atomName || "?") : ""; };
+      const columns = [
+        { key:"n", label:"#", get:(r, i) => i + 1 },
+        { key:"type", label:t("v_measure_type"), get:r => r.kind },
+        { key:"value", label:t("v_measure_value"),
+          get:r => r.unit === "angstrom" ? r.value.toFixed(3) : r.value.toFixed(2) },
+        { key:"unit", label:t("v_measure_unit"), get:r => r.unit === "angstrom" ? "angstrom" : "degree" },
+        { key:"pdb", label:"PDB", get:() => meta.pdb_id },
+        { key:"atoms", label:t("v_measure_atoms"),
+          get:r => r.atoms.map(a => a.residue + " " + (a.atomName || "?")).join(" — ") },
+        { key:"atom1", label:"atom 1", get:r => cell(r, 0) },
+        { key:"atom2", label:"atom 2", get:r => cell(r, 1) },
+        { key:"atom3", label:"atom 3", get:r => cell(r, 2) },
+        { key:"atom4", label:"atom 4", get:r => cell(r, 3) }];
+      // toCSV passes only the row, so the running number is materialised here instead.
+      const rows = exportable.map((r, i) => Object.assign({}, r, { n:i + 1 }));
+      const cols = columns.map(c => c.key === "n"
+        ? { key:"n", label:"#", get:r => r.n } : c);
+      const metaLines = () => ({
+        structure: meta.pdb_id, receptor: V.plainName(meta.receptor_name || ""),
+        note: "geometry computed from the deposited coordinates; distances in angstrom, "
+            + "angles and dihedrals in degrees" });
+      const base = "measurements_" + meta.pdb_id;
+      options.appendChild(el("button", { class:"btn small", type:"button", text:t("export_csv"),
+        onclick:() => download(base + ".csv", toCSV(cols, rows, metaLines())) }));
+      options.appendChild(el("button", { class:"btn small", type:"button", text:t("export_xlsx"),
+        onclick:() => downloadXLSX(base + ".xlsx",
+          [{ name:t("v_measure_title"), columns:cols, rows }]) }));
+      const toggle = el("button", { class:"btn small", type:"button", "aria-expanded":"false",
+        text:t("v_measure_download"), onclick:() => {
+          options.hidden = !options.hidden;
+          toggle.setAttribute("aria-expanded", options.hidden ? "false" : "true");
+        } });
+      actions.appendChild(toggle);
+      measureSection.appendChild(actions);
+      measureSection.appendChild(options);
+    } else if (actions.childNodes.length) measureSection.appendChild(actions);
+  }
+  VIEW.setMeasureMode(VIEW.isMeasuring(), () => paintMeasure());
 
   // The residue list is what a reader works with; the motif shortcuts sit under it.
   const contactSection = el("div", { class: "viewer-section" });
@@ -617,6 +730,7 @@ function buildViewerSide(meta) {
             const selected = VIEW.toggleMotif(motif.id);
             b.classList.toggle("selected", selected);
             b.setAttribute("aria-pressed", selected ? "true" : "false");
+            paintFocus();
           } });
         const tip = el("span", { class:"motif-pattern-popover", role:"tooltip" });
         motif.pattern.forEach((token, index) => {
@@ -639,9 +753,24 @@ function buildViewerSide(meta) {
   motifSection.appendChild(el("button", { class: "clear-selection", text: t("v_clear_selection"),
     onclick: () => { VIEW.clearSelections(); buildViewerSide(meta); } }));
 
+  /* Offered wherever a selection is made, and only while there is one: with nothing selected the
+     control would be promising to hide everything. */
+  const focusRow = el("div", { class:"focus-row" });
+  function paintFocus() {
+    clear(focusRow);
+    if (!VIEW.hasSelection()) { focusRow.hidden = true; return; }
+    focusRow.hidden = false;
+    const on = VIEW.isFocusSelection();
+    focusRow.appendChild(el("button", { class:"btn small focus-toggle" + (on ? " selected" : ""),
+      type:"button", "aria-pressed": on ? "true" : "false", title: t("v_focus_hint"),
+      text: on ? t("v_focus_off") : t("v_focus_on"),
+      onclick: () => { VIEW.setFocusSelection(!VIEW.isFocusSelection()); buildViewerSide(meta); } }));
+  }
+  paintFocus();
+
   const contacts = VIEW.contactResidues();
   if (wholeReceptor) {
-    buildReceptorColumns(contactSection, meta);
+    buildReceptorColumns(contactSection, meta, paintFocus);
   } else if (contacts.length) {
     contactSection.appendChild(el("h4", { class: "viewer-section-title", text: t("v_contact_list") }));
     contactSection.appendChild(el("p", { class: "muted small", text: t("v_click_hint") }));
@@ -653,6 +782,7 @@ function buildViewerSide(meta) {
           const selected = VIEW.toggleResidue(r.chain, r.seq);
           b.classList.toggle("selected", selected);
           b.setAttribute("aria-pressed", selected ? "true" : "false");
+          paintFocus();
         } });
       if (r.motif) {
         b.appendChild(el("strong", { class: "residue-motif", text: r.motif }));
@@ -663,6 +793,9 @@ function buildViewerSide(meta) {
     }
     contactSection.appendChild(list);
   }
+  side.appendChild(focusRow);
+  side.appendChild(measureSection);
+  paintMeasure();
   side.appendChild(contactSection);
   side.appendChild(motifSection);
 
@@ -694,7 +827,10 @@ function buildViewerSide(meta) {
    Clicking a position draws that residue and labels it; clicking again takes it away. That is the
    same control the pocket list already offered, so the two lists behave identically and only their
    contents differ. */
-function buildReceptorColumns(container, meta) {
+/* `onSelectionChange` is passed in rather than reached for: this function lives outside
+   buildViewerSide, so the panel's own repaint is not in its scope — a click here was throwing
+   silently while every assertion still passed. */
+function buildReceptorColumns(container, meta, onSelectionChange) {
   container.appendChild(el("h4", { class:"viewer-section-title", text:t("v_whole_list") }));
   const segments = VIEW.receptorSegments();
   if (!segments.length) {
@@ -727,6 +863,7 @@ function buildReceptorColumns(container, meta) {
         const on = VIEW.toggleResidue(row.c, row.n);
         b.classList.toggle("selected", on);
         b.setAttribute("aria-pressed", on ? "true" : "false");
+        if (onSelectionChange) onSelectionChange();
       } }, [
       el("strong", { class:"tm-residue-aa", text:row.a }),
       el("span", { class:"tm-residue-pos", text:row.p })]);
