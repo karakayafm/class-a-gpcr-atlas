@@ -19,6 +19,27 @@ let residueTable = [];
    because a selection can legitimately empty that layer — every contact residue picked — and an
    absent representation would then be read as "the reader turned them off". */
 let contactLabelsOn = true;
+/* Measurement. The reader picks atoms in the scene and the viewer reports what can be computed
+   from however many they have picked: two give a distance, three an angle at the middle one, four
+   a dihedral. Held here rather than in the panel because the picking happens in the scene and the
+   atom indices only mean anything against the loaded structure. */
+let measureMode = false;
+/* Whether the contacting side chains are on screen, so switching measurement mode can redraw them
+   in the other form without turning on a layer the reader had switched off. */
+let contactsOn = true;
+/* Show only what the reader picked. The pocket layer is a good default and a poor place to work:
+   twenty side chains, their labels and the interaction lines between them are most of what is on
+   screen, and a reader who has chosen three residues is looking past all of it. */
+let focusSelection = false;
+let measureChanged = null;
+const measureAtoms = [];
+/* Measurements the reader has kept. The picking set above is the one being built; once it says
+   something worth keeping it moves here and the picking starts again empty, so a second question
+   — the distance across the pocket, say, beside the one just measured at the ligand — does not
+   have to inherit the atoms of the first. */
+const measureKept = [];
+const MEASURE_MAX = 4;
+const MEASURE_COLOUR = 0xff8a3d;
 /* The positions a reader arrived with, carried over from the motif panel's query. Held apart from
    the manual selection on purpose: they are not something clicked here and must survive the two
    residue lists, so switching between the pocket and the whole receptor does not lose the reason
@@ -240,6 +261,8 @@ export async function open(host, pdb, observationId, onStatus) {
      the list; where two structures share a chain letter it would have drawn one receptor's
      positions on another's coordinates. */
   residueTable = []; queryResidues.clear(); queryPositions = [];
+  measureAtoms.length = 0; measureKept.length = 0; measureMode = false;
+  focusSelection = false;
   try { meta = await loadBundleMeta(pdb); }
   catch (e) { onStatus(errorMessage(e)); return null; }
   let stage;
@@ -256,6 +279,7 @@ export async function open(host, pdb, observationId, onStatus) {
   // A WebGL canvas is opaque to assistive technology: without a name it is announced as nothing
   // at all. Name it after the structure it is showing, and re-name it whenever that changes.
   labelCanvas(host, pdb);
+  try { stage.signals.clicked.add(onScenePick); } catch (e) {}
   LC.resizeStageIfVisible();
   current = observationId ||
     (meta.observations.find(o => o.ligand_selection) || meta.observations[0] || {}).observation_id;
@@ -273,6 +297,7 @@ function labelCanvas(host, pdb) {
 
 export function close() { LC.destroyStage(); comp = null; meta = null; current = null; reps = {};
   residueTable = []; queryResidues.clear(); queryPositions = [];
+  measureAtoms.length = 0; measureKept.length = 0; measureMode = false; measureChanged = null;
   selectedResidues.clear(); selectedMotifs.clear(); }
 
 /* Resolved through the residue table, so a position the structure does not resolve simply does not
@@ -300,6 +325,197 @@ export function frameQuery() {
   if (!queryResidues.size) return false;
   frame(Array.from(queryResidues).join(" or "));
   return true;
+}
+
+/* --------------------------------------------------------------- measurement */
+/* Plain geometry on the coordinates as deposited, in the units the field reads them in: angstroms
+   for a distance, degrees for an angle and for a torsion. Nothing here is rounded before display. */
+function measureDistance(a, b) {
+  return Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
+}
+function subtract(a, b) { return { x:a.x - b.x, y:a.y - b.y, z:a.z - b.z }; }
+function dot(a, b) { return a.x * b.x + a.y * b.y + a.z * b.z; }
+function cross(a, b) {
+  return { x:a.y * b.z - a.z * b.y, y:a.z * b.x - a.x * b.z, z:a.x * b.y - a.y * b.x };
+}
+function norm(a) { return Math.hypot(a.x, a.y, a.z); }
+function measureAngle(a, b, c) {
+  const u = subtract(a, b), v = subtract(c, b);
+  const denom = norm(u) * norm(v);
+  if (!denom) return null;
+  return Math.acos(Math.min(1, Math.max(-1, dot(u, v) / denom))) * 180 / Math.PI;
+}
+/* Signed, by the IUPAC convention: the angle between the plane through the first three atoms and
+   the plane through the last three, positive clockwise looking along b to c. */
+function measureDihedral(a, b, c, d) {
+  const b1 = subtract(b, a), b2 = subtract(c, b), b3 = subtract(d, c);
+  const n1 = cross(b1, b2), n2 = cross(b2, b3), m = cross(n1, b2);
+  const l = norm(b2);
+  if (!l || !norm(n1) || !norm(n2)) return null;
+  return Math.atan2(dot(m, n2) / l, dot(n1, n2)) * 180 / Math.PI;
+}
+
+/* What to call the atom in the readout: the generic position where the structure has one, because
+   that is the name the rest of the atlas uses, and the deposited residue otherwise. */
+function measureAtomLabel(atom) {
+  const chain = atom.chainname, seq = String(atom.resno);
+  const row = residueTable.find(r => r.c === chain && r.n === seq);
+  const residue = row ? row.a + row.p : (atom.resname || "") + seq;
+  return { residue, atomName: atom.atomname || "", chain, seq };
+}
+
+/* Licorice draws bonds and no atom centres, so in measurement mode there is often nothing to aim
+   at: at some angles an atom is simply not clickable and the reader has to rotate until it is.
+   Ball-and-stick puts a sphere on every atom. Modest spheres — a target to hit, not a change of
+   representation the reader has to look past. */
+function contactRepType() { return measureMode ? "ball+stick" : "licorice"; }
+function contactRepParams(residues) {
+  const base = { sele:withoutHydrogen(sel(residues)), colorScheme:"element", colorValue:0x8ab8e8 };
+  return measureMode ? Object.assign({ aspectRatio:1.9, scale:0.30 }, base) : base;
+}
+/* Every contacting side chain the current observations name, in whichever form the mode calls for.
+   One place, so the two ways it used to be drawn cannot drift apart. */
+function addContactSideChains() {
+  dropByPrefix("contacts"); dropByPrefix("iface");
+  if (focusSelection) return;
+  ligandObservations().forEach((o, i) =>
+    addRep((POLYMER[o.binding_site_class] ? "iface_" : "contacts_") + i,
+      contactRepType(), contactRepParams(o.contact_receptor_residues)));
+}
+
+function measureDrop() { dropByPrefix("measure"); }
+
+/* One geometry per set. The set being built also gets its atoms marked, because those are the ones
+   a click will take back; a kept set is a result rather than a selection and needs no handles. */
+function drawMeasureSet(atoms, key, marked) {
+  const indices = atoms.map(a => a.index);
+  if (marked) addRep(key + "_pick", "spacefill", { sele:"@" + indices.join(","),
+    colorScheme:"uniform", colorValue:MEASURE_COLOUR, radiusType:"size", radiusSize:0.32,
+    opacity:0.95 });
+  /* Uniform colour rather than a `color` value: the measurement geometry has to read as one thing
+     against a scene already carrying four other colour meanings, and a thin default-shaded line
+     across twenty angstroms of receptor is not something a reader can follow. */
+  const paint = { colorScheme:"uniform", colorValue:MEASURE_COLOUR };
+  if (indices.length === 2)
+    addRep(key + "_distance", "distance", Object.assign({ atomPair:[indices],
+      labelUnit:"angstrom", labelColor:"white", labelSize:2.2, labelZOffset:2,
+      labelBackground:true, labelBackgroundColor:"#3a1c08", labelBackgroundOpacity:0.8,
+      useCylinder:true, radiusSize:0.12 }, paint));
+  if (indices.length === 3)
+    addRep(key + "_angle", "angle", Object.assign({ atomTriple:[indices],
+      labelColor:"white", labelSize:2.2, opacity:0.5, linewidth:3 }, paint));
+  if (indices.length === 4)
+    addRep(key + "_dihedral", "dihedral", Object.assign({ atomQuad:[indices],
+      labelColor:"white", labelSize:2.2, opacity:0.5, linewidth:3 }, paint));
+}
+
+function measureDraw() {
+  measureDrop();
+  if (!comp) return;
+  measureKept.forEach((set, i) => drawMeasureSet(set, "measure_kept" + i, false));
+  if (measureAtoms.length) drawMeasureSet(measureAtoms, "measure_now", true);
+}
+
+/* The one answer the current picks support. Reported as a kind and a number so the panel decides
+   how to word it and nothing here has to know the interface language. */
+function resultFor(p) {
+  if (p.length === 2) return { kind:"distance", value:measureDistance(p[0], p[1]), unit:"angstrom" };
+  if (p.length === 3) return { kind:"angle", value:measureAngle(p[0], p[1], p[2]), unit:"degree" };
+  if (p.length === 4)
+    return { kind:"dihedral", value:measureDihedral(p[0], p[1], p[2], p[3]), unit:"degree" };
+  return null;
+}
+export function measureResult() { return resultFor(measureAtoms); }
+export function measureKeptList() {
+  return measureKept.map((set, i) => Object.assign({ id:i, atoms:set.map(a => Object.assign({}, a)) },
+    resultFor(set)));
+}
+/* Banks the set being built, if it says anything, and starts an empty one. */
+export function measureKeep() {
+  if (!resultFor(measureAtoms)) return false;
+  measureKept.push(measureAtoms.slice());
+  measureAtoms.length = 0;
+  measureDraw();
+  if (measureChanged) measureChanged();
+  return true;
+}
+export function measureRemoveKept(i) {
+  if (i < 0 || i >= measureKept.length) return;
+  measureKept.splice(i, 1);
+  measureDraw();
+  if (measureChanged) measureChanged();
+}
+export function measureList() { return measureAtoms.map(a => Object.assign({}, a)); }
+export function isMeasuring() { return measureMode; }
+export function measureFull() { return measureAtoms.length >= MEASURE_MAX; }
+
+export function measureClear() {
+  measureAtoms.length = 0;
+  measureKept.length = 0;
+  measureDraw();
+  if (measureChanged) measureChanged();
+}
+export function measureUndo() {
+  measureAtoms.pop();
+  measureDraw();
+  if (measureChanged) measureChanged();
+}
+export function isFocusSelection() { return focusSelection; }
+export function hasSelection() {
+  return selectedResidues.size > 0 || selectedMotifs.size > 0 || queryResidues.size > 0;
+}
+export function setFocusSelection(on) {
+  focusSelection = !!on && hasSelection();
+  if (contactsOn) addContactSideChains();
+  addContactLabels(claimedResidues());
+  addDisplayedInteractions();
+  if (focusSelection) frameSelection();
+  return focusSelection;
+}
+/* The camera follows, because "only the selection" and "still framed on the pocket you just
+   emptied" is not what the words promise. */
+function frameSelection() {
+  const keys = Array.from(claimedResidues());
+  if (keys.length) frame(keys.join(" or "));
+}
+/* A focus with nothing to focus on is a blank pocket and a reader wondering what broke, so
+   emptying the selection releases it. */
+function releaseFocusIfEmpty() {
+  if (focusSelection && !hasSelection()) setFocusSelection(false);
+}
+
+export function setMeasureMode(on, onChange) {
+  const was = measureMode;
+  measureMode = !!on;
+  measureChanged = onChange || measureChanged;
+  if (was !== measureMode && contactsOn) addContactSideChains();
+  if (!measureMode) { measureAtoms.length = 0; measureKept.length = 0; measureDraw(); }
+  if (measureChanged) measureChanged();
+  return measureMode;
+}
+
+/* Attached once per stage. The guard is here rather than on the binding so that turning the mode
+   off and on again does not accumulate handlers on a stage that outlives both. */
+function onScenePick(pick) {
+  if (!measureMode || !pick || !pick.atom) return;
+  const atom = pick.atom;
+  /* Clicking a picked atom takes it back, the way clicking a selected residue does in the lists.
+     Without this a second click on the same atom added a duplicate, and a duplicate can never
+     produce an answer — two coincident points have no angle — so the reader was left with a
+     measurement that silently could not resolve. */
+  const already = measureAtoms.findIndex(a => a.index === atom.index);
+  if (already >= 0) {
+    measureAtoms.splice(already, 1);
+    measureDraw();
+    if (measureChanged) measureChanged();
+    return;
+  }
+  if (measureAtoms.length >= MEASURE_MAX) return;
+  const info = measureAtomLabel(atom);
+  measureAtoms.push({ index:atom.index, x:atom.x, y:atom.y, z:atom.z,
+    residue:info.residue, atomName:info.atomName, chain:info.chain, seq:info.seq });
+  measureDraw();
+  if (measureChanged) measureChanged();
 }
 
 /* ------------------------------------------------- the receptor beyond the pocket */
@@ -398,11 +614,10 @@ export function applyDefaults() {
   if (o && o.ligand_selection) {
     const all = ligandObservations();
     addDisplayedLigands();
-    all.forEach((lig, i) => addRep((POLYMER[lig.binding_site_class] ? "iface_" : "contacts_") + i,
-      "licorice", { sele:withoutHydrogen(sel(lig.contact_receptor_residues)),
-        colorScheme:"element", colorValue:0x8ab8e8 }));
+    addContactSideChains();
     addDisplayedInteractions();
     addCovalentHighlight(o);
+    contactsOn = true;
     contactLabelsOn = true;
     addContactLabels();
     frame(all.map(lig => "(" + ligandSelection(lig) + ") or (" +
@@ -476,10 +691,11 @@ function labelTextFor(details) {
    offsets the name landed a few pixels from itself and read as a smeared double. Same text either
    way, so dropping this one where a selection already names the residue loses nothing. */
 function addContactLabels(exclude) {
+  dropRep("motif_labels");
+  if (focusSelection) return;
   const o = obs();
   const details = (o && o.contact_receptor_details || []).filter(r =>
     !exclude || !exclude.has(residueKey(r.auth_asym_id, r.auth_seq_id)));
-  dropRep("motif_labels");
   if (!details.length) return;
   const s = details.map(r => residueKey(r.auth_asym_id, r.auth_seq_id)).join(" or ");
   addRep("motif_labels", "label", { sele:"(" + s + ") and .CA", labelType:"text",
@@ -503,6 +719,9 @@ function addInteractionLines(o=obs(), key="lines") {
 }
 
 function addDisplayedInteractions() {
+  /* The interaction lines run from the ligand to contacting side chains. With those hidden the
+     lines would end in mid-air, so they go with them. */
+  if (focusSelection) { dropByPrefix("lines"); return; }
   ligandObservations().forEach((o, i) => addInteractionLines(o, i ? "lines_extra_" + i : "lines"));
 }
 
@@ -680,6 +899,7 @@ export function toggleResidue(chain, seq) {
   const removing = selectedResidues.has(key);
   removing ? selectedResidues.delete(key) : selectedResidues.add(key);
   redrawSelections();
+  releaseFocusIfEmpty();
   if (!removing) {
     const o = obs(), ligand = ligandSelection(o);
     const both = "(" + Array.from(selectedResidues).join(" or ") + ") or (" + ligand + ")";
@@ -695,6 +915,7 @@ export function isResidueSelected(chain, seq) {
 export function toggleMotif(id) {
   selectedMotifs.has(id) ? selectedMotifs.delete(id) : selectedMotifs.add(id);
   redrawSelections();
+  releaseFocusIfEmpty();
   const residues = residuesForMotif(id);
   if (selectedMotifs.has(id) && residues.length) {
     const o = obs(), motif = residues.map(r => residueKey(r.auth_asym_id, r.auth_seq_id)).join(" or ");
@@ -707,6 +928,7 @@ export function toggleMotif(id) {
 
 export function clearSelections() {
   selectedResidues.clear(); selectedMotifs.clear(); redrawSelections();
+  releaseFocusIfEmpty();
 }
 
 export async function snapshot() {
@@ -735,10 +957,8 @@ export const toggles = {
   },
   contacts(on) {
     dropByPrefix("contacts"); dropByPrefix("iface");
-    if (!on) return;
-    ligandObservations().forEach((o, i) => addRep((POLYMER[o.binding_site_class] ? "iface_" : "contacts_") + i,
-      "licorice", { sele:withoutHydrogen(sel(o.contact_receptor_residues)),
-        colorScheme:"element", colorValue:0x8ab8e8 }));
+    contactsOn = on;
+    if (on) addContactSideChains();
   },
   lines(on) { if (!on) { dropByPrefix("lines"); return; } addDisplayedInteractions(); },
   ligand(on) {
