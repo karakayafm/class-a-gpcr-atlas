@@ -358,6 +358,39 @@ body.modal-open { overflow:hidden; }
 .tm-column-list { display:flex; flex-direction:column; gap:2px; max-height:340px;
   overflow-y:auto; padding-right:2px; }
 .tm-missing { margin:8px 0 0; font-size:11.5px; }
+/* Measurement. The picked atoms are numbered because the order is what decides the answer: the
+   middle atom of three carries the angle, and a dihedral is signed by the order of its four. */
+.measure-picks { margin:8px 0; padding-left:20px; font-size:12px; display:grid; gap:2px; }
+.measure-value { display:flex; align-items:baseline; justify-content:space-between; gap:10px;
+  margin:8px 0 0; padding:7px 9px; border:1px solid #ff8a3d; border-radius:7px;
+  background:rgba(255,138,61,0.10); }
+.measure-value strong { font-size:15px; font-variant-numeric:tabular-nums; }
+.measure-kind { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
+.measure-actions { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+.focus-row { margin:10px 0 0; }
+.focus-row[hidden] { display:none; }
+/* Green while it is an offer. The control only exists once something is selected, so it arrives in
+   a panel the reader has just changed and has to be noticed arriving; a plain button in a column
+   of plain buttons is not. Amber once it is on, matching every other engaged control here. */
+.focus-toggle { background:#dff3e3; border-color:#3f9c62; }
+:root[data-theme="dark"] .focus-toggle { background:#1e3527; border-color:#4e9c6d; }
+.focus-toggle.selected { background:#ffe9d9; border-color:#ff8a3d; }
+:root[data-theme="dark"] .focus-toggle.selected { background:#3a2416; border-color:#ff8a3d; }
+.measure-download-options { display:flex; gap:6px; flex-wrap:wrap; margin-top:6px;
+  padding-top:6px; border-top:1px dashed var(--line); }
+.measure-download-options[hidden] { display:none; }
+.measure-kept { display:grid; gap:6px; margin:8px 0; }
+.measure-kept-row { position:relative; padding:6px 26px 6px 9px; border:1px solid var(--line);
+  border-left:3px solid #ff8a3d; border-radius:7px; }
+.measure-kept-row > div:first-child { display:flex; align-items:baseline; gap:8px; }
+.measure-kept-value { font-size:14px; font-variant-numeric:tabular-nums; }
+.measure-remove { position:absolute; top:4px; right:4px; width:20px; height:20px; padding:0;
+  border:0; background:none; color:var(--muted); cursor:pointer; font-size:14px; line-height:1;
+  border-radius:4px; }
+.measure-remove:hover { background:var(--chip); color:var(--ink); }
+.viewer-tool-measure[aria-pressed="true"] { background:#ffe9d9; border-color:#ff8a3d; }
+:root[data-theme="dark"] .viewer-tool-measure[aria-pressed="true"] { background:#3a2416;
+  border-color:#ff8a3d; }
 .tm-other { margin-top:10px; }
 .tm-other > summary { cursor:pointer; font-size:12px; color:var(--muted); }
 .tm-other-list { display:flex; flex-wrap:wrap; gap:3px; margin-top:6px; }
