@@ -1,5 +1,28 @@
 # Changelog
 
+## Unreleased
+
+### Viewer
+
+- **Superposition.** A second structure — or a third — can be laid over the one on screen from
+  the viewer's side panel. The fit is over the CA atoms of the generic-numbered positions the two
+  structures share, so depositions of one receptor and structures of different receptors are the
+  same operation; the panel reports the RMSD and how many positions carried it. Each structure in
+  the scene takes one colour through its cartoon, side chains and ligand, with nitrogen, oxygen and
+  sulfur keeping theirs, and residue labels carry the structure's colour in their text.
+- **Active structure.** With something superposed, the panel's controls address whichever structure
+  is selected in the strip at the top: its cartoon, side chains, ligand, contact labels and
+  interaction lines, and its own whole-receptor position list.
+- **Measurement across structures.** Distances, angles and torsions can be taken between atoms of
+  different superposed structures. Each atom is named by the generic position of the structure it
+  belongs to, and the readout and the exported table name that structure.
+
+### Browsing
+
+- Arriving at a named structure — from the search box or a link out of another panel — leaves the
+  filters describing it, so the receptor family and receptor it belongs to can be read beside the
+  list rather than looked up.
+
 ## 0.1.0-beta.2 — 2026-08-12
 
 ### Browsing

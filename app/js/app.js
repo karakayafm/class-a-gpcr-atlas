@@ -11,6 +11,7 @@ import * as V from "./views/views.js";
 import { ligandExplorer } from "./views/ligands.js";
 import * as MQ from "./views/motifquery.js";
 import * as VIEW from "./viewer/viewer.js";
+import * as ALIGN from "./viewer/align.js";
 
 const MAIN = () => document.getElementById("main");
 let lastFamily = null, modalOpener = null;
@@ -206,6 +207,94 @@ function setupGlobalSearch() {
   });
 }
 
+/* Superposition. Its own section rather than a mode like measurement, because an overlay stays on
+   screen and goes on being true while the reader does other things — picking residues, measuring,
+   switching observation — and a mode would have to be left before any of that. */
+function buildAlignSection(meta) {
+  const section = el("div", { class: "viewer-section align-section" });
+  section.appendChild(el("h3", { text: t("align_title") }));
+  section.appendChild(el("p", { class: "muted small", text: t("align_hint") }));
+  const status = el("p", { class: "align-status", hidden: true });
+  const list = el("div", { class: "align-list" });
+  const input = el("input", { type: "search", class: "align-input",
+    placeholder: t("align_placeholder"), "aria-label": t("align_placeholder") });
+  const addButton = el("button", { class: "btn small", text: t("align_add") });
+
+  const say = (text, isError) => {
+    status.textContent = text || "";
+    status.hidden = !text;
+    status.classList.toggle("align-error", !!isError);
+  };
+  function paint() {
+    clear(list);
+    const rows = ALIGN.overlayList();
+    if (!rows.length) {
+      list.appendChild(el("p", { class: "muted small", text: t("align_none") }));
+      return;
+    }
+    /* The base structure is recoloured the moment the first overlay lands, so it needs a swatch
+       here too — otherwise green is the one colour in the scene the panel does not explain. */
+    const baseSwatch = el("i", { class: "align-swatch" });
+    baseSwatch.style.background = ALIGN.baseColour();
+    list.appendChild(el("div", { class: "align-row align-row-base" }, [
+      baseSwatch,
+      el("div", { class: "align-row-text" }, [
+        el("strong", { text: meta.pdb_id }),
+        el("span", { class: "muted small", text: V.plainName(meta.receptor_name || "") }),
+        el("span", { class: "muted small", text: t("align_reference") })
+      ])
+    ]));
+    for (const row of rows) {
+      const swatch = el("i", { class: "align-swatch" });
+      // The colour is decided by the align module, so the legend has to be told rather than styled.
+      swatch.style.background = "#" + row.colour.toString(16).padStart(6, "0");
+      list.appendChild(el("div", { class: "align-row" }, [
+        swatch,
+        el("div", { class: "align-row-text" }, [
+          el("strong", { text: row.pdb }),
+          el("span", { class: "muted small", text: V.plainName(row.name || "") }),
+          // The fit is only as good as what carried it, so both numbers are always shown.
+          el("span", { class: "muted small", text: t("align_rmsd", {
+            rmsd: row.rmsd.toFixed(2), n: row.n }) })
+        ]),
+        el("button", { class: "btn tiny", "aria-label": t("align_remove"), text: "✕",
+          // The whole panel is rebuilt, not just this list: the structure switcher and the toggles
+          // above describe what is in the scene, and removing a structure changes both.
+          onclick: () => { ALIGN.removeOverlay(row.pdb); buildViewerSide(meta); } })
+      ]));
+    }
+    list.appendChild(el("div", { class: "align-row-actions" }, [
+      el("button", { class: "btn small", text: t("align_frame"),
+        onclick: () => ALIGN.frameAll() }),
+      el("button", { class: "btn small", text: t("align_clear"),
+        onclick: () => { ALIGN.clearOverlays(); buildViewerSide(meta); } })
+    ]));
+  }
+  const add = async () => {
+    const pdb = input.value.trim();
+    if (!pdb) return;
+    addButton.disabled = true;
+    const res = await ALIGN.addOverlay(pdb, text => say(text, false));
+    addButton.disabled = false;
+    if (res && res.error) { say(res.error, true); return; }
+    say("", false);
+    input.value = "";
+    ALIGN.frameAll();
+    // Rebuilt rather than repainted, so the structure switcher appears with the first overlay and
+    // the layer toggles start addressing whichever structure is active.
+    buildViewerSide(meta);
+  };
+  addButton.addEventListener("click", add);
+  input.addEventListener("keydown", e => {
+    if (e.key === "Enter") { e.preventDefault(); add(); }
+  });
+  section.appendChild(el("div", { class: "align-controls" }, [input, addButton]));
+  section.appendChild(status);
+  section.appendChild(list);
+  paint();
+  return section;
+}
+
 /* ------------------------------------------------------------------ 3D modal */
 function ensureModal() {
   let m = document.getElementById("modal");
@@ -263,6 +352,11 @@ async function openModal(pdb, observationId, focusResidue, opts) {
   setBackgroundInert(true);
   const st = document.getElementById("viewer-status");
   st.hidden = false; st.textContent = t("loading_structure");
+  /* Overlays belong to the stage VIEW.open is about to destroy and rebuild, so they are forgotten
+     here rather than removed — the components are already going. Opening a second structure while
+     the modal stays open, which changing the address does, comes through here too. */
+  ALIGN.reset();
+  activeStructure = null;
   // the viewport is visible now; the viewer resizes only after this point
   const meta = await VIEW.open(document.getElementById("viewport"), pdb, observationId,
     msg => { st.textContent = msg; st.hidden = !msg; });
@@ -342,6 +436,8 @@ function closeModal() {
   const m = document.getElementById("modal");
   if (!m || m.hidden) return;
   VIEW.close();
+  ALIGN.reset();
+  activeStructure = null;
   m.hidden = true;
   document.body.classList.remove("modal-open");
   setBackgroundInert(false);
@@ -397,6 +493,46 @@ function buildObservationSwitch(meta) {
   box.appendChild(el("span", { class:"obs-switch-name", title:observationText(list[at]),
     text:V.plainName(list[at].ligand_name || list[at].ligand_entity_id) }));
 }
+/* Which structure the panel's controls act on. The viewer was written around one structure, so
+   every toggle, every list and the whole-receptor columns addressed it implicitly. With something
+   superposed there are two, and a reader who wants the other one's side chains, or its positions
+   outside the pocket, had no way to say so. Named rather than inferred, so the panel can say which
+   structure it is describing. */
+let activeStructure = null;
+function activePdb(meta) {
+  const want = String(activeStructure || "").toUpperCase();
+  if (want && want !== String(meta.pdb_id).toUpperCase() && !ALIGN.isOverlaid(want))
+    activeStructure = null;         // it was removed while active
+  return String(activeStructure || meta.pdb_id).toUpperCase();
+}
+
+/* The strip that switches between the structures in the scene. Only drawn once there is more than
+   one — with nothing superposed it would be a control with a single option. */
+function buildStructureSwitch(meta, onChange) {
+  if (!ALIGN.hasOverlays()) return null;
+  const active = activePdb(meta);
+  const strip = el("div", { class:"structure-switch", role:"group",
+    "aria-label":t("v_active_structure") });
+  strip.appendChild(el("span", { class:"structure-switch-label", text:t("v_active_structure") }));
+  const chip = (pdb, colour, label) => {
+    const isActive = pdb === active;
+    const b = el("button", { class:"structure-chip" + (isActive ? " selected" : ""), type:"button",
+      "aria-pressed":isActive ? "true" : "false", title:label,
+      onclick:() => { activeStructure = pdb; onChange(); } });
+    const sw = el("i", { class:"structure-chip-swatch" });
+    sw.style.background = colour;
+    b.appendChild(sw);
+    b.appendChild(el("span", { text:pdb }));
+    return b;
+  };
+  strip.appendChild(chip(String(meta.pdb_id).toUpperCase(), ALIGN.baseColour(),
+    V.plainName(meta.receptor_name || "")));
+  for (const row of ALIGN.overlayList())
+    strip.appendChild(chip(row.pdb, "#" + row.colour.toString(16).padStart(6, "0"),
+      V.plainName(row.name || "")));
+  return strip;
+}
+
 function buildViewerSide(meta) {
   const side = document.getElementById("viewer-side");
   clear(side);
@@ -432,15 +568,30 @@ function buildViewerSide(meta) {
     side.appendChild(el("p", { class:"observation-hint", text:t("observation_hint") }));
     side.appendChild(sel); side.appendChild(picker);
   }
+  const active = activePdb(meta);
+  const onBase = active === String(meta.pdb_id).toUpperCase();
+  const switcher = buildStructureSwitch(meta, () => buildViewerSide(meta));
+  if (switcher) side.appendChild(switcher);
   const on = { cartoon: true, ligand: true, contacts: true, motifs: false, motifLabels: true,
     surface: false, surfaceReceptor:false, surfaceLigand:false, lines: true,
     allLigands: false, ions: false, aux: false, spin: false };
+  /* The layers an overlay carries. Anything outside this map is disabled and says why, because a
+     toggle that does nothing is worse than one that is visibly unavailable. */
+  const OVERLAY_LAYER = { cartoon:"cartoon", contacts:"sidechains", ligand:"ligand",
+    motifLabels:"labels", lines:"interactions" };
+  if (!onBase) {
+    const state = ALIGN.layerState(active) || {};
+    for (const [key, layer] of Object.entries(OVERLAY_LAYER)) on[key] = state[layer] !== false;
+  }
   const ctrl = el("div", { class: "viewer-tools" });
   const add = (key, label, disabled) => {
-    const b = el("button", { class: "viewer-tool", disabled: !!disabled,
+    const unsupported = !onBase && !OVERLAY_LAYER[key];
+    const b = el("button", { class: "viewer-tool", disabled: !!disabled || unsupported,
+      title: unsupported ? t("v_overlay_layer_unsupported", { pdb: active }) : null,
       "aria-pressed": on[key] ? "true" : "false", text: label, onclick: () => {
         on[key] = !on[key]; b.setAttribute("aria-pressed", on[key] ? "true" : "false");
-        VIEW.toggles[key](on[key]);
+        if (onBase) VIEW.toggles[key](on[key]);
+        else ALIGN.setLayer(active, OVERLAY_LAYER[key], on[key]);
       } });
     ctrl.appendChild(b);
     return b;
@@ -583,6 +734,9 @@ function buildViewerSide(meta) {
     "aria-pressed": VIEW.isMeasuring() ? "true" : "false",
     text: t("v_measure"), onclick: () => {
       VIEW.setMeasureMode(!VIEW.isMeasuring(), () => paintMeasure());
+      // The overlays switch to ball-and-stick with the base structure, or half the scene stays
+      // unclickable in a mode whose whole purpose is clicking atoms.
+      ALIGN.refreshStyle();
       paintMeasure();
     } });
   ctrl.appendChild(measureButton);
@@ -609,7 +763,13 @@ function buildViewerSide(meta) {
     const kept = VIEW.measureKeptList();
     const format = r => r.unit === "angstrom"
       ? r.value.toFixed(2) + " Å" : r.value.toFixed(1) + "°";
-    const atomsLine = atoms => atoms.map(a => a.residue + " " + (a.atomName || "?")).join(" — ");
+    /* With something superposed, "F6x52 CE1 — F6x52 CE1" names the same position in two different
+       receptors and reads as a measurement from an atom to itself. The structure is prefixed only
+       when there is more than one on screen, so the ordinary single-structure readout is unchanged. */
+    const many = ALIGN.hasOverlays();
+    const atomText = a => (many && a.struct ? a.struct + " " : "") + a.residue + " " +
+      (a.atomName || "?");
+    const atomsLine = atoms => atoms.map(atomText).join(" — ");
     /* Kept measurements first: they are answers, and they stay on screen while the next question
        is being picked out. */
     if (kept.length) {
@@ -628,7 +788,7 @@ function buildViewerSide(meta) {
     if (picks.length) {
       const list = el("ol", { class:"measure-picks" });
       for (const p of picks) list.appendChild(el("li", {}, [
-        el("strong", { text:p.residue }),
+        el("strong", { text:(many && p.struct ? p.struct + " " : "") + p.residue }),
         el("span", { class:"muted", text:" · " + (p.atomName || "?") })]));
       measureSection.appendChild(list);
     }
@@ -655,7 +815,8 @@ function buildViewerSide(meta) {
     if (exportable.length) {
       const options = el("div", { class:"measure-download-options", hidden:true });
       const cell = (r, i) => { const a = r.atoms[i];
-        return a ? a.chain + ":" + a.seq + " " + a.residue + " " + (a.atomName || "?") : ""; };
+        return a ? (a.struct ? a.struct + " " : "") + a.chain + ":" + a.seq + " " +
+          a.residue + " " + (a.atomName || "?") : ""; };
       const columns = [
         { key:"n", label:"#", get:(r, i) => i + 1 },
         { key:"type", label:t("v_measure_type"), get:r => r.kind },
@@ -664,7 +825,8 @@ function buildViewerSide(meta) {
         { key:"unit", label:t("v_measure_unit"), get:r => r.unit === "angstrom" ? "angstrom" : "degree" },
         { key:"pdb", label:"PDB", get:() => meta.pdb_id },
         { key:"atoms", label:t("v_measure_atoms"),
-          get:r => r.atoms.map(a => a.residue + " " + (a.atomName || "?")).join(" — ") },
+          get:r => r.atoms.map(a => (a.struct ? a.struct + " " : "") + a.residue + " " +
+            (a.atomName || "?")).join(" — ") },
         { key:"atom1", label:"atom 1", get:r => cell(r, 0) },
         { key:"atom2", label:"atom 2", get:r => cell(r, 1) },
         { key:"atom3", label:"atom 3", get:r => cell(r, 2) },
@@ -750,8 +912,14 @@ function buildViewerSide(meta) {
     }
     motifSection.appendChild(list);
   }
+  /* Clears whichever structure is active. Without this, residues picked on an overlay could be
+     taken off only one at a time, because this control reached past the switcher to the base
+     structure — the same class of bug the switcher was added to end. */
   motifSection.appendChild(el("button", { class: "clear-selection", text: t("v_clear_selection"),
-    onclick: () => { VIEW.clearSelections(); buildViewerSide(meta); } }));
+    onclick: () => {
+      if (onBase) VIEW.clearSelections(); else ALIGN.clearOverlaySelection(active);
+      buildViewerSide(meta);
+    } }));
 
   /* Offered wherever a selection is made, and only while there is one: with nothing selected the
      control would be promising to hide everything. */
@@ -796,6 +964,7 @@ function buildViewerSide(meta) {
   side.appendChild(focusRow);
   side.appendChild(measureSection);
   paintMeasure();
+  side.appendChild(buildAlignSection(meta));
   side.appendChild(contactSection);
   side.appendChild(motifSection);
 
@@ -831,8 +1000,13 @@ function buildViewerSide(meta) {
    buildViewerSide, so the panel's own repaint is not in its scope — a click here was throwing
    silently while every assertion still passed. */
 function buildReceptorColumns(container, meta, onSelectionChange) {
-  container.appendChild(el("h4", { class:"viewer-section-title", text:t("v_whole_list") }));
-  const segments = VIEW.receptorSegments();
+  /* Reads whichever structure the switcher has active, so the question "what is along TM6 of the
+     structure I superposed" has the same answer path as it does for the base structure. */
+  const active = activePdb(meta);
+  const onBase = active === String(meta.pdb_id).toUpperCase();
+  container.appendChild(el("h4", { class:"viewer-section-title",
+    text:t("v_whole_list") + (onBase ? "" : " — " + active) }));
+  const segments = onBase ? VIEW.receptorSegments() : ALIGN.segmentsOf(active);
   if (!segments.length) {
     container.appendChild(el("p", { class:"notice small", text:t("v_whole_unavailable") }));
     return;
@@ -841,11 +1015,15 @@ function buildReceptorColumns(container, meta, onSelectionChange) {
   const other = segments.find(s => !s.helix);
   container.appendChild(el("p", { class:"muted small", text:t("v_whole_hint") }));
   // Said once, where a reader can act on it: the green cards are not something they clicked.
-  if (VIEW.hasQueryMarks())
+  if (onBase && VIEW.hasQueryMarks())
     container.appendChild(el("p", { class:"muted small tm-query-note",
       text:t("v_whole_query_note", { n:VIEW.queryPositionList().length }) }));
+  const isSelected = row => onBase ? VIEW.isResidueSelected(row.c, row.n)
+    : ALIGN.isOverlayResidueSelected(active, row.c, row.n);
+  const toggle = row => onBase ? VIEW.toggleResidue(row.c, row.n)
+    : ALIGN.toggleOverlayResidue(active, row.c, row.n);
   const residueButton = row => {
-    const selected = VIEW.isResidueSelected(row.c, row.n);
+    const selected = isSelected(row);
     const mutated = !!row.w;
     const title = [
       row.a + row.p,
@@ -860,7 +1038,7 @@ function buildReceptorColumns(container, meta, onSelectionChange) {
       "aria-pressed":selected ? "true" : "false", title,
       "aria-label":title,
       onclick:() => {
-        const on = VIEW.toggleResidue(row.c, row.n);
+        const on = toggle(row);
         b.classList.toggle("selected", on);
         b.setAttribute("aria-pressed", on ? "true" : "false");
         if (onSelectionChange) onSelectionChange();

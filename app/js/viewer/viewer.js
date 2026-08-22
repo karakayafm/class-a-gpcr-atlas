@@ -2,7 +2,7 @@
 // terminology, different default representations and different camera framing.
 import { t, siteClassLabel } from "../core/i18n.js";
 import { el, clear } from "../components/dom.js";
-import { loadBundleMeta, bundleCifUrl, errorMessage } from "../data/loader.js";
+import { loadBundleMeta, bundleCifUrl, loadReceptorResidues, errorMessage } from "../data/loader.js";
 import * as LC from "./lifecycle.js";
 
 let comp = null, meta = null, current = null, reps = {};
@@ -19,6 +19,11 @@ let residueTable = [];
    because a selection can legitimately empty that layer — every contact residue picked — and an
    absent representation would then be read as "the reader turned them off". */
 let contactLabelsOn = true;
+/* Set while a second structure is superposed on this one, and null otherwise. The ordinary scene
+   spends colour on meaning — element colours on the ligand, a tint on the contacting side chains,
+   another on the motifs — and all of that is worth more than telling two structures apart, right up
+   until there are two structures. Then it is worth less than that, and this takes over. */
+let uniformColour = null;
 /* Measurement. The reader picks atoms in the scene and the viewer reports what can be computed
    from however many they have picked: two give a distance, three an angle at the middle one, four
    a dihedral. Held here rather than in the panel because the picking happens in the scene and the
@@ -262,7 +267,7 @@ export async function open(host, pdb, observationId, onStatus) {
      positions on another's coordinates. */
   residueTable = []; queryResidues.clear(); queryPositions = [];
   measureAtoms.length = 0; measureKept.length = 0; measureMode = false;
-  focusSelection = false;
+  focusSelection = false; uniformColour = null; foreignTables.clear();
   try { meta = await loadBundleMeta(pdb); }
   catch (e) { onStatus(errorMessage(e)); return null; }
   let stage;
@@ -296,7 +301,8 @@ function labelCanvas(host, pdb) {
 }
 
 export function close() { LC.destroyStage(); comp = null; meta = null; current = null; reps = {};
-  residueTable = []; queryResidues.clear(); queryPositions = [];
+  residueTable = []; queryResidues.clear(); queryPositions = []; uniformColour = null;
+  foreignTables.clear(); measureShapeComp = null;
   measureAtoms.length = 0; measureKept.length = 0; measureMode = false; measureChanged = null;
   selectedResidues.clear(); selectedMotifs.clear(); }
 
@@ -355,13 +361,38 @@ function measureDihedral(a, b, c, d) {
   return Math.atan2(dot(m, n2) / l, dot(n1, n2)) * 180 / Math.PI;
 }
 
+/* Numbering tables for the superposed structures, keyed by the name their NGL structure carries.
+   Registered by the align module rather than imported from it, because this module knows nothing
+   about superposition and importing it back would close a cycle. Without these, an atom picked in
+   an overlay was named from the base structure's table — which is a different receptor with
+   different residue numbers — so it fell through to the deposited name and the readout said
+   PHE275 where every other part of the atlas says 6x52. */
+const foreignTables = new Map();
+export function registerStructureTable(name, rows) {
+  foreignTables.set(String(name || "").toUpperCase(), Array.isArray(rows) ? rows : []);
+}
+export function forgetStructureTables() { foreignTables.clear(); }
+
+function structureNameOf(atom) {
+  return String((atom && atom.structure && atom.structure.name) || (meta && meta.pdb_id) || "")
+    .toUpperCase();
+}
+/* The base structure's own table is the lazy one loaded for the whole-receptor list; a foreign
+   structure falls back to nothing rather than to the base table, because naming an overlay's
+   residue from the base receptor's numbering is worse than not naming it. */
+function tableFor(name) {
+  if (meta && name === String(meta.pdb_id).toUpperCase()) return residueTable;
+  return foreignTables.get(name) || [];
+}
+
 /* What to call the atom in the readout: the generic position where the structure has one, because
    that is the name the rest of the atlas uses, and the deposited residue otherwise. */
 function measureAtomLabel(atom) {
+  const struct = structureNameOf(atom);
   const chain = atom.chainname, seq = String(atom.resno);
-  const row = residueTable.find(r => r.c === chain && r.n === seq);
+  const row = tableFor(struct).find(r => r.c === chain && r.n === seq);
   const residue = row ? row.a + row.p : (atom.resname || "") + seq;
-  return { residue, atomName: atom.atomname || "", chain, seq };
+  return { residue, atomName: atom.atomname || "", chain, seq, struct };
 }
 
 /* Licorice draws bonds and no atom centres, so in measurement mode there is often nothing to aim
@@ -383,37 +414,68 @@ function addContactSideChains() {
       contactRepType(), contactRepParams(o.contact_receptor_residues)));
 }
 
-function measureDrop() { dropByPrefix("measure"); }
+/* Measurement geometry is drawn in world coordinates on a shape of its own, not as representations
+   of the structure the atoms came from.
+ *
+ * NGL's distance, angle and dihedral representations take atom *indices*, and an index only means
+ * anything against one structure. That was fine while there was one structure. With a second
+ * superposed on it, a measurement that spans the two has no single structure to be a representation
+ * of, and asking the base component to draw an overlay's index silently drew a different atom —
+ * the number in the panel was right and the marker on screen was somewhere else.
+ *
+ * A shape takes positions, and the overlay's coordinates have already been moved into this frame by
+ * the superposition, so both cases are the same operation. What is given up is NGL's dashed arc on
+ * angles; what is bought is that the picture agrees with the number. */
+const MEASURE_RGB = [1, 0.541, 0.239];   // MEASURE_COLOUR as a shape colour
+let measureShapeComp = null;
 
-/* One geometry per set. The set being built also gets its atoms marked, because those are the ones
-   a click will take back; a kept set is a result rather than a selection and needs no handles. */
-function drawMeasureSet(atoms, key, marked) {
-  const indices = atoms.map(a => a.index);
-  if (marked) addRep(key + "_pick", "spacefill", { sele:"@" + indices.join(","),
-    colorScheme:"uniform", colorValue:MEASURE_COLOUR, radiusType:"size", radiusSize:0.32,
-    opacity:0.95 });
-  /* Uniform colour rather than a `color` value: the measurement geometry has to read as one thing
-     against a scene already carrying four other colour meanings, and a thin default-shaded line
-     across twenty angstroms of receptor is not something a reader can follow. */
-  const paint = { colorScheme:"uniform", colorValue:MEASURE_COLOUR };
-  if (indices.length === 2)
-    addRep(key + "_distance", "distance", Object.assign({ atomPair:[indices],
-      labelUnit:"angstrom", labelColor:"white", labelSize:2.2, labelZOffset:2,
-      labelBackground:true, labelBackgroundColor:"#3a1c08", labelBackgroundOpacity:0.8,
-      useCylinder:true, radiusSize:0.12 }, paint));
-  if (indices.length === 3)
-    addRep(key + "_angle", "angle", Object.assign({ atomTriple:[indices],
-      labelColor:"white", labelSize:2.2, opacity:0.5, linewidth:3 }, paint));
-  if (indices.length === 4)
-    addRep(key + "_dihedral", "dihedral", Object.assign({ atomQuad:[indices],
-      labelColor:"white", labelSize:2.2, opacity:0.5, linewidth:3 }, paint));
+function measureDrop() {
+  dropByPrefix("measure");
+  const stage = LC.getStage();
+  if (measureShapeComp && stage) { try { stage.removeComponent(measureShapeComp); } catch (e) {} }
+  measureShapeComp = null;
+}
+
+function measureValueText(atoms) {
+  const r = resultFor(atoms);
+  if (!r || r.value == null || !isFinite(r.value)) return null;
+  return r.unit === "angstrom" ? r.value.toFixed(2) + " Å" : r.value.toFixed(1) + "°";
 }
 
 function measureDraw() {
   measureDrop();
-  if (!comp) return;
-  measureKept.forEach((set, i) => drawMeasureSet(set, "measure_kept" + i, false));
-  if (measureAtoms.length) drawMeasureSet(measureAtoms, "measure_now", true);
+  const NGL = window.NGL, stage = LC.getStage();
+  if (!NGL || !stage) return;
+  const sets = measureKept.map(atoms => ({ atoms, marked:false }));
+  if (measureAtoms.length) sets.push({ atoms:measureAtoms, marked:true });
+  if (!sets.length) return;
+  const shape = new NGL.Shape("measurement");
+  let drew = false;
+  for (const { atoms, marked } of sets) {
+    const p = atoms.map(a => [a.x, a.y, a.z]);
+    /* Only the set being built gets spheres: those are the atoms a click will take back, and a kept
+       set is a result rather than a selection. */
+    if (marked) for (const q of p) { shape.addSphere(q, MEASURE_RGB, 0.34); drew = true; }
+    for (let i = 0; i + 1 < p.length; i++) {
+      shape.addCylinder(p[i], p[i+1], MEASURE_RGB, 0.09);
+      drew = true;
+    }
+    const text = measureValueText(atoms);
+    if (text) {
+      // At the vertex for an angle, at the midpoint for a distance: in both cases the point the
+      // reader is looking at while they read the number.
+      const at = p.length === 2
+        ? [(p[0][0]+p[1][0])/2, (p[0][1]+p[1][1])/2, (p[0][2]+p[1][2])/2]
+        : p[1];
+      shape.addText(at, [1, 1, 1], 2.2, text);
+      drew = true;
+    }
+  }
+  if (!drew) return;
+  try {
+    measureShapeComp = stage.addComponentFromObject(shape);
+    measureShapeComp.addRepresentation("buffer");
+  } catch (e) { measureShapeComp = null; }
 }
 
 /* The one answer the current picks support. Reported as a kind and a number so the panel decides
@@ -503,7 +565,10 @@ function onScenePick(pick) {
      Without this a second click on the same atom added a duplicate, and a duplicate can never
      produce an answer — two coincident points have no angle — so the reader was left with a
      measurement that silently could not resolve. */
-  const already = measureAtoms.findIndex(a => a.index === atom.index);
+  /* Keyed by structure as well as index: an index is only unique within one structure, so with an
+     overlay on screen clicking an atom in one could take back an atom in the other. */
+  const struct = structureNameOf(atom);
+  const already = measureAtoms.findIndex(a => a.index === atom.index && a.struct === struct);
   if (already >= 0) {
     measureAtoms.splice(already, 1);
     measureDraw();
@@ -512,7 +577,7 @@ function onScenePick(pick) {
   }
   if (measureAtoms.length >= MEASURE_MAX) return;
   const info = measureAtomLabel(atom);
-  measureAtoms.push({ index:atom.index, x:atom.x, y:atom.y, z:atom.z,
+  measureAtoms.push({ index:atom.index, struct, x:atom.x, y:atom.y, z:atom.z,
     residue:info.residue, atomName:info.atomName, chain:info.chain, seq:info.seq });
   measureDraw();
   if (measureChanged) measureChanged();
@@ -522,11 +587,65 @@ function onScenePick(pick) {
 export function setResidueTable(rows) { residueTable = Array.isArray(rows) ? rows : []; }
 export function hasResidueTable() { return residueTable.length > 0; }
 
+/* ------------------------------------------------- what superposition needs from here
+   The align module fits a second structure onto this one over the generic positions they share, so
+   it needs the loaded component, which chain of it is the receptor, and the numbering table. The
+   table is lazy — a reader who never leaves the pocket never fetches it — so this loads it on
+   demand rather than reporting an empty receptor for a structure that has one. */
+export function baseComponent() { return comp; }
+/* Deliberately not applyDefaults: that clears the selection, resets the ligand display and reframes
+   the camera, and none of those should happen because a second structure arrived. This rebuilds the
+   structural layers only — addRep replaces by key — and leaves everything the reader had set. */
+export function setUniformColour(hex) {
+  const next = hex || null;
+  if (next === uniformColour) return;
+  uniformColour = next;
+  if (!comp || !meta) return;
+  addRep("cartoon", "cartoon", { sele: receptorSelection(), color: "#646a73", opacity: 0.68 });
+  const o = obs();
+  if (o && o.ligand_selection) {
+    addDisplayedLigands();
+    if (contactsOn) addContactSideChains();
+    addDisplayedInteractions();
+    addCovalentHighlight(o);
+  }
+  redrawSelections();
+}
+export function uniformColourValue() { return uniformColour; }
+export function basePdb() { return meta ? meta.pdb_id : ""; }
+export function receptorChain() { return activeReceptorChain(); }
+export async function ensureBaseResidueRows() {
+  if (residueTable.length || !meta) return residueTable.slice();
+  try {
+    const payload = await loadReceptorResidues(meta.pdb_id);
+    setResidueTable((payload && payload.residues) || []);
+  } catch (e) { /* a structure without a numbering table simply cannot be aligned on */ }
+  return residueTable.slice();
+}
+
 /* Grouped for the panel: one list per helix, in position order, for the chain on screen. H8 and
    the resolved loop residues are kept in a group of their own rather than dropped — they are as
    real as the helical ones, they just are not one of the seven columns the panel draws. */
 /* The seven the panel draws, so a caller can tell which of them a structure has nothing for. */
 export function helixOrder() { return HELICES.slice(); }
+
+/* The same grouping for a structure that is not the one this module loaded — a superposed overlay.
+   Kept here rather than duplicated in the align module so the two lists are built by one piece of
+   code and cannot drift; what differs between them is only which rows and which contacts go in. */
+export function segmentRows(rows, chain, contactKeys) {
+  const contacts = contactKeys instanceof Set ? contactKeys : new Set(contactKeys || []);
+  const groups = new Map();
+  for (const r of (rows || [])) {
+    if (chain && r.c !== chain) continue;
+    const key = HELICES.indexOf(r.s) >= 0 ? r.s : "other";
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(Object.assign({ contact:contacts.has(residueKey(r.c, r.n)), query:false }, r));
+  }
+  const out = HELICES.filter(h => groups.has(h)).map(h => ({ segment:h, helix:true,
+    residues:groups.get(h) }));
+  if (groups.has("other")) out.push({ segment:"other", helix:false, residues:groups.get("other") });
+  return out;
+}
 
 export function receptorSegments() {
   const chain = activeReceptorChain();
@@ -592,10 +711,57 @@ function obs() { return (meta && meta.observations || []).find(o => o.observatio
 // A late event — a toggle fired while the modal is closing, or a stray change handler — must
 // not throw against a torn-down component. Every representation helper is a no-op once the
 // stage is gone.
+/* Layers that keep their own colour while the structure is painted uniform. Two kinds: the ones
+   that answer a different question from "which structure is this" — what the reader picked, what
+   they measured, what they arrived asking about — and the text, which has to stay legible against
+   whatever colour the structure took. Losing those to the uniform coat would make superposition a
+   mode in which selection stops giving feedback. */
+function keepsOwnColour(key, type) {
+  return type === "label" || key.startsWith("measure") ||
+    key.startsWith("picked_") || key.startsWith("query_") || key.endsWith("_labels");
+}
+
+/* The contact labels are the exception to the exception. They are excluded from the uniform coat
+   above because a label painted the structure's colour on a dark background is a label, whereas a
+   label whose *background* is painted that colour stops being readable. But leaving them white made
+   the identity vanish exactly where it matters most: with a second structure superposed, two labels
+   land on the same position — V3x33 from one receptor and I3x33 from the other — and two white tags
+   do not say which is which. So the glyphs take the colour and the background stays black. */
+function labelColour(fallback) { return uniformColour || fallback; }
+
+/* Representations that draw atoms, where "uniform" is applied as element colouring with the
+   structure's colour standing in for carbon. A cartoon has no atoms to distinguish and takes the
+   colour flat. */
+const ATOMISTIC = { licorice:1, "ball+stick":1, spacefill:1, hyperball:1, line:1, point:1 };
+
+/* The uniform coat, as representation parameters. Carbon carries the structure's identity and the
+   heteroatoms keep theirs: nitrogen blue, oxygen red, sulfur yellow. Which is the compromise the
+   scene actually needs — the colour still says which structure a ligand belongs to, because carbon
+   is most of every ligand, while the atoms that decide what a contact *is* stay readable. */
+function uniformParams(type) {
+  return ATOMISTIC[type]
+    ? { colorScheme: "element", colorValue: uniformColour }
+    : { color: uniformColour, colorScheme: undefined };
+}
+
 function addRep(key, type, params) {
   if (!comp) return null;
   if (reps[key]) { try { comp.removeRepresentation(reps[key]); } catch (e) {} }
-  try { reps[key] = comp.addRepresentation(type, params); } catch (e) { return null; }
+  let p = params;
+  /* While something is superposed on this structure, every structural layer of it is one colour,
+     so the eye separates the two structures before it reads anything else. `color` overrides
+     whatever the layer would have chosen — element colouring on the ligand, the contact tint on the
+     side chains — so both are removed rather than left to fight it. */
+  if (uniformColour && !keepsOwnColour(key, type)) {
+    p = Object.assign({}, params);
+    /* Both are dropped before the coat goes on. `color` is what the layer chose for itself — the
+       white carbon overlay on the active ligand, the grey cartoon — and NGL lets it override
+       colorScheme, so leaving it in place kept that ligand white on a structure painted green. */
+    delete p.color; delete p.colorScheme; delete p.colorValue;
+    Object.assign(p, uniformParams(type));
+    if (p.colorScheme === undefined) delete p.colorScheme;
+  }
+  try { reps[key] = comp.addRepresentation(type, p); } catch (e) { return null; }
   return reps[key];
 }
 function dropRep(key) {
@@ -699,7 +865,7 @@ function addContactLabels(exclude) {
   if (!details.length) return;
   const s = details.map(r => residueKey(r.auth_asym_id, r.auth_seq_id)).join(" or ");
   addRep("motif_labels", "label", { sele:"(" + s + ") and .CA", labelType:"text",
-    labelText:labelTextFor(details), color:"white", backgroundColor:"#111111",
+    labelText:labelTextFor(details), color:labelColour("white"), backgroundColor:"#111111",
     backgroundOpacity:0.68, showBackground:true, fixedSize:false, labelSize:2.2, radius:0.8, zOffset:2 });
 }
 
