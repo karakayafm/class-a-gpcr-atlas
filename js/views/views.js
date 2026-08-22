@@ -696,6 +696,7 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
     for (const [name, key] of Object.entries(FILTER_KEYS)) next[key] = filters[name] || "";
     for (const [name, key] of Object.entries(LIST_KEYS)) next[key] = (filters[name] || []).join(",");
     next.rep = filters.representativeOnly ? "" : "0";
+    next.af = autoFiltered ? "1" : "";
     next.thr = filters.contactThreshold ? String(filters.contactThreshold) : "";
     next.rng = Object.entries(filters.ranges || {})
       .filter(([, span]) => span && (span[0] != null || span[1] != null))
@@ -720,6 +721,24 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
   if (initialPdb && selected && selected.pdb_id === String(initialPdb).toUpperCase() &&
       filters.representativeOnly && selected.analysis_unit_representative !== true)
     filters.representativeOnly = false;
+  /* The same address also says which receptor and receptor family the structure belongs to, and
+     until now the panel did not. A reader who searched "2RH1" or followed a link from another
+     module arrived with every dropdown reading "all" and had to find those two facts in the detail
+     pane — the two facts the list is organised by. Setting them from the structure itself answers
+     the question next to the list it describes, and leaves the list showing that receptor's other
+     depositions rather than the whole family.
+     `af` records that this was done. A language change rebuilds this view from the route, so
+     without it clearing one of these filters would be undone on the next remount. */
+  let autoFiltered = parseRoute().af === "1";
+  if (initialPdb && selected && selected.pdb_id === String(initialPdb).toUpperCase() &&
+      !autoFiltered && !filters.family && !filters.receptor) {
+    filters.family = selected.receptor_family_name || "";
+    filters.receptor = selected.receptor_name || "";
+    autoFiltered = true;
+    // Recorded in the address straight away, so the narrowed list is what gets shared and what a
+    // remount reads back, rather than something this view alone remembers.
+    writeFilters();
+  }
   const uniq = fn => Array.from(new Set(d.structures.flatMap(fn).filter(Boolean))).sort();
   const observed = d.structures.filter(x => x.observations.some(o => o.coordinate_status === "observed"));
   const ligandNames = new Set(observed.flatMap(x => x.observations.map(o => o.ligand_name).filter(Boolean)));
