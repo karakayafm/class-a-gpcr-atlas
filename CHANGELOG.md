@@ -16,6 +16,14 @@
 - **Measurement across structures.** Distances, angles and torsions can be taken between atoms of
   different superposed structures. Each atom is named by the generic position of the structure it
   belongs to, and the readout and the exported table name that structure.
+- **Interaction types.** Interactions opens three layers that can be shown separately: the ligand's
+  contacts with the receptor, the contacts between different transmembrane helices, and those within
+  one helix. Hydrogen bonds are drawn in light green and hydrophobic contacts in mustard; the other
+  types keep the viewer's existing colours. The helical layers are scoped to the residues on screen
+  — the intra-helical one to each of them and four either side, the span an alpha helix bonds
+  across — and include backbone hydrogen bonds, which are most of what holds a helix together. Both
+  are off by default. Inter-helical contacts run through the interior of the bundle, where the
+  cartoon ribbon hides them; turning the receptor cartoon off shows them.
 
 ### Browsing
 

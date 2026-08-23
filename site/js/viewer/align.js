@@ -189,10 +189,14 @@ function paintOverlay(entry) {
     /* Both sides parenthesised. Unbracketed, `a or b or (c) and hetero and not hydrogen` is at the
        mercy of the selection language's precedence, and the reading that binds `and` across the
        whole disjunction leaves only hetero atoms selected — no receptor side, so no contacts. */
-    if (cr && lig) comp.addRepresentation("contact", {
-      sele: "(" + cr + ") or (" + lig + ")", maxHbondDist: 3.6, maxHydrophobicDist: 4.2,
-      maxPiStackingDist: 5.5, labelVisible: true, labelUnit: "angstrom", labelSize: 0.72,
-      labelColor: V.currentBackground() === "white" ? "#111111" : "#ffffff" });
+    if (cr && lig) {
+      const params = { sele: "(" + cr + ") or (" + lig + ")", maxHbondDist: 3.6,
+        maxHydrophobicDist: 4.2, maxPiStackingDist: 5.5, labelVisible: true,
+        labelUnit: "angstrom", labelSize: 0.72 };
+      // Split by interaction type exactly as the base structure is, so a hydrogen bond is the same
+      // green and a hydrophobic contact the same mustard whichever structure it belongs to.
+      V.addSplitContactsTo(comp, params, { weakHydrogenBond: true });
+    }
   }
   if (entry.layers.labels) {
     const { text, sele } = contactLabelText(entry);

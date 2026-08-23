@@ -357,6 +357,8 @@ async function openModal(pdb, observationId, focusResidue, opts) {
      the modal stays open, which changing the address does, comes through here too. */
   ALIGN.reset();
   activeStructure = null;
+  interactionPanelOpen = false;
+  surfacePanelOpen = false;
   // the viewport is visible now; the viewer resizes only after this point
   const meta = await VIEW.open(document.getElementById("viewport"), pdb, observationId,
     msg => { st.textContent = msg; st.hidden = !msg; });
@@ -438,6 +440,8 @@ function closeModal() {
   VIEW.close();
   ALIGN.reset();
   activeStructure = null;
+  interactionPanelOpen = false;
+  surfacePanelOpen = false;
   m.hidden = true;
   document.body.classList.remove("modal-open");
   setBackgroundInert(false);
@@ -499,6 +503,12 @@ function buildObservationSwitch(meta) {
    outside the pocket, had no way to say so. Named rather than inferred, so the panel can say which
    structure it is describing. */
 let activeStructure = null;
+/* Whether the interaction layers are showing. Held outside buildViewerSide because that function
+   rebuilds the panel from scratch — switching to the whole receptor, changing observation, changing
+   language — and a disclosure that closes itself every time is one the reader has to keep
+   reopening while the layers it controls are still on. */
+let interactionPanelOpen = false;
+let surfacePanelOpen = false;
 function activePdb(meta) {
   const want = String(activeStructure || "").toUpperCase();
   if (want && want !== String(meta.pdb_id).toUpperCase() && !ALIGN.isOverlaid(want))
@@ -604,7 +614,62 @@ function buildViewerSide(meta) {
   // The contacting side chains were drawn unconditionally; a reader looking at ligand
   // topology alone had no way to clear them.
   add("contacts", t("v_side_chains"), apo || !hasLig);
-  const interactionsButton = add("lines", t("v_interactions"), apo || !hasLig);
+  /* Interactions is no longer one thing, so its button is a disclosure rather than a switch.
+     Clicking it opens the three layers it covers and changes nothing on screen: the ligand's
+     contacts, which is what this view was built for, and the two helical ones, which answer what
+     holds the bundle together rather than what binds. Making it a switch as well meant the first
+     click turned everything off before the panel could be seen. */
+  const interactionPanel = el("div", { class:"interaction-options", hidden:!interactionPanelOpen,
+    "aria-label":t("v_interactions") });
+  const interactionsButton = el("button", { class:"viewer-tool disclosure", type:"button",
+    "aria-expanded":interactionPanelOpen ? "true" : "false",
+    "aria-pressed":VIEW.anyInteractionLayer() ? "true" : "false",
+    text:t("v_interactions") });
+  ctrl.appendChild(interactionsButton);
+  /* Inside the button row, not after it. The row wraps, and a panel appended to the side pane
+     landed below every other tool — far enough from the control that opened it that it read as a
+     separate thing. Given a full-width flex basis it breaks onto the line directly beneath its
+     own button instead. */
+  ctrl.appendChild(interactionPanel);
+  const INTERACTION_LAYERS = [
+    ["ligand", "v_interactions_ligand", "v_interactions_ligand_hint"],
+    ["inter",  "v_interactions_inter",  "v_interactions_inter_hint"],
+    ["intra",  "v_interactions_intra",  "v_interactions_intra_hint"]
+  ];
+  function paintInteractionLayers() {
+    clear(interactionPanel);
+    const state = VIEW.interactionLayerState();
+    for (const [name, label, hint] of INTERACTION_LAYERS) {
+      // Only the ligand layer depends on there being a ligand; the helical ones describe the
+      // receptor and are as meaningful in an apo structure as in a bound one.
+      const unavailable = name === "ligand" && (apo || !hasLig || !on.ligand);
+      const b = el("button", { class:"viewer-tool interaction-option", type:"button",
+        disabled: unavailable,
+        "aria-pressed": state[name] && !unavailable ? "true" : "false", title:t(hint), text:t(label),
+        onclick: async () => {
+          const next = !VIEW.interactionLayerState()[name];
+          // The helical layers are grouped by helix, and only the numbering table says which
+          // helix a residue is in. Loaded before the layer goes on, or it would draw nothing.
+          if (next && name !== "ligand") {
+            b.disabled = true;
+            await ensureResidueTable(meta);
+            b.disabled = false;
+          }
+          VIEW.setInteractionLayer(name, next);
+          paintInteractionLayers();
+          interactionsButton.setAttribute("aria-pressed",
+            VIEW.anyInteractionLayer() ? "true" : "false");
+        } });
+      interactionPanel.appendChild(b);
+    }
+  }
+  paintInteractionLayers();
+  interactionsButton.addEventListener("click", () => {
+    interactionPanelOpen = !interactionPanelOpen;
+    interactionPanel.hidden = !interactionPanelOpen;
+    interactionsButton.setAttribute("aria-expanded", interactionPanelOpen ? "true" : "false");
+    paintInteractionLayers();
+  });
   let covalentButton = null;
   let ligandPanel = null;
   if (hasLig && VIEW.isPolymerLigand()) {
@@ -627,9 +692,11 @@ function buildViewerSide(meta) {
         ligandVisibility.textContent = t(on.ligand ? "v_ligand_hide" : "v_ligand_show");
         cartoonLigand.disabled = !on.ligand;
         licoriceLigand.disabled = !on.ligand;
-        on.lines = on.ligand;
-        interactionsButton.disabled = !on.ligand;
-        interactionsButton.setAttribute("aria-pressed", on.lines ? "true" : "false");
+        /* The helical interaction layers describe the receptor, so hiding the ligand no longer
+           closes the whole control — it only makes the protein-ligand layer unavailable. */
+        paintInteractionLayers();
+        interactionsButton.setAttribute("aria-pressed",
+          VIEW.anyInteractionLayer() ? "true" : "false");
         if (covalentButton) {
           covalentButton.setAttribute("aria-pressed", on.ligand ? "true" : "false");
           covalentButton.classList.toggle("selected", on.ligand);
@@ -637,7 +704,7 @@ function buildViewerSide(meta) {
         VIEW.toggles.ligand(on.ligand);
       } });
     ligandPanel.append(cartoonLigand, licoriceLigand, ligandVisibility);
-    const ligandButton = el("button", { class:"viewer-tool", "aria-expanded":"false",
+    const ligandButton = el("button", { class:"viewer-tool disclosure", "aria-expanded":"false",
       text:t("v_ligand"), onclick:() => {
         ligandPanel.hidden = !ligandPanel.hidden;
         ligandButton.setAttribute("aria-expanded", ligandPanel.hidden ? "false" : "true");
@@ -649,9 +716,11 @@ function buildViewerSide(meta) {
         on.ligand = !on.ligand;
         ligandButton.setAttribute("aria-pressed", on.ligand ? "true" : "false");
         ligandButton.textContent = t(on.ligand ? "v_ligand_hide" : "v_ligand_show");
-        on.lines = on.ligand;
-        interactionsButton.disabled = !on.ligand;
-        interactionsButton.setAttribute("aria-pressed", on.lines ? "true" : "false");
+        /* The helical interaction layers describe the receptor, so hiding the ligand no longer
+           closes the whole control — it only makes the protein-ligand layer unavailable. */
+        paintInteractionLayers();
+        interactionsButton.setAttribute("aria-pressed",
+          VIEW.anyInteractionLayer() ? "true" : "false");
         if (covalentButton) {
           covalentButton.setAttribute("aria-pressed", on.ligand ? "true" : "false");
           covalentButton.classList.toggle("selected", on.ligand);
@@ -660,29 +729,36 @@ function buildViewerSide(meta) {
       } });
     ctrl.appendChild(ligandButton);
   }
-  const surfacePanel = el("div", { class:"surface-options", hidden:true,
+  /* Like Interactions: this button opens the two surfaces it covers rather than switching them.
+     As a switch it did both at once, so the first click turned the surfaces on before the panel
+     that controls them could be read, and the reader had no way to ask for one without the other. */
+  const surfacePanel = el("div", { class:"surface-options", hidden:!surfacePanelOpen,
     "aria-label":t("v_surface") });
+  const surfaceMaster = el("button", { class:"viewer-tool disclosure", type:"button",
+    disabled:apo || !hasLig, "aria-expanded":surfacePanelOpen ? "true" : "false",
+    "aria-pressed":"false", text:t("v_surface") });
+  const paintSurfaceMaster = () => {
+    on.surface = on.surfaceReceptor || on.surfaceLigand;
+    surfaceMaster.setAttribute("aria-pressed", on.surface ? "true" : "false");
+  };
   const surfaceOption = (key, label, toggle) => {
     const b = el("button", { class:"viewer-tool surface-option", "aria-pressed":"false",
       text:label, onclick:() => {
         on[key] = !on[key]; b.setAttribute("aria-pressed", on[key] ? "true" : "false");
         toggle(on[key]);
+        paintSurfaceMaster();
       } });
     surfacePanel.appendChild(b); return b;
   };
-  const receptorSurface = surfaceOption("surfaceReceptor", t("v_surface_receptor"), VIEW.toggles.surfaceReceptor);
-  const ligandSurface = surfaceOption("surfaceLigand", t("v_surface_ligand"), VIEW.toggles.surfaceLigand);
-  const surfaceMaster = el("button", { class:"viewer-tool", disabled:apo || !hasLig,
-    "aria-pressed":"false", text:t("v_surface"), onclick:() => {
-      on.surface = !on.surface;
-      surfaceMaster.setAttribute("aria-pressed", on.surface ? "true" : "false");
-      surfacePanel.hidden = !on.surface;
-      on.surfaceReceptor = on.surface; on.surfaceLigand = on.surface;
-      receptorSurface.setAttribute("aria-pressed", on.surface ? "true" : "false");
-      ligandSurface.setAttribute("aria-pressed", on.surface ? "true" : "false");
-      VIEW.toggles.surface(on.surface);
-    } });
+  surfaceOption("surfaceReceptor", t("v_surface_receptor"), VIEW.toggles.surfaceReceptor);
+  surfaceOption("surfaceLigand", t("v_surface_ligand"), VIEW.toggles.surfaceLigand);
+  surfaceMaster.addEventListener("click", () => {
+    surfacePanelOpen = !surfacePanelOpen;
+    surfacePanel.hidden = !surfacePanelOpen;
+    surfaceMaster.setAttribute("aria-expanded", surfacePanelOpen ? "true" : "false");
+  });
   ctrl.appendChild(surfaceMaster);
+  ctrl.appendChild(surfacePanel);
   /* One switch rather than two buttons: the background is either dark or light, and two
      separate controls made it look as though both could be off. */
   const backgroundSwitch = el("button", { class:"viewer-switch", type:"button", role:"switch" },
@@ -742,7 +818,7 @@ function buildViewerSide(meta) {
   ctrl.appendChild(measureButton);
   side.appendChild(ctrl);
   if (ligandPanel) side.appendChild(ligandPanel);
-  side.appendChild(surfacePanel);
+
   side.appendChild(el("div", { class: "viewer-actions" }, [
     el("button", { class: "btn", text: t("v_pocket"), onclick: () => VIEW.focusPocket() })
   ]));

@@ -268,6 +268,8 @@ export async function open(host, pdb, observationId, onStatus) {
   residueTable = []; queryResidues.clear(); queryPositions = [];
   measureAtoms.length = 0; measureKept.length = 0; measureMode = false;
   focusSelection = false; uniformColour = null; foreignTables.clear();
+  interactionLayers.ligand = true; interactionLayers.inter = false;
+  interactionLayers.intra = false; ligandShown = true;
   try { meta = await loadBundleMeta(pdb); }
   catch (e) { onStatus(errorMessage(e)); return null; }
   let stage;
@@ -601,7 +603,7 @@ export function setUniformColour(hex) {
   if (next === uniformColour) return;
   uniformColour = next;
   if (!comp || !meta) return;
-  addRep("cartoon", "cartoon", { sele: receptorSelection(), color: "#646a73", opacity: 0.68 });
+  addRep("cartoon", "cartoon", { sele: receptorSelection(), color: "#646a73", opacity: CARTOON_OPACITY });
   const o = obs();
   if (o && o.ligand_selection) {
     addDisplayedLigands();
@@ -775,7 +777,7 @@ export function applyDefaults() {
   const rc = receptorSelection();
   ligandMode = "cartoon";
   selectedResidues.clear(); selectedMotifs.clear();
-  addRep("cartoon", "cartoon", { sele: rc, color: "#646a73", opacity: 0.68 });
+  addRep("cartoon", "cartoon", { sele: rc, color: "#646a73", opacity: CARTOON_OPACITY });
   const o = obs();
   if (o && o.ligand_selection) {
     const all = ligandObservations();
@@ -874,6 +876,242 @@ function addContactLabels(exclude) {
    amber stacking contact. On the black background the navy is all but invisible, so there the
    labels are forced white and the lines keep carrying the interaction type. */
 function contactLabelColour() { return viewerBackground === "black" ? "white" : undefined; }
+/* Hydrogen bonds are drawn light green rather than NGL's blue.
+ *
+ * The colour cannot be asked for: NGL's contact representation has no colour parameter and assigns
+ * one per interaction type from a hardcoded table. The vendored copy of the library could be
+ * patched — the constant appears exactly once — but THIRD_PARTY_NOTICES.md states that file is
+ * byte-identical to the published distribution and carries its SHA-256, and a colour is not worth
+ * making that untrue.
+ *
+ * So the hydrogen bonds are drawn as a representation of their own, with every other interaction
+ * type switched off, and its buffers are repainted after it is built. Everything else keeps NGL's
+ * own colouring in a second representation. */
+/* Interaction types the atlas recolours, and the rest.
+ *
+ * NGL assigns a colour per interaction type from a table compiled into the library — there is no
+ * parameter for it, and the vendored copy is declared byte-identical to the published distribution
+ * with its SHA-256, which a colour is not worth making untrue. So each recoloured type is drawn as
+ * a representation of its own with every other type switched off, and its buffers are repainted
+ * once built. Everything left over goes in a final representation keeping NGL's own colours. */
+const ALL_CONTACT_TYPES = ["hydrogenBond", "waterHydrogenBond", "backboneHydrogenBond",
+  "weakHydrogenBond", "hydrophobic", "halogenBond", "ionicInteraction", "metalCoordination",
+  "cationPi", "piStacking"];
+const RECOLOURED_CONTACTS = [
+  { key:"hbond", types:["hydrogenBond", "waterHydrogenBond", "backboneHydrogenBond"],
+    rgb:[0x7f / 255, 0xe0 / 255, 0xa0 / 255], label:"#7fe0a0" },
+  { key:"phobic", types:["hydrophobic"],
+    rgb:[0xd8 / 255, 0xa5 / 255, 0x31 / 255], label:"#d8a531" }
+];
+/* Which types NGL computes unless told otherwise. Backbone and weak hydrogen bonds and water-
+   mediated ones are off in NGL and stay off here except where a caller asks — the helical layers
+   do, because backbone hydrogen bonds are most of what holds a helix together. */
+const DEFAULT_CONTACT_TYPES = { hydrogenBond:true, waterHydrogenBond:false,
+  backboneHydrogenBond:false, weakHydrogenBond:false, hydrophobic:true, halogenBond:true,
+  ionicInteraction:true, metalCoordination:true, cationPi:true, piStacking:true };
+
+/* One contact layer, split into one representation per recoloured type plus one for the rest.
+   `wanted` says which types this layer asks for at all; a type switched off there is off in every
+   representation, so a caller cannot enable something through the back door of a colour group. */
+function buildSplitContacts(add, params, wanted) {
+  const enabled = Object.assign({}, DEFAULT_CONTACT_TYPES, wanted || {});
+  const off = {};
+  for (const t of ALL_CONTACT_TYPES) off[t] = false;
+  const claimed = new Set();
+  for (const group of RECOLOURED_CONTACTS) {
+    const mine = group.types.filter(t => enabled[t]);
+    for (const t of group.types) claimed.add(t);
+    if (!mine.length) continue;
+    const types = Object.assign({}, off);
+    for (const t of mine) types[t] = true;
+    repaintBuffers(add("_" + group.key,
+      Object.assign({}, params, types, { labelColor:group.label })), group.rgb);
+  }
+  const rest = Object.assign({}, off);
+  let any = false;
+  for (const t of ALL_CONTACT_TYPES)
+    if (enabled[t] && !claimed.has(t)) { rest[t] = true; any = true; }
+  if (any) add("", Object.assign({}, params, rest));
+}
+
+function addSplitContacts(key, params, wanted) {
+  buildSplitContacts((suffix, p) => addRep(key + suffix, "contact", p), params, wanted);
+}
+
+/* Same split on a component this module did not load — a superposed structure. Exported rather than
+   duplicated in the align module so one description of "what colour is an interaction" serves every
+   structure in the scene. */
+export function addSplitContactsTo(component, params, wanted) {
+  if (!component) return;
+  buildSplitContacts((suffix, p) => {
+    try { return component.addRepresentation("contact", p); } catch (e) { return null; }
+  }, params, wanted);
+}
+
+function repaintBuffers(element, rgb) {
+  const buffers = element && element.repr && element.repr.bufferList;
+  if (!buffers || !buffers.length) return false;
+  let painted = false;
+  for (const buffer of buffers) {
+    const attributes = buffer && buffer.geometry && buffer.geometry.attributes;
+    if (!attributes) continue;
+    for (const name of ["color", "color2"]) {
+      const attribute = attributes[name];
+      if (!attribute || !attribute.array) continue;
+      for (let i = 0; i + 2 < attribute.array.length; i += 3) {
+        attribute.array[i] = rgb[0];
+        attribute.array[i + 1] = rgb[1];
+        attribute.array[i + 2] = rgb[2];
+      }
+      attribute.needsUpdate = true;
+      painted = true;
+    }
+  }
+  return painted;
+}
+
+/* Which interaction layers are on. The viewer drew one kind — ligand to receptor — and called it
+   "interactions", which is the only kind a binding-site view needs and not the only kind there is.
+   The helical ones answer a different question: what holds the bundle together, and which helices
+   touch each other. They are off by default because a receptor's intra-helical hydrogen bonds are
+   every backbone i,i+4 pair in every helix, which is the shape of an alpha helix and about two
+   hundred and fifty lines. */
+const interactionLayers = { ligand:true, inter:false, intra:false };
+/* Whether the ligand itself is on screen. The protein-ligand lines run to it, so they go when it
+   goes — but the helical layers describe the receptor and have no reason to. Tracked rather than
+   folded into the layer flag, so re-showing the ligand brings its lines back without the reader
+   having to switch them on again. */
+let ligandShown = true;
+export function interactionLayerState() { return Object.assign({}, interactionLayers); }
+export function setInteractionLayer(name, on) {
+  if (!(name in interactionLayers)) return false;
+  interactionLayers[name] = !!on;
+  redrawInteractions();
+  return true;
+}
+export function anyInteractionLayer() {
+  return Object.values(interactionLayers).some(Boolean);
+}
+/* The helical layers are the only part of the viewer that needs to know which helix a residue is
+   in, so they are the only part that needs the numbering table. Reported so the panel can load it
+   before switching one on rather than drawing nothing and saying nothing. */
+export function helicalLayersNeedTable() {
+  return (interactionLayers.inter || interactionLayers.intra) && !residueTable.length;
+}
+
+function helixGroups() {
+  const chain = activeReceptorChain();
+  const out = new Map();
+  for (const r of residueTable) {
+    if (chain && r.c !== chain) continue;
+    if (HELICES.indexOf(r.s) < 0) continue;
+    if (!out.has(r.s)) out.set(r.s, []);
+    out.get(r.s).push(r.n + ":" + r.c);
+  }
+  return out;
+}
+
+/* One group of contacts, drawn as the same two representations everything else uses: the hydrogen
+   bonds on their own so they can be repainted green, and every other type in NGL's own colours.
+   `filterSele` as a pair of selections is what makes inter-helical expressible — NGL keeps only
+   contacts with one atom in the first selection and the other in the second. */
+function addContactGroup(key, sele, filterPair, extra) {
+  const base = Object.assign({ sele, maxHbondDist:3.6, maxHydrophobicDist:4.2,
+    maxPiStackingDist:5.5, labelVisible:false }, extra || {});
+  if (filterPair) base.filterSele = filterPair;
+  addSplitContacts(key, base,
+    { weakHydrogenBond:true, backboneHydrogenBond:!!(extra || {}).backboneHydrogenBond });
+  /* Inter-helical contacts run through the interior of the bundle, which is where the cartoon
+     ribbon is, and NGL's semi-transparent cartoon writes depth — it does not blend with what is
+     behind it, it removes it. Measured on one selected residue: with the ribbon on the layer put
+     nothing on screen at all, with it off, 444 pixels. Four ways of drawing through it were tried
+     and every one is worse than the problem: a thicker line does not reach past the ribbon,
+     thinning the ribbon to 0.22 leaves the receptor invisible and the lines still lost, taking the
+     lines out of the depth test changes nothing, and stopping the ribbon writing depth breaks the
+     ribbon into fragments. So the ribbon wins, and a reader who wants these contacts turns it
+     off — one click, and they show cleanly. */
+}
+
+/* The residues actually on screen as atoms: the ligand's contact shell while that layer is on, plus
+   anything the reader picked or arrived marking. Used to scope the intra-helical layer, which over
+   whole helices is every backbone i,i+4 pair of all seven — several hundred lines that light the
+   entire bundle and bury whatever the reader was looking at. */
+function displayedResidueKeys() {
+  const out = new Set(claimedResidues());
+  if (contactsOn && !focusSelection) {
+    const o = obs();
+    for (const r of (o && o.contact_receptor_details) || [])
+      out.add(residueKey(r.auth_asym_id, r.auth_seq_id));
+    for (const [c, seq] of (o && o.contact_receptor_residues) || []) out.add(residueKey(c, seq));
+  }
+  return out;
+}
+
+function addHelicalInteractions() {
+  if (!interactionLayers.inter && !interactionLayers.intra) return;
+  const groups = helixGroups();
+  const names = HELICES.filter(h => (groups.get(h) || []).length > 1);
+  const seleOf = h => groups.get(h).join(" or ");
+  /* Both helical layers are scoped to what is on screen, but they need different scopes.
+     Intra-helical: an alpha helix hydrogen-bonds i to i+4, and the residues a pocket puts on one
+     helix are scattered along it — taken as the displayed residues alone the layer drew nothing at
+     all. So the scope is each displayed residue plus four either side: exactly the span that can
+     bond to it, the helix's own number rather than one chosen to make the picture look right.
+     Inter-helical: no span, because a side chain reaches across to another helix directly. The
+     scope is the displayed residues themselves, and every contact they make with any other helix.
+     Left unscoped this poured the whole bundle onto the screen while the reader was looking at one
+     residue — the layer answered "which helices touch each other" when they had asked "what does
+     this one touch". */
+  const shown = displayedResidueKeys();
+  const HELIX_BOND_SPAN = 4;
+  const intraOf = h => {
+    // Ordered along the chain so "four either side" means four turns of sequence, not of payload.
+    const ordered = groups.get(h).slice().sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
+    const keep = new Set();
+    ordered.forEach((key, i) => {
+      if (!shown.has(key)) return;
+      for (let j = Math.max(0, i - HELIX_BOND_SPAN);
+           j <= Math.min(ordered.length - 1, i + HELIX_BOND_SPAN); j++) keep.add(ordered[j]);
+    });
+    return ordered.filter(k => keep.has(k));
+  };
+  // Backbone hydrogen bonds are off by default in NGL and are most of what holds a helix together,
+  // so the helical layers ask for them explicitly.
+  const extra = { backboneHydrogenBond:true };
+  if (interactionLayers.intra)
+    for (const h of names) {
+      const here = intraOf(h);
+      if (here.length > 1) addContactGroup("lines_intra_" + h, here.join(" or "), null, extra);
+    }
+  if (interactionLayers.inter)
+    names.forEach(h => {
+      /* One side of the pair is the displayed residues of this helix, the other is every other
+         helix — so what is drawn is what those residues reach across to, whichever helix answers.
+         A contact displayed at both ends is drawn twice over the same line, which costs nothing. */
+      const mine = groups.get(h).filter(k => shown.has(k));
+      if (!mine.length) return;
+      const others = names.filter(x => x !== h).map(seleOf).join(" or ");
+      if (!others) return;
+      const here = mine.join(" or ");
+      addContactGroup("lines_inter_" + h, "(" + seleOf(h) + ") or (" + others + ")",
+        [here, others], extra);
+    });
+}
+
+const CARTOON_OPACITY = 0.68;
+
+function redrawInteractions() {
+  dropByPrefix("lines");
+  /* Only the ligand's lines go when the reader asks to see the selection alone: they run to the
+     contacting side chains, and with those hidden they would end in mid-air. The helical layers are
+     drawn over the selection itself, so showing the selection alone is the state they are most
+     wanted in — dropping them there left the reader looking at exactly the residues they had picked
+     and told that nothing connects them. */
+  if (interactionLayers.ligand && ligandShown && !focusSelection)
+    ligandObservations().forEach((o, i) => addInteractionLines(o, i ? "lines_extra_" + i : "lines"));
+  addHelicalInteractions();
+}
+
 function addInteractionLines(o=obs(), key="lines") {
   if (!o || !o.ligand_selection) return;
   const params = { sele:sel(o.contact_receptor_residues) + " or " +
@@ -881,15 +1119,14 @@ function addInteractionLines(o=obs(), key="lines") {
     maxPiStackingDist:5.5, labelVisible:true, labelUnit:"angstrom", labelSize:0.72 };
   const colour = contactLabelColour();
   if (colour) params.labelColor = colour;
-  addRep(key, "contact", params);
+  addSplitContacts(key, params, { weakHydrogenBond:true });
 }
 
-function addDisplayedInteractions() {
-  /* The interaction lines run from the ligand to contacting side chains. With those hidden the
-     lines would end in mid-air, so they go with them. */
-  if (focusSelection) { dropByPrefix("lines"); return; }
-  ligandObservations().forEach((o, i) => addInteractionLines(o, i ? "lines_extra_" + i : "lines"));
-}
+/* Kept as the name the rest of the module calls, but it no longer decides anything: the one place
+   that knows which layers survive which state is redrawInteractions. It used to drop every line in
+   focus mode and return, which is why moving that rule into redrawInteractions did nothing — this
+   is the function focus mode actually calls, and it never got there. */
+function addDisplayedInteractions() { redrawInteractions(); }
 
 export function contactResidues() {
   const o = obs();
@@ -1058,6 +1295,9 @@ function redrawSelections() {
 
   // Rebuilt last, without whatever the layers above have just named.
   if (contactLabelsOn) addContactLabels(claimed);
+  /* The intra-helical layer is drawn over the residues on screen, and this is what changes which
+     those are. Redrawn only when that layer is on, so an ordinary click pays nothing for it. */
+  if (interactionLayers.intra) redrawInteractions();
 }
 
 export function toggleResidue(chain, seq) {
@@ -1114,7 +1354,8 @@ export function focusPocket() {
 
 export const toggles = {
   cartoon(on) { const rc = receptorSelection();
-    on ? addRep("cartoon", "cartoon", { sele:rc, color:"#646a73", opacity:0.68 }) : dropRep("cartoon"); },
+    if (!on) { dropRep("cartoon"); return; }
+    addRep("cartoon", "cartoon", { sele:rc, color:"#646a73", opacity:CARTOON_OPACITY }); },
   allLigands(on) {
     if (!on) { dropRep("all_lig"); return; }
     const all = (meta.observations || []).filter(o => o.ligand_selection)
@@ -1125,11 +1366,24 @@ export const toggles = {
     dropByPrefix("contacts"); dropByPrefix("iface");
     contactsOn = on;
     if (on) addContactSideChains();
+    // The contact shell is part of what the intra-helical layer is scoped to.
+    if (interactionLayers.intra) redrawInteractions();
   },
-  lines(on) { if (!on) { dropByPrefix("lines"); return; } addDisplayedInteractions(); },
+  lines(on) {
+    // The master switch drives every layer at once; the panel's three controls drive them singly.
+    interactionLayers.ligand = on;
+    if (!on) { interactionLayers.inter = false; interactionLayers.intra = false; }
+    redrawInteractions();
+  },
   ligand(on) {
-    if (!on) { dropByPrefix("ligand"); dropByPrefix("lines");
-      dropRep("covalent_atoms"); dropRep("covalent_bond"); return; }
+    ligandShown = on;
+    if (!on) {
+      dropByPrefix("ligand"); dropRep("covalent_atoms"); dropRep("covalent_bond");
+      // Only the ligand's own lines go; anything helical stays, because it was never about
+      // the ligand.
+      redrawInteractions();
+      return;
+    }
     addDisplayedLigands(); addDisplayedInteractions(); addCovalentHighlight(obs()); },
   ligandMode(mode) {
     ligandMode = mode === "licorice" ? "licorice" : "cartoon";
