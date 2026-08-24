@@ -210,14 +210,42 @@ export function cacheStats() {
   return { family: famCache.size, bundle: bundleCache.size,
            maxFamily: MAX_FAMILY_ENTRIES * 4, maxBundle: MAX_BUNDLE_ENTRIES };
 }
+/* The reload hint, on the failures a stale cache actually causes.
+ *
+ * The payload loader checks that every file's schema and data version match the manifest, and that
+ * check is right — mixing payloads from two builds would show numbers from one against labels from
+ * another. What it cannot tell is *why* they disagree, and the common reason is not a broken build:
+ * it is a browser holding one file from the previous deploy and fetching the next from the network.
+ * A reload with the cache bypassed fixes it, and until now nothing said so. A wrong address is a
+ * different failure — reloading a family that does not exist reloads nothing — so `family_unknown`
+ * is left without the hint. */
+function reloadKeys() {
+  const p = (navigator.userAgentData && navigator.userAgentData.platform) ||
+            navigator.platform || "";
+  return /mac/i.test(p) ? "⇧ ⌘ R" : "Ctrl + Shift + R";
+}
+/* Every failure a reload can plausibly fix. `getJSON` reports a failed request as `network`, a bad
+   status as `http_404` and friends, and unreadable content as `parse`; the manifest checks add
+   `schema` and `version`. A 404 or a version mismatch right after a deploy is the stale-cache case
+   exactly. `family_unknown` is the one left out — the address names a family that does not exist,
+   and reloading it reloads nothing. */
+export function isStaleCacheError(err) {
+  return err instanceof LoadError && err.kind !== "family_unknown";
+}
+export function reloadHint() { return t("err_stale_cache", { keys: reloadKeys() }); }
+
 export function errorMessage(err) {
   if (!(err instanceof LoadError)) return String(err && err.message || err);
+  const hint = isStaleCacheError(err) ? " " + reloadHint() : "";
+  if (err.kind.startsWith("http_"))
+    return t("err_http", { code: err.kind.slice(5) }) + " — " + err.detail + hint;
   switch (err.kind) {
-    case "file": return t("err_file");
-    case "schema": return t("err_schema") + " — " + err.detail;
-    case "version": return t("err_hash") + " — " + err.detail;
-    case "parse": return t("err_parse") + " — " + err.detail;
+    case "file": return t("err_file") + hint;
+    case "network": return t("err_network") + " — " + err.detail + hint;
+    case "schema": return t("err_schema") + " — " + err.detail + hint;
+    case "version": return t("err_hash") + " — " + err.detail + hint;
+    case "parse": return t("err_parse") + " — " + err.detail + hint;
     case "family_unknown": return t("err_family") + " — " + err.detail;
-    default: return t("err_family") + " — " + err.detail;
+    default: return t("err_family") + " — " + err.detail + hint;
   }
 }
