@@ -44,6 +44,13 @@ export function overlayCount() { return overlays.length; }
 /* The panel draws the legend, so it has to be told what the base structure was painted. */
 export function baseColour() { return BASE_COLOUR; }
 
+/* The superposed structures, in the order they were added, for the interaction diagram. Each is a
+   loaded component with its own metadata, so a panel can be drawn from it exactly as from the base
+   structure — the diagram does not need to know which is which. */
+export function diagramSpecs() {
+  return overlays.map(o => ({ comp: o.comp, meta: o.meta, observation: null, name: o.name }));
+}
+
 /* Labels carry the structure's identity in their *text* colour, on the same black background every
    structure uses.
  *
@@ -198,6 +205,18 @@ function paintOverlay(entry) {
       V.addSplitContactsTo(comp, params, { weakHydrogenBond: true });
     }
   }
+  /* The two pocket surfaces, drawn with the base structure's own parameters so a surface means the
+     same thing whichever structure carries it — except for the receptor surface, which takes this
+     overlay's colour rather than grey. Two grey surfaces from two structures in one pocket cannot be
+     told apart, and telling them apart is the whole reason both are on screen. */
+  if (entry.layers.surfaceReceptor) {
+    const cr = contactResiduesOf(entry.meta);
+    if (cr) comp.addRepresentation("surface", { sele: "(" + cr + ") and protein",
+      opacity: 0.28, colorScheme: "uniform", colorValue: colour });
+  }
+  if (entry.layers.surfaceLigand && lig)
+    comp.addRepresentation("surface", { sele: lig, opacity: 0.34,
+      colorScheme: "uniform", colorValue: colour });
   if (entry.layers.labels) {
     const { text, sele } = contactLabelText(entry);
     /* Restricted to the atoms the text map actually covers, the way the base structure does it.
@@ -361,7 +380,9 @@ export async function addOverlay(pdb, onStatus) {
     name: (meta.receptor_name || meta.receptor_entry_name || ""),
     // Same three layers the base structure's own toggles control, so the switcher can drive either.
     layers: { cartoon: true, sidechains: true, ligand: true,
-              labels: true, interactions: true },
+              labels: true, interactions: true,
+              // Off until asked for, exactly as the base structure's are.
+              surfaceReceptor: false, surfaceLigand: false },
     // Positions the reader has clicked in the whole-receptor list while this structure was active.
     selected: new Set() };
   overlays.push(entry);

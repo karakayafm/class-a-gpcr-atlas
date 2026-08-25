@@ -11,8 +11,9 @@
   the scene takes one colour through its cartoon, side chains and ligand, with nitrogen, oxygen and
   sulfur keeping theirs, and residue labels carry the structure's colour in their text.
 - **Active structure.** With something superposed, the panel's controls address whichever structure
-  is selected in the strip at the top: its cartoon, side chains, ligand, contact labels and
-  interaction lines, and its own whole-receptor position list.
+  is selected in the strip at the top: its cartoon, side chains, ligand, contact labels, interaction
+  lines, its pocket and ligand surfaces, and its own whole-receptor position list. Each structure's
+  pocket surface takes that structure's colour, so two of them in one site can be told apart.
 - **Measurement across structures.** Distances, angles and torsions can be taken between atoms of
   different superposed structures. Each atom is named by the generic position of the structure it
   belongs to, and the readout and the exported table name that structure.
@@ -24,6 +25,19 @@
   across — and include backbone hydrogen bonds, which are most of what holds a helix together. Both
   are off by default. Inter-helical contacts run through the interior of the bundle, where the
   cartoon ribbon hides them; turning the receptor cartoon off shows them.
+- **2D interaction diagram.** The binding site can be downloaded as a flat figure. The ligand is
+  drawn as a structure — rings as rings, at one bond length — surrounded by the residues it
+  contacts, each labelled with its generic position above its deposited name and distance, filled by
+  the segment it sits in, and sized by how close the contact is. Every contact line is drawn as what
+  it is: salt bridge, hydrogen bond, weak hydrogen bond, π-stacking, cation-π, halogen bond, metal
+  coordination, hydrophobic, or an untyped close approach, with a key naming the kinds that figure
+  contains. PNG on click, SVG on shift-click.
+- **One figure per superposition.** With structures superposed, each gets a panel of its own, laid
+  out as a grid rather than a row so six of them stay legible. Every panel shares one scale and one
+  orientation, and every residue leads with its generic position, so a position can be found in the
+  same place with the same label in each panel whatever its deposited numbering. Each panel names
+  its receptor, its ligand and whether that ligand is an agonist, an antagonist or an inverse
+  agonist. A structure whose ligand is a peptide has no small molecule to draw and is left out.
 
 ### Browsing
 

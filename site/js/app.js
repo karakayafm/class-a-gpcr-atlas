@@ -12,6 +12,7 @@ import { ligandExplorer } from "./views/ligands.js";
 import * as MQ from "./views/motifquery.js";
 import * as VIEW from "./viewer/viewer.js";
 import * as ALIGN from "./viewer/align.js";
+import * as DIAGRAM from "./viewer/diagram.js";
 
 const MAIN = () => document.getElementById("main");
 let lastFamily = null, modalOpener = null;
@@ -592,7 +593,13 @@ function buildViewerSide(meta) {
   if (!onBase) {
     const state = ALIGN.layerState(active) || {};
     for (const [key, layer] of Object.entries(OVERLAY_LAYER)) on[key] = state[layer] !== false;
+    // Surfaces start off rather than on, so they are read straight rather than defaulted true.
+    on.surfaceReceptor = !!state.surfaceReceptor;
+    on.surfaceLigand = !!state.surfaceLigand;
+  } else {
+    Object.assign(on, VIEW.surfaceState());
   }
+  on.surface = on.surfaceReceptor || on.surfaceLigand;
   const ctrl = el("div", { class: "viewer-tools" });
   const add = (key, label, disabled) => {
     const unsupported = !onBase && !OVERLAY_LAYER[key];
@@ -621,9 +628,12 @@ function buildViewerSide(meta) {
      click turned everything off before the panel could be seen. */
   const interactionPanel = el("div", { class:"interaction-options", hidden:!interactionPanelOpen,
     "aria-label":t("v_interactions") });
+  const anyInteraction = () => onBase
+    ? VIEW.anyInteractionLayer()
+    : ((ALIGN.layerState(active) || {}).interactions !== false);
   const interactionsButton = el("button", { class:"viewer-tool disclosure", type:"button",
     "aria-expanded":interactionPanelOpen ? "true" : "false",
-    "aria-pressed":VIEW.anyInteractionLayer() ? "true" : "false",
+    "aria-pressed":anyInteraction() ? "true" : "false",
     text:t("v_interactions") });
   ctrl.appendChild(interactionsButton);
   /* Inside the button row, not after it. The row wraps, and a panel appended to the side pane
@@ -636,18 +646,41 @@ function buildViewerSide(meta) {
     ["inter",  "v_interactions_inter",  "v_interactions_inter_hint"],
     ["intra",  "v_interactions_intra",  "v_interactions_intra_hint"]
   ];
+  /* These three switches belong to a structure, not to the panel.
+   *
+   * They used to read and write viewer.js's module state whatever was selected, so switching to a
+   * superposed structure showed the base structure's answer: protein-ligand turned off, and that
+   * structure's contact lines still on screen because nothing had asked it to drop them. An overlay
+   * carries a single `interactions` layer covering exactly the protein-ligand case, so that is what
+   * the first switch drives; the two helical layers are grouped by helix from the base structure's
+   * numbering table and have no overlay equivalent, so they say so rather than pretending. */
+  function interactionState() {
+    if (onBase) return VIEW.interactionLayerState();
+    const state = ALIGN.layerState(active) || {};
+    return { ligand: state.interactions !== false, inter: false, intra: false };
+  }
   function paintInteractionLayers() {
     clear(interactionPanel);
-    const state = VIEW.interactionLayerState();
+    const state = interactionState();
     for (const [name, label, hint] of INTERACTION_LAYERS) {
       // Only the ligand layer depends on there being a ligand; the helical ones describe the
       // receptor and are as meaningful in an apo structure as in a bound one.
-      const unavailable = name === "ligand" && (apo || !hasLig || !on.ligand);
+      const overlayOnly = !onBase && name !== "ligand";
+      const unavailable = overlayOnly || (name === "ligand" && (apo || !hasLig || !on.ligand));
       const b = el("button", { class:"viewer-tool interaction-option", type:"button",
         disabled: unavailable,
-        "aria-pressed": state[name] && !unavailable ? "true" : "false", title:t(hint), text:t(label),
+        "aria-pressed": state[name] && !unavailable ? "true" : "false",
+        title: overlayOnly ? t("v_overlay_layer_unsupported", { pdb: active }) : t(hint),
+        text:t(label),
         onclick: async () => {
-          const next = !VIEW.interactionLayerState()[name];
+          const next = !interactionState()[name];
+          if (!onBase) {
+            ALIGN.setLayer(active, "interactions", next);
+            on.lines = next;                 // the same layer the Lines switch drives
+            paintInteractionLayers();
+            interactionsButton.setAttribute("aria-pressed", next ? "true" : "false");
+            return;
+          }
           // The helical layers are grouped by helix, and only the numbering table says which
           // helix a residue is in. Loaded before the layer goes on, or it would draw nothing.
           if (next && name !== "ligand") {
@@ -736,22 +769,29 @@ function buildViewerSide(meta) {
     "aria-label":t("v_surface") });
   const surfaceMaster = el("button", { class:"viewer-tool disclosure", type:"button",
     disabled:apo || !hasLig, "aria-expanded":surfacePanelOpen ? "true" : "false",
-    "aria-pressed":"false", text:t("v_surface") });
+    "aria-pressed":on.surface ? "true" : "false", text:t("v_surface") });
   const paintSurfaceMaster = () => {
     on.surface = on.surfaceReceptor || on.surfaceLigand;
     surfaceMaster.setAttribute("aria-pressed", on.surface ? "true" : "false");
   };
-  const surfaceOption = (key, label, toggle) => {
-    const b = el("button", { class:"viewer-tool surface-option", "aria-pressed":"false",
+  /* Same fault as the interaction switches: these called viewer.js directly, so asking for a
+     ligand surface while a superposed structure was selected put the surface on the base structure
+     instead — and the button, whose state was a local reset on every rebuild, disagreed with the
+     scene as soon as the reader switched back. Both now go to the selected structure, and both read
+     their state from it. */
+  const surfaceOption = (key, label) => {
+    const b = el("button", { class:"viewer-tool surface-option",
+      "aria-pressed": on[key] ? "true" : "false",
       text:label, onclick:() => {
         on[key] = !on[key]; b.setAttribute("aria-pressed", on[key] ? "true" : "false");
-        toggle(on[key]);
+        if (onBase) VIEW.toggles[key](on[key]);
+        else ALIGN.setLayer(active, key, on[key]);
         paintSurfaceMaster();
       } });
     surfacePanel.appendChild(b); return b;
   };
-  surfaceOption("surfaceReceptor", t("v_surface_receptor"), VIEW.toggles.surfaceReceptor);
-  surfaceOption("surfaceLigand", t("v_surface_ligand"), VIEW.toggles.surfaceLigand);
+  surfaceOption("surfaceReceptor", t("v_surface_receptor"));
+  surfaceOption("surfaceLigand", t("v_surface_ligand"));
   surfaceMaster.addEventListener("click", () => {
     surfacePanelOpen = !surfacePanelOpen;
     surfacePanel.hidden = !surfacePanelOpen;
@@ -782,6 +822,24 @@ function buildViewerSide(meta) {
     onclick: () => { VIEW.resetView(); buildViewerSide(meta); } }));
   ctrl.appendChild(el("button", { class: "viewer-tool", text: t("v_snapshot"),
     onclick: () => VIEW.snapshot() }));
+  /* The 2D diagram. It takes whatever is on screen — the structure being viewed, then each
+     superposed one in the order it was added — so a three-way superposition downloads as three
+     panels side by side and needs no separate control of its own. */
+  const diagramButton = el("button", { class: "viewer-tool", text: t("v_diagram"),
+    onclick: (ev) => {
+      const specs = [VIEW.diagramSpec(), ...ALIGN.diagramSpecs()].filter(Boolean);
+      const name = specs.map(x => x.meta.pdb_id).join("-") + "-2d";
+      // Shift gives the vector original, which is what a figure needs and a PNG cannot be turned
+      // back into. The plain click stays a PNG because that is what most people want to look at.
+      const done = ev.shiftKey ? DIAGRAM.downloadSVG(specs, name)
+                               : DIAGRAM.downloadPNG(specs, name);
+      if (!done) {
+        diagramButton.textContent = t("v_diagram_none");
+        setTimeout(() => { diagramButton.textContent = t("v_diagram"); }, 2600);
+      }
+    } });
+  diagramButton.title = t("v_diagram_hint");
+  ctrl.appendChild(diagramButton);
   /* The switch between the two residue lists. It sits with the other quick controls because that
      is where a reader is already looking when they decide the pocket is not the thing they came
      for; the framing follows, because a position on the intracellular end of TM6 is off screen
