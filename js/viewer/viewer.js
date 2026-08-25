@@ -595,6 +595,20 @@ export function hasResidueTable() { return residueTable.length > 0; }
    table is lazy — a reader who never leaves the pocket never fetches it — so this loads it on
    demand rather than reporting an empty receptor for a structure that has one. */
 export function baseComponent() { return comp; }
+/* Which surfaces the base structure is actually showing. The panel used to keep this in a local
+   that was rebuilt — and reset to false — every time the reader switched structures, so a surface
+   left on came back with its button reading off. Reading it from the representations that exist
+   means the button cannot disagree with the scene. */
+export function surfaceState() {
+  return { surfaceReceptor: !!reps.surface_receptor, surfaceLigand: !!reps.surface_ligand };
+}
+/* What the diagram module needs from the structure this module loaded: the component to read
+   coordinates from, its metadata, and which observation is on screen — a structure with two ligands
+   should diagram the one the reader is looking at, not the first one in the file. */
+export function diagramSpec() {
+  return comp && meta ? { comp, meta, observation: current,
+                          name: meta.receptor_name || meta.receptor_entry_name || "" } : null;
+}
 /* Deliberately not applyDefaults: that clears the selection, resets the ligand display and reframes
    the camera, and none of those should happen because a second structure arrived. This rebuilds the
    structural layers only — addRep replaces by key — and leaves everything the reader had set. */
@@ -809,12 +823,12 @@ function motifLabel(id) {
     TM5_TM7_tyrosine_network:"v_motif_tyrosine_network" })[id];
   return key ? t(key) : id.replaceAll("_", " ");
 }
-function genericShort(value) {
+export function genericShort(value) {
   const s = String(value || "");
   const m = s.match(/^(\d+)(?:\.\d+)?x(\d+)$/);
   return m ? m[1] + "x" + m[2] : s;
 }
-function oneLetter(name) { return ({ ALA:"A",ARG:"R",ASN:"N",ASP:"D",CYS:"C",GLN:"Q",GLU:"E",
+export function oneLetter(name) { return ({ ALA:"A",ARG:"R",ASN:"N",ASP:"D",CYS:"C",GLN:"Q",GLU:"E",
   GLY:"G",HIS:"H",ILE:"I",LEU:"L",LYS:"K",MET:"M",PHE:"F",PRO:"P",SER:"S",THR:"T",
   TRP:"W",TYR:"Y",VAL:"V" })[String(name || "").toUpperCase()] || "?"; }
 
