@@ -62,14 +62,14 @@ export function granthamDistance(a, b) {
 
 const UNCOVERED = { " ": "not_applicable", "-": "unresolved", "?": "unmapped" };
 const SORTS = ["receptor", "family", "coverage", "exact", "phys", "weighted"];
-/* Exact, not physchem. A short query saturates the physicochemical score — three conservative
-   substitutions and three identities both read 100% — so ranking on it puts a receptor that
+/* Exact, not physchem. A short query saturates the physicochemical score - three conservative
+   substitutions and three identities both read 100% - so ranking on it puts a receptor that
    matches nothing exactly level with one that matches everything. Identity is the sharper
    question, and physchem stays beside it as its own column. */
 const DEFAULT_SORT = "-exact", DEFAULT_TOP = 25;
 /* Two position sets, one panel. The microswitch payload is the positions that move on
    activation; the pocket payload is the positions a ligand touches. Same schema, so everything
-   below — scoring, entropy, aggregation, the heatmap — is unchanged by the choice. */
+   below - scoring, entropy, aggregation, the heatmap - is unchanged by the choice. */
 const POOLS = { motif: L.loadMotifSearch, pocket: L.loadPocketSearch,
                 receptor: L.loadReceptorSearch };
 /* Which pools carry a per-position threshold, and what the threshold means in each. The pocket
@@ -120,7 +120,7 @@ function routeFromState(s, route) {
 
 /* Which positions the reference table and the motif cards offer. The microswitch pool offers all
    of them; the pocket pool offers those contacting a ligand often enough in the chosen binding
-   site class. Only what is *offered* is filtered — a position named in the query is still scored,
+   site class. Only what is *offered* is filtered - a position named in the query is still scored,
    because a filter is a way of reading the payload, not a restriction on what may be asked. */
 function activePositions(payload, state) {
   const filter = FILTERED_POOLS[state.pool];
@@ -154,7 +154,7 @@ function labelOf(position, payload, numbering) {
 }
 /* The marker shown wherever a position is named.
    
-   The visible label is the structure-based number on its own — `3x32` — because that is what the
+   The visible label is the structure-based number on its own - `3x32` - because that is what the
    binding pocket detail and the 3D viewer show, and a panel that spelled the same position
    differently from the rest of the atlas would be its own kind of trap. The Ballesteros-Weinstein
    number is always one hover away, and where the two schemes disagree the position is marked so
@@ -179,7 +179,7 @@ function positionLabel(position, payload, numbering, opts) {
   else if (info.variable)
     node.title = t("mq_bw_variable", { bw: info.bw, n: info.receptors, total: info.total });
   /* Where the two schemes agree there is no tooltip at all. One was written on the reasoning that
-     the label no longer carries the BW number so the hover should — but at an agreeing position
+     the label no longer carries the BW number so the hover should - but at an agreeing position
      the BW number *is* the label with a dot for the x, so the note said 3.52 is 3x52 and they
      agree, on most of the positions on screen. A hover that repeats its own anchor is noise. */
   if (opts && opts.segment) node.appendChild(el("span", { class: "muted small",
@@ -216,15 +216,15 @@ export function parseQuery(text, known, numbering) {
     if (position.includes(".")) {
       const resolved = bwIndex[position];
       if (!resolved) { bad.push(token); continue; }
-      /* A BW number can name more than one structure-based position — 4.58 is 4x58 in 106
-         receptors and 4x59 in 94 — so resolving it to the most common one and saying nothing
+      /* A BW number can name more than one structure-based position - 4.58 is 4x58 in 106
+         receptors and 4x59 in 94 - so resolving it to the most common one and saying nothing
          would be a coin flip presented as an answer. The alternatives travel with the
          translation and the panel offers them. */
       const alternatives = bwAlternatives[position] || null;
       /* Most of the bundle agrees between the two schemes, and there `3.32` resolves to `3x32`:
          the same residue, the same number, nothing translated. Announcing that is noise, and it
          was the loudest thing on the page for a query that had nothing to report. Only a
-         translation that moves the position — or a BW number that names more than one — is worth
+         translation that moves the position - or a BW number that names more than one - is worth
          a line. */
       if (position.replace(".", "x") !== resolved || alternatives)
         translated.push({ from: position, to: resolved, residues: residue[2].toUpperCase(),
@@ -251,7 +251,7 @@ function queryText(groups) {
 
 /* Shannon entropy over the receptor-level residue distribution at each position, and a weight
    derived from it. A position where every Class A receptor carries the same residue answers no
-   question — every receptor matches it — so asking for the consensus there tells a reader
+   question - every receptor matches it - so asking for the consensus there tells a reader
    nothing, and the weighted score discounts it towards zero. */
 function specificity(payload, scope, groups, allow) {
   const dist = (payload.variation || {})[scope] || {};
@@ -289,7 +289,7 @@ function specificity(payload, scope, groups, allow) {
 /* ------------------------------------------------------------------ scoring */
 
 /* One structure against the query. Every position returns a cell, and a cell always says which
-   of the four states it is in and — where it is not exact — how far away it is, so the call is
+   of the four states it is in and - where it is not exact - how far away it is, so the call is
    auditable rather than a colour a reader has to trust. */
 export function scoreStructure(record, groups, posIndex, spec) {
   const cells = groups.map(group => {
@@ -336,7 +336,7 @@ export function scoreStructure(record, groups, posIndex, spec) {
    The key is the payload's own `s` string plus the `m` map, so it is a property of the structure
    and not of the query: switching the query never regroups anything. Within a group every member
    has the same `s`, so their coverage is identical for any query and the representative is
-   decided by the tie-break alone — the lowest PDB id. The coverage comparison is written out
+   decided by the tie-break alone - the lowest PDB id. The coverage comparison is written out
    anyway, because it is the rule, and a later change to the key must not silently lose it. */
 function profileKey(record) {
   const m = record.m || {};
@@ -358,7 +358,7 @@ function uniqueProfiles(structures) {
 }
 
 /* Which families carry a given residue at a given position, and how much that concentrates them.
-   Counted once per receptor — a receptor with eighty depositions is one receptor — and reported
+   Counted once per receptor - a receptor with eighty depositions is one receptor - and reported
    against the whole scope as a background, so "62% of peptide receptors, 3.4x the Class A rate"
    can be read off directly. Enrichment is the family's share divided by the scope's share. */
 function familyDistribution(payload, scope, position, residues, posIndex) {
@@ -492,8 +492,8 @@ let mounted = null;
    reason the old panel could not keep its state in the address. */
 /* The in-place path exists so a route change confined to this panel does not take the query input
    out of the document and the caret with it. A language change is not that: half of this panel is
-   built once at mount — the heading, the intro, the control labels, and the family-name map the
-   specificity column reads from — and only what `draw()` rebuilds would follow the new language.
+   built once at mount - the heading, the intro, the control labels, and the family-name map the
+   specificity column reads from - and only what `draw()` rebuilds would follow the new language.
    The result was a panel in two languages at once, with English column headings over Turkish
    family names. So the mount records the language it was built in, and a change to it falls
    through to a full re-render, which restores the query from the address anyway. */
@@ -553,7 +553,7 @@ export async function motifQuery(root, route) {
   const specBox = el("div", { class: "mq-spec" });
   // Open by default: the distributions in it are how a query gets built and how a position's
   // variation is read, which is not something to go looking for behind a disclosure. Whether it
-  // is open is deliberately not in the route — it is a reading preference, not a query.
+  // is open is deliberately not in the route - it is a reading preference, not a query.
   const positionBox = el("details", { class: "mq-positions", open: true });
   const familyBox = el("div", { class: "mq-block" });
   const receptorBox = el("div", { class: "mq-block" });
@@ -561,7 +561,7 @@ export async function motifQuery(root, route) {
   const aside = el("aside", { class: "mq-detail", hidden: true, "aria-live": "polite" });
   const layout = el("div", { class: "mq-layout" });
 
-  /* The field runs the query as it is typed, so the button is not what makes it work — it is
+  /* The field runs the query as it is typed, so the button is not what makes it work - it is
      there because a search field without one reads as though nothing has happened yet. It sits
      inside the field's box rather than beside it, so it costs the input no width. */
   const searchButton = el("button", { class: "mq-search", type: "button",
@@ -623,7 +623,7 @@ export async function motifQuery(root, route) {
   const motifBand = el("details", { class: "mq-band", open: true }, [
     el("summary", { class: "mq-band-label" }), motifTabs]);
   /* The query summary sits above the starting points, not below them. It is what the panel is
-     currently being asked, and the cards under it are a way to change that — the answer belongs
+     currently being asked, and the cards under it are a way to change that - the answer belongs
      next to the controls that produced it, and the offers belong under the answer. */
   wrap.appendChild(specBox);
   wrap.appendChild(motifBand);
@@ -709,8 +709,8 @@ export async function motifQuery(root, route) {
       if (!usable.length) continue;
       const label = motifLabel(m);
       const tokensOf = () => motifTokens(m).filter(x => activeSet.has(x.position));
-      /* The badge counts positions. It used to repeat the label — "TM1  TM1", "Canonical 7TM
-         pocket  Canonical 7TM pocket" — which said the same thing twice and left the one number
+      /* The badge counts positions. It used to repeat the label - "TM1  TM1", "Canonical 7TM
+         pocket  Canonical 7TM pocket" - which said the same thing twice and left the one number
          a reader actually wants off the card. */
       const tokens = tokensOf().map(x => x.token);
       const seeded = tokens.join(" ");
@@ -763,7 +763,7 @@ export async function motifQuery(root, route) {
   /* A filled arrow in a chip, not a chevron glyph. `\u203a` at text weight disappeared into the
      row: it was the one mark telling a reader the row does something, and it read as punctuation.
      Drawn rather than typed so its weight does not depend on the reader's font. */
-  /* A plain white block arrow on a green field — the old Internet Explorer "Go" button, with the
+  /* A plain white block arrow on a green field - the old Internet Explorer "Go" button, with the
      colour in the field rather than in the glyph. Flat: a gloss and a bevel on a 26px mark read
      as noise at this size, and white on green is the pair that carries at a glance. */
   function goArrowIE() {
@@ -921,7 +921,7 @@ export async function motifQuery(root, route) {
 
   /* Entropy says a position varies. It does not say *who* varies, which is the question a reader
      actually arrives with: 6x30 carrying E in a third of receptors is only interesting once you
-     can see which third. This is that breakdown — receptors per family, the share of that family
+     can see which third. This is that breakdown - receptors per family, the share of that family
      carrying the residue, and how far above or below the Class A background it sits. */
   function familyDistributionBlock(position, residues) {
     const wrap = el("div", { class: "mq-famdist" });
@@ -965,7 +965,7 @@ export async function motifQuery(root, route) {
   }
 
   /* The position reference. It is how a query gets built by clicking rather than typing, and now
-     also how the family breakdown above is reached, so it stays on the page — but it is not an
+     also how the family breakdown above is reached, so it stays on the page - but it is not an
      answer and does not sit above one. */
   function drawPositions(spec, parsed, active, hidden) {
     clear(positionBox);
@@ -1080,7 +1080,7 @@ export async function motifQuery(root, route) {
           : state.sort.replace(/^-/, ""))) }) + " "),
       metricHelp(t("mq_tied_help"))]));
     /* Presentation only. Scoring already runs on one representative structure per receptor, so
-       collapsing duplicate profiles changes no score anywhere — it changes what the structure
+       collapsing duplicate profiles changes no score anywhere - it changes what the structure
        column counts and which depositions the detail lists. */
     const uniqBox = el("input", { type: "checkbox", id: "mq-uniq", checked: state.uniq });
     uniqBox.addEventListener("change", () => update({ uniq: uniqBox.checked }));
@@ -1148,9 +1148,9 @@ export async function motifQuery(root, route) {
     table.appendChild(el("thead", {}, el("tr", {}, [
       sortHead("receptor", t("col_receptor")),
       sortHead("family", t("col_family")),
-      /* No structure count. It answered a question nobody was asking here — the depositions are
+      /* No structure count. It answered a question nobody was asking here - the depositions are
          listed by name in the detail beside the table, which is where a reader goes when they
-         want them — and a column reading "2 / 4" next to four percentages invited the reading
+         want them - and a column reading "2 / 4" next to four percentages invited the reading
          that it was a fifth score. */
       sortHead("coverage", t("mq_col_coverage"), metricHelp(t("mq_coverage_help"))),
       sortHead("exact", t("mq_col_exact"), metricHelp(t("mq_exact_help"))),
@@ -1232,8 +1232,8 @@ export async function motifQuery(root, route) {
   function cellTitle(cell, r) {
     const wanted = cell.wanted.join(" / ");
     if (cell.status === "uncovered")
-      return r.receptor + " " + cell.position + " — " + t("mq_uncovered_" + cell.reason);
-    const base = r.receptor + " " + cell.position + " — " + t("mq_cell_" + cell.status,
+      return r.receptor + " " + cell.position + " - " + t("mq_uncovered_" + cell.reason);
+    const base = r.receptor + " " + cell.position + " - " + t("mq_cell_" + cell.status,
       { wanted, carried: cell.wild,
         distance: cell.distance === null ? "—" : cell.distance.toFixed(0) });
     return cell.engineered
@@ -1396,7 +1396,7 @@ export async function motifQuery(root, route) {
     if (filter === "coverage") clear(freqNote);
     /* Read once and guarded, because the state and the payload can disagree for a moment: the
        route can name the pocket pool while the payload in hand is still the microswitch one, and a
-       fetch that is abandoned — a reload mid-flight is enough — leaves them that way. The class
+       fetch that is abandoned - a reload mid-flight is enough - leaves them that way. The class
        list was already guarded; the denominator below it was not, so that moment threw and took
        the whole panel down instead of drawing it without a control it has no data for. */
     const siteMeta = (payload.pool && payload.pool.site_classes) || null;
@@ -1428,7 +1428,7 @@ export async function motifQuery(root, route) {
     const hidden = payload.positions.length - active.length;
     const parsed = parseQuery(state.query, known, numbering);
     /* A query arriving from the address may separate its tokens with `+` and give them in any
-       order. Show it in the form the panel itself writes — but only while the field is not being
+       order. Show it in the form the panel itself writes - but only while the field is not being
        typed in, and only when everything in it parsed: a typo has to stay on screen where it can
        be corrected, not be tidied out of sight. */
     if (document.activeElement !== queryInput) {

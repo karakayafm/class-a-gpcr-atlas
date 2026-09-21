@@ -8,7 +8,7 @@
  * length, fused rings are placed edge-to-edge, and the chains hanging off them zigzag at 120° the
  * way a hand-drawn structure does. The pose is not thrown away: the finished sketch is rotated (and
  * reflected if that fits better) onto the projected coordinates, so the molecule still faces the way
- * it does in the pocket and the residue bubbles — which are still placed by projection — stay on
+ * it does in the pocket and the residue bubbles - which are still placed by projection - stay on
  * the side they belong to.
  */
 
@@ -89,8 +89,8 @@ function polygonOnEdge(pa, pb, n, away) {
 /* Lay one fused ring system out, starting from its biggest ring.
  *
  * `anchor` is how a ring system that hangs off a chain gets positioned. Without it, every system
- * was built around the origin, so a molecule like BRL-54443 — an indole and a piperidine joined by
- * a single bond, which is two systems, not one — drew both rings on top of each other. With it, the
+ * was built around the origin, so a molecule like BRL-54443 - an indole and a piperidine joined by
+ * a single bond, which is two systems, not one - drew both rings on top of each other. With it, the
  * ring is built around the atom the chain already placed, extending away from where the chain came
  * from. */
 function layoutSystem(system, pos, bondLen, anchor) {
@@ -160,7 +160,7 @@ function layoutSystem(system, pos, bondLen, anchor) {
   return placedHere;
 }
 
-/* Do two segments cross? Shared endpoints do not count — bonds meeting at an atom are not a
+/* Do two segments cross? Shared endpoints do not count - bonds meeting at an atom are not a
    crossing, they are a bond angle. */
 function crosses(a, b, c, d) {
   const eq = (p, q) => Math.abs(p[0]-q[0]) < 1e-6 && Math.abs(p[1]-q[1]) < 1e-6;
@@ -173,8 +173,8 @@ function crosses(a, b, c, d) {
  *
  * A substituent goes 120° off the bond that reached its neighbour, which is what makes a chain
  * zigzag instead of doubling back on itself. Of the two directions that satisfy that, the one
- * chosen is whichever crosses no existing bond, stays clear of other atoms, and — only as a
- * tie-break — points the way the real pose points, so the sketch still faces the pocket correctly.
+ * chosen is whichever crosses no existing bond, stays clear of other atoms, and - only as a
+ * tie-break - points the way the real pose points, so the sketch still faces the pocket correctly.
  *
  * Scoring by clearance alone, which is what the first version did, drew the linker of BI-167107
  * straight back across its own phenyl. */

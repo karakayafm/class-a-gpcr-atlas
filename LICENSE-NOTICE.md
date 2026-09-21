@@ -32,7 +32,7 @@ Official text: <https://creativecommons.org/licenses/by-nc/4.0/legalcode>
 
 | Path | Governing licence |
 |---|---|
-| `data/web/structures/**` | **CC0 1.0** — coordinate files redistributed unchanged from the RCSB PDB. Approximately **92% of this distribution by size**. This project grants and withholds nothing over them. |
+| `data/web/structures/**` | **CC0 1.0** - coordinate files redistributed unchanged from the RCSB PDB. Approximately **92% of this distribution by size**. This project grants and withholds nothing over them. |
 | `vendor/**` | MIT, BSD-3-Clause and Apache-2.0 third-party software (NGL Viewer, three.js, chroma.js, ColorBrewer, JS Signals, Kdtree). See `THIRD_PARTY_NOTICES.md`. |
 | Source-derived fields | Material derived from GPCRdb, UniProt and the PDB Chemical Component Dictionary remains under its source licence. **GPCRdb data is CC BY 4.0 and its attribution obligation applies regardless of the terms above.** |
 

@@ -5,12 +5,12 @@ the licence texts themselves are `LICENSE` and `LICENSE-DATA`, distributed unmod
 
 | What | Licence | Who holds it |
 |---|---|---|
-| Coordinate files (`site/data/web/structures/**`) — **~92% of this distribution by size** | **CC0 1.0** | RCSB PDB. Public domain. This project neither grants nor withholds rights. |
+| Coordinate files (`site/data/web/structures/**`) - **~92% of this distribution by size** | **CC0 1.0** | RCSB PDB. Public domain. This project neither grants nor withholds rights. |
 | GPCRdb-derived fields (taxonomy, receptor and structure annotation) | **CC BY 4.0** | GPCRdb. **Attribution required.** |
 | UniProt accessions relayed via RCSB | CC BY 4.0 | UniProt |
 | Vendored software (`site/vendor/**`) | MIT / BSD-3-Clause / Apache-2.0 | see `THIRD_PARTY_NOTICES.md` |
-| **Project-created data** — contacts, mappings, aggregation units, motif measurements, adjudications, review-gated overlay, documentation | **CC BY-NC 4.0** | Muhammed Fatih Karakaya |
-| **Project-created code** — application, pipeline, schemas, tests | **PolyForm Noncommercial 1.0.0** | Muhammed Fatih Karakaya |
+| **Project-created data** - contacts, mappings, aggregation units, motif measurements, adjudications, review-gated overlay, documentation | **CC BY-NC 4.0** | Muhammed Fatih Karakaya |
+| **Project-created code** - application, pipeline, schemas, tests | **PolyForm Noncommercial 1.0.0** | Muhammed Fatih Karakaya |
 
 ## The two things most often got wrong
 
@@ -25,7 +25,7 @@ exercise of the licensed rights, and nothing here is intended or may be read to 
 ## Commercial use
 
 Not permitted under these public licences. It may be available by separate written agreement with
-Muhammed Fatih Karakaya — edu.mfatih@gmail.com.
+Muhammed Fatih Karakaya - edu.mfatih@gmail.com.
 
 ## Not open source
 

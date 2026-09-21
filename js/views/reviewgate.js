@@ -1,7 +1,7 @@
-// Phase 6A.1 — review-gate and validation-scope presentation.
+// Phase 6A.1 - review-gate and validation-scope presentation.
 //
 // The public presentation uses the review-gated overlay. The original Phase 4 value is still
-// available, but only in a labelled panel — never as the default, never in the main ranking,
+// available, but only in a labelled panel - never as the default, never in the main ranking,
 // never in a comparison.
 //
 import { t, getLang } from "../core/i18n.js";
@@ -57,7 +57,7 @@ export function originalPanel(gate, phase4Positions) {
 }
 
 /* Beta value lookup for the current threshold/weighting. Every combination is precomputed in the
-   overlay, so this reads a field — it never recomputes a fraction in the browser. */
+   overlay, so this reads a field - it never recomputes a fraction in the browser. */
 const TH_KEY = { "4.0A": "4A", "4.5A": "4_5A", "5.0A": "5A" };
 const W_KEY = {
   unit_weighted_continuous: "unit_weighted_continuous",

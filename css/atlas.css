@@ -344,8 +344,8 @@ body.modal-open { overflow:hidden; }
 .residue-distance { color:#92979e; font-size:11px; text-align:right; }
 .residue-button:hover,.motif-button:hover { border-color:var(--accent); }
 .residue-button.selected { background:#ef72aa; color:#171019; border-color:#ef72aa; }
-/* The whole receptor, seven columns wide inside a 340px panel. Each button is two short lines —
-   the residue over its position — because side by side they would not fit seven times over, and
+/* The whole receptor, seven columns wide inside a 340px panel. Each button is two short lines -
+   the residue over its position - because side by side they would not fit seven times over, and
    the column is scanned vertically anyway. The columns scroll together horizontally on a narrow
    panel rather than being allowed to squeeze the letters out of legibility. */
 .tm-columns { display:grid; grid-auto-flow:column; grid-auto-columns:minmax(40px,1fr);
@@ -425,7 +425,7 @@ body.modal-open { overflow:hidden; }
 /* Same pink the scene paints a picked residue with, so the list and the structure agree. */
 .tm-residue.selected { background:#ef72aa; color:#171019; border-color:#ef72aa; }
 .tm-residue.selected .tm-residue-pos { color:#3d2130; }
-/* Filled, not outlined — a one-pixel border was the whole marking and read as noise. The fill is
+/* Filled, not outlined - a one-pixel border was the whole marking and read as noise. The fill is
    a tint rather than the saturated blue the side chains are drawn in: contacts are a third of the
    cards, and at full strength the panel became a blue wall with the odd white gap. It only has to
    say "this one", so the border carries the definition (3.2:1 against the panel, which the tint
@@ -613,7 +613,7 @@ td.eff-warning_only { color:var(--muted); }
 
 /* Inline source links, grouped like the reference viewer: label above, bracketed chips below. */
 .source-groups { display:flex; flex-wrap:wrap; align-items:flex-end; gap:10px 18px; }
-/* The dialog button is an action, not another source group — keep it off the chip flow. */
+/* The dialog button is an action, not another source group - keep it off the chip flow. */
 .source-groups > .btn { margin-left:auto; align-self:flex-end; }
 .source-group { display:grid; gap:3px; }
 .source-group-label { font-size:10.5px; letter-spacing:.4px; color:var(--muted); text-transform:uppercase; }
@@ -639,7 +639,7 @@ td.eff-warning_only { color:var(--muted); }
 .evidence-table table.data { margin-top:4px; }
 .tier-badge { display:inline-block; padding:2px 8px; border-radius:999px; font-size:11.5px;
   white-space:nowrap; background:var(--warn-bg); color:var(--warn-ink); border:1px solid rgba(140,110,40,.28); }
-/* Tier A sits between yellow and orange — warmer than the tier B badge, but the same family,
+/* Tier A sits between yellow and orange - warmer than the tier B badge, but the same family,
    because both are evidence badges and should not read as unrelated states. */
 .tier-badge.tier-a { background:#fbe3c2; color:#7a4a05; border-color:#dda94e; }
 .member-yes { color:#137a52; font-weight:600; white-space:nowrap; }
@@ -873,7 +873,7 @@ td.eff-warning_only { color:var(--muted); }
   background:var(--panel); color:var(--ink); cursor:pointer; font-size:11px;
   font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
 .sim-alt-pick:hover { border-color:var(--accent); color:var(--accent); }
-/* Two rows now: the hit, then what selecting it does. The second row is the affordance — before
+/* Two rows now: the hit, then what selecting it does. The second row is the affordance - before
    it, the row's only clue that it led anywhere was the cursor and a tooltip. */
 /* Family label on a motif card: it identifies where the structure lives and is read as often as
    the receptor name, so it is set at the same size rather than as a footnote. */
@@ -882,7 +882,7 @@ td.eff-warning_only { color:var(--muted); }
 .motif-legend-item { padding:2px 9px; border-radius:999px; font-size:11px;
   border:1px solid var(--line); }
 /* Side-chain classes. Hues laid out at even spacing in CIELAB at fixed lightness, so no two
-   classes sit closer than dE 14 — the first attempt put polar, basic and glycine within dE 5 of
+   classes sit closer than dE 14 - the first attempt put polar, basic and glycine within dE 5 of
    one another, which is below what anyone can separate at chip size. Glycine is neutral by
    construction: it is the residue with no side chain to classify. */
 :root {
@@ -991,7 +991,7 @@ td.eff-warning_only { color:var(--muted); }
    full width it needs that more than it did in the rail, not less. Only the padding changes. */
 .lx-query .sim-panel { padding:10px 14px 4px; }
 /* The panel was built for a 300px rail, where one control per line is the only option. With the
-   page's width the two ways in — a SMILES you type and a deposition you name — sit side by side
+   page's width the two ways in - a SMILES you type and a deposition you name - sit side by side
    as the alternatives they are, and everything they produce runs full width beneath them. */
 .lx-query .sim-body { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:2px 22px;
   align-items:end; }
@@ -1023,7 +1023,7 @@ td.eff-warning_only { color:var(--muted); }
 
 .lx-layout { display:grid; grid-template-columns:290px minmax(0,1fr); gap:16px; align-items:start; }
 /* The rail is taller than the viewport once every facet is open, and sticky alone meant the
-   last groups — method, transducer — could only be reached by scrolling the whole page past the
+   last groups - method, transducer - could only be reached by scrolling the whole page past the
    results. It scrolls within itself instead, so the filters stay whole while the list moves. */
 .lx-rail { display:grid; gap:8px; align-content:start; position:sticky; top:8px;
   max-height:calc(100vh - 24px); overflow-y:auto; overscroll-behavior:contain;
@@ -1366,13 +1366,13 @@ a.result-item:focus-visible { outline:2px solid var(--accent); outline-offset:-2
 .mq-swatch.mq-engineered { outline:2px dashed var(--warn-ink); outline-offset:-3px; }
 
 /* Offset past the masthead, which is itself sticky at top:0 and 53px tall with z-index 20. Pinned
-   at 12px this panel came to rest *under* it — the heading and the close button were painted over
+   at 12px this panel came to rest *under* it - the heading and the close button were painted over
    by the header for the whole of the scroll, and only reappeared once the page scrolled back far
    enough for the panel to sit in normal flow again. 53 + 12 for the same gap the old value meant
    to leave. `.explorer-rail` already assumes the same masthead, at top:112px.
 
-   The cap then leaves room for two more things. Its own offset, and the page's trailing chrome —
-   the main element's bottom padding and what sits below it — because a sticky element is released
+   The cap then leaves room for two more things. Its own offset, and the page's trailing chrome -
+   the main element's bottom padding and what sits below it - because a sticky element is released
    at the bottom of its containing block by being pushed *up*, head first. The results column ends
    before the page's scroll does, so at the very bottom of a long result the last stretch of
    scrolling would otherwise slide the heading off the top as well. Never taller than the room that
@@ -1416,7 +1416,7 @@ a.result-item:focus-visible { outline:2px solid var(--accent); outline-offset:-2
 }
 
 /* The floating variant of the help popover. It lives in <body> and is positioned against the
-   marker's client rect, so no ancestor's overflow can clip it — see metricHelp() for why that is
+   marker's client rect, so no ancestor's overflow can clip it - see metricHelp() for why that is
    necessary. The arrow is dropped: with the box flipping above or below and clamped to the
    viewport, an arrow would frequently point at nothing. */
 .site-help-popover.is-floating { position:fixed; left:0; top:0; right:auto; bottom:auto;
@@ -1425,7 +1425,7 @@ a.result-item:focus-visible { outline:2px solid var(--accent); outline-offset:-2
 
 /* ---------------------------------------------- split chips: read here, add there.
    A motif card and a residue chip each offer two different actions, so each is a wrapper holding
-   two sibling buttons — never a button inside a button. Both halves are reachable by keyboard in
+   two sibling buttons - never a button inside a button. Both halves are reachable by keyboard in
    their own right and carry their own aria-label. */
 .motif-tab { padding:0; overflow:hidden; }
 .motif-tab-body, .motif-chip-body { display:inline-flex; align-items:center; gap:9px;
@@ -1437,7 +1437,7 @@ a.result-item:focus-visible { outline:2px solid var(--accent); outline-offset:-2
 /* Only the split variant drops its padding; the plain chip is still a single button. */
 .motif-chip.split { padding:0; overflow:hidden; }
 .motif-chip-body { gap:5px; padding:2px 4px 2px 7px; font-size:inherit; }
-/* The add target: a muted blue field with a white glyph — 5.7:1 in the light theme and 4.8:1 in
+/* The add target: a muted blue field with a white glyph - 5.7:1 in the light theme and 4.8:1 in
    the dark one, both past WCAG AA for text. It was a much darker navy, which at eight cards in a
    row read as a row of holes punched in the page rather than as eight buttons. */
 .motif-tab-add, .motif-tab-remove, .motif-chip-add { flex:none; border:0; font:inherit;
@@ -1541,7 +1541,7 @@ a.result-item:focus-visible { outline:2px solid var(--accent); outline-offset:-2
    motif cards (31px -> 62px), height stays at that control's 19px so the row does not grow.
    The field carries the green and the arrow is white, so the tray has to be the saturated green
    rather than the pale one: white on `--mq-exact` is 1.25:1 and simply disappears, while on
-   `--mq-exact-line` it holds 3.21:1 in the light theme and 4.15:1 in the dark — past the 3:1
+   `--mq-exact-line` it holds 3.21:1 in the light theme and 4.15:1 in the dark - past the 3:1
    WCAG asks of a non-text control. */
 .mq-famtag-go { flex:none; width:62px; height:19px; padding:0 4px; margin-left:8px;
   border-radius:5px; cursor:pointer; display:grid; place-items:center;
@@ -1607,7 +1607,7 @@ a.result-item:focus-visible { outline:2px solid var(--accent); outline-offset:-2
 .interaction-options[hidden] { display:none; }
 .interaction-option { font-size:12px; }
 
-/* Disclosure triangles. Right while closed, down while open — the same convention the browser's
+/* Disclosure triangles. Right while closed, down while open - the same convention the browser's
    own <details> marker uses, so the two kinds of disclosure in this panel read alike. Built from
    borders rather than a glyph so it inherits the button's colour in either theme. */
 .viewer-tool.disclosure::after,

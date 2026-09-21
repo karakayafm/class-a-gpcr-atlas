@@ -1,4 +1,4 @@
-// All views. Each returns a DOM node; none recomputes science — every number is read from a
+// All views. Each returns a DOM node; none recomputes science - every number is read from a
 // Phase 4-derived payload field.
 import { t, siteClassLabel, siteClassDefinition, stateLabel, warnLabel, transducerLabel,
   ligandClassLabel, biologicalTypeLabel, methodLabel, getLang } from "../core/i18n.js";
@@ -51,7 +51,7 @@ function siteClassChip(id, count, familySlug) {
     text:siteClassDefinition(id) });
   let pinned = false;
   const button = el("button", { class:"site-help-button", type:"button", text:"?",
-    "aria-label":siteClassLabel(id) + " — " + t("site_help_aria"),
+    "aria-label":siteClassLabel(id) + " - " + t("site_help_aria"),
     "aria-describedby":tipId, "aria-expanded":"false" });
   const filterLink = el("span", { class:"chip site-filter-link", role:"link", tabindex:"0",
     text:siteClassLabel(id) + " " + count });
@@ -99,7 +99,7 @@ function placeHelp(tip) {
    It has to be, because `table.data` carries `border-radius` with `overflow:hidden` to clip the
    sticky header's background, and an ancestor with a non-visible overflow clips absolutely
    positioned descendants. The popover opens upward out of the table's top edge, so every marker
-   in a table header had its explanation cut away — everywhere in the atlas, not only here. A
+   in a table header had its explanation cut away - everywhere in the atlas, not only here. A
    scroll box or a bounded aside around the table clips it a second time.
 
    Only the element that carries the text moves: the button stays where it was, keeps its
@@ -121,7 +121,7 @@ export function metricHelp(text) {
     const b = button.getBoundingClientRect();
     const t = tip.getBoundingClientRect();
     const margin = 8;
-    // Above by preference, below when there is no room — the same rule as before, now measured
+    // Above by preference, below when there is no room - the same rule as before, now measured
     // against the viewport instead of an ancestor that may be scrolled out of view.
     const above = b.top - t.height - margin;
     const top = above >= margin ? above : Math.min(b.bottom + margin,
@@ -289,7 +289,7 @@ export async function panels(initialPanel, open3D) {
       const familyRows = rows.filter(row => row.family_slug === familySelect.value)
         .sort((a,b) => a.pdb_id.localeCompare(b.pdb_id));
       for (const row of familyRows) structureSelect.appendChild(el("option", {
-        value:row.pdb_id, text:row.pdb_id + " — " + plainName(row.receptor_name)
+        value:row.pdb_id, text:row.pdb_id + " - " + plainName(row.receptor_name)
       }));
       structureSelect.disabled = !familySelect.value;
       resetPocket();
@@ -357,7 +357,7 @@ const CORE_PREVALENCE = 0.75;
 
 /* Positions that most of the panel contacts, keyed by generic number. Purely a comparison aid:
    it marks conserved pocket positions and, conversely, lets the caller list core positions this
-   particular structure does not reach. It never hides anything — that is the threshold filter's job. */
+   particular structure does not reach. It never hides anything - that is the threshold filter's job. */
 /* Every mapped position in the panel with its prevalence, so both the ≥75% markers and the
    contact-frequency slider read from one table instead of two slightly different ones. */
 function panelPositions(panelStats, panelId, siteClass) {
@@ -368,7 +368,7 @@ function panelPositions(panelStats, panelId, siteClass) {
   const panel = list.find(p => p.id === panelId);
   if (!panel) return out;
   // Exactly one binding-site class, never a merge. Site classes carry very different
-  // denominators — a covalent-core panel may hold two units, so a position contacted in both
+  // denominators - a covalent-core panel may hold two units, so a position contacted in both
   // reads 100% and would swamp the canonical pocket if the classes were pooled.
   const wanted = siteClass || "canonical_7tm_pocket";
   const site = (panel.site_classes || []).find(s => s.binding_site_class === wanted);
@@ -448,7 +448,7 @@ function missingCoreRow(record, core) {
 }
 
 /* Counts sit in their own boxed, right-aligned badge. Run together with the label they read as
-   part of the protein name — "G12 / G13 5" looks like a subunit, not a tally of five structures. */
+   part of the protein name - "G12 / G13 5" looks like a subunit, not a tally of five structures. */
 /* Mirrors pipeline/phase5/build_payloads.py:panel_slug so URLs and payload paths agree. */
 function panelSlugOf(panel) {
   return String(panel).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -620,7 +620,7 @@ export async function overview(root, slug) {
   }
   wrap.appendChild(kv);
   if (s.unresolved_site_class_observations)
-    wrap.appendChild(el("p", { class: "notice", text: t("unresolved_site") + " — " +
+    wrap.appendChild(el("p", { class: "notice", text: t("unresolved_site") + " - " +
       s.unresolved_site_class_observations }));
   wrap.appendChild(el("h3", { text: t("coverage") }));
   const ct = el("table", { class: "data" }, [el("tbody", {},
@@ -714,7 +714,7 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
   /* An address that names a structure names it deliberately; the representative-only filter is a
      browsing default, not an instruction. When they disagree the default gives way. They disagree
      often: the motif panel links to the deposition it actually scored, and that is frequently not
-     the one chosen to represent its analysis unit — so following such a link used to land on the
+     the one chosen to represent its analysis unit - so following such a link used to land on the
      family list with a different structure selected and no sign that the one asked for had been
      filtered out. Only the default is relaxed. A reader who turned the filter off writes `rep=0`
      and nothing here overrides a choice that was made. */
@@ -724,7 +724,7 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
   /* The same address also says which receptor and receptor family the structure belongs to, and
      until now the panel did not. A reader who searched "2RH1" or followed a link from another
      module arrived with every dropdown reading "all" and had to find those two facts in the detail
-     pane — the two facts the list is organised by. Setting them from the structure itself answers
+     pane - the two facts the list is organised by. Setting them from the structure itself answers
      the question next to the list it describes, and leaves the list showing that receptor's other
      depositions rather than the whole family.
      `af` records that this was done. A language change rebuilds this view from the route, so
@@ -899,7 +899,7 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
       const code = componentOf(item.observation);
       const record = code && chemistry ? chemistry.get(code) : null;
       const note = record && record.parse_status === "failed" && record.parse_error
-        ? " — " + record.parse_error : "";
+        ? " - " + record.parse_error : "";
       items.appendChild(el("li", {}, [
         el("strong", { text: item.structure.pdb_id }),
         el("span", { text: " " + label + (code ? " (" + code + ")" : "") + note })
@@ -914,7 +914,7 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
      variant can carry the related tables as extra sheets, which is why the two are not
      generated from an identical row set. */
   /* The buttons read only "CSV"/"XLSX", so each carries an accessible name describing the
-     dataset it downloads — otherwise a screen reader announces six identical controls. */
+     dataset it downloads - otherwise a screen reader announces six identical controls. */
   const exportName = panelMode ? "panel-" + panelSlug : slug;
   function exportRow(labelKey, csvName, xlsxName, onCsv, onXlsx) {
     return el("div", { class: "export-row" }, [
@@ -997,8 +997,8 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
       (a.resolution || 99) - (b.resolution || 99) || a.pdb_id.localeCompare(b.pdb_id));
   }
 
-  /* Chemistry filtering moved out with the rail that drove it. The three-way split it needed —
-     matched, unmatched, unassessable — went with it; what is left is the filtered set. */
+  /* Chemistry filtering moved out with the rail that drove it. The three-way split it needed -
+     matched, unmatched, unassessable - went with it; what is left is the filtered set. */
   function partition() {
     return { match: baseFiltered(), unknown: [], ligandMatches: 0, ligandUnknown: [] };
   }
@@ -1083,7 +1083,7 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
         el("p", { class: "muted", text: plainName(x.receptor_name || "—") + " · " + x.receptor_entry_name })]),
       /* Two ways in, because they are two different questions. The pocket is where most readers
          start, so it keeps the primary button; the whole receptor is for the reader who came with
-         a position the ligand never touches — which the pocket view cannot show at all, and used
+         a position the ligand never touches - which the pocket view cannot show at all, and used
          to leave them with nothing to click. */
       el("div", { class: "detail-open-actions" }, [
         el("button", { class: "btn btn-primary", text: t("open_binding_site"),
@@ -1170,11 +1170,11 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
       const resultLabel = t("ev_result_" + row.result);
       const rationale = row["rationale_" + getLang()] || row.rationale_en || "";
       // Tier A rationales already open with the result phrase, and tier B rationales repeat the
-      // assay name — so pick one source of words per tier instead of concatenating all three.
+      // assay name - so pick one source of words per tier instead of concatenating all three.
       const detailText = row.tier === "A"
         ? (rationale.startsWith(resultLabel)
             ? rationale.slice(resultLabel.length).replace(/^\s*[—–-]\s*/, "") : rationale)
-        : [fe.assay_or_evidence, fe.curator_note].filter(Boolean).join(" — ");
+        : [fe.assay_or_evidence, fe.curator_note].filter(Boolean).join(" - ");
       const sourceLabel = (source.reference_id || "").replace(/^PMCID:/, "") ||
         (/rcsb\.org/.test(source.url || "") ? "RCSB " + row.pdb_id : t("source_open"));
       body.appendChild(el("tr", {}, [
@@ -1182,7 +1182,7 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
         el("td", {}, el("span", { class: "tier-badge tier-" + (row.tier || "").toLowerCase(),
           text: row["tier_label_" + getLang()] || row.tier_label_en || row.tier })),
         el("td", {}, [el("strong", { text: resultLabel }),
-          el("span", { text: detailText ? " — " + detailText : "" })]),
+          el("span", { text: detailText ? " - " + detailText : "" })]),
         el("td", {}, source.url
           ? el("a", { href: source.url, target: "_blank", rel: "noopener", text: sourceLabel })
           : el("span", { class: "muted", text: "—" })),
@@ -1248,7 +1248,7 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
       ]));
     }
     // The threshold hides positions the panel rarely touches. Residues with no generic mapping
-    // have no panel prevalence to judge, so they are never hidden — we cannot claim they are rare.
+    // have no panel prevalence to judge, so they are never hidden - we cannot claim they are rare.
     const minPrevalence = filters.contactThreshold || 0;
     const keep = residue => {
       if (!minPrevalence) return true;
@@ -1374,7 +1374,7 @@ function exportContactList(rows, pocket, slug, xlsx) {
 }
 
 /* Generic positions down the rows, structures across the columns, closest heavy-atom distance
-   in the cells. Blank means the position was not within the 5 Å shell for that structure —
+   in the cells. Blank means the position was not within the 5 Å shell for that structure -
    distinct from a position that is absent from the numbering, which never gets a row at all. */
 function exportMatrix(rows, pocket, slug, xlsx) {
   const list = pocketRows(rows, pocket);
@@ -1456,7 +1456,7 @@ export async function contacts(root, slug, siteClass, polymer) {
   if (betaPos) wrap.appendChild(el("p", { class: "muted small", text: t("rg_default_note") }));
   const gp = RG.gatePanel(gate, site);
   if (gp) wrap.appendChild(gp);
-  if (polymer) wrap.appendChild(el("p", { class: "muted small", text: t("interface_terms") + " — " +
+  if (polymer) wrap.appendChild(el("p", { class: "muted small", text: t("interface_terms") + " - " +
     t("receptor_interface_residue") + " / " + t("ligand_polymer_residue") + " / " + t("residue_pair") }));
   const wb = warnBadges(d.warnings); if (wb) wrap.appendChild(wb);
   const body = el("div"); wrap.appendChild(body);
@@ -1507,7 +1507,7 @@ export async function contacts(root, slug, siteClass, polymer) {
         onclick: () => { ST.set({ page: pg.page - 1 }); draw(); } }),
       el("button", { class: "btn", text: "›", disabled: pg.page >= pg.pages - 1,
         onclick: () => { ST.set({ page: pg.page + 1 }); draw(); } }),
-      el("button", { class: "btn", text: t("export_csv") + " — " + t("export_contacts"),
+      el("button", { class: "btn", text: t("export_csv") + " - " + t("export_contacts"),
         onclick: () => {
           const cols = [{ key: "generic_position" }, { key: "units" }, { key: "units_with_any_contact" },
             { key: "unit_weighted_contact_fraction_4A" }, { key: "unit_weighted_contact_fraction_4_5A" },
@@ -1571,7 +1571,7 @@ export async function motifs(root, slug) {
     el("td", { class: "small", text: Object.keys(p.sodium_environment).map(k => k + ":" + p.sodium_environment[k]).join(" ") })
   ]));
   pt.appendChild(pb); wrap.appendChild(pt);
-  wrap.appendChild(el("button", { class: "btn", text: t("export_csv") + " — " + t("export_motifs"),
+  wrap.appendChild(el("button", { class: "btn", text: t("export_csv") + " - " + t("export_motifs"),
     onclick: () => download("motifs_" + slug + ".csv", toCSV(
       [{ key: "motif_id" }, { key: "generic_positions" }, { key: "structures" },
        { key: "canonical_identity" }, { key: "noncanonical_identity" },
@@ -1664,7 +1664,7 @@ export async function evidence(root, slug, openOnly) {
   wrap.appendChild(el("h2", { text: d["label_" + getLang()] || d.label_en }));
   wrap.appendChild(el("p", { class: "muted", text: t("adjud_note") }));
   wrap.appendChild(el("p", { class: "muted small",
-    text: d.human_review_required + " / " + d.count + " — " + d.unit_of_count }));
+    text: d.human_review_required + " / " + d.count + " - " + d.unit_of_count }));
   const bar = el("div", { class: "controls" });
   const isel = el("select", { "aria-label": "issue" });
   const issues = Array.from(new Set(d.items.flatMap(i => i.issue_types))).sort();
@@ -1688,7 +1688,7 @@ export async function evidence(root, slug, openOnly) {
       tb.appendChild(el("tr", {}, [
         el("td", {}, el("a", { class:"pdb-review-link", text:i.pdb_id,
           href:buildHash({ family:slug, view:"3d", pdb:i.pdb_id }),
-          title:i.pdb_id + " — 3B" })),
+          title:i.pdb_id + " - 3B" })),
         el("td", { class: "small", text: i.evidence_adjudication || "—" }),
         el("td", { text: i.adjudication_confidence || "—" }),
         el("td", { text: t("human_not_started") }),
@@ -1706,7 +1706,7 @@ export async function evidence(root, slug, openOnly) {
     }
     tbl.appendChild(tb); body.appendChild(tbl);
     body.appendChild(el("p", { class: "muted small", text: rows.length + " / " + d.count }));
-    body.appendChild(el("button", { class: "btn", text: t("export_csv") + " — " + t("export_reviews"),
+    body.appendChild(el("button", { class: "btn", text: t("export_csv") + " - " + t("export_reviews"),
       onclick: () => download("reviews_" + slug + ".csv", toCSV(
         [{ key: "review_item_id" }, { key: "pdb_id" }, { key: "issue_types" },
          { key: "automated_proposal" }, { key: "evidence_adjudication" },
@@ -1779,7 +1779,7 @@ export async function sources() {
   roleTable.appendChild(el("thead", {}, el("tr", {}, [t("sr_source"), t("sr_role"),
     t("sr_fields"), t("sr_licence"), t("sr_transform")].map(h => el("th", { text: h })))));
   const roleBody = el("tbody");
-  // Coordinates first, then annotation, pharmacology, chemistry, and the bundled viewer last —
+  // Coordinates first, then annotation, pharmacology, chemistry, and the bundled viewer last -
   // the order the data actually flows through the pipeline. Unlisted sources fall in alphabetically.
   const ORDER = ["rcsb", "gpcrdb", "gtopdb", "chembl", "bindingdb", "pubchem", "unichem",
     "uniprot", "ngl"];
@@ -1825,7 +1825,7 @@ export async function sources() {
     // The label, not the record key: `odbl_sharealike_derived_data_review` is how the pipeline
     // names it, and putting that on the page reads as a leaked variable.
     el("li", {}, [el("strong", { text: g.label || g.gate }),
-      el("span", { class: "muted", text: " — " + t("gate_" + g.status) }),
+      el("span", { class: "muted", text: " - " + t("gate_" + g.status) }),
       el("span", { text: ": " + g.note })]))));
   return wrap;
 }
@@ -1842,7 +1842,7 @@ export async function references(root, slug) {
     const list = el("ol", { class: "reference-list" });
     for (const key of keys) {
       const c = cites[key];
-      const item = el("li", {}, [ el("strong", { class: "ref-db-label", text: databaseLabel(key) + " — " }),
+      const item = el("li", {}, [ el("strong", { class: "ref-db-label", text: databaseLabel(key) + " - " }),
         el("span", { text: plainCitation(c) }) ]);
       if (c.pubmed_url) item.appendChild(el("a", { href: c.pubmed_url, target: "_blank",
         rel: "noopener", text: " PubMed" }));
@@ -1852,7 +1852,7 @@ export async function references(root, slug) {
     wrap.appendChild(el("p", { class: "muted small", text: t("cite_db_note") }));
   }
   if (g.atlas) wrap.appendChild(el("p", { class: "muted small",
-    text: g.atlas.title + " " + (g.atlas.version || "") + " — " +
+    text: g.atlas.title + " " + (g.atlas.version || "") + " - " +
       (g["atlas"]["doi_note_" + getLang()] || g.atlas.doi_note_en || "") }));
   if (!slug) wrap.appendChild(el("p", { class: "muted", text: t("ref_pick_family") }));
   if (slug) {
@@ -1986,7 +1986,7 @@ export async function cite(root, pdb, slug) {
 
       const picker = el("select", { "aria-label": t("cite_choose_structure") });
       for (const s of structures) picker.appendChild(el("option", { value: s.pdb_id,
-        text: s.pdb_id + " — " + plainName(s.receptor_name || s.receptor_entry_name || "") }));
+        text: s.pdb_id + " - " + plainName(s.receptor_name || s.receptor_entry_name || "") }));
       picker.value = current.pdb_id;
       const output = el("div");
       body.append(el("label", { class: "filter-field cite-picker" }, [
@@ -2050,7 +2050,7 @@ export async function cite(root, pdb, slug) {
    Removed rather than left in place, because nothing routed to it any more. */
 
 /* Guide. The methods page states what the pipeline does; this states what each panel is for,
-   what question it answers and — the part a methods list cannot carry — how far the answer
+   what question it answers and - the part a methods list cannot carry - how far the answer
    reaches. Every panel here ends with what it does not establish, because a contact distance
    and a binding claim are different things and the interface should not let one stand in for
    the other. */
@@ -2078,7 +2078,7 @@ export async function guide(root) {
     ["exports", ["read", "use", "limit"]],
   ];
   /* The column dictionary. Every file the atlas writes is listed with its columns, and each column
-     is named by the same key the export itself uses — so a column cannot exist without a
+     is named by the same key the export itself uses - so a column cannot exist without a
      definition here, and a definition cannot drift from the heading it explains. */
   const FILES = [
     ["guide_file_ligands", ["similarity", "name", "components", "roles_receptor_counts",
