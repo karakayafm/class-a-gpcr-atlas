@@ -354,13 +354,18 @@ function measureAngle(a, b, c) {
   return Math.acos(Math.min(1, Math.max(-1, dot(u, v) / denom))) * 180 / Math.PI;
 }
 /* Signed, by the IUPAC convention: the angle between the plane through the first three atoms and
-   the plane through the last three, positive clockwise looking along b to c. */
+   the plane through the last three, positive clockwise looking along b to c.
+   The leading minus is the convention, not a correction factor. Without it this returns the
+   mirror image of the IUPAC angle, which is not a harmless offset: a side chain in the rotamer
+   the literature calls gauche-minus reads as gauche-plus, and an isoleucine chi1 near -60 - the
+   commonest rotamer there is - is reported as +60, which is one of the rarest. Checked against a
+   constructed case whose answer is +90 by geometry. */
 function measureDihedral(a, b, c, d) {
   const b1 = subtract(b, a), b2 = subtract(c, b), b3 = subtract(d, c);
   const n1 = cross(b1, b2), n2 = cross(b2, b3), m = cross(n1, b2);
   const l = norm(b2);
   if (!l || !norm(n1) || !norm(n2)) return null;
-  return Math.atan2(dot(m, n2) / l, dot(n1, n2)) * 180 / Math.PI;
+  return -Math.atan2(dot(m, n2) / l, dot(n1, n2)) * 180 / Math.PI;
 }
 
 /* Numbering tables for the superposed structures, keyed by the name their NGL structure carries.
