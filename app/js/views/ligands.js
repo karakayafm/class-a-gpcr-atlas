@@ -10,7 +10,7 @@
  *
  * Two things the payload forces, both of which a purely component-keyed list would get wrong:
  *
- *   A quarter of the pharmacological observations carry no chemical component at all — 303 of
+ *   A quarter of the pharmacological observations carry no chemical component at all - 303 of
  *   them are polymer chains, peptides and proteins. They are ligands and they are the point of
  *   several families. They are keyed by name, listed beside the small molecules, and marked as
  *   what they are rather than dropped for being undrawable.
@@ -21,7 +21,7 @@
  *   wrong for them, so roles are given per receptor context and the role filter selects
  *   observations rather than compounds.
  *
- * The class payloads overlap — forty-five depositions and ninety-five observations appear in more
+ * The class payloads overlap - forty-five depositions and ninety-five observations appear in more
  * than one file, because a structure is listed under every class its ligands belong to. Everything
  * here is deduplicated by observation id before it is counted.
  */
@@ -328,7 +328,7 @@ export async function ligandExplorer(root, initialLigand) {
   checkGroup("chem_ring_systems", filters.ringSystems, e => facetOf(e, "ring_systems"), patternLabel);
   /* Scaffolds group compounds; a scaffold only one compound carries groups nothing, so as in the
      chemistry rail this lists only the ones two or more share. The label is the scaffold SMILES
-     because the release does not name them — it computes them, and a name would claim a chemotype
+     because the release does not name them - it computes them, and a name would claim a chemotype
      class that was never asserted. */
   const sharedScaffolds = new Map();
   for (const entry of all) {
@@ -535,7 +535,7 @@ export async function ligandExplorer(root, initialLigand) {
        fills that third slot only when there is not: a measured constant is what a reader came for,
        and a polar surface area is what can be said when nobody has published one. The chip names
        the receptor it belongs to, because an affinity with no target attached is not a fact about
-       anything — the full table is in the detail. */
+       anything - the full table is in the detail. */
     const d = (entry.chem && entry.chem.descriptors) || null;
     const best = strongest(entry);
     if (d || best) {
@@ -632,7 +632,7 @@ export async function ligandExplorer(root, initialLigand) {
           text: t("lx_role_structures", { n: structures.size }) + " · "
             + t(receptors === 1 ? "lx_role_receptors_one" : "lx_role_receptors", { n: receptors }) }));
         /* Which family, named. The counts said how many receptors without saying whose, and the
-           only other place it appeared was the hover text of a PDB chip — so answering "what does
+           only other place it appeared was the hover text of a PDB chip - so answering "what does
            this compound bind" meant opening a structure to find out. Two names inline and the rest
            behind a count, because a promiscuous ligand can span most of the atlas and the caption
            has to stay a caption. */
@@ -920,7 +920,7 @@ export async function ligandExplorer(root, initialLigand) {
       { key: "name", label: col("name") },
       { key: "components", label: col("components"), get: r => r.components.join("+") },
       /* Named for its unit. "roles_by_receptor_context" left a reader to work out that the number
-         beside a role counts receptors — and the note that says so is a # line the spreadsheet
+         beside a role counts receptors - and the note that says so is a # line the spreadsheet
          hides. A role's count and the receptors column do not add up, because a receptor can carry
          two roles, so the header has to carry the unit itself. */
       { key: "roles", label: col("roles_receptor_counts"),
@@ -942,7 +942,7 @@ export async function ligandExplorer(root, initialLigand) {
       { key: "tpsa", label: col("tpsa"), get: r => r.chem?.descriptors?.tpsa ?? "" },
       { key: "inchikey", label: col("inchikey"), get: r => r.chem?.inchikey ?? "" },
       /* The reported constants, one column per measure. Each carries the receptor it was measured
-         at, because a value with no target attached is not a fact about anything — the same reason
+         at, because a value with no target attached is not a fact about anything - the same reason
          the roles column names its receptors. Empty where nothing is published: the release covers
          23 of 578 components, and a blank is not a zero. */
       ...["Ki", "Kd", "IC50", "EC50"].map(type => ({

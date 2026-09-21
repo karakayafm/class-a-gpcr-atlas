@@ -18,7 +18,7 @@ const MAIN = () => document.getElementById("main");
 let lastFamily = null, modalOpener = null;
 /* Which residue list the side panel is showing: the ligand's contact shell, or the whole
    receptor. Kept here rather than in the viewer because it is a property of the panel, not of
-   the scene — the viewer draws exactly what is selected either way. Reset per structure, and
+   the scene - the viewer draws exactly what is selected either way. Reset per structure, and
    deliberately outside buildViewerSide so a redraw (reset view, clear selection, language
    change) does not throw a reader back to the pocket. */
 let wholeReceptor = false;
@@ -175,8 +175,8 @@ function setupGlobalSearch() {
     if (activateFirst) { openHit(exact || scored[0]); return; }
     clear(panel);
     if (!scored.length) {
-      /* A withdrawn entry is kept out of the index on purpose — leading a reader to a retracted
-         structure is worse than not finding it — and where its replacement is here, the
+      /* A withdrawn entry is kept out of the index on purpose - leading a reader to a retracted
+         structure is worse than not finding it - and where its replacement is here, the
          replacement carries the old identifier and the search resolves it. Where the replacement
          is *not* here, neither identifier matched anything and the reader got silence from an
          atlas that knows exactly what happened to it. Now it says so. */
@@ -209,8 +209,8 @@ function setupGlobalSearch() {
 }
 
 /* Superposition. Its own section rather than a mode like measurement, because an overlay stays on
-   screen and goes on being true while the reader does other things — picking residues, measuring,
-   switching observation — and a mode would have to be left before any of that. */
+   screen and goes on being true while the reader does other things - picking residues, measuring,
+   switching observation - and a mode would have to be left before any of that. */
 function buildAlignSection(meta) {
   const section = el("div", { class: "viewer-section align-section" });
   section.appendChild(el("h3", { text: t("align_title") }));
@@ -234,7 +234,7 @@ function buildAlignSection(meta) {
       return;
     }
     /* The base structure is recoloured the moment the first overlay lands, so it needs a swatch
-       here too — otherwise green is the one colour in the scene the panel does not explain. */
+       here too - otherwise green is the one colour in the scene the panel does not explain. */
     const baseSwatch = el("i", { class: "align-swatch" });
     baseSwatch.style.background = ALIGN.baseColour();
     list.appendChild(el("div", { class: "align-row align-row-base" }, [
@@ -330,7 +330,7 @@ function ensureModal() {
   return m;
 }
 function setBackgroundInert(on) {
-  // Everything except the dialog itself, rather than a list of landmark selectors — a list
+  // Everything except the dialog itself, rather than a list of landmark selectors - a list
   // silently misses whatever gets added later, and it already missed the skip link and the
   // breadcrumb, both of which sit directly on <body>.
   const m = document.getElementById("modal");
@@ -354,7 +354,7 @@ async function openModal(pdb, observationId, focusResidue, opts) {
   const st = document.getElementById("viewer-status");
   st.hidden = false; st.textContent = t("loading_structure");
   /* Overlays belong to the stage VIEW.open is about to destroy and rebuild, so they are forgotten
-     here rather than removed — the components are already going. Opening a second structure while
+     here rather than removed - the components are already going. Opening a second structure while
      the modal stays open, which changing the address does, comes through here too. */
   ALIGN.reset();
   activeStructure = null;
@@ -446,8 +446,8 @@ function closeModal() {
   m.hidden = true;
   document.body.classList.remove("modal-open");
   setBackgroundInert(false);
-  /* The structure stays named in the address. The page behind is showing it — closing the viewer
-     is leaving the 3D view, not the structure — and dropping it left an address that no longer
+  /* The structure stays named in the address. The page behind is showing it - closing the viewer
+     is leaving the 3D view, not the structure - and dropping it left an address that no longer
      described the page. The viewer's own keys do go, because nothing behind the modal reads them. */
   const r = parseRoute(); delete r.observation; delete r.whole; delete r.mark;
     if (r.view === "3d") r.view = r.family ? "structures" : "landing";
@@ -457,8 +457,8 @@ function closeModal() {
   modalOpener = null;
 }
 /* A structure can hold several ligands, and readers were missing that the view is showing only
-   one of them. The choice is offered in three places now — the modal title, the side panel and an
-   overlay on the viewer — so they all route through here and refresh each other. */
+   one of them. The choice is offered in three places now - the modal title, the side panel and an
+   overlay on the viewer - so they all route through here and refresh each other. */
 function applyObservation(meta, id) {
   VIEW.setObservation(id);
   const status = VIEW.statusMessage(), node = document.getElementById("viewer-status");
@@ -467,9 +467,9 @@ function applyObservation(meta, id) {
   updateModalTitle(meta); buildViewerSide(meta); buildObservationSwitch(meta);
 }
 function observationList(meta) { return meta.observations || []; }
-function observationText(o) { return V.plainName(o.ligand_name || o.ligand_entity_id) + " — " + o.ligand_role; }
-/* An observation with no coordinates or no atom selection stays in the list — it is a real
-   annotation — but it is labelled, so switching to it does not look like a broken viewer. */
+function observationText(o) { return V.plainName(o.ligand_name || o.ligand_entity_id) + " - " + o.ligand_role; }
+/* An observation with no coordinates or no atom selection stays in the list - it is a real
+   annotation - but it is labelled, so switching to it does not look like a broken viewer. */
 function observationDrawable(o) {
   return o.coordinate_status === "observed" && !!o.ligand_selection;
 }
@@ -505,8 +505,8 @@ function buildObservationSwitch(meta) {
    structure it is describing. */
 let activeStructure = null;
 /* Whether the interaction layers are showing. Held outside buildViewerSide because that function
-   rebuilds the panel from scratch — switching to the whole receptor, changing observation, changing
-   language — and a disclosure that closes itself every time is one the reader has to keep
+   rebuilds the panel from scratch - switching to the whole receptor, changing observation, changing
+   language - and a disclosure that closes itself every time is one the reader has to keep
    reopening while the layers it controls are still on. */
 let interactionPanelOpen = false;
 let surfacePanelOpen = false;
@@ -518,7 +518,7 @@ function activePdb(meta) {
 }
 
 /* The strip that switches between the structures in the scene. Only drawn once there is more than
-   one — with nothing superposed it would be a control with a single option. */
+   one - with nothing superposed it would be a control with a single option. */
 function buildStructureSwitch(meta, onChange) {
   if (!ALIGN.hasOverlays()) return null;
   const active = activePdb(meta);
@@ -547,7 +547,7 @@ function buildStructureSwitch(meta, onChange) {
 function buildViewerSide(meta) {
   const side = document.getElementById("viewer-side");
   clear(side);
-  side.appendChild(el("h3", { text: meta.pdb_id + " — " + V.plainName(meta.receptor_name || "") }));
+  side.appendChild(el("h3", { text: meta.pdb_id + " - " + V.plainName(meta.receptor_name || "") }));
   side.appendChild(el("p", { class: "muted small", text: meta.species + " · " +
     (meta.experimental_method ? methodLabel(meta.experimental_method) : "") + " · " +
     (meta.resolution != null ? meta.resolution + " Å" : "") }));
@@ -558,7 +558,7 @@ function buildViewerSide(meta) {
     const sel = el("select", { class:"observation-native", "aria-label": t("observation"),
       onchange:e => selectObservation(e.target.value) });
     for (const o of meta.observations) sel.appendChild(el("option", { value: o.observation_id,
-      text: (o.ligand_name || o.ligand_entity_id) + " — " + o.ligand_role,
+      text: (o.ligand_name || o.ligand_entity_id) + " - " + o.ligand_role,
       selected: o.observation_id === VIEW.currentObservation() }));
     const currentObservation = meta.observations.find(o =>
       o.observation_id === VIEW.currentObservation()) || meta.observations[0];
@@ -637,7 +637,7 @@ function buildViewerSide(meta) {
     text:t("v_interactions") });
   ctrl.appendChild(interactionsButton);
   /* Inside the button row, not after it. The row wraps, and a panel appended to the side pane
-     landed below every other tool — far enough from the control that opened it that it read as a
+     landed below every other tool - far enough from the control that opened it that it read as a
      separate thing. Given a full-width flex basis it breaks onto the line directly beneath its
      own button instead. */
   ctrl.appendChild(interactionPanel);
@@ -726,7 +726,7 @@ function buildViewerSide(meta) {
         cartoonLigand.disabled = !on.ligand;
         licoriceLigand.disabled = !on.ligand;
         /* The helical interaction layers describe the receptor, so hiding the ligand no longer
-           closes the whole control — it only makes the protein-ligand layer unavailable. */
+           closes the whole control - it only makes the protein-ligand layer unavailable. */
         paintInteractionLayers();
         interactionsButton.setAttribute("aria-pressed",
           VIEW.anyInteractionLayer() ? "true" : "false");
@@ -750,7 +750,7 @@ function buildViewerSide(meta) {
         ligandButton.setAttribute("aria-pressed", on.ligand ? "true" : "false");
         ligandButton.textContent = t(on.ligand ? "v_ligand_hide" : "v_ligand_show");
         /* The helical interaction layers describe the receptor, so hiding the ligand no longer
-           closes the whole control — it only makes the protein-ligand layer unavailable. */
+           closes the whole control - it only makes the protein-ligand layer unavailable. */
         paintInteractionLayers();
         interactionsButton.setAttribute("aria-pressed",
           VIEW.anyInteractionLayer() ? "true" : "false");
@@ -776,7 +776,7 @@ function buildViewerSide(meta) {
   };
   /* Same fault as the interaction switches: these called viewer.js directly, so asking for a
      ligand surface while a superposed structure was selected put the surface on the base structure
-     instead — and the button, whose state was a local reset on every rebuild, disagreed with the
+     instead - and the button, whose state was a local reset on every rebuild, disagreed with the
      scene as soon as the reader switched back. Both now go to the selected structure, and both read
      their state from it. */
   const surfaceOption = (key, label) => {
@@ -822,8 +822,8 @@ function buildViewerSide(meta) {
     onclick: () => { VIEW.resetView(); buildViewerSide(meta); } }));
   ctrl.appendChild(el("button", { class: "viewer-tool", text: t("v_snapshot"),
     onclick: () => VIEW.snapshot() }));
-  /* The 2D diagram. It takes whatever is on screen — the structure being viewed, then each
-     superposed one in the order it was added — so a three-way superposition downloads as three
+  /* The 2D diagram. It takes whatever is on screen - the structure being viewed, then each
+     superposed one in the order it was added - so a three-way superposition downloads as three
      panels side by side and needs no separate control of its own. */
   const diagramButton = el("button", { class: "viewer-tool", text: t("v_diagram"),
     onclick: (ev) => {
@@ -897,13 +897,13 @@ function buildViewerSide(meta) {
     const kept = VIEW.measureKeptList();
     const format = r => r.unit === "angstrom"
       ? r.value.toFixed(2) + " Å" : r.value.toFixed(1) + "°";
-    /* With something superposed, "F6x52 CE1 — F6x52 CE1" names the same position in two different
+    /* With something superposed, "F6x52 CE1 - F6x52 CE1" names the same position in two different
        receptors and reads as a measurement from an atom to itself. The structure is prefixed only
        when there is more than one on screen, so the ordinary single-structure readout is unchanged. */
     const many = ALIGN.hasOverlays();
     const atomText = a => (many && a.struct ? a.struct + " " : "") + a.residue + " " +
       (a.atomName || "?");
-    const atomsLine = atoms => atoms.map(atomText).join(" — ");
+    const atomsLine = atoms => atoms.map(atomText).join(" - ");
     /* Kept measurements first: they are answers, and they stay on screen while the next question
        is being picked out. */
     if (kept.length) {
@@ -960,7 +960,7 @@ function buildViewerSide(meta) {
         { key:"pdb", label:"PDB", get:() => meta.pdb_id },
         { key:"atoms", label:t("v_measure_atoms"),
           get:r => r.atoms.map(a => (a.struct ? a.struct + " " : "") + a.residue + " " +
-            (a.atomName || "?")).join(" — ") },
+            (a.atomName || "?")).join(" - ") },
         { key:"atom1", label:"atom 1", get:r => cell(r, 0) },
         { key:"atom2", label:"atom 2", get:r => cell(r, 1) },
         { key:"atom3", label:"atom 3", get:r => cell(r, 2) },
@@ -1021,7 +1021,7 @@ function buildViewerSide(meta) {
       for (const motif of rows) {
         const b = el("button", { class: "motif-button motif-" + motif.group, "aria-pressed": "false",
           text: motif.label,
-          "aria-label":motif.label + " — " + motif.tooltip,
+          "aria-label":motif.label + " - " + motif.tooltip,
           onclick: () => {
             const selected = VIEW.toggleMotif(motif.id);
             b.classList.toggle("selected", selected);
@@ -1048,7 +1048,7 @@ function buildViewerSide(meta) {
   }
   /* Clears whichever structure is active. Without this, residues picked on an overlay could be
      taken off only one at a time, because this control reached past the switcher to the base
-     structure — the same class of bug the switcher was added to end. */
+     structure - the same class of bug the switcher was added to end. */
   motifSection.appendChild(el("button", { class: "clear-selection", text: t("v_clear_selection"),
     onclick: () => {
       if (onBase) VIEW.clearSelections(); else ALIGN.clearOverlaySelection(active);
@@ -1122,7 +1122,7 @@ function buildViewerSide(meta) {
       meta.auxiliary_note_en }));
 }
 
-/* The whole receptor, as seven columns — one helix each, read from the extracellular end down,
+/* The whole receptor, as seven columns - one helix each, read from the extracellular end down,
    which is the order the positions themselves are numbered in. A column rather than a single long
    list because the question a reader brings here is almost always about one helix ("what is along
    TM3?"), and a flat list of two hundred and fifty buttons answers it only by scrolling.
@@ -1131,7 +1131,7 @@ function buildViewerSide(meta) {
    same control the pocket list already offered, so the two lists behave identically and only their
    contents differ. */
 /* `onSelectionChange` is passed in rather than reached for: this function lives outside
-   buildViewerSide, so the panel's own repaint is not in its scope — a click here was throwing
+   buildViewerSide, so the panel's own repaint is not in its scope - a click here was throwing
    silently while every assertion still passed. */
 function buildReceptorColumns(container, meta, onSelectionChange) {
   /* Reads whichever structure the switcher has active, so the question "what is along TM6 of the
@@ -1139,7 +1139,7 @@ function buildReceptorColumns(container, meta, onSelectionChange) {
   const active = activePdb(meta);
   const onBase = active === String(meta.pdb_id).toUpperCase();
   container.appendChild(el("h4", { class:"viewer-section-title",
-    text:t("v_whole_list") + (onBase ? "" : " — " + active) }));
+    text:t("v_whole_list") + (onBase ? "" : " - " + active) }));
   const segments = onBase ? VIEW.receptorSegments() : ALIGN.segmentsOf(active);
   if (!segments.length) {
     container.appendChild(el("p", { class:"notice small", text:t("v_whole_unavailable") }));
@@ -1193,7 +1193,7 @@ function buildReceptorColumns(container, meta, onSelectionChange) {
   }
   container.appendChild(grid);
   /* A helix with nothing to list is left out of the grid, and left out silently a reader cannot
-     tell "this structure does not resolve TM6" from "the atlas could not number it" — they had to
+     tell "this structure does not resolve TM6" from "the atlas could not number it" - they had to
      ask. It is the second: the residues are usually there in the coordinates, but the alignment
      the generic numbering is derived from did not reach them, so there is no position to click.
      Three structures out of 1346 are in this state, which is exactly why it needs saying: nobody
@@ -1219,7 +1219,7 @@ async function render(r) {
   const manifest = L.getManifest();
   // The motif query panel keeps its whole state in the address. A route change confined to that
   // panel's own keys is handed to the mounted panel, because re-rendering the view would take
-  // the query input out of the document and the caret with it — which is what stopped the panel
+  // the query input out of the document and the caret with it - which is what stopped the panel
   // from being addressable in the first place.
   if (MQ.canUpdateInPlace(r)) { MQ.applyRoute(r); buildChrome(manifest); setStatus(""); return; }
   buildChrome(manifest);
@@ -1267,15 +1267,15 @@ async function render(r) {
     }
     if (!node) { fatal(t("err_route")); setStatus(""); return; }
     main.appendChild(node);
-    // Re-entering render() while the same structure is already open — which a language change
-    // does — must not tear the stage down and rebuild it; the user would lose the camera and
+    // Re-entering render() while the same structure is already open - which a language change
+    // does - must not tear the stage down and rebuild it; the user would lose the camera and
     // every toggle. Only open when the modal is not already showing this structure.
     if (r.view === "3d" && r.pdb) {
       const m = document.getElementById("modal");
       const already = m && !m.hidden && VIEW.meta_() && VIEW.meta_().pdb_id === r.pdb;
       if (!already) await openModal(r.pdb, r.observation, null,
         { whole: r.whole === "1", mark: r.mark });
-      /* The address can change while the modal stays open — Back and Forward between the two
+      /* The address can change while the modal stays open - Back and Forward between the two
          residue lists do exactly that, and so does editing the hash by hand. Without this the
          panel kept whatever the last click left behind and the address quietly lied about it. */
       else await syncWholeReceptor(r.whole === "1");
@@ -1316,11 +1316,11 @@ async function boot() {
   const m = L.getManifest();
   setupGlobalSearch();
   // One short line that says what the build is and where the detail lives. The counts and the
-  // per-family validation matrix are shown in context — in Methods, in each family overview and
-  // in the review-gate panel beside the numbers they qualify — which is where a reader can act
+  // per-family validation matrix are shown in context - in Methods, in each family overview and
+  // in the review-gate panel beside the numbers they qualify - which is where a reader can act
   // on them. A banner long enough to state everything is a banner nobody reads.
   document.getElementById("prerelease").textContent = t("prerelease_notice");
-  document.title = m.atlas_title + " — " + m.version;
+  document.title = m.atlas_title + " - " + m.version;
   onRoute(render);
   startRouter();
 }

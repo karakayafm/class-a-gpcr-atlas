@@ -145,8 +145,8 @@ def main() -> int:
             if panel == "transducer_free":
                 pathway = "no_transducer"
                 result = "structural_absence"
-                rationale_tr = "yapıda iletici yok — çökeltilmiş polimer envanterinde G proteini veya arrestin bulunmuyor"
-                rationale_en = "no transducer in the structure — the deposited polymer inventory contains no G protein or arrestin"
+                rationale_tr = "yapıda iletici yok - çökeltilmiş polimer envanterinde G proteini veya arrestin bulunmuyor"
+                rationale_en = "no transducer in the structure - the deposited polymer inventory contains no G protein or arrestin"
             else:
                 pathway = panel
                 result = "structural_presence"

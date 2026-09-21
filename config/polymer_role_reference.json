@@ -1,7 +1,7 @@
 {
   "reference": "polymer_role_reference",
   "phase": 2,
-  "description": "Evidence table for classifying non-receptor polymer chains. Chain length and proximity to the receptor are NOT classification criteria — a nanobody and a peptide ligand can be the same length, and a transducer sits closer to the receptor than most ligands do. Identity evidence (UniProt accession, entity description) decides; length is recorded but never decides.",
+  "description": "Evidence table for classifying non-receptor polymer chains. Chain length and proximity to the receptor are NOT classification criteria - a nanobody and a peptide ligand can be the same length, and a transducer sits closer to the receptor than most ligands do. Identity evidence (UniProt accession, entity description) decides; length is recorded but never decides.",
   "precedence": [
     "1. receptor identity: UniProt accession matches the structure's GPCRdb receptor accession",
     "2. curated UniProt accession match (transducer / fusion / arrestin)",
@@ -162,7 +162,7 @@
   ],
   "polymer_ligand_rule": {
     "rule": "A polymer chain is a pharmacological ligand ONLY when the structure's source ligand annotation (GPCRdb) carries type 'peptide' or 'protein' and the chain is not already identified as receptor, transducer, antibody or fusion.",
-    "matching": "Where exactly one unclassified non-receptor polymer chain remains and the source annotates a peptide/protein ligand, that chain is the ligand with confidence 'single_candidate_match'. Where more than one remains, every candidate is emitted with confidence 'ambiguous_multiple_candidates' and queued for review — the pipeline does not pick one.",
+    "matching": "Where exactly one unclassified non-receptor polymer chain remains and the source annotates a peptide/protein ligand, that chain is the ligand with confidence 'single_candidate_match'. Where more than one remains, every candidate is emitted with confidence 'ambiguous_multiple_candidates' and queued for review - the pipeline does not pick one.",
     "segment_rule": "Whether the whole chain or only a segment is the interacting ligand is a separate field, recorded as unresolved unless a source states the range. It is never inferred from geometry."
   },
   "peptide_length_threshold": {
@@ -184,7 +184,7 @@
       "date": "2026-08-04",
       "change": "Extended description patterns for transducer, antibody, fusion and auxiliary roles, and added anchored regex rules for short nanobody codes.",
       "trigger": "Audit of the 382 polymer chains left unresolved by the first pass showed four systematic identity gaps rather than genuinely unknown chains.",
-      "principle": "Every addition is identity evidence — a reagent's name or accession. No pattern uses chain length or proximity to the receptor.",
+      "principle": "Every addition is identity evidence - a reagent's name or accession. No pattern uses chain length or proximity to the receptor.",
       "recorded_in": "governance/DECISION_LOG.md"
     }
   ]

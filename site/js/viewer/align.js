@@ -46,7 +46,7 @@ export function baseColour() { return BASE_COLOUR; }
 
 /* The superposed structures, in the order they were added, for the interaction diagram. Each is a
    loaded component with its own metadata, so a panel can be drawn from it exactly as from the base
-   structure — the diagram does not need to know which is which. */
+   structure - the diagram does not need to know which is which. */
 export function diagramSpecs() {
   return overlays.map(o => ({ comp: o.comp, meta: o.meta, observation: null, name: o.name }));
 }
@@ -56,7 +56,7 @@ export function diagramSpecs() {
  *
  * Tinting the background instead was tried and is worse in both directions: dark enough for white
  * text to read against, it is indistinguishable from black, so two labels stacked on the same
- * position — V3x33 from one receptor, I3x33 from the other — say nothing about which is which;
+ * position - V3x33 from one receptor, I3x33 from the other - say nothing about which is which;
  * light enough to be recognisable, the white text stops being legible. Colouring the glyphs keeps
  * the contrast of black behind them and puts the identity where the eye already is. */
 function hex(colour) { return "#" + colour.toString(16).padStart(6, "0"); }
@@ -75,7 +75,7 @@ function caByPosition(structure, rows, chain) {
   structure.eachAtom(a => {
     if (a.atomname !== "CA") return;
     const p = want.get(a.chainname + ":" + a.resno);
-    // A position resolved twice — altloc, or a chain repeated in the asymmetric unit — keeps its
+    // A position resolved twice - altloc, or a chain repeated in the asymmetric unit - keeps its
     // first occurrence, so both structures resolve it the same deterministic way.
     if (p && !out.has(p)) out.set(p, [a.x, a.y, a.z]);
   });
@@ -99,7 +99,7 @@ function rmsdOf(a, b) {
 
 /* The ligand of the overlaid structure, as an NGL selection. Its own metadata knows which residues
    those are; without this the overlay would show a bare receptor and the comparison a reader most
-   often wants — two ligands in one pocket — would be the one thing missing. */
+   often wants - two ligands in one pocket - would be the one thing missing. */
 function ligandSelectionOf(meta) {
   const parts = [];
   for (const o of meta.observations || []) {
@@ -112,8 +112,8 @@ function ligandSelectionOf(meta) {
 }
 
 /* The side chains this structure's own ligand contacts. Without them an overlay is a ribbon and a
-   ligand floating in it, and the question superposition is usually asked in order to answer — does
-   the other receptor put the same residue against the same part of the ligand — has nothing on
+   ligand floating in it, and the question superposition is usually asked in order to answer - does
+   the other receptor put the same residue against the same part of the ligand - has nothing on
    screen to answer it with. Its own contact list is used, not the base structure's: these are that
    receptor's contacts, and borrowing the base structure's residue numbers would draw the wrong ones. */
 function contactSelectionOf(meta) {
@@ -130,7 +130,7 @@ function contactSelectionOf(meta) {
   return "(" + parts.join(" or ") + ") and not hydrogen and sidechainAttached";
 }
 
-/* The contacting residues as a plain residue selection — no `sidechainAttached` — which is what the
+/* The contacting residues as a plain residue selection - no `sidechainAttached` - which is what the
    interaction representation needs on both sides of the line. */
 function contactResiduesOf(meta) {
   const seen = new Set();
@@ -170,7 +170,7 @@ function paintOverlay(entry) {
   const { comp, colour } = entry;
   try { comp.removeAllRepresentations(); } catch (e) {}
   /* One colour for the whole structure so it reads as one object against the base structure's green
-     and against the other overlays — but on the atomistic layers the colour is carried by carbon
+     and against the other overlays - but on the atomistic layers the colour is carried by carbon
      and the heteroatoms keep theirs, so nitrogen and oxygen stay identifiable in every ligand on
      screen. That is what the comparison is usually about. */
   const flat = { colorScheme: "uniform", colorValue: colour };
@@ -195,7 +195,7 @@ function paintOverlay(entry) {
     const cr = contactResiduesOf(entry.meta);
     /* Both sides parenthesised. Unbracketed, `a or b or (c) and hetero and not hydrogen` is at the
        mercy of the selection language's precedence, and the reading that binds `and` across the
-       whole disjunction leaves only hetero atoms selected — no receptor side, so no contacts. */
+       whole disjunction leaves only hetero atoms selected - no receptor side, so no contacts. */
     if (cr && lig) {
       const params = { sele: "(" + cr + ") or (" + lig + ")", maxHbondDist: 3.6,
         maxHydrophobicDist: 4.2, maxPiStackingDist: 5.5, labelVisible: true,
@@ -206,7 +206,7 @@ function paintOverlay(entry) {
     }
   }
   /* The two pocket surfaces, drawn with the base structure's own parameters so a surface means the
-     same thing whichever structure carries it — except for the receptor surface, which takes this
+     same thing whichever structure carries it - except for the receptor surface, which takes this
      overlay's colour rather than grey. Two grey surfaces from two structures in one pocket cannot be
      told apart, and telling them apart is the whole reason both are on screen. */
   if (entry.layers.surfaceReceptor) {
@@ -340,7 +340,7 @@ export async function addOverlay(pdb, onStatus) {
   const mobileChain = dominantChain(mobileRows);
   const refCA = caByPosition(base.structure, baseRows, baseChain);
   const mobCA = caByPosition(comp.structure, mobileRows, mobileChain);
-  /* Sorted so the pairing is reproducible and independent of payload order — the two coordinate
+  /* Sorted so the pairing is reproducible and independent of payload order - the two coordinate
      arrays have to be in corresponding order, and nothing downstream would notice if they were not. */
   const shared = [...refCA.keys()].filter(p => mobCA.has(p)).sort();
   if (shared.length < MIN_POSITIONS) {
@@ -403,8 +403,8 @@ export function removeOverlay(pdb) {
   try { if (stage) stage.removeComponent(overlays[i].comp); } catch (e) {}
   V.registerStructureTable(id, []);
   overlays.splice(i, 1);
-  // Nothing left to tell apart, so the scene's ordinary colouring — element colours on the ligand,
-  // the contact tint on the side chains — comes back.
+  // Nothing left to tell apart, so the scene's ordinary colouring - element colours on the ligand,
+  // the contact tint on the side chains - comes back.
   if (!overlays.length) V.setUniformColour(null);
   return true;
 }

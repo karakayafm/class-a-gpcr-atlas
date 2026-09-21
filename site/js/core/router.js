@@ -14,8 +14,8 @@ export function parseRoute() {
 }
 export function buildHash(state) {
   // `motif` was reserved here long before anything wrote it. The motif query panel now keeps its
-  // whole state in the address — the query, the scope it is read over, the selected receptor, the
-  // sort and the row count — so those keys are ordered too and a pasted address restores a panel
+  // whole state in the address - the query, the scope it is read over, the selected receptor, the
+  // sort and the row count - so those keys are ordered too and a pasted address restores a panel
   // exactly. Ordering is cosmetic: an unlisted key is still emitted, just after these.
   const order = ["family", "view", "pool", "site", "motif", "scope", "class", "minfreq",
                  "hit", "sort", "top", "uniq", "pdb", "observation", "whole", "mark", "receptor"];

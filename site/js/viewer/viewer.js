@@ -11,17 +11,17 @@ let viewerBackground = "black";
 /* Every generic-numbered residue of the receptor chain, not only the ligand's contact shell.
    The coordinates always held the whole chain; what was missing was the table saying which
    residue carries which generic number, so a position outside the pocket could be named in the
-   motif panel and then not clicked on here. Loaded on demand — a reader who stays in the pocket
-   never fetches it — so an empty table means "not asked for yet" or "not available for this
+   motif panel and then not clicked on here. Loaded on demand - a reader who stays in the pocket
+   never fetches it - so an empty table means "not asked for yet" or "not available for this
    structure", and the panel says which. */
 let residueTable = [];
 /* Whether the contact-label layer is on. Tracked rather than inferred from the representation,
-   because a selection can legitimately empty that layer — every contact residue picked — and an
+   because a selection can legitimately empty that layer - every contact residue picked - and an
    absent representation would then be read as "the reader turned them off". */
 let contactLabelsOn = true;
 /* Set while a second structure is superposed on this one, and null otherwise. The ordinary scene
-   spends colour on meaning — element colours on the ligand, a tint on the contacting side chains,
-   another on the motifs — and all of that is worth more than telling two structures apart, right up
+   spends colour on meaning - element colours on the ligand, a tint on the contacting side chains,
+   another on the motifs - and all of that is worth more than telling two structures apart, right up
    until there are two structures. Then it is worth less than that, and this takes over. */
 let uniformColour = null;
 /* Measurement. The reader picks atoms in the scene and the viewer reports what can be computed
@@ -40,7 +40,7 @@ let measureChanged = null;
 const measureAtoms = [];
 /* Measurements the reader has kept. The picking set above is the one being built; once it says
    something worth keeping it moves here and the picking starts again empty, so a second question
-   — the distance across the pocket, say, beside the one just measured at the ligand — does not
+   - the distance across the pocket, say, beside the one just measured at the ligand - does not
    have to inherit the atoms of the first. */
 const measureKept = [];
 const MEASURE_MAX = 4;
@@ -84,7 +84,7 @@ export function setBackground(mode) {
      switch rather than waiting for the next redraw. Rebuilt rather than repainted: going back to
      white has to restore NGL's own per-interaction label colouring, and rebuilding restores it by
      construction instead of by naming a value we would be guessing at. Only rebuilt if the lines
-     are on screen — if the reader turned them off, they stay off. */
+     are on screen - if the reader turned them off, they stay off. */
   if (reps.lines) addDisplayedInteractions();
   // The carbon overlay is background-dependent for the same reason and is rebuilt with it.
   if (reps.ligand) addDisplayedLigands();
@@ -120,7 +120,7 @@ function ligandSelection(o) {
     return o.ligand_selection.chains.map(chain => ":" + chain).join(" or ");
   // Ligand selections may contain symmetry-related copies from every protomer.
   // The contact list identifies the copy paired with the active receptor chain, so it is
-  // preferred — but only where it agrees with the residues this observation declares. A
+  // preferred - but only where it agrees with the residues this observation declares. A
   // structure can hold two copies of one component in different sites (7CFN: INT-777 at R:403
   // orthosteric and R:401 lipid-facing), and there the contact list names both copies. Taking
   // it whole made the two observations resolve to the same atoms, so switching between them
@@ -185,7 +185,7 @@ function addCovalentHighlight(o) {
 }
 
 /* The ligand under discussion is the subject of the picture, so its carbon skeleton is the
-   brightest thing in it — white against the dark receptor rather than NGL's default grey, which
+   brightest thing in it - white against the dark receptor rather than NGL's default grey, which
    sits at about the same value as the cartoon behind it. Which colour that is has to follow the
    background: white carbons on the white background would be an invisible ligand. */
 function ligandCarbonColour() { return viewerBackground === "black" ? "#ffffff" : "#2b2f36"; }
@@ -237,7 +237,7 @@ function addDisplayedLigands() {
   const ordered = ligands.slice().sort((a, b) =>
     (a === active ? -1 : 0) - (b === active ? -1 : 0));
   /* Applied to the active ligand however many there are. It used to be conditional on there being
-     more than one, so the ordinary case — one ligand — was the one that never got it, and the
+     more than one, so the ordinary case - one ligand - was the one that never got it, and the
      carbons stayed grey exactly where nothing else was competing for attention. Where a structure
      does hold several, the others keep the default grey and the distinction the condition was
      there to make still holds. */
@@ -260,7 +260,7 @@ export async function open(host, pdb, observationId, onStatus) {
   if (!NGL) { onStatus(t("err_webgl")); return null; }
   onStatus(t("loading_structure"));
   /* Cleared before the new structure loads, not only in close(). Opening a second structure while
-     the modal stays open — which changing the address does — left the previous structure's residue
+     the modal stays open - which changing the address does - left the previous structure's residue
      table in place, and every position in it keyed by an auth_seq_id that means something else
      here. It survived only because the chain letters usually differ and the chain filter emptied
      the list; where two structures share a chain letter it would have drawn one receptor's
@@ -366,8 +366,8 @@ function measureDihedral(a, b, c, d) {
 /* Numbering tables for the superposed structures, keyed by the name their NGL structure carries.
    Registered by the align module rather than imported from it, because this module knows nothing
    about superposition and importing it back would close a cycle. Without these, an atom picked in
-   an overlay was named from the base structure's table — which is a different receptor with
-   different residue numbers — so it fell through to the deposited name and the readout said
+   an overlay was named from the base structure's table - which is a different receptor with
+   different residue numbers - so it fell through to the deposited name and the readout said
    PHE275 where every other part of the atlas says 6x52. */
 const foreignTables = new Map();
 export function registerStructureTable(name, rows) {
@@ -399,7 +399,7 @@ function measureAtomLabel(atom) {
 
 /* Licorice draws bonds and no atom centres, so in measurement mode there is often nothing to aim
    at: at some angles an atom is simply not clickable and the reader has to rotate until it is.
-   Ball-and-stick puts a sphere on every atom. Modest spheres — a target to hit, not a change of
+   Ball-and-stick puts a sphere on every atom. Modest spheres - a target to hit, not a change of
    representation the reader has to look past. */
 function contactRepType() { return measureMode ? "ball+stick" : "licorice"; }
 function contactRepParams(residues) {
@@ -422,7 +422,7 @@ function addContactSideChains() {
  * NGL's distance, angle and dihedral representations take atom *indices*, and an index only means
  * anything against one structure. That was fine while there was one structure. With a second
  * superposed on it, a measurement that spans the two has no single structure to be a representation
- * of, and asking the base component to draw an overlay's index silently drew a different atom —
+ * of, and asking the base component to draw an overlay's index silently drew a different atom -
  * the number in the panel was right and the marker on screen was somewhere else.
  *
  * A shape takes positions, and the overlay's coordinates have already been moved into this frame by
@@ -565,7 +565,7 @@ function onScenePick(pick) {
   const atom = pick.atom;
   /* Clicking a picked atom takes it back, the way clicking a selected residue does in the lists.
      Without this a second click on the same atom added a duplicate, and a duplicate can never
-     produce an answer — two coincident points have no angle — so the reader was left with a
+     produce an answer - two coincident points have no angle - so the reader was left with a
      measurement that silently could not resolve. */
   /* Keyed by structure as well as index: an index is only unique within one structure, so with an
      overlay on screen clicking an atom in one could take back an atom in the other. */
@@ -592,18 +592,18 @@ export function hasResidueTable() { return residueTable.length > 0; }
 /* ------------------------------------------------- what superposition needs from here
    The align module fits a second structure onto this one over the generic positions they share, so
    it needs the loaded component, which chain of it is the receptor, and the numbering table. The
-   table is lazy — a reader who never leaves the pocket never fetches it — so this loads it on
+   table is lazy - a reader who never leaves the pocket never fetches it - so this loads it on
    demand rather than reporting an empty receptor for a structure that has one. */
 export function baseComponent() { return comp; }
 /* Which surfaces the base structure is actually showing. The panel used to keep this in a local
-   that was rebuilt — and reset to false — every time the reader switched structures, so a surface
+   that was rebuilt - and reset to false - every time the reader switched structures, so a surface
    left on came back with its button reading off. Reading it from the representations that exist
    means the button cannot disagree with the scene. */
 export function surfaceState() {
   return { surfaceReceptor: !!reps.surface_receptor, surfaceLigand: !!reps.surface_ligand };
 }
 /* What the diagram module needs from the structure this module loaded: the component to read
-   coordinates from, its metadata, and which observation is on screen — a structure with two ligands
+   coordinates from, its metadata, and which observation is on screen - a structure with two ligands
    should diagram the one the reader is looking at, not the first one in the file. */
 export function diagramSpec() {
   return comp && meta ? { comp, meta, observation: current,
@@ -611,7 +611,7 @@ export function diagramSpec() {
 }
 /* Deliberately not applyDefaults: that clears the selection, resets the ligand display and reframes
    the camera, and none of those should happen because a second structure arrived. This rebuilds the
-   structural layers only — addRep replaces by key — and leaves everything the reader had set. */
+   structural layers only - addRep replaces by key - and leaves everything the reader had set. */
 export function setUniformColour(hex) {
   const next = hex || null;
   if (next === uniformColour) return;
@@ -640,12 +640,12 @@ export async function ensureBaseResidueRows() {
 }
 
 /* Grouped for the panel: one list per helix, in position order, for the chain on screen. H8 and
-   the resolved loop residues are kept in a group of their own rather than dropped — they are as
+   the resolved loop residues are kept in a group of their own rather than dropped - they are as
    real as the helical ones, they just are not one of the seven columns the panel draws. */
 /* The seven the panel draws, so a caller can tell which of them a structure has nothing for. */
 export function helixOrder() { return HELICES.slice(); }
 
-/* The same grouping for a structure that is not the one this module loaded — a superposed overlay.
+/* The same grouping for a structure that is not the one this module loaded - a superposed overlay.
    Kept here rather than duplicated in the align module so the two lists are built by one piece of
    code and cannot drift; what differs between them is only which rows and which contacts go in. */
 export function segmentRows(rows, chain, contactKeys) {
@@ -692,8 +692,8 @@ export function receptorSegments() {
    position the ligand never touches: framing the pocket would put it off screen.
 
    Framed on the receptor's own residues, not on its chain. A crystallisation construct puts the
-   fusion partner on the same auth chain — 6E59 carries the receptor at 28-320 and a BRIL domain
-   at 1001-1196 — so framing the chain fits a bounding sphere around both, leaves the receptor at
+   fusion partner on the same auth chain - 6E59 carries the receptor at 28-320 and a BRIL domain
+   at 1001-1196 - so framing the chain fits a bounding sphere around both, leaves the receptor at
    a third of the viewport and shrinks the residue labels to a few pixels. The generic-numbered
    residues are exactly the receptor, which is what the reader asked to see. */
 export function frameReceptor() {
@@ -724,12 +724,12 @@ export function setObservation(id) { if (!comp) { current = id; return; } curren
 
 function obs() { return (meta && meta.observations || []).find(o => o.observation_id === current) || null; }
 
-// A late event — a toggle fired while the modal is closing, or a stray change handler — must
+// A late event - a toggle fired while the modal is closing, or a stray change handler - must
 // not throw against a torn-down component. Every representation helper is a no-op once the
 // stage is gone.
 /* Layers that keep their own colour while the structure is painted uniform. Two kinds: the ones
-   that answer a different question from "which structure is this" — what the reader picked, what
-   they measured, what they arrived asking about — and the text, which has to stay legible against
+   that answer a different question from "which structure is this" - what the reader picked, what
+   they measured, what they arrived asking about - and the text, which has to stay legible against
    whatever colour the structure took. Losing those to the uniform coat would make superposition a
    mode in which selection stops giving feedback. */
 function keepsOwnColour(key, type) {
@@ -741,7 +741,7 @@ function keepsOwnColour(key, type) {
    above because a label painted the structure's colour on a dark background is a label, whereas a
    label whose *background* is painted that colour stops being readable. But leaving them white made
    the identity vanish exactly where it matters most: with a second structure superposed, two labels
-   land on the same position — V3x33 from one receptor and I3x33 from the other — and two white tags
+   land on the same position - V3x33 from one receptor and I3x33 from the other - and two white tags
    do not say which is which. So the glyphs take the colour and the background stays black. */
 function labelColour(fallback) { return uniformColour || fallback; }
 
@@ -752,7 +752,7 @@ const ATOMISTIC = { licorice:1, "ball+stick":1, spacefill:1, hyperball:1, line:1
 
 /* The uniform coat, as representation parameters. Carbon carries the structure's identity and the
    heteroatoms keep theirs: nitrogen blue, oxygen red, sulfur yellow. Which is the compromise the
-   scene actually needs — the colour still says which structure a ligand belongs to, because carbon
+   scene actually needs - the colour still says which structure a ligand belongs to, because carbon
    is most of every ligand, while the atoms that decide what a contact *is* stay readable. */
 function uniformParams(type) {
   return ATOMISTIC[type]
@@ -766,12 +766,12 @@ function addRep(key, type, params) {
   let p = params;
   /* While something is superposed on this structure, every structural layer of it is one colour,
      so the eye separates the two structures before it reads anything else. `color` overrides
-     whatever the layer would have chosen — element colouring on the ligand, the contact tint on the
-     side chains — so both are removed rather than left to fight it. */
+     whatever the layer would have chosen - element colouring on the ligand, the contact tint on the
+     side chains - so both are removed rather than left to fight it. */
   if (uniformColour && !keepsOwnColour(key, type)) {
     p = Object.assign({}, params);
-    /* Both are dropped before the coat goes on. `color` is what the layer chose for itself — the
-       white carbon overlay on the active ligand, the grey cartoon — and NGL lets it override
+    /* Both are dropped before the coat goes on. `color` is what the layer chose for itself - the
+       white carbon overlay on the active ligand, the grey cartoon - and NGL lets it override
        colorScheme, so leaving it in place kept that ligand white on a structure painted green. */
     delete p.color; delete p.colorScheme; delete p.colorValue;
     Object.assign(p, uniformParams(type));
@@ -834,7 +834,7 @@ export function oneLetter(name) { return ({ ALA:"A",ARG:"R",ASN:"N",ASP:"D",CYS:
 
 /* A selected residue outside the ligand's contact shell has no entry in the observation, so the
    label map had nothing to say about it and it was drawn as an unnamed stick. The whole-receptor
-   table covers exactly those, and the observation still wins where both describe a residue —
+   table covers exactly those, and the observation still wins where both describe a residue -
    it carries the distance and the contact type, which the table does not. */
 function selectedDetails() {
   const o = obs();
@@ -869,7 +869,7 @@ function labelTextFor(details) {
 
 /* The contact labels are the one layer that is on without anyone asking for it, so it is the one
    that has to give way. A residue that is both a ligand contact and a current selection was labelled
-   twice — once here and once by the selection — and since the two ask for slightly different label
+   twice - once here and once by the selection - and since the two ask for slightly different label
    offsets the name landed a few pixels from itself and read as a smeared double. Same text either
    way, so dropping this one where a selection already names the residue loses nothing. */
 function addContactLabels(exclude) {
@@ -886,7 +886,7 @@ function addContactLabels(exclude) {
 }
 
 /* NGL colours a contact's distance label to match the interaction it belongs to, which is right
-   on the white background — a navy figure beside a navy hydrogen bond, an amber one beside an
+   on the white background - a navy figure beside a navy hydrogen bond, an amber one beside an
    amber stacking contact. On the black background the navy is all but invisible, so there the
    labels are forced white and the lines keep carrying the interaction type. */
 function contactLabelColour() { return viewerBackground === "black" ? "white" : undefined; }
@@ -894,7 +894,7 @@ function contactLabelColour() { return viewerBackground === "black" ? "white" : 
  *
  * The colour cannot be asked for: NGL's contact representation has no colour parameter and assigns
  * one per interaction type from a hardcoded table. The vendored copy of the library could be
- * patched — the constant appears exactly once — but THIRD_PARTY_NOTICES.md states that file is
+ * patched - the constant appears exactly once - but THIRD_PARTY_NOTICES.md states that file is
  * byte-identical to the published distribution and carries its SHA-256, and a colour is not worth
  * making that untrue.
  *
@@ -903,7 +903,7 @@ function contactLabelColour() { return viewerBackground === "black" ? "white" : 
  * own colouring in a second representation. */
 /* Interaction types the atlas recolours, and the rest.
  *
- * NGL assigns a colour per interaction type from a table compiled into the library — there is no
+ * NGL assigns a colour per interaction type from a table compiled into the library - there is no
  * parameter for it, and the vendored copy is declared byte-identical to the published distribution
  * with its SHA-256, which a colour is not worth making untrue. So each recoloured type is drawn as
  * a representation of its own with every other type switched off, and its buffers are repainted
@@ -918,7 +918,7 @@ const RECOLOURED_CONTACTS = [
     rgb:[0xd8 / 255, 0xa5 / 255, 0x31 / 255], label:"#d8a531" }
 ];
 /* Which types NGL computes unless told otherwise. Backbone and weak hydrogen bonds and water-
-   mediated ones are off in NGL and stay off here except where a caller asks — the helical layers
+   mediated ones are off in NGL and stay off here except where a caller asks - the helical layers
    do, because backbone hydrogen bonds are most of what holds a helix together. */
 const DEFAULT_CONTACT_TYPES = { hydrogenBond:true, waterHydrogenBond:false,
   backboneHydrogenBond:false, weakHydrogenBond:false, hydrophobic:true, halogenBond:true,
@@ -952,7 +952,7 @@ function addSplitContacts(key, params, wanted) {
   buildSplitContacts((suffix, p) => addRep(key + suffix, "contact", p), params, wanted);
 }
 
-/* Same split on a component this module did not load — a superposed structure. Exported rather than
+/* Same split on a component this module did not load - a superposed structure. Exported rather than
    duplicated in the align module so one description of "what colour is an interaction" serves every
    structure in the scene. */
 export function addSplitContactsTo(component, params, wanted) {
@@ -984,7 +984,7 @@ function repaintBuffers(element, rgb) {
   return painted;
 }
 
-/* Which interaction layers are on. The viewer drew one kind — ligand to receptor — and called it
+/* Which interaction layers are on. The viewer drew one kind - ligand to receptor - and called it
    "interactions", which is the only kind a binding-site view needs and not the only kind there is.
    The helical ones answer a different question: what holds the bundle together, and which helices
    touch each other. They are off by default because a receptor's intra-helical hydrogen bonds are
@@ -992,7 +992,7 @@ function repaintBuffers(element, rgb) {
    hundred and fifty lines. */
 const interactionLayers = { ligand:true, inter:false, intra:false };
 /* Whether the ligand itself is on screen. The protein-ligand lines run to it, so they go when it
-   goes — but the helical layers describe the receptor and have no reason to. Tracked rather than
+   goes - but the helical layers describe the receptor and have no reason to. Tracked rather than
    folded into the layer flag, so re-showing the ligand brings its lines back without the reader
    having to switch them on again. */
 let ligandShown = true;
@@ -1027,7 +1027,7 @@ function helixGroups() {
 
 /* One group of contacts, drawn as the same two representations everything else uses: the hydrogen
    bonds on their own so they can be repainted green, and every other type in NGL's own colours.
-   `filterSele` as a pair of selections is what makes inter-helical expressible — NGL keeps only
+   `filterSele` as a pair of selections is what makes inter-helical expressible - NGL keeps only
    contacts with one atom in the first selection and the other in the second. */
 function addContactGroup(key, sele, filterPair, extra) {
   const base = Object.assign({ sele, maxHbondDist:3.6, maxHydrophobicDist:4.2,
@@ -1036,19 +1036,19 @@ function addContactGroup(key, sele, filterPair, extra) {
   addSplitContacts(key, base,
     { weakHydrogenBond:true, backboneHydrogenBond:!!(extra || {}).backboneHydrogenBond });
   /* Inter-helical contacts run through the interior of the bundle, which is where the cartoon
-     ribbon is, and NGL's semi-transparent cartoon writes depth — it does not blend with what is
+     ribbon is, and NGL's semi-transparent cartoon writes depth - it does not blend with what is
      behind it, it removes it. Measured on one selected residue: with the ribbon on the layer put
      nothing on screen at all, with it off, 444 pixels. Four ways of drawing through it were tried
      and every one is worse than the problem: a thicker line does not reach past the ribbon,
      thinning the ribbon to 0.22 leaves the receptor invisible and the lines still lost, taking the
      lines out of the depth test changes nothing, and stopping the ribbon writing depth breaks the
      ribbon into fragments. So the ribbon wins, and a reader who wants these contacts turns it
-     off — one click, and they show cleanly. */
+     off - one click, and they show cleanly. */
 }
 
 /* The residues actually on screen as atoms: the ligand's contact shell while that layer is on, plus
    anything the reader picked or arrived marking. Used to scope the intra-helical layer, which over
-   whole helices is every backbone i,i+4 pair of all seven — several hundred lines that light the
+   whole helices is every backbone i,i+4 pair of all seven - several hundred lines that light the
    entire bundle and bury whatever the reader was looking at. */
 function displayedResidueKeys() {
   const out = new Set(claimedResidues());
@@ -1068,13 +1068,13 @@ function addHelicalInteractions() {
   const seleOf = h => groups.get(h).join(" or ");
   /* Both helical layers are scoped to what is on screen, but they need different scopes.
      Intra-helical: an alpha helix hydrogen-bonds i to i+4, and the residues a pocket puts on one
-     helix are scattered along it — taken as the displayed residues alone the layer drew nothing at
+     helix are scattered along it - taken as the displayed residues alone the layer drew nothing at
      all. So the scope is each displayed residue plus four either side: exactly the span that can
      bond to it, the helix's own number rather than one chosen to make the picture look right.
      Inter-helical: no span, because a side chain reaches across to another helix directly. The
      scope is the displayed residues themselves, and every contact they make with any other helix.
      Left unscoped this poured the whole bundle onto the screen while the reader was looking at one
-     residue — the layer answered "which helices touch each other" when they had asked "what does
+     residue - the layer answered "which helices touch each other" when they had asked "what does
      this one touch". */
   const shown = displayedResidueKeys();
   const HELIX_BOND_SPAN = 4;
@@ -1100,7 +1100,7 @@ function addHelicalInteractions() {
   if (interactionLayers.inter)
     names.forEach(h => {
       /* One side of the pair is the displayed residues of this helix, the other is every other
-         helix — so what is drawn is what those residues reach across to, whichever helix answers.
+         helix - so what is drawn is what those residues reach across to, whichever helix answers.
          A contact displayed at both ends is drawn twice over the same line, which costs nothing. */
       const mine = groups.get(h).filter(k => shown.has(k));
       if (!mine.length) return;
@@ -1119,7 +1119,7 @@ function redrawInteractions() {
   /* Only the ligand's lines go when the reader asks to see the selection alone: they run to the
      contacting side chains, and with those hidden they would end in mid-air. The helical layers are
      drawn over the selection itself, so showing the selection alone is the state they are most
-     wanted in — dropping them there left the reader looking at exactly the residues they had picked
+     wanted in - dropping them there left the reader looking at exactly the residues they had picked
      and told that nothing connects them. */
   if (interactionLayers.ligand && ligandShown && !focusSelection)
     ligandObservations().forEach((o, i) => addInteractionLines(o, i ? "lines_extra_" + i : "lines"));
@@ -1138,7 +1138,7 @@ function addInteractionLines(o=obs(), key="lines") {
 
 /* Kept as the name the rest of the module calls, but it no longer decides anything: the one place
    that knows which layers survive which state is redrawInteractions. It used to drop every line in
-   focus mode and return, which is why moving that rule into redrawInteractions did nothing — this
+   focus mode and return, which is why moving that rule into redrawInteractions did nothing - this
    is the function focus mode actually calls, and it never got there. */
 function addDisplayedInteractions() { redrawInteractions(); }
 
@@ -1200,7 +1200,7 @@ export function motifGroups() {
       ? "v_motif_difference_one" : "v_motif_difference_many", { count:differences }) : "";
     return { id, label:motifLabel(id) + (differences ? " *" : ""), differences,
       pattern, differenceText,
-      tooltip:t("v_motif_positions", { positions }) + (differenceText ? " — " + differenceText : ""),
+      tooltip:t("v_motif_positions", { positions }) + (differenceText ? " - " + differenceText : ""),
       group:structural.has(id) ? "structural" : ligand.has(id) ? "ligand" : "activation" };
   });
 }
@@ -1243,7 +1243,7 @@ function selectionInView(selection, margin) {
    framing where an Angstrom-sized label is a few pixels tall. It bought that at the cost of the
    case readers actually use: zooming onto a residue then left its name at the same few pixels
    while everything around it grew. The framing was the real fault there and is fixed at its own
-   source — the fusion partner no longer drags the camera back — so these behave exactly like the
+   source - the fusion partner no longer drags the camera back - so these behave exactly like the
    contact labels beside them, which is also the behaviour a reader has already learned. */
 /* Every residue any layer is going to name, whatever the reason. redrawSelections builds the same
    set as it goes, because it also needs the order; this is for callers that only need the answer. */
@@ -1258,8 +1258,8 @@ function claimedResidues() {
 function redrawSelections() {
   dropRep("picked_residues"); dropRep("picked_labels"); dropRep("picked_motifs"); dropRep("picked_motif_labels");
   dropRep("query_residues"); dropRep("query_labels");
-  /* A residue can be reached three ways — clicked in a list, carried in from a query, or part of a
-     named motif — and the same residue is often reached twice: pick 7x50 in the whole-receptor
+  /* A residue can be reached three ways - clicked in a list, carried in from a query, or part of a
+     named motif - and the same residue is often reached twice: pick 7x50 in the whole-receptor
      columns and NPxxY among the motifs, and it is in both. Each source used to draw its own stick
      and its own label at the same alpha carbon, and because the two labels ask for slightly
      different offsets they landed a few pixels apart, so the name read as two overlapping copies of

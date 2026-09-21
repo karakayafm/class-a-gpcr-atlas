@@ -1,12 +1,12 @@
 /* A two-dimensional interaction diagram, drawn from the pose rather than from a depiction.
  *
- * The usual way to draw one of these is to lay the ligand out as a textbook structure — bonds at
- * 120°, rings regular — and then place the contacting residues around it by a layout algorithm that
+ * The usual way to draw one of these is to lay the ligand out as a textbook structure - bonds at
+ * 120°, rings regular - and then place the contacting residues around it by a layout algorithm that
  * has no knowledge of where they actually are. That needs a chemistry toolkit in the browser, and
  * it throws away the one thing this atlas has: the deposited coordinates.
  *
  * So this projects instead. The ligand's own heavy atoms define a plane by principal components,
- * and everything — the molecule, and the contacting residue of each contact — is projected onto it.
+ * and everything - the molecule, and the contacting residue of each contact - is projected onto it.
  * The molecule comes out looking like the pose seen down its own best axis rather than like a
  * ChemDraw figure, and in exchange every residue sits on the side it is really on. A ring viewed
  * edge-on will look flat, which is honest: it is flat from there.
@@ -43,7 +43,7 @@ const DEFAULT_COLOUR = "#c8c8c8";
 /* What kind of contact each line is.
  *
  * Until now every contact was the same red dash, so a salt bridge, a hydrogen bond and a passing
- * hydrophobic brush were indistinguishable — which is most of what a reader wants from a figure
+ * hydrophobic brush were indistinguishable - which is most of what a reader wants from a figure
  * like this. NGL computes the types; they are read back below.
  *
  * These are not the same greens and mustards the 3D view uses. Measured against white, the 3D
@@ -98,7 +98,7 @@ const RING_GAP = 22;            // clear space between the molecule and the near
  * deposition: β2-adrenoceptor Asp3x32 is 113 in 2RH1 and 3113 in 4LDE, because that construct
  * numbers its fusion partner into the receptor. Panels are placed side by side in order to be
  * compared, and a reader cannot compare ASP113 against ASP3113 at a glance. So the generic position
- * leads — the same label the 3D viewer puts on the residue, so the two views agree — and the
+ * leads - the same label the 3D viewer puts on the residue, so the two views agree - and the
  * deposited name and number follow underneath for anyone who needs to find it in the file. */
 function residueNames(d) {
   const three = String(d.residue_name || "").toUpperCase();
@@ -115,7 +115,7 @@ function centroid(points) {
 }
 
 /* Two principal axes of the ligand's own atoms, by Jacobi on the 3x3 covariance. The molecule is
-   drawn down its smallest axis, which is the direction in which it is flattest — for anything with
+   drawn down its smallest axis, which is the direction in which it is flattest - for anything with
    a ring system that is close to the ring plane. */
 function planeOf(points) {
   const c = centroid(points);
@@ -157,8 +157,8 @@ const project = (p, pl) => [
    radius is invented, and it is invented because two things at different depths can project onto
    the same point and a diagram that overlaps them says less than one that does not.
 
-   Everything here is already in pixels. Doing the push in Ångströms and adding a pixel clearance —
-   which is what the first version did — throws the bubbles several molecule-widths out and leaves
+   Everything here is already in pixels. Doing the push in Ångströms and adding a pixel clearance -
+   which is what the first version did - throws the bubbles several molecule-widths out and leaves
    the ligand a dot in the middle once the panel is fitted around them.
 
    Separation is by bounding box, not by circle. A bubble is a circle with two lines of text under
@@ -190,7 +190,7 @@ function placeBubbles(items, ligand2d) {
         const ox = ea.hw + eb.hw - Math.abs(dx);      // overlap along each axis
         const oy = ea.hh + eb.hh - Math.abs(dy);
         if (ox <= 0 || oy <= 0) continue;             // boxes already clear
-        // Push apart along whichever axis needs the smaller correction — the shortest way out.
+        // Push apart along whichever axis needs the smaller correction - the shortest way out.
         if (ox < oy) {
           const k = (dx >= 0 ? 1 : -1) * ox / 2;
           a.x -= k; b.x += k;
@@ -214,7 +214,7 @@ function placeBubbles(items, ligand2d) {
 /* The interaction types NGL finds between the ligand and the rest of the structure.
  *
  * NGL computes contacts but does not keep them: the representation consumes them into a geometry
- * buffer and the typed list is gone. What survives is the geometry, and that is enough — one
+ * buffer and the typed list is gone. What survives is the geometry, and that is enough - one
  * representation is built per type group with only that type enabled, and its line endpoints are
  * read back out. The endpoints are world coordinates, so they can be matched against atoms.
  *
@@ -258,7 +258,7 @@ const dist2 = (a, b) => (a[0]-b[0])**2 + (a[1]-b[1])**2 + (a[2]-b[2])**2;
  *
  * The endpoints are usually atom centres, but for pi-stacking and cation-pi NGL puts them at ring
  * centroids, which belong to no atom. So this takes the nearest of each rather than an exact match,
- * and drops anything whose nearest ligand atom is further than a ring radius away — that is the
+ * and drops anything whose nearest ligand atom is further than a ring radius away - that is the
  * only case in which the endpoint is not describing the ligand at all. */
 function resolveContacts(raw, atoms, residueAtoms) {
   const out = [];
@@ -313,7 +313,7 @@ function panelData(spec) {
         if (d < 1.75) bonds.push([atoms[i].index, atoms[j].index, 1]);
       }
 
-  /* Each contacting residue, with the ligand atom it is nearest to — that atom is where the dashed
+  /* Each contacting residue, with the ligand atom it is nearest to - that atom is where the dashed
      line has to start, and it is also what makes the contact readable as chemistry. Every heavy atom
      of the residue is kept as well, because an interaction NGL reports may land on a different one
      than the closest approach does. */
@@ -338,9 +338,9 @@ function panelData(spec) {
                     p: best.r, ligIndex: best.lig.index, links: [] });
   }
 
-  /* The typed interactions, hung on the residues they belong to. A residue can hold more than one —
+  /* The typed interactions, hung on the residues they belong to. A residue can hold more than one -
      a salt bridge from its carboxylate and a hydrophobic brush from its CB are two different facts
-     about the same residue — and each is drawn from the ligand atom it actually involves. Residues
+     about the same residue - and each is drawn from the ligand atom it actually involves. Residues
      that come back with nothing typed keep a single faint line to their closest approach, which is
      all the payload's distance ever claimed. */
   const byKey = new Map(residues.map(r => [r.key, r]));
@@ -372,7 +372,7 @@ function panelData(spec) {
            atoms, bonds, residues };
 }
 
-/* Receptor names in the payload carry HTML — "&beta;<sub>2</sub>-adrenoceptor" — because every other
+/* Receptor names in the payload carry HTML - "&beta;<sub>2</sub>-adrenoceptor" - because every other
    surface in the atlas renders them into a page. SVG has no <sub>, so the markup is flattened here
    rather than escaped, which would print the tags. */
 function plain(html) {
@@ -394,7 +394,7 @@ function layoutPanel(data, axes) {
   /* Orientation is shared across the row, position is not.
    *
    * Superposition has already put every structure in one coordinate frame, so the same viewing
-   * plane can be used for all of them — and it has to be, or D3x32 lands top-left in one panel and
+   * plane can be used for all of them - and it has to be, or D3x32 lands top-left in one panel and
    * top-centre in the next and the row cannot be read across. Each ligand is still centred in its
    * own panel: what the row is for is comparing which residues reach which part of each ligand, not
    * how far apart two ligands sit, and a panel drawn around an off-centre molecule wastes the space
@@ -408,7 +408,7 @@ function layoutPanel(data, axes) {
    * which is the worse trade. */
   const own = planeOf(data.atoms.map(a => a.p));
   const pl = axes ? { origin: own.origin, u: axes.u, v: axes.v } : own;
-  /* The pose, projected. This is no longer what gets drawn — it is the target the sketch is
+  /* The pose, projected. This is no longer what gets drawn - it is the target the sketch is
      oriented against, and it is what the residue bubbles are placed from. */
   const projected = new Map();
   for (const a of data.atoms) {
@@ -538,7 +538,7 @@ const STYLE = `
 .d-legend{font:11px system-ui,sans-serif;fill:#333;dominant-baseline:middle}
 `;
 
-/* One SVG holding one panel per structure, in the order they were given — the base structure first
+/* One SVG holding one panel per structure, in the order they were given - the base structure first
    and each superposed one after it, so the file reads as the comparison it was asked for. */
 /* A key for the line colours, listing only the interaction types the figure actually contains.
    A fixed legend would claim halogen bonds in a figure that has none.

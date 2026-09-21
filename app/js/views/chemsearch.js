@@ -66,8 +66,8 @@ function exampleOnTab(field, example) {
 
 /* A Bemis-Murcko scaffold matched back into the molecule it came from should always match, and
    for 33 of this release's 497 scaffolds it did not. Stripping the side chains changes the
-   hydrogen count on whatever they were attached to — an N-methyl becomes N-H, a quaternary
-   ammonium becomes [NH2+] — and as a SMARTS query [nH] demands exactly one hydrogen, so
+   hydrogen count on whatever they were attached to - an N-methyl becomes N-H, a quaternary
+   ammonium becomes [NH2+] - and as a SMARTS query [nH] demands exactly one hydrogen, so
    caffeine's own scaffold failed against caffeine. The count is an artefact of the stripping, not
    a fact about the framework, so it is dropped from bracketed atoms while element, charge and
    aromaticity are kept; stereocentres are left alone, their @ marks not matching the pattern.
@@ -84,7 +84,7 @@ function scaffoldQuery(mod, smiles) {
 /* ---------------------------------------------------------------- several queries at once */
 /* One query answers on the page. A set of them is a different job: the reader wants the table,
    not the browsing, and wants to keep it. The work is the same fingerprint comparison, plus the
-   part the single-query view draws — what a query and a hit have in common — written out instead.
+   part the single-query view draws - what a query and a hit have in common - written out instead.
  *
  * The catalogue patterns each molecule carries are computed once per molecule and intersected,
  * rather than matched again for every pair: a hundred pairs over thirty-nine patterns would be
@@ -243,7 +243,7 @@ export function createSimilarityPanel(options) {
 
   /* Pull the ligand out of a deposition the reader names, so a structure can be the query
      without them having to find its SMILES first. An entry often holds more than one component
-     with a structure here — 5T1A holds two — and taking the first silently made the panel look
+     with a structure here - 5T1A holds two - and taking the first silently made the panel look
      as though the entry had one ligand. The rest are offered as buttons: the reader can see
      there was a choice and make it differently. The component code names each one, and the
      chemical name on hover comes from the PDB chemical component dictionary, which is where
@@ -300,7 +300,7 @@ export function createSimilarityPanel(options) {
           return { mol: m, label, found, matched: (found.atoms || []).length > 0 };
         });
       /* The pattern is the hit's own Bemis-Murcko scaffold, so it always covers most of the
-         hit — that is what a scaffold is. Marking it there while the query carries no match
+         hit - that is what a scaffold is. Marking it there while the query carries no match
          painted four fifths of one molecule green and none of the other, which reads as a
          similarity map and is not one: the score comes from the whole-molecule fingerprint,
          not from the marked atoms. The highlight means "this is what the two share", so it is
@@ -426,7 +426,7 @@ export function createSimilarityPanel(options) {
       }
       overlay.appendChild(el("div", { class: "sim-lightbox-inner" }, [
         el("header", { class: "sim-lightbox-head" }, [
-          el("h2", { text: t("sim_compare_open") + " — " + rec.ccd }),
+          el("h2", { text: t("sim_compare_open") + " - " + rec.ccd }),
           el("button", { class: "btn small", type: "button", text: t("sim_compare_png"),
             onclick: () => downloadPairPng(parts(), name, width, height) }),
           el("button", { class: "btn small", type: "button", text: t("sim_compare_svg"),
@@ -454,7 +454,7 @@ export function createSimilarityPanel(options) {
           atoms: (mark && mark.atoms[i]) || [], bonds: (mark && mark.bonds[i]) || [],
           highlightColour: [0.62, 0.85, 0.72] })) }));
     }
-    /* The pieces both molecules carry, from the atlas's own SMARTS catalogue — the same 39
+    /* The pieces both molecules carry, from the atlas's own SMARTS catalogue - the same 39
        patterns the chemistry filters are built on, so what is marked here is what the facet
        lists elsewhere already name. A pattern is kept only when it matches both molecules,
        and dropped when a more specific child of it also matches, so an amide is not also
@@ -497,7 +497,7 @@ export function createSimilarityPanel(options) {
         found.push({ key: s.key, atoms: s.atoms, bonds: s.bonds,
           label: s.spec["label_" + getLang()] || s.spec.label_en || s.key });
       }
-      /* One shared pattern needs no "All" beside it — it is all of it. Returning a nameless
+      /* One shared pattern needs no "All" beside it - it is all of it. Returning a nameless
          placeholder here was the bug behind a pair marked green under a caption saying nothing
          was shared: the placeholder was painted but never listed, so the marks had no name and
          the count said none. Nothing shared now returns nothing. */
@@ -634,7 +634,7 @@ export function createSimilarityPanel(options) {
             { n: result.failed.length, list: result.failed.map(f => f.label).join(", ") }) : "");
       /* A batch drives the page exactly as a single query does. Keeping its results in this box
          meant two query mechanisms competing for one listing, with only one of them winning and
-         nothing on screen saying which — so the box showed one set of molecules while the banner
+         nothing on screen saying which - so the box showed one set of molecules while the banner
          named another. The single-query field is cleared for the same reason. */
       {
         input.value = "";
@@ -732,7 +732,7 @@ export function createSimilarityPanel(options) {
   batchBox.appendChild(batchStatus);
   body.appendChild(batchBox);
   /* Both notes together, folded away. They are reference text a reader needs once, and every
-     attempt to lay them out across the foot of a wide panel — narrow measure, two columns, three —
+     attempt to lay them out across the foot of a wide panel - narrow measure, two columns, three -
      read worse than the last. The guide carries the same ground in full. */
   const about = el("details", { class: "sim-about" });
   about.appendChild(el("summary", { text: t("sim_about") }));

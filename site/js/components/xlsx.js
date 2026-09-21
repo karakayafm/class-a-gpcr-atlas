@@ -1,5 +1,5 @@
 // Minimal XLSX writer. The atlas ships offline with no CDN and no bundler, so a spreadsheet
-// library is not available — but an .xlsx is just a ZIP of XML parts, and a ZIP written with
+// library is not available - but an .xlsx is just a ZIP of XML parts, and a ZIP written with
 // the "store" method needs no compressor. Only what Excel/LibreOffice require to open a sheet
 // is emitted: inline strings, numbers, and one worksheet per table.
 
@@ -99,7 +99,7 @@ function zip(files) {
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
 }
 
-/* sheets: [{ name, columns, rows }] — columns use the same {key,label,get} shape as toCSV. */
+/* sheets: [{ name, columns, rows }] - columns use the same {key,label,get} shape as toCSV. */
 export function toXLSX(sheets) {
   const named = sheets.map((sheet, i) => ({ ...sheet, name: safeSheetName(sheet.name, i) }));
   const files = [

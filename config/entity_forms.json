@@ -1,6 +1,6 @@
 {
   "vocabulary": "entity_form",
-  "description": "The physical shape a modelled entity takes in a deposition. This is a structural fact from the source, never an interpretation of what the entity is for — that is ligand_role.",
+  "description": "The physical shape a modelled entity takes in a deposition. This is a structural fact from the source, never an interpretation of what the entity is for - that is ligand_role.",
   "entity_forms": [
     {
       "id": "nonpolymer_residue",

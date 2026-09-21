@@ -43,8 +43,8 @@ export function createStage(NGL, node, params) {
   try {
     stage.mouseControls.remove("drag-middle");
     stage.mouseControls.add("drag-middle", NGL.MouseActions.panDrag);
-    /* NGL binds its own measurement to right-click and ctrl-left by default. It works — it has
-       been quietly working here all along — but it is a second measurement mechanism with no
+    /* NGL binds its own measurement to right-click and ctrl-left by default. It works - it has
+       been quietly working here all along - but it is a second measurement mechanism with no
        readout, no way to clear it and no sign that it exists, and right-click also opens the
        browser's context menu. The atlas has its own measurement mode with a panel, so these are
        removed and there is exactly one way to measure. */

@@ -2,7 +2,7 @@
   "layer": "core_class_a_motifs",
   "definition_basis": "GPCRdb generic position. Amino-acid identity is NEVER part of the definition.",
   "overlap_rule": "Motifs overlap by design (3x40, 5x50, 6x44, 6x48, 7x49, 7x53, 3x50 each belong to more than one). A residue is stored ONCE with a motif_membership list; it is never duplicated per motif.",
-  "identity_rule": "Where a receptor carries a non-canonical residue at a motif position, the record is motif_position_present with residue_identity_noncanonical. It is NOT reported as 'motif absent' — a present position with a different residue is a different fact from a missing position.",
+  "identity_rule": "Where a receptor carries a non-canonical residue at a motif position, the record is motif_position_present with residue_identity_noncanonical. It is NOT reported as 'motif absent' - a present position with a different residue is a different fact from a missing position.",
   "motifs": [
     {
       "id": "PIF_connector",

@@ -124,7 +124,7 @@ def main() -> int:
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Not found — Class A GPCR Contact Atlas</title>
+<title>Not found - Class A GPCR Contact Atlas</title>
 <style>
  body{font:15px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;margin:0;padding:48px 20px;
       background:#f4f5f6;color:#1e2124}

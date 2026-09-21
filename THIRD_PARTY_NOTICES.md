@@ -8,7 +8,7 @@ This file covers **software only**. Data sources and their licences are listed s
 application's reference panel and in `reports/phase6a/DATA_DISTRIBUTION_MATRIX.csv`.
 
 The licence of this project's own code and output is **not stated here because it is not yet
-decided** — see `governance/DEFERRED_DECISIONS.md` DD-12.
+decided** - see `governance/DEFERRED_DECISIONS.md` DD-12.
 
 ---
 
@@ -50,7 +50,7 @@ THE SOFTWARE.
 
 NGL bundles three.js rather than loading it separately. The bundle identifies itself at runtime
 as `three.js r158` (it sets `data-engine="three.js r158"` on the WebGL canvas), which is how the
-version below was determined — it is observed from the shipped file, not assumed.
+version below was determined - it is observed from the shipped file, not assumed.
 
 Licence text retrieved 2026-08-05 from `https://raw.githubusercontent.com/mrdoob/three.js/r158/LICENSE`
 (SHA-256 `852e0e8699169bf9f6fdc6bda3e682d078dcbc738b5d33e74df594721bff271d`).
@@ -148,7 +148,7 @@ Version: 1.0.0 - Build: 268 (2012/11/29 05:48 PM)
 **A standalone licence file could not be retrieved.** `LICENSE`, `LICENSE.txt` and
 `MIT-LICENSE.txt` at the project's repository root all returned HTTP 404 on 2026-08-05. The
 inline notice above is therefore the only first-party licence statement this project has for
-this component, and it is reproduced rather than substituted with a generic MIT text — writing
+this component, and it is reproduced rather than substituted with a generic MIT text - writing
 out a licence body the upstream project did not publish at the location checked would be
 inventing a document. Resolving this is listed as an open item in
 `reports/phase6a/THIRD_PARTY_NOTICE_AUDIT.md`.

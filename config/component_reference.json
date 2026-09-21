@@ -1,7 +1,7 @@
 {
   "reference": "component_class_reference",
   "phase": 2,
-  "description": "Chemical-class reference for non-polymer components. Its ONLY job is to describe what a component is chemically and what it is normally present for. It does NOT select ligands: a component becomes a pharmacological ligand solely through a per-structure source annotation (see config/ligand_roles.json). Consequently a component left unclassified here can never be silently promoted to a ligand — it is reported as unresolved and reviewed.",
+  "description": "Chemical-class reference for non-polymer components. Its ONLY job is to describe what a component is chemically and what it is normally present for. It does NOT select ligands: a component becomes a pharmacological ligand solely through a per-structure source annotation (see config/ligand_roles.json). Consequently a component left unclassified here can never be silently promoted to a ligand - it is reported as unresolved and reviewed.",
   "sources": [
     {
       "name": "PDB Chemical Component Dictionary (via RCSB chem_comp)",

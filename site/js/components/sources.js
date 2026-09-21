@@ -66,7 +66,7 @@ async function open(slug,structure,sourceButton) {
   const modal=ensureModal(); opener=sourceButton; modal.hidden=false;
   const body=modal.querySelector(".source-modal-body"); clear(body);
   body.appendChild(el("p", { class:"muted", text:t("loading") }));
-  modal.querySelector("h2").textContent=t("source_title")+" — "+structure.pdb_id;
+  modal.querySelector("h2").textContent=t("source_title")+" - "+structure.pdb_id;
   try {
     const [refs,evidence,xrefs]=await Promise.all([L.loadFamilyReferences(slug),
       L.loadFamilyEvidence(slug),L.loadLigandXrefs(slug)]);
@@ -123,7 +123,7 @@ function evidenceTable(rows) {
 function ligandTable(rows) {
   if (!rows.length) return none(); const list=el("div", { class:"source-ligand-list" });
   for (const row of rows) { const links=[row.chembl,row.gtopdb,row.pubchem].filter(Boolean);
-    list.appendChild(el("div", { class:"source-ligand-row" }, [el("strong", { text:row.ccd+" — "+(row.name||"") }),
+    list.appendChild(el("div", { class:"source-ligand-row" }, [el("strong", { text:row.ccd+" - "+(row.name||"") }),
       el("span", { class:"source-link-row" }, links.map(x=>sourceLink(x.url,(x.label||x.id)+(x.approximate?" ≈":""))))])); }
   return list;
 }
