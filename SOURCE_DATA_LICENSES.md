@@ -74,7 +74,7 @@ these sources.
   curated by BindingDB staff are provided under the Creative Commons Attribution 3.0 License."*
 - **What is fetched:** only `BindingDB_BindingDB_Articles_202608_tsv.zip`, the staff-curated
   subset, SHA-256 `2529b1c5…`. The ChEMBL-derived records are a **separate download that is never
-  retrieved**. The remaining subsets — PDSPKi, Patents, PubChem, CSAR, ITC, Covid-19 — fall under
+  retrieved**. The remaining subsets - PDSPKi, Patents, PubChem, CSAR, ITC, Covid-19 - fall under
   neither of the two stated categories, so their terms are not established by that sentence and
   they are not used.
 - **Why the REST API is not used:** it returns no field identifying which measurement came from
