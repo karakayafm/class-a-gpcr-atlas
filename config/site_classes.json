@@ -12,8 +12,13 @@
       "permitted_transitions": [
         "extended_orthosteric_pocket",
         "bitopic_or_multi_region_site",
+        "lipid_facing_site",
+        "intracellular_allosteric_pocket",
+        "extracellular_allosteric_pocket",
+        "other_site",
         "unresolved"
       ],
+      "transition_note": "Widened 2026-09-30 to match the curation already in pipeline/phase5/build_payloads.py (CURATED_SITE_CLASSES), which moves source-annotated orthosteric ligands found elsewhere in the structure to the class of the place they occupy. See curation/site_class_review.",
       "phase_introduced": 2
     },
     {

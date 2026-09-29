@@ -153,6 +153,25 @@
           "analysis_unit_representative": {
             "type": "boolean",
             "description": "True for the structure chosen to stand for its phase 4 aggregation unit: the highest-resolution member, ties settled on PDB identifier. False for repeats and for structures belonging to no unit."
+          },
+          "curation_notes": {
+            "type": "array",
+            "description": "Curator notes on what the structure's hetero groups are where the source annotation does not describe them - an apo structure whose annotated ligand is a lipid or a detergent, or a ligand annotated but not modelled. One object per note, in English and Turkish.",
+            "items": {
+              "type": "object",
+              "required": [
+                "en",
+                "tr"
+              ],
+              "properties": {
+                "en": {
+                  "type": "string"
+                },
+                "tr": {
+                  "type": "string"
+                }
+              }
+            }
           }
         }
       }

@@ -25,8 +25,7 @@ the lysophosphatidylserines, BNG and LDA.
 
 | status | rows | |
 |---|---|---|
-| `not_a_ligand` | 3 | 8XXU, 8XXV, 9IYB: phosphatidylinositol. Decided by the reviewer on 2026-09-30. |
-| `proposed_not_a_ligand` | 6 | Rhodopsin 4J4Q, 4PXF, 5TE3, 5WKT, 6NWE (octyl glucoside) and 4X1H (nonyl glucoside): a detergent recorded with binding mode "unknown" in ligand-free opsin. Awaiting a decision. |
+| `not_a_ligand` | 9 | 8XXU, 8XXV, 9IYB: phosphatidylinositol. Rhodopsin 4J4Q, 4PXF, 5TE3, 5WKT, 6NWE (octyl glucoside) and 4X1H (nonyl glucoside): detergent in the retinal pocket of opsin that GPCRdb lists as apo. Decided by the reviewer on 2026-09-30. |
 | `keep_ligand` | 11 | Published lipid ligands of lipid receptors: lysophosphatidylserine and analogues at GPR34, GPR174, P2Y10; oleic and palmitic acid at FFAR4, GPR3, GPR6. |
 
 Nothing is demoted automatically, because lipid receptors have lipid ligands: oleic acid is a bulk
@@ -42,6 +41,14 @@ auxiliary and environment chains are left out of the bundle for size.
 
 Once the three phosphatidylinositol records are corrected in the data, the lipid will move from the
 ligand layer to this one without a change to the viewer.
+
+## Applied to the pipeline (2026-09-30)
+
+Phosphatidylinositol in 8XXU, 8XXV and 9IYB, and the detergent in the six opsin structures
+(decided: GPCRdb lists them as apo; the detergent sits in the retinal pocket and that is kept as a
+structure note, not as a ligand), are written into `pipeline/phase5/build_payloads.py`
+(`CURATED_APO_STRUCTURES`, `CURATED_NON_LIGAND_STRUCTURES`, `CURATED_STRUCTURE_NOTES`) for the next
+full build. The eleven lipid ligands of lipid receptors stay ligands.
 
 ## Re-running
 

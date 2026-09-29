@@ -27,6 +27,58 @@ CURATED_APO_STRUCTURES.update({"7F1Q","7F1R","7F1T","8TLM","7T9M","7T9N","7XW7"}
 # polymer-ligand/agonist annotation in filters, summaries, or the viewer.
 CURATED_APO_STRUCTURES.add("8G94")
 CURATED_NON_LIGAND_STRUCTURES={"8G94"}
+# Site-class review of 2026-09-30 (curation/site_class_review, curation/lipid_review). In each of
+# these the only hetero group the source annotates as a ligand is not one: phosphatidylinositol
+# (A1D5Q) in 8XXU/8XXV/9IYB, and detergent in the retinal pocket of six opsin structures that GPCRdb
+# itself lists as apo. What they are is kept as a structure note (CURATED_STRUCTURE_NOTES).
+REVIEW_APO={"8XXU","8XXV","9IYB","4J4Q","4PXF","5TE3","5WKT","6NWE","4X1H"}
+CURATED_APO_STRUCTURES.update(REVIEW_APO)
+CURATED_NON_LIGAND_STRUCTURES.update(REVIEW_APO)
+_BOG="Octyl beta-D-glucopyranoside (BOG), a detergent"
+_BOG_TR="Oktil beta-D-glukopiranozit (BOG), bir deterjan"
+def _opsin_note(comp_en, comp_tr, contacts):
+    return {"en":f"GPCRdb lists this structure as apo. {comp_en}, sits in the retinal (orthosteric) pocket "
+                 f"and contacts {contacts}. It is recorded here for information and is not counted as a ligand.",
+            "tr":f"GPCRdb bu yapıyı apo olarak listeler. {comp_tr}, retinal (ortosterik) cebinde durur ve "
+                 f"{contacts} pozisyonlarına temas eder. Bilgi olarak kaydedilmiştir; ligand sayılmaz."}
+CURATED_STRUCTURE_NOTES={
+  "8XXU":{"en":"Apo. The only hetero group modelled, A1D5Q, is phosphatidylinositol, a membrane lipid; it is "
+               "not counted as a ligand and is shown with the lipids.",
+          "tr":"Apo. Modellenmiş tek hetero grup olan A1D5Q bir membran lipidi olan fosfatidilinositoldür; "
+               "ligand sayılmaz ve lipidlerle birlikte gösterilir."},
+  "8XXV":{"en":"Apo. The only hetero group modelled, A1D5Q, is phosphatidylinositol, a membrane lipid; it is "
+               "not counted as a ligand and is shown with the lipids.",
+          "tr":"Apo. Modellenmiş tek hetero grup olan A1D5Q bir membran lipidi olan fosfatidilinositoldür; "
+               "ligand sayılmaz ve lipidlerle birlikte gösterilir."},
+  "9IYB":{"en":"The source annotates PGD2, which is not modelled in the deposited coordinates. The only hetero "
+               "group, A1D5Q, is phosphatidylinositol, a membrane lipid, and is not counted as a ligand.",
+          "tr":"Kaynak PGD2'yi anote eder, ancak PGD2 kayıtlı koordinatlarda modellenmemiştir. Tek hetero grup "
+               "olan A1D5Q bir membran lipidi olan fosfatidilinositoldür ve ligand sayılmaz."},
+  "4J4Q":_opsin_note(_BOG,_BOG_TR,"T3x33, Y6x51, M5x43, F5x47, K7x42, A3x32 and ECL2"),
+  "4PXF":_opsin_note(_BOG,_BOG_TR,"E3x37, Y6x51, W6x48, A6x55, G3x36, M5x43, T3x33"),
+  "5TE3":_opsin_note(_BOG,_BOG_TR,"A3x32, W6x48, Y6x51, T3x33, G3x36, M5x43, F5x47 and ECL2"),
+  "5WKT":_opsin_note(_BOG,_BOG_TR,"T3x33, Y6x51, W6x48, M5x43, A6x52, G3x36 and ECL2"),
+  "6NWE":_opsin_note(_BOG,_BOG_TR,"T3x33, G3x36, W6x48, M5x43, A6x52, Y6x51, E3x37"),
+  "4X1H":_opsin_note("Nonyl beta-D-glucopyranoside (BNG), a detergent",
+                     "Nonil beta-D-glukopiranozit (BNG), bir deterjan",
+                     "G3x36, K7x42, Y6x51, E3x37, T3x33, W6x48, M5x43"),
+  "6U1N":{"en":"The source annotates iperoxo (orthosteric agonist) and LY2119620 (positive allosteric "
+               "modulator); only LY2119620 is modelled in the deposited coordinates.",
+          "tr":"Kaynak iperoksonu (ortosterik agonist) ve LY2119620'yi (pozitif allosterik modülatör) anote "
+               "eder; kayıtlı koordinatlarda yalnızca LY2119620 modellenmiştir."},
+}
+# Role and binding mode per ligand entity, where the source's orthosteric label does not describe
+# the site the ligand is in. CURATED_STRUCTURE_LIGANDS cannot do this: it applies to every
+# observation of a structure, and 5TZY carries two ligands with different roles.
+_ALLO="pharmacological_allosteric_ligand"; _BITOPIC="pharmacological_bitopic_ligand"
+CURATED_LIGAND_ROLES={
+  "8HNN:LE:np:43I":(_ALLO,None), "5O9H:LE:np:9P2":(_ALLO,None), "9K1C:LE:np:HXA":(_ALLO,None),
+  "8TB7:LE:np:ZOB":(_ALLO,None), "8IKG:LE:np:Q2B":(_ALLO,None), "8IKH:LE:np:Q2L":(_ALLO,None),
+  "8W8R:LE:np:U7D":(_ALLO,None), "8W8S:LE:np:U7D":(_ALLO,None),
+  "5TZY:LE:np:MK6":(_BITOPIC,None), "8EJC:LE:np:2YB":(_BITOPIC,None), "8EJK:LE:np:2YB":(_BITOPIC,None),
+  # GPCRdb gives LY2119620 as PAM; the agonist label came from the unmodelled iperoxo.
+  "6U1N:LE:np:2CU":("positive_allosteric_modulator","PAM"),
+}
 CURATED_OBSERVED_LIGANDS={"9D3E:LE:np:A1A1W","9D3E:LE:np:EBX",
   "9D3G:LE:np:A1A2A","9D3G:LE:np:EBX",
   "6MET:LE:poly:ambiguous:0","7FIG:LE:poly:ambiguous:0","7FIG:LE:poly:ambiguous:1",
@@ -163,14 +215,23 @@ CURATED_SITE_CLASSES={
   "8PJK:LE:np:T7M":"lipid_facing_site",
   "4PHU:LE:np:2YB":"bitopic_or_multi_region_site",
   "5TZR:LE:np:MK6":"bitopic_or_multi_region_site",
-  "5TZY:LE:np:7OS":"bitopic_or_multi_region_site",
+  "5TZY:LE:np:7OS":"lipid_facing_site",   # outside the bundle (review 2026-09-30)
   "5KW2:LE:np:6XQ":"lipid_facing_site",
   "6KQI:LE:np:9GL":"lipid_facing_site",
   "7FEE:LE:np:7IC":"lipid_facing_site",
   "7WV9:LE:np:7IC":"lipid_facing_site",
   "8J20:LE:np:9T4":"intracellular_allosteric_pocket",
-  "8XXU:LE:np:A1D5Q":"bitopic_or_multi_region_site",
-  "8XXV:LE:np:A1D5Q":"bitopic_or_multi_region_site",
+  # Site-class review of 2026-09-30 (curation/site_class_review/site_class_candidates.csv).
+  "8HNN:LE:np:43I":"other_site",            # below the pocket, TM3-TM5-TM6
+  "5O9H:LE:np:9P2":"lipid_facing_site",     # as 6C1Q
+  "9K1C:LE:np:HXA":"lipid_facing_site",
+  "8TB7:LE:np:ZOB":"intracellular_allosteric_pocket",
+  "8IKG:LE:np:Q2B":"lipid_facing_site", "8IKH:LE:np:Q2L":"lipid_facing_site",
+  "8W8R:LE:np:U7D":"other_site", "8W8S:LE:np:U7D":"other_site",   # side pocket outside the bundle
+  "6U1N:LE:np:2CU":"extracellular_allosteric_pocket",             # as 4MQT, 6OIK, 7T94, 7T96, 7V68
+  "5TZY:LE:np:MK6":"bitopic_or_multi_region_site",                # as 5TZR
+  "8EJC:LE:np:2YB":"bitopic_or_multi_region_site", "8EJK:LE:np:2YB":"bitopic_or_multi_region_site",  # as 4PHU
+  "8HQM:LE:np:140":"extended_orthosteric_pocket", "8HVI:LE:np:NFI":"extended_orthosteric_pocket",
 }
 
 def panel_slug(panel:str)->str:
@@ -367,10 +428,13 @@ def main()->int:
                   "ligand_name":((curated or {}).get("ligand_name") or
                     (lg["source_annotations"].get("gpcrdb_ligand") or {}).get("name")),
                   "ligand_components":comps,
-                  "ligand_role":(curated or {}).get("ligand_role",lg["ligand_role"]),
+                  "ligand_role":(curated or {}).get("ligand_role",
+                    (CURATED_LIGAND_ROLES.get(lg["ligand_entity_id"]) or (lg["ligand_role"],))[0]),
                   "entity_form":(curated or {}).get("entity_form",lg["entity_form"]),
                   "biological_type":(curated or {}).get("biological_type",lg["biological_type"]),
-                  "binding_mode":(curated or {}).get("binding_mode",lg["binding_mode"]),
+                  "binding_mode":(curated or {}).get("binding_mode",
+                    ((CURATED_LIGAND_ROLES.get(lg["ligand_entity_id"]) or (None,None))[1]
+                     or lg["binding_mode"])),
                   "binding_site_class":(curated or {}).get("binding_site_class",
                     CURATED_SITE_CLASSES.get(lg["ligand_entity_id"],lg["binding_site_class"])),
                   "coordinate_status":("observed" if observed else
@@ -427,6 +491,7 @@ def main()->int:
               "superseded_by":(SUPERSEDED_BY.get(pid,{}).get("replaced_by") or [None])[0],
               "analysis_unit_representative":pid in UNIT_REPS,
               "observations":obs,"observation_count":len(obs),
+              "curation_notes":([CURATED_STRUCTURE_NOTES[pid]] if pid in CURATED_STRUCTURE_NOTES else []),
               "has_viewer_bundle":True})
         files["structures.json"]=wj(d/"structures.json",
             {"schema":"structure_index.schema.json","schema_version":SCHEMA_VERSION,

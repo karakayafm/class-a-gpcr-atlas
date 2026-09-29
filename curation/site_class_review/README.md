@@ -86,6 +86,24 @@ publication's abstract where it describes the site, and the reference. `decided_
   the motif query's pocket pool and the analysis-unit denominators of the affected families all
   move, so the correction belongs in a new data version.
 
+## Applied to the pipeline (2026-09-30)
+
+The decisions are written into `pipeline/phase5/build_payloads.py` and take effect at the next full
+build, as a new data version; the published release is unchanged until then.
+
+- `CURATED_SITE_CLASSES`: the 15 reviewed site classes; the two A1D5Q entries (8XXU, 8XXV) removed;
+  5TZY's AgoPAM moved to `lipid_facing_site`.
+- `CURATED_LIGAND_ROLES` (new): role and binding mode per ligand entity - allosteric for the
+  ligands moved out of the pocket, bitopic for the FFAR1 ago-allosteric ligands, PAM for 6U1N.
+  `CURATED_STRUCTURE_LIGANDS` could not do this: it applies to every observation of a structure.
+- `CURATED_APO_STRUCTURES` / `CURATED_NON_LIGAND_STRUCTURES`: 8XXU, 8XXV, 9IYB and the six opsin
+  structures whose only annotated ligand is a detergent.
+- `CURATED_STRUCTURE_NOTES` (new): what those structures carry, in English and Turkish, published as
+  `curation_notes` on the structure record (`schemas/phase5/structure_index.schema.json`) and shown on
+  the structure page.
+- `config/site_classes.json`: the canonical pocket's declared transitions widened to the classes the
+  curation already uses.
+
 ## Re-running
 
 ```bash

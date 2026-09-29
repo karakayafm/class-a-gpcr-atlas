@@ -1093,6 +1093,11 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
           onclick: () => onOpen3D(x.pdb_id, o.observation_id, null, { whole: true }) })])
     ]));
     if (x.superseded) detail.appendChild(supersededNotice(x));
+    // What a curator found where the source annotation does not describe the structure - an apo
+    // structure whose annotated ligand is a lipid or a detergent, a ligand annotated but not modelled.
+    for (const note of x.curation_notes || [])
+      detail.appendChild(el("p", { class: "notice curation-note" }, [
+        el("strong", { text: t("curation_note") + " " }), note[getLang()] || note.en]));
     detail.appendChild(el("div", { class: "detail-tags" }, [
       el("span", { class: "chip", text: plainName(x.receptor_family_name || "—") }),
       el("span", { class: "chip", text: stateLabel(x.structural_state || "unknown") }),
