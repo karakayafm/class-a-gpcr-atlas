@@ -751,6 +751,7 @@ function keepsOwnColour(key, type) {
   // superposed structures' selected residues already do; their labels and the motif picks do not.
   return type === "label" || key.startsWith("measure") ||
     (key.startsWith("picked_") && key !== "picked_residues") || key.startsWith("query_") ||
+    key === "lipids" ||
     key.endsWith("_labels");
 }
 
@@ -1444,6 +1445,15 @@ export const toggles = {
     if (!on) { dropRep("covalent_atoms"); dropRep("covalent_bond"); return; }
     addCovalentHighlight(obs());
   },
+  /* Membrane lipids and detergents in the bundle - cholesterol, monoolein, phospholipids, fatty
+     acids, glucoside and maltoside detergents. They are part of the deposited model, not ligands,
+     so they are off by default and never drawn as one: a component the record counts as this
+     structure's ligand is left to the ligand layer, even where the same component is a bulk lipid
+     elsewhere (oleic acid is a membrane lipid in most bundles and the agonist in 8ID6). */
+  lipids(on) { if (!on) { dropRep("lipids"); return; }
+    const s = lipidSelection();
+    if (s) addRep("lipids", "licorice", { sele: s, colorScheme: "element", colorValue: 0xc9ced4,
+      radiusScale: 0.55, opacity: 0.9 }); },
   ions(on) { if (!on) { dropRep("ions"); return; }
     const na = (meta.observed_sodium || []).map(r => r.auth_seq_id + ":" + r.auth_asym_id);
     if (na.length) addRep("ions", "spacefill", { sele: na.join(" or "), color: "purple", scale: 0.4 }); },
@@ -1452,6 +1462,31 @@ export const toggles = {
     if (a) addRep("aux", "cartoon", { sele: a, color: "lightgrey", opacity: 0.5 }); },
   spin(on) { const s = LC.getStage(); if (s) { try { s.setSpin(!!on); } catch (e) {} } }
 };
+
+/* Chemical components that are membrane lipids or detergents: the component reference's
+   membrane_lipid and detergent entries (config/component_reference.json) and the components found
+   by name in the bundles (curation/lipid_review/lipid_components.csv). */
+const LIPID_COMPONENTS = new Set([
+  "CHD", "CLR", "D10", "DD9", "HEX", "MYR", "OLA", "OLB", "OLC", "P5S", "PC1", "PCW", "PEE", "PEV",
+  "PGW", "PLM", "POV", "R16", "STE", "UND", "Y01",                     // membrane lipids, reference
+  "2CV", "9YU", "BOG", "C8E", "HTG", "JZR", "LMT", "LMU", "SOG",       // detergents, reference
+  "A1D5Q", "PEF", "KW0", "KW3", "VF0", "WJS",                          // phospho- and lysolipids, by name
+  "BNG", "LDA"]);                                                      // detergents, by name
+function lipidSelection() {
+  if (!comp || !comp.structure) return null;
+  const ligandKeys = new Set();
+  for (const o of (meta && meta.observations) || [])
+    for (const r of (o.ligand_selection && o.ligand_selection.residues) || [])
+      ligandKeys.add(residueKey(r[0] ?? r.auth_asym_id, r[1] ?? r.auth_seq_id));
+  const keys = new Set();
+  comp.structure.eachResidue(r => {
+    if (!LIPID_COMPONENTS.has(r.resname)) return;
+    const key = residueKey(r.chainname, r.resno);
+    if (!ligandKeys.has(key)) keys.add(r.resno + ":" + r.chainname);
+  });
+  return keys.size ? [...keys].join(" or ") : null;
+}
+export function hasLipids() { return !!lipidSelection(); }
 
 export function resetView() { if (comp) applyDefaults(); }
 export function statusMessage() {

@@ -649,7 +649,7 @@ function buildViewerSide(meta) {
   const remembered = onBase ? baseToggles : null;
   const on = remembered || { cartoon: true, ligand: true, contacts: true, motifs: false, motifLabels: true,
     surface: false, surfaceReceptor:false, surfaceLigand:false, lines: true,
-    allLigands: false, ions: false, aux: false, spin: false };
+    allLigands: false, ions: false, aux: false, spin: false, lipids: false };
   if (onBase) baseToggles = on;
   /* The layers an overlay carries. Anything outside this map is disabled and says why, because a
      toggle that does nothing is worse than one that is visibly unavailable. */
@@ -689,6 +689,9 @@ function buildViewerSide(meta) {
   // The contacting side chains were drawn unconditionally; a reader looking at ligand
   // topology alone had no way to clear them.
   add("contacts", t("v_side_chains"), apo || !hasLig);
+  // Membrane lipids and detergents: off by default, unavailable where the bundle carries none.
+  const lipidButton = add("lipids", t("v_lipids"), onBase && !VIEW.hasLipids());
+  if (onBase) lipidButton.title = t(VIEW.hasLipids() ? "v_lipids_hint" : "v_lipids_none");
   /* Interactions is no longer one thing, so its button is a disclosure rather than a switch.
      Clicking it opens the three layers it covers and changes nothing on screen: the ligand's
      contacts, which is what this view was built for, and the two helical ones, which answer what
