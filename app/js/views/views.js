@@ -2072,6 +2072,7 @@ export async function guide(root) {
     ["viewer", ["read", "use", "limit"]],
     ["panels", ["read", "use", "limit"]],
     ["motifsearch", ["read", "use", "limit"]],
+    ["contactmap", ["read", "use", "limit"]],
     ["ligands", ["read", "use", "limit"]],
     ["similarity", ["read", "use", "limit"]],
     ["isomers", ["read", "use", "limit"]],

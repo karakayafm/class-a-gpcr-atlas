@@ -398,7 +398,9 @@ function measureAtomLabel(atom) {
   const struct = structureNameOf(atom);
   const chain = atom.chainname, seq = String(atom.resno);
   const row = tableFor(struct).find(r => r.c === chain && r.n === seq);
-  const residue = row ? row.a + row.p : (atom.resname || "") + seq;
+  /* A residue without a generic position - a ligand, mostly - is named by its component code and
+     residue number. Written together they read as one code ("43I401" for 43I, residue 401). */
+  const residue = row ? row.a + row.p : (atom.resname || "") + " #" + seq;
   return { residue, atomName: atom.atomname || "", chain, seq, struct };
 }
 
@@ -446,7 +448,10 @@ function measureDrop() {
 function measureValueText(atoms) {
   const r = resultFor(atoms);
   if (!r || r.value == null || !isFinite(r.value)) return null;
-  return r.unit === "angstrom" ? r.value.toFixed(2) + " Å" : r.value.toFixed(1) + "°";
+  /* The scene label goes through NGL's text atlas, which carries printable ASCII, the degree sign
+     and U+212B ANGSTROM SIGN - not U+00C5, the letter Å everything else here uses. The two look
+     the same and only one has a glyph; the other was drawn as a replacement character. */
+  return r.unit === "angstrom" ? r.value.toFixed(2) + " \u212B" : r.value.toFixed(1) + "°";
 }
 
 function measureDraw() {
@@ -621,14 +626,18 @@ export function setUniformColour(hex) {
   const next = hex || null;
   if (next === uniformColour) return;
   uniformColour = next;
+  repaintCoat();
+}
+function repaintCoat() {
   if (!comp || !meta) return;
   addRep("cartoon", "cartoon", { sele: receptorSelection(), color: "#646a73", opacity: CARTOON_OPACITY });
   const o = obs();
   if (o && o.ligand_selection) {
-    addDisplayedLigands();
+    // A ligand the reader hid stays hidden when the coat changes - superposing a structure or
+    // choosing a colour is not a request to see it again.
+    if (ligandShown) { addDisplayedLigands(); addCovalentHighlight(o); }
     if (contactsOn) addContactSideChains();
     addDisplayedInteractions();
-    addCovalentHighlight(o);
   }
   redrawSelections();
 }
@@ -738,8 +747,11 @@ function obs() { return (meta && meta.observations || []).find(o => o.observatio
    whatever colour the structure took. Losing those to the uniform coat would make superposition a
    mode in which selection stops giving feedback. */
 function keepsOwnColour(key, type) {
+  // Selected residues are part of the receptor, so under a coat they wear its colour, as the
+  // superposed structures' selected residues already do; their labels and the motif picks do not.
   return type === "label" || key.startsWith("measure") ||
-    key.startsWith("picked_") || key.startsWith("query_") || key.endsWith("_labels");
+    (key.startsWith("picked_") && key !== "picked_residues") || key.startsWith("query_") ||
+    key.endsWith("_labels");
 }
 
 /* The contact labels are the exception to the exception. They are excluded from the uniform coat
@@ -759,11 +771,12 @@ const ATOMISTIC = { licorice:1, "ball+stick":1, spacefill:1, hyperball:1, line:1
    heteroatoms keep theirs: nitrogen blue, oxygen red, sulfur yellow. Which is the compromise the
    scene actually needs - the colour still says which structure a ligand belongs to, because carbon
    is most of every ligand, while the atoms that decide what a contact *is* stay readable. */
-function uniformParams(type) {
+function uniformParams(type, coat) {
   return ATOMISTIC[type]
-    ? { colorScheme: "element", colorValue: uniformColour }
-    : { color: uniformColour, colorScheme: undefined };
+    ? { colorScheme: "element", colorValue: coat }
+    : { color: coat, colorScheme: undefined };
 }
+
 
 function addRep(key, type, params) {
   if (!comp) return null;
@@ -779,7 +792,7 @@ function addRep(key, type, params) {
        white carbon overlay on the active ligand, the grey cartoon - and NGL lets it override
        colorScheme, so leaving it in place kept that ligand white on a structure painted green. */
     delete p.color; delete p.colorScheme; delete p.colorValue;
-    Object.assign(p, uniformParams(type));
+    Object.assign(p, uniformParams(type, uniformColour));
     if (p.colorScheme === undefined) delete p.colorScheme;
   }
   try { reps[key] = comp.addRepresentation(type, p); } catch (e) { return null; }
@@ -1002,6 +1015,8 @@ const interactionLayers = { ligand:true, inter:false, intra:false };
    having to switch them on again. */
 let ligandShown = true;
 export function interactionLayerState() { return Object.assign({}, interactionLayers); }
+/* Read back by the panel when it is rebuilt, so a ligand the reader hid is not offered as visible. */
+export function ligandIsShown() { return ligandShown; }
 export function setInteractionLayer(name, on) {
   if (!(name in interactionLayers)) return false;
   interactionLayers[name] = !!on;
@@ -1407,7 +1422,7 @@ export const toggles = {
   ligandMode(mode) {
     ligandMode = mode === "licorice" ? "licorice" : "cartoon";
     dropByPrefix("ligand");
-    addDisplayedLigands();
+    if (ligandShown) addDisplayedLigands();
   },
   surface(on) { this.surfaceReceptor(on); this.surfaceLigand(on); },
   surfaceReceptor(on) { const o = obs(); if (!on || !o) { dropRep("surface_receptor"); return; }

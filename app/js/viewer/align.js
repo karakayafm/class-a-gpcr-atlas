@@ -42,7 +42,20 @@ export function isOverlaid(pdb) {
 }
 export function overlayCount() { return overlays.length; }
 /* The panel draws the legend, so it has to be told what the base structure was painted. */
-export function baseColour() { return BASE_COLOUR; }
+export function baseColour() { return baseColourNow; }
+let baseColourNow = BASE_COLOUR;
+/* Colours the reader chooses. The whole structure takes the new colour - cartoon, side chains,
+   selected residues, labels and ligand carbons - so a structure still reads as one object. */
+export function setBaseColour(hex) {
+  if (!overlays.length || !/^#[0-9a-f]{6}$/i.test(hex || "")) return false;
+  baseColourNow = hex; V.setUniformColour(hex); return true;
+}
+export function setOverlayColour(pdb, hex) {
+  const o = overlays.find(x => x.pdb === String(pdb || "").toUpperCase());
+  if (!o || !/^#[0-9a-f]{6}$/i.test(hex || "")) return false;
+  o.colour = parseInt(hex.slice(1), 16);
+  paintOverlay(o); return true;
+}
 
 /* The superposed structures, in the order they were added, for the interaction diagram. Each is a
    loaded component with its own metadata, so a panel can be drawn from it exactly as from the base
@@ -150,6 +163,8 @@ function contactLabelText(entry) {
     for (const [chain, seq] of o.contact_receptor_residues || []) contacts.add(seq + ":" + chain);
   for (const r of entry.rows) {
     if (!contacts.has(r.n + ":" + r.c)) continue;
+    // A selected residue carries its own label; a second one on the same CA was two tags stacked.
+    if (entry.selected.has(residueKey(r.c, r.n))) continue;
     wanted.set(r.c + ":" + r.n, r.a + r.p);
   }
   const text = {}, keys = [];
@@ -235,9 +250,18 @@ function paintOverlay(entry) {
     comp.addRepresentation("licorice", Object.assign({
       sele: "(" + sele + ") and not hydrogen and sidechainAttached",
       radiusScale: 1.5, opacity: 1 }, byElement));
+    /* Named by generic position, as the base structure names its selection - "S2x63", not
+       "SER101", which meant something only in this one deposition. A residue with no generic
+       position falls back to its deposited name. */
+    const byKey = new Map(entry.rows.map(r => [residueKey(r.c, r.n), r.a + r.p]));
+    const labelText = {};
+    try {
+      comp.structure.eachAtom(a => {
+        labelText[a.index] = byKey.get(residueKey(a.chainname, a.resno)) || (a.resname + a.resno);
+      }, new window.NGL.Selection("(" + sele + ") and .CA"));
+    } catch (e) {}
     comp.addRepresentation("label", {
-      sele: "(" + sele + ") and .CA", labelType: "format",
-      labelFormat: "%(resname)s%(resno)s", labelGrouping: "residue",
+      sele: "(" + sele + ") and .CA", labelType: "text", labelText,
       color: hex(colour), fixedSize: false, labelSize: 2.2, zOffset: 2,
       showBackground: true, backgroundColor: LABEL_BACKGROUND, backgroundOpacity: 0.8 });
   }
@@ -405,7 +429,7 @@ export function removeOverlay(pdb) {
   overlays.splice(i, 1);
   // Nothing left to tell apart, so the scene's ordinary colouring - element colours on the ligand,
   // the contact tint on the side chains - comes back.
-  if (!overlays.length) V.setUniformColour(null);
+  if (!overlays.length) { V.setUniformColour(null); baseColourNow = BASE_COLOUR; }
   return true;
 }
 
@@ -414,7 +438,7 @@ export function clearOverlays() {
   for (const o of overlays) { try { if (stage) stage.removeComponent(o.comp); } catch (e) {} }
   overlays.length = 0;
   V.forgetStructureTables();
-  V.setUniformColour(null);
+  V.setUniformColour(null); baseColourNow = BASE_COLOUR;
 }
 
 /* Called when the base structure changes or the modal closes. The components belong to a stage that
