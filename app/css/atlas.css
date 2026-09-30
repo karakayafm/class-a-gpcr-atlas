@@ -1797,3 +1797,53 @@ a.result-item:focus-visible { outline:2px solid var(--accent); outline-offset:-2
   .mf-row-3d { margin:0 12px 8px; justify-self:start; }
   .mf-fam-row { grid-template-columns:120px 1fr 56px; }
 }
+/* Find motif prototype: colour carries the reading. The first pass used only the pale state tints
+   on a grey page, which read as a disabled panel. Surfaces are white, the states are solid, and the
+   one number the page exists to give is set large in the accent colour. */
+.mf-head h2 { color:var(--accent); }
+.mf-ask { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px;
+  box-shadow:0 1px 2px rgba(0,0,0,.04); }
+.mf-chip { background:var(--panel); }
+.mf-chip .mf-chip-add { color:var(--accent); font-weight:700; }
+.mf-card { background:var(--panel); box-shadow:0 1px 3px rgba(0,0,0,.06); border-left-width:6px; }
+.mf-card-res { color:var(--accent); }
+.mf-card-word { display:inline-block; margin-top:6px; padding:2px 9px; border-radius:999px;
+  font-size:11.5px; font-weight:600; }
+.mf-common-all  { border-left-color:#9aa1a8; }
+.mf-common-all  .mf-card-word { background:#eceef0; color:#5b6169; }
+.mf-common-most { border-left-color:#4f8fc0; }
+.mf-common-most .mf-card-word { background:#dcebf7; color:#1f4f75; }
+.mf-common-some { border-left-color:#8a63c9; }
+.mf-common-some .mf-card-word { background:#ece3fa; color:#4b2c80; }
+.mf-common-few  { border-left-color:#3f9a55; }
+.mf-common-few  .mf-card-word { background:#3f9a55; color:#fff; }
+.mf-answer-title { display:flex; align-items:baseline; gap:4px; }
+.mf-answer-n { font-size:30px; font-weight:800; color:var(--mq-exact-line); line-height:1; }
+.mf-families { background:var(--panel); }
+.mf-fam-track { background:#e9ecef; }
+.mf-fam-fill { background:linear-gradient(90deg, #5fb071, #3f9a55); }
+.mf-tab { background:var(--panel); }
+.mf-tab .tab-count { font-weight:700; color:#fff; border-radius:999px; padding:1px 8px; }
+.mf-tab-exact .tab-count     { background:#3f9a55; }
+.mf-tab-similar .tab-count   { background:#c9a227; }
+.mf-tab-different .tab-count { background:#c65353; }
+.mf-tab-nodata .tab-count    { background:#8b939b; }
+.mf-list { background:var(--panel); box-shadow:0 1px 3px rgba(0,0,0,.05); }
+.mf-row.open { background:#f3f8fb; }
+.mf-row-main:hover { background:#eef5f9; }
+.mf-row-3d { color:var(--accent); border-color:var(--accent); font-weight:600; }
+.mf-letter.mq-exact        { background:#3f9a55; border-color:#3f9a55; color:#fff; }
+.mf-letter.mq-conservative { background:#e0b52d; border-color:#e0b52d; color:#3a2c00; }
+.mf-letter.mq-mismatch     { background:#c65353; border-color:#c65353; color:#fff; }
+.mf-letter.mq-uncovered    { background:#e3e6e9; border-color:#cfd4d9; color:#6b7279; }
+.mf-letter.mf-eng { outline:2px dashed #1e2124; outline-offset:-4px; }
+.mf-detail { background:#f3f8fb; }
+:root[data-theme="dark"] .mf-row.open, :root[data-theme="dark"] .mf-detail,
+:root[data-theme="dark"] .mf-row-main:hover { background:#1f2a31; }
+:root[data-theme="dark"] .mf-fam-track { background:#2c3138; }
+:root[data-theme="dark"] .mf-letter.mf-eng { outline-color:#e6e8ea; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .mf-row.open, :root:not([data-theme="light"]) .mf-detail,
+  :root:not([data-theme="light"]) .mf-row-main:hover { background:#1f2a31; }
+  :root:not([data-theme="light"]) .mf-fam-track { background:#2c3138; }
+}

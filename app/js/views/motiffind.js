@@ -82,10 +82,14 @@ export async function motifFind(root, route) {
     if (state.open) r.open = state.open;
     navigate(r, true);
   }
+  // A redraw rebuilds the answer, which empties the page for a moment; the reader stays where
+  // they were rather than being thrown back to the top.
   function set(patch) {
     Object.assign(state, patch);
     writeRoute();
+    const y = window.scrollY;
     draw();
+    window.scrollTo(0, y);
   }
 
   /* ------------------------------------------------------------ 1. the question */
@@ -96,7 +100,13 @@ export async function motifFind(root, route) {
 
   const input = el("input", { type: "text", class: "mf-input", spellcheck: "false",
     value: state.query, placeholder: t("mf_placeholder"), "aria-label": t("mf_title") });
-  input.addEventListener("input", debounce(() => set({ query: input.value, open: "", tab: "" }), 250));
+  /* Only a real edit resets the reading. An input event also arrives without one - an input method
+     (IBus on Linux) sends one when the window regains focus - and treating it as a new query closed
+     the receptor the reader had open and sent the tabs back to the first. */
+  input.addEventListener("input", debounce(() => {
+    if (input.value.trim() === state.query.trim()) return;
+    set({ query: input.value, open: "", tab: "" });
+  }, 250));
   const clearBtn = el("button", { class: "btn small", type: "button", text: t("mq_clear"),
     onclick: () => { input.value = ""; set({ query: "", open: "", tab: "" }); } });
   const scopeSelect = el("select", { class: "mf-scope", "aria-label": t("motif_scope") });
@@ -265,6 +275,23 @@ export async function motifFind(root, route) {
     return box;
   }
 
+  function toggleRow(row, r, parsed) {
+    const closing = state.open === r.receptor;
+    for (const other of answer.querySelectorAll(".mf-row.open")) {
+      other.classList.remove("open");
+      const d = other.querySelector(".mf-detail"); if (d) d.remove();
+      const b = other.querySelector(".mf-row-main"); b.setAttribute("aria-expanded", "false");
+      b.querySelector(".mf-row-caret").textContent = "▸";
+    }
+    state.open = closing ? "" : r.receptor;
+    if (!closing) {
+      row.classList.add("open");
+      const b = row.querySelector(".mf-row-main"); b.setAttribute("aria-expanded", "true");
+      b.querySelector(".mf-row-caret").textContent = "▾";
+      row.appendChild(detailRow(r, parsed));
+    }
+    writeRoute();
+  }
   function drawAnswer(parsed, agg) {
     clear(answer);
     if (!parsed.groups.length) {
@@ -284,8 +311,9 @@ export async function motifFind(root, route) {
     const tab = state.tab || TABS.find(k => groups[k].length) || "exact";
     const total = agg.receptors.length + agg.unscored.length;
 
-    answer.appendChild(el("h3", { class: "mf-answer-title",
-      text: t("mf_answer_title", { n: groups.exact.length, total }) }));
+    answer.appendChild(el("h3", { class: "mf-answer-title" }, [
+      el("span", { class: "mf-answer-n", text: String(groups.exact.length) }),
+      el("span", { text: " " + t("mf_answer_title_rest", { total }) })]));
     // Which families carry the motif exactly: the share of each family's receptors in the first tab.
     const fam = new Map();
     for (const r of agg.receptors) {
@@ -345,8 +373,9 @@ export async function motifFind(root, route) {
       const partial = r.score.covered < r.score.cells.length;
       const rep = r.representative;
       const row = el("div", { class: "mf-row" + (opened ? " open" : "") });
+      // Opening or closing a receptor changes that row and nothing else - no redraw.
       const main = el("button", { type: "button", class: "mf-row-main", "aria-expanded": opened ? "true" : "false",
-        onclick: () => set({ open: opened ? "" : r.receptor }) }, [
+        onclick: () => toggleRow(row, r, parsed) }, [
         el("span", { class: "mf-row-name" }, [el("strong", { text: plainName(r.name) || r.receptor }),
           el("small", { class: "muted", text: " " + r.receptor })]),
         el("span", { class: "mf-row-family muted small", text: nameOf.get(r.family) || r.family }),
