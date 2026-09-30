@@ -271,6 +271,8 @@ export async function open(host, pdb, observationId, onStatus) {
   focusSelection = false; uniformColour = null; foreignTables.clear();
   interactionLayers.ligand = true; interactionLayers.inter = false;
   interactionLayers.intra = false; ligandShown = true; lipidOverlay = null; transducerOverlay = null;
+  partnerContacts.lipids = null; partnerContacts.transducer = null; partnerWanted.lipids = false;
+  partnerWanted.transducer = false;
   // Which structures have their lipids in the lipid overlay rather than the bundle. Fetched once;
   // a build without the overlay answers null, and the bundle's own lipids still work.
   if (lipidIndex === undefined) {
@@ -1460,14 +1462,31 @@ export const toggles = {
      structure's ligand is left to the ligand layer, even where the same component is a bulk lipid
      elsewhere (oleic acid is a membrane lipid in most bundles and the agonist in 8ID6). */
   transducer(on) {
-    if (!on) { if (transducerOverlay) transducerOverlay.setVisibility(false); return; }
-    if (transducerEntry()) showTransducerOverlay();
+    partnerWanted.transducer = on;
+    if (!on) {
+      if (transducerOverlay) transducerOverlay.setVisibility(false);
+      dropPartnerContacts("transducer"); return;
+    }
+    if (transducerEntry()) showTransducerOverlay().then(() => {
+      if (partnerWanted.transducer && transducerOverlay)
+        showPartnerContacts("transducer", [transducerOverlay.structure]);
+    });
   },
   lipids(on) {
-    if (!on) { dropRep("lipids"); if (lipidOverlay) lipidOverlay.setVisibility(false); return; }
+    partnerWanted.lipids = on;
+    if (!on) {
+      dropRep("lipids"); if (lipidOverlay) lipidOverlay.setVisibility(false);
+      dropPartnerContacts("lipids"); return;
+    }
     const s = lipidSelection();
     if (s) addRep("lipids", "licorice", Object.assign({ sele: s }, LIPID_STYLE));
-    if (overlayHasLipids()) showLipidOverlay();
+    (overlayHasLipids() ? showLipidOverlay() : Promise.resolve()).then(() => {
+      if (!partnerWanted.lipids) return;
+      const parts = [];
+      if (s) parts.push(comp.structure.getView(new window.NGL.Selection(s)));
+      if (lipidOverlay && overlayHasLipids()) parts.push(lipidOverlay.structure);
+      if (parts.length) showPartnerContacts("lipids", parts);
+    });
   },
   ions(on) { if (!on) { dropRep("ions"); return; }
     const na = (meta.observed_sodium || []).map(r => r.auth_seq_id + ":" + r.auth_asym_id);
@@ -1526,6 +1545,131 @@ async function showLipidOverlay() {
 }
 export function hasLipids() { return !!lipidSelection() || overlayHasLipids(); }
 
+/* What the lipids and the transducer touch on the receptor, drawn when their layer is switched on
+   and gone when it is switched off.
+
+   NGL computes interactions within one structure, and the partners are not in the receptor's: the
+   overlay lipids and the transducer are files of their own. So the receptor chain and the partner
+   are copied into one structure (NGL.concatStructures - coordinates untouched, the same deposited
+   frame) and added as a component of its own. On it: the interactions between partner and receptor
+   only, typed and coloured exactly as the ligand's are (filterSele keeps a contact only with one
+   atom on each side); the receptor residues with a heavy atom within 4 A of the partner, as side
+   chains labelled by generic position; and for the transducer, its own contacting residues, which
+   replace the 8 A interface shell the file carries. */
+const PARTNER_CONTACT_DIST = 4.0;
+const PARTNER_TINT = { lipids: 0xe3c77a, transducer: 0x7fd6d0 };
+const partnerContacts = { lipids: null, transducer: null };
+const partnerWanted = { lipids: false, transducer: false };
+const partnerSummary = { lipids: null, transducer: null };
+export function partnerContactSummary(kind) { return partnerSummary[kind]; }
+function dropPartnerContacts(kind) {
+  const stage = LC.getStage(), c = partnerContacts[kind];
+  if (c && stage) { try { stage.removeComponent(c); } catch (e) {} }
+  partnerContacts[kind] = null; partnerSummary[kind] = null;
+  if (kind === "transducer" && transducerOverlay) setTransducerShell(true);
+}
+async function showPartnerContacts(kind, partners) {
+  const NGL = window.NGL, stage = LC.getStage();
+  if (!NGL || !stage || !comp || !meta || !NGL.concatStructures) return;
+  dropPartnerContacts(kind);
+  const pdb = meta.pdb_id, chain = activeReceptorChain();
+  if (!chain) return;
+  const receptorSele = (chain ? ":" + chain + " and " : "") + "protein";
+  await ensureBaseResidueRows();
+  if (!meta || meta.pdb_id !== pdb || !partnerWanted[kind]) return;
+  let combined;
+  try {
+    combined = NGL.concatStructures(pdb + " " + kind + " contacts",
+      comp.structure.getView(new NGL.Selection(receptorSele)), ...partners);
+  } catch (e) { return; }
+  // Told apart by chain: the receptor part is its protein chain, and no partner carries protein
+  // in that chain - lipids are not protein, and the transducer file never holds the receptor chain.
+  const receptorPart = "(" + receptorSele + ")", partnerPart = "not " + receptorPart;
+  const receptorSet = combined.getAtomSet(new NGL.Selection(receptorPart));
+  const partnerSet = combined.getAtomSet(new NGL.Selection(partnerPart + " and not hydrogen"));
+  const nearPartner = combined.getAtomSetWithinSelection(partnerSet, PARTNER_CONTACT_DIST);
+  const nearReceptor = combined.getAtomSetWithinSelection(
+    combined.getAtomSet(new NGL.Selection(receptorPart + " and not hydrogen")), PARTNER_CONTACT_DIST);
+  const recResidues = new Map(), partnerResidues = new Map();
+  // The receptor chain can carry a fusion partner (T4L, BRIL) in the same chain; where the
+  // numbering table is loaded, only residues it numbers count as the receptor's.
+  const numbered = residueTable.length ? new Set(residueTable.map(r => residueKey(r.c, r.n))) : null;
+  combined.eachAtom(a => {
+    if (a.element === "H") return;
+    const inReceptor = receptorSet.isSet(a.index);
+    if (inReceptor && nearPartner.isSet(a.index) &&
+        (!numbered || numbered.has(residueKey(a.chainname, a.resno))))
+      recResidues.set(residueKey(a.chainname, a.resno), { c: a.chainname, n: a.resno, name: a.resname });
+    if (!inReceptor && nearReceptor.isSet(a.index))
+      partnerResidues.set(a.chainname + ":" + a.resno, { c: a.chainname, n: a.resno, name: a.resname });
+  });
+  if (!recResidues.size) { partnerSummary[kind] = { receptor: 0, partner: 0 }; return; }
+  const c = stage.addComponentFromObject(combined);
+  if (!c) return;
+  const recSele = "(" + [...recResidues.keys()].join(" or ") + ") and " + receptorPart;
+  const partnerSele = "(" + [...partnerResidues.values()].map(r => r.n + ":" + r.c).join(" or ") +
+    ") and " + partnerPart;
+  c.addRepresentation("licorice", { sele: "(" + recSele + ") and sidechainAttached and not hydrogen",
+    colorScheme: "element", colorValue: PARTNER_TINT[kind], radiusScale: 0.8 });
+  if (kind === "transducer") {
+    // The partner's own contacting side chains, in its subunit colours, replace the 8 A shell.
+    setTransducerShell(false);
+    const entry = transducerEntry() || { chains: {} };
+    for (const [ch, info] of Object.entries(entry.chains)) {
+      const mine = [...partnerResidues.values()].filter(r => r.c === ch);
+      if (!mine.length) continue;
+      c.addRepresentation("licorice", {
+        sele: "(" + mine.map(r => r.n + ":" + ch).join(" or ") + ") and " + partnerPart +
+          " and sidechainAttached and not hydrogen",
+        colorScheme: "element", colorValue: SUBUNIT_COLOURS[info.subunit] || 0xb0b4ba, radiusScale: 0.7 });
+    }
+  }
+  // concatStructures makes each part a model of its own, and NGL drops every contact between two
+  // models unless one of them is named the master: the receptor, which went in first, is model 0.
+  const params = { sele: "(" + recSele + ") or (" + partnerSele + ")",
+    filterSele: [partnerSele, recSele], masterModelIndex: 0, maxHbondDist: 3.6,
+    maxHydrophobicDist: 4.2, maxPiStackingDist: 5.5, labelVisible: false };
+  addSplitContactsTo(c, params, { weakHydrogenBond: true });
+  // Receptor residues named by generic position where the numbering table has one.
+  const generic = new Map(residueTable.map(r => [residueKey(r.c, r.n), r]));
+  const text = {};
+  combined.eachAtom(a => {
+    if (!receptorSet.isSet(a.index)) return;
+    const r = recResidues.get(residueKey(a.chainname, a.resno));
+    if (!r) return;
+    const g = generic.get(residueKey(a.chainname, a.resno));
+    text[a.index] = g && g.p ? (g.a || oneLetter(r.name)) + genericShort(g.p) : r.name + r.n;
+  }, new NGL.Selection(".CA"));
+  const labels = c.addRepresentation("label", { sele: "(" + recSele + ") and .CA", labelType: "text",
+    labelText: text, color: labelColour("white"), backgroundColor: "#111111", backgroundOpacity: 0.68,
+    showBackground: true, fixedSize: false, labelSize: 2.2, radius: 0.8, zOffset: 2 });
+  // An interface sits inside the partner's fold, so the labels are drawn over everything; the
+  // names are what the reader came for, and a residue label cannot be mistaken for a structure.
+  drawOnTop(labels);
+  partnerContacts[kind] = c;
+  partnerSummary[kind] = { receptor: recResidues.size, partner: partnerResidues.size };
+  // The contacts are what was asked for, so the camera goes to them.
+  try { c.autoView("(" + recSele + ") or (" + partnerSele + ")", 800); } catch (e) {}
+}
+/* While the contacts are on, the transducer's own cartoon is thinned and stops hiding what is
+   behind it - the interface is inside the G protein, and an opaque ribbon covered every line and
+   label of it. The 8 A side-chain shell gives way to the contacting residues. */
+function setTransducerShell(on) {
+  if (!transducerOverlay) return;
+  for (const r of transducerOverlay.reprList) {
+    if (r.repr.type === "licorice") r.setVisibility(on);
+    if (r.repr.type === "cartoon") r.setParameters(on ? { opacity: 0.9, depthWrite: true }
+                                                        : { opacity: 0.45, depthWrite: false });
+  }
+}
+function drawOnTop(element) {
+  for (const buffer of (element && element.repr && element.repr.bufferList) || []) {
+    for (const m of [buffer.material, buffer.wireframeMaterial]) {
+      if (m) { m.depthTest = false; m.needsUpdate = true; }
+    }
+  }
+}
+
 /* G protein and arrestin chains, from overlay/structures/<PDB>/transducer.cif.gz: backbone
    throughout and whole residues at the receptor interface, in the bundle's deposited frame. Each
    subunit has its own colour, so Galpha, Gbeta and Ggamma read apart from one another and from
@@ -1570,7 +1714,6 @@ async function showTransducerOverlay() {
         }
       }
       transducerOverlay = c;
-      stage.autoView(800);            // the complex reaches far beyond the pocket view: show all of it
     } catch (e) { return; }
   }
   transducerOverlay.setVisibility(true);

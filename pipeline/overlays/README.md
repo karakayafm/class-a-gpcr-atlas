@@ -47,14 +47,3 @@ copies of the receptor, the structure page says so and links to that assembly at
 chains are the bundle's receptor entities plus any entity carrying the receptor's UniProt accession
 (taken from its entry name, so fusion partners on the receptor entity never count). Copies that are
 only in the asymmetric unit are recorded under `asymmetric_unit_only` and not flagged.
-
-## Re-running
-
-```bash
-python3 pipeline/overlays/build_lipid_overlay.py         # [--pdb 7CKZ ...] [--limit N]
-python3 pipeline/overlays/build_transducer_overlay.py    # [--pdb 7CKZ ...] [--limit N]
-python3 pipeline/overlays/build_receptor_copies.py
-```
-
-Run them after a full build, before the site is published; they read the published
-`viewer_meta.json` files for the receptor chains and ligand residues.
