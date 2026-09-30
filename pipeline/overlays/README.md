@@ -11,8 +11,9 @@ the viewer loads them without any transformation and only when a layer asks for 
 |---|---|---|
 | `build_lipid_overlay.py` | `overlay/structures/<PDB>/lipids.cif`, `overlay/lipids_index.json` | *Lipids* |
 | `build_transducer_overlay.py` | `overlay/structures/<PDB>/transducer.cif.gz`, `overlay/transducer_index.json` | *Transducer* |
+| `build_receptor_copies.py` | `overlay/receptor_copies.json` | structure page note, *Receptor oligomer* |
 
-Both download each entry once into `data/cache/coordinates/` (the cache `build_bundles.py` reads)
+The first two download each entry once into `data/cache/coordinates/` (the cache `build_bundles.py` reads)
 and record the source file's SHA-256 and the selection rule in their index.
 
 ## Lipids
@@ -39,12 +40,21 @@ and description, the number of interface residues and the file size.
 The transducers stay out of the bundles by design: they would more than double most bundles, and
 the file is fetched only when the layer is switched on.
 
+## Receptor copies
+
+The viewer draws one receptor chain. Where the PDB's first biological assembly holds two or more
+copies of the receptor, the structure page says so and links to that assembly at RCSB. Receptor
+chains are the bundle's receptor entities plus any entity carrying the receptor's UniProt accession
+(taken from its entry name, so fusion partners on the receptor entity never count). Copies that are
+only in the asymmetric unit are recorded under `asymmetric_unit_only` and not flagged.
+
 ## Re-running
 
 ```bash
 python3 pipeline/overlays/build_lipid_overlay.py         # [--pdb 7CKZ ...] [--limit N]
 python3 pipeline/overlays/build_transducer_overlay.py    # [--pdb 7CKZ ...] [--limit N]
+python3 pipeline/overlays/build_receptor_copies.py
 ```
 
-Run both after a full build, before the site is published; they read the published
+Run them after a full build, before the site is published; they read the published
 `viewer_meta.json` files for the receptor chains and ligand residues.

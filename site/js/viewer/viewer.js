@@ -1552,11 +1552,22 @@ async function showTransducerOverlay() {
       const c = await stage.loadFile(base() + "overlay/structures/" + pdb + "/transducer.cif.gz",
         { ext: "cif", compressed: "gz", name: pdb + " transducer" });
       if (!meta || meta.pdb_id !== pdb) { stage.removeComponent(c); return; }  // moved on meanwhile
+      // Interface residues are the ones the file carries whole, i.e. with more than the four
+      // backbone atoms. Their side chains are drawn from CA, so they join the cartoon.
+      const iface = {};
+      c.structure.eachResidue(r => {
+        if (r.atomCount > 4) {
+          (iface[r.chainname] = iface[r.chainname] || []).push(r.resno + (r.inscode ? "^" + r.inscode : ""));
+        }
+      });
       for (const [chain, info] of Object.entries(entry.chains)) {
         const colour = SUBUNIT_COLOURS[info.subunit] || 0xb0b4ba;
         c.addRepresentation("cartoon", { sele: ":" + chain, color: colour, opacity: 0.9 });
-        c.addRepresentation("licorice", { sele: ":" + chain + " and sidechainAttached and not backbone",
-          colorScheme: "element", colorValue: colour, radiusScale: 0.7 });
+        if (iface[chain] && iface[chain].length) {
+          c.addRepresentation("licorice", {
+            sele: "(" + iface[chain].join(" or ") + ") and :" + chain + " and sidechainAttached",
+            colorScheme: "element", colorValue: colour, radiusScale: 0.7 });
+        }
       }
       transducerOverlay = c;
       stage.autoView(800);            // the complex reaches far beyond the pocket view: show all of it

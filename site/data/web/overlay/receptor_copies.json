@@ -1,0 +1,1350 @@
+{
+ "schema": "receptor_copies_overlay",
+ "schema_version": "1.0.0",
+ "generated": "2026-09-30",
+ "source": "RCSB PDB entry and assembly records (data.rcsb.org GraphQL), UniProt entry names, CC0/CC BY",
+ "rule": "chains of the receptor (bundle receptor entities, or any entity carrying the receptor's UniProt accession) contained in the PDB's first biological assembly; two or more is flagged",
+ "note": "The viewer draws one receptor chain. A first assembly of a crystal structure is the depositor's or software's assignment and is not by itself evidence of a biological dimer.",
+ "structures": {
+  "1GZM": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "1HZX": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "1L9H": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "2G87": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "2HPY": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "2J4Y": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "2PED": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "2Y00": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "2Y01": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "2Y02": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "2Y03": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "2Y04": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "3CAP": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "3OAX": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "3ODU": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "3OE9": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "4DAJ": {
+   "copies_asymmetric_unit": 4,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "C",
+    "D"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "4DJH": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "4EA3": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "4GPO": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "4U15": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "5DGY": {
+   "copies_asymmetric_unit": 4,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "B",
+    "D"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "5DHG": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "5DHH": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "5DSG": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "5O9H": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "5UEN": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "5UNF": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "5UNH": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "5V54": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "5ZKQ": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "6AK3": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "6IQL": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "6KUW": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "6ME6": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "6OFJ": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "ELECTRON MICROSCOPY"
+  },
+  "6PT2": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "tetrameric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "6PT3": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "6VI4": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "tetrameric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "6YVR": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "AAA",
+    "BBB"
+   ],
+   "assembly_1_oligomeric_state": "tetrameric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "7EZC": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "7F83": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "7W0L": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "Q",
+    "R"
+   ],
+   "assembly_1_oligomeric_state": "hexameric",
+   "method": "ELECTRON MICROSCOPY"
+  },
+  "7W0N": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "Q",
+    "R"
+   ],
+   "assembly_1_oligomeric_state": "octameric",
+   "method": "ELECTRON MICROSCOPY"
+  },
+  "7ZBC": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "7ZBE": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "8A6C": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "8A6D": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "8A6E": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "8EF5": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "M",
+    "R"
+   ],
+   "assembly_1_oligomeric_state": "heptameric",
+   "method": "ELECTRON MICROSCOPY"
+  },
+  "8EF6": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "M",
+    "R"
+   ],
+   "assembly_1_oligomeric_state": "heptameric",
+   "method": "ELECTRON MICROSCOPY"
+  },
+  "8EFL": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "M",
+    "R"
+   ],
+   "assembly_1_oligomeric_state": "heptameric",
+   "method": "ELECTRON MICROSCOPY"
+  },
+  "8EFO": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "M",
+    "R"
+   ],
+   "assembly_1_oligomeric_state": "heptameric",
+   "method": "ELECTRON MICROSCOPY"
+  },
+  "8F7Q": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "M",
+    "R"
+   ],
+   "assembly_1_oligomeric_state": "nonameric",
+   "method": "ELECTRON MICROSCOPY"
+  },
+  "8F7R": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "M",
+    "R"
+   ],
+   "assembly_1_oligomeric_state": "nonameric",
+   "method": "ELECTRON MICROSCOPY"
+  },
+  "8F7S": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "D",
+    "R"
+   ],
+   "assembly_1_oligomeric_state": "octameric",
+   "method": "ELECTRON MICROSCOPY"
+  },
+  "8FCZ": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "tetrameric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "8FD0": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "tetrameric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "8FD1": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "tetrameric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "8JPS": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "tetrameric",
+   "method": "ELECTRON MICROSCOPY"
+  },
+  "8TH3": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "tetrameric",
+   "method": "ELECTRON MICROSCOPY"
+  },
+  "8U4S": {
+   "copies_asymmetric_unit": 3,
+   "copies_assembly_1": 3,
+   "chains_assembly_1": [
+    "C",
+    "G",
+    "R"
+   ],
+   "assembly_1_oligomeric_state": "nonameric",
+   "method": "ELECTRON MICROSCOPY"
+  },
+  "8U4T": {
+   "copies_asymmetric_unit": 4,
+   "copies_assembly_1": 4,
+   "chains_assembly_1": [
+    "AA",
+    "I",
+    "Q",
+    "R"
+   ],
+   "assembly_1_oligomeric_state": "dodecameric",
+   "method": "ELECTRON MICROSCOPY"
+  },
+  "8W1V": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "tetrameric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "8WVX": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "tetrameric",
+   "method": "ELECTRON MICROSCOPY"
+  },
+  "8Y69": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 2,
+   "chains_assembly_1": [
+    "A",
+    "D"
+   ],
+   "assembly_1_oligomeric_state": "octameric",
+   "method": "ELECTRON MICROSCOPY"
+  }
+ },
+ "asymmetric_unit_only": {
+  "1F88": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "1U19": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "2I36": {
+   "copies_asymmetric_unit": 3,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "C"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "2I37": {
+   "copies_asymmetric_unit": 3,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "C"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "2VT4": {
+   "copies_asymmetric_unit": 4,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "D"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "2YCW": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "2YCX": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "2YCY": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "2YCZ": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "2Z73": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "3AYM": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "3AYN": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "3OE8": {
+   "copies_asymmetric_unit": 3,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "A"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "3PBL": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "3ZEV": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "A"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "3ZPQ": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "3ZPR": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "4AMI": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "4AMJ": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "4BUO": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "4BV0": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "4BWB": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "4MBS": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "4RWA": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "4RWD": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "4U16": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "4UG2": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "4WW3": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "4XNW": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "A"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "4ZWJ": {
+   "copies_asymmetric_unit": 4,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "D"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "5F8U": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "5G53": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "5JQH": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "A"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "5LWE": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "5TUD": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "D"
+   ],
+   "assembly_1_oligomeric_state": "trimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "5W0P": {
+   "copies_asymmetric_unit": 4,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "D"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "5ZHP": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "6A93": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "6A94": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "6AKX": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "6B73": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "6DO1": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "tetrameric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "6E67": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "6GPX": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "6H7J": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "trimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "6H7L": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "trimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "6H7M": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "trimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "6H7N": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "trimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "6H7O": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "trimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "6IBB": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "C"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "6IBL": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "dimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "6ME7": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "A"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "6ME8": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "A"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "6ME9": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "A"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "6RZ5": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "A"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "6TO7": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "A"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "6TOD": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "A"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "6TOS": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "A"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "6TOT": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "A"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "6TP3": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "A"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "6TP4": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "A"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "6TP6": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "A"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "6TPJ": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "A"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "6TQ4": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "A"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "6TQ6": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "A"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "6TQ7": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "A"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "6TQ9": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "A"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "6WGT": {
+   "copies_asymmetric_unit": 3,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "A"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "6WH4": {
+   "copies_asymmetric_unit": 3,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "A"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "7BVQ": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "7C4S": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "trimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "7JNI": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "A"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "7YXA": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "A"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "8GNG": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "X"
+   ],
+   "assembly_1_oligomeric_state": "trimeric",
+   "method": "X-RAY DIFFRACTION"
+  },
+  "8ZMG": {
+   "copies_asymmetric_unit": 2,
+   "copies_assembly_1": 1,
+   "chains_assembly_1": [
+    "B"
+   ],
+   "assembly_1_oligomeric_state": "monomeric",
+   "method": "X-RAY DIFFRACTION"
+  }
+ }
+}
