@@ -270,11 +270,14 @@ export async function open(host, pdb, observationId, onStatus) {
   measureAtoms.length = 0; measureKept.length = 0; measureMode = false;
   focusSelection = false; uniformColour = null; foreignTables.clear();
   interactionLayers.ligand = true; interactionLayers.inter = false;
-  interactionLayers.intra = false; ligandShown = true; lipidOverlay = null;
+  interactionLayers.intra = false; ligandShown = true; lipidOverlay = null; transducerOverlay = null;
   // Which structures have their lipids in the lipid overlay rather than the bundle. Fetched once;
   // a build without the overlay answers null, and the bundle's own lipids still work.
   if (lipidIndex === undefined) {
     try { lipidIndex = await loadOverlay("lipids_index.json"); } catch (e) { lipidIndex = null; }
+  }
+  if (transducerIndex === undefined) {
+    try { transducerIndex = await loadOverlay("transducer_index.json"); } catch (e) { transducerIndex = null; }
   }
   try { meta = await loadBundleMeta(pdb); }
   catch (e) { onStatus(errorMessage(e)); return null; }
@@ -1456,6 +1459,10 @@ export const toggles = {
      so they are off by default and never drawn as one: a component the record counts as this
      structure's ligand is left to the ligand layer, even where the same component is a bulk lipid
      elsewhere (oleic acid is a membrane lipid in most bundles and the agonist in 8ID6). */
+  transducer(on) {
+    if (!on) { if (transducerOverlay) transducerOverlay.setVisibility(false); return; }
+    if (transducerEntry()) showTransducerOverlay();
+  },
   lipids(on) {
     if (!on) { dropRep("lipids"); if (lipidOverlay) lipidOverlay.setVisibility(false); return; }
     const s = lipidSelection();
@@ -1518,6 +1525,45 @@ async function showLipidOverlay() {
   lipidOverlay.setVisibility(true);
 }
 export function hasLipids() { return !!lipidSelection() || overlayHasLipids(); }
+
+/* G protein and arrestin chains, from overlay/structures/<PDB>/transducer.cif.gz: backbone
+   throughout and whole residues at the receptor interface, in the bundle's deposited frame. Each
+   subunit has its own colour, so Galpha, Gbeta and Ggamma read apart from one another and from
+   the receptor; the interface side chains carry the same colour on their carbons. Nanobodies,
+   scFv16, Fab fragments and fusion partners are not transducers and are not in the file. */
+let transducerIndex, transducerOverlay = null;
+const SUBUNIT_COLOURS = { "G alpha": 0xf0a04b, "G beta": 0x5cbf96, "G gamma": 0xb58ad6, "arrestin": 0xe0708f };
+function transducerEntry() {
+  return (meta && transducerIndex && transducerIndex.structures &&
+          transducerIndex.structures[meta.pdb_id]) || null;
+}
+export function hasTransducer() { return !!transducerEntry(); }
+/* "G alpha (A), G beta (B), G gamma (G)" - for the button's explanation. */
+export function transducerSummary() {
+  const e = transducerEntry();
+  return e ? Object.entries(e.chains).map(([c, v]) => v.subunit + " (" + c + ")").join(", ") : "";
+}
+async function showTransducerOverlay() {
+  const stage = LC.getStage(), entry = transducerEntry();
+  if (!stage || !entry) return;
+  if (!transducerOverlay) {
+    const pdb = meta.pdb_id;
+    try {
+      const c = await stage.loadFile(base() + "overlay/structures/" + pdb + "/transducer.cif.gz",
+        { ext: "cif", compressed: "gz", name: pdb + " transducer" });
+      if (!meta || meta.pdb_id !== pdb) { stage.removeComponent(c); return; }  // moved on meanwhile
+      for (const [chain, info] of Object.entries(entry.chains)) {
+        const colour = SUBUNIT_COLOURS[info.subunit] || 0xb0b4ba;
+        c.addRepresentation("cartoon", { sele: ":" + chain, color: colour, opacity: 0.9 });
+        c.addRepresentation("licorice", { sele: ":" + chain + " and sidechainAttached and not backbone",
+          colorScheme: "element", colorValue: colour, radiusScale: 0.7 });
+      }
+      transducerOverlay = c;
+      stage.autoView(800);            // the complex reaches far beyond the pocket view: show all of it
+    } catch (e) { return; }
+  }
+  transducerOverlay.setVisibility(true);
+}
 
 export function resetView() { if (comp) applyDefaults(); }
 export function statusMessage() {

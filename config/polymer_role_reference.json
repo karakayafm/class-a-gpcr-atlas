@@ -75,7 +75,8 @@
         "g(o) subunit",
         "gi1-gq",
         "gs-mini-gq",
-        "g-protein subunit"
+        "g-protein subunit",
+        "g324"
       ],
       "rationale": "Covers all G-protein subunits and engineered mini-G / chimeric constructs across species. Extended in Phase 2 after audit: entities are also described as 'G subunit alpha (q)' and 'G subunit q (Gi1-Gq chimeric)', which the original phrase did not match."
     },
@@ -186,6 +187,14 @@
       "trigger": "Audit of the 382 polymer chains left unresolved by the first pass showed four systematic identity gaps rather than genuinely unknown chains.",
       "principle": "Every addition is identity evidence - a reagent's name or accession. No pattern uses chain length or proximity to the receptor.",
       "recorded_in": "governance/DECISION_LOG.md"
+    },
+    {
+      "phase": 5,
+      "date": "2026-09-30",
+      "change": "Added the transducer description pattern 'g324'.",
+      "trigger": "Transducer overlay audit: 7XWO chain F, an engineered Gq described only as 'G324', matched no pattern; other depositions of the same construct read 'Guanine nucleotide-binding protein Gq (G324)'.",
+      "principle": "Identity evidence only - the construct's name.",
+      "recorded_in": "pipeline/overlays/README.md"
     }
   ]
 }

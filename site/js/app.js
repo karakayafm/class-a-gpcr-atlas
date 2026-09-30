@@ -649,7 +649,7 @@ function buildViewerSide(meta) {
   const remembered = onBase ? baseToggles : null;
   const on = remembered || { cartoon: true, ligand: true, contacts: true, motifs: false, motifLabels: true,
     surface: false, surfaceReceptor:false, surfaceLigand:false, lines: true,
-    allLigands: false, ions: false, aux: false, spin: false, lipids: false };
+    allLigands: false, ions: false, aux: false, spin: false, lipids: false, transducer: false };
   if (onBase) baseToggles = on;
   /* The layers an overlay carries. Anything outside this map is disabled and says why, because a
      toggle that does nothing is worse than one that is visibly unavailable. */
@@ -692,6 +692,10 @@ function buildViewerSide(meta) {
   // Membrane lipids and detergents: off by default, unavailable where the bundle carries none.
   const lipidButton = add("lipids", t("v_lipids"), onBase && !VIEW.hasLipids());
   if (onBase) lipidButton.title = t(VIEW.hasLipids() ? "v_lipids_hint" : "v_lipids_none");
+  // G protein and arrestin chains, loaded when asked for; not antibodies, nanobodies or fusions.
+  const transducerButton = add("transducer", t("v_transducer_layer"), onBase && !VIEW.hasTransducer());
+  if (onBase) transducerButton.title = VIEW.hasTransducer()
+    ? t("v_transducer_hint", { chains: VIEW.transducerSummary() }) : t("v_transducer_none");
   /* Interactions is no longer one thing, so its button is a disclosure rather than a switch.
      Clicking it opens the three layers it covers and changes nothing on screen: the ligand's
      contacts, which is what this view was built for, and the two helical ones, which answer what
