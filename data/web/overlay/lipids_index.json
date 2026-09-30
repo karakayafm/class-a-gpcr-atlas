@@ -1,0 +1,2337 @@
+{
+ "structures": {
+  "1GZM": {
+   "residues": 14,
+   "atoms": 222,
+   "components": {
+    "C8E": 9,
+    "LDA": 2,
+    "PEF": 1,
+    "PLM": 2
+   },
+   "source_sha256": "26cfddbed21504337ddddb62caf715bea0360cd5805e73b50187276ae5b3db53"
+  },
+  "1HZX": {
+   "residues": 9,
+   "atoms": 177,
+   "components": {
+    "BNG": 6,
+    "PLM": 3
+   },
+   "source_sha256": "1160ee30e9c42c0de052950da8a3f0329b593c202d1f11f7a11725b8f121aaf9"
+  },
+  "1L9H": {
+   "residues": 11,
+   "atoms": 209,
+   "components": {
+    "BNG": 6,
+    "PLM": 5
+   },
+   "source_sha256": "20435aa3b154679543a50c8e7ad6fc96de1956759a751ff15a90e61b59075995"
+  },
+  "1U19": {
+   "residues": 9,
+   "atoms": 157,
+   "components": {
+    "HTG": 3,
+    "PLM": 6
+   },
+   "source_sha256": "97e3e595729f786d25cb116a0fa6e3525f52f96a238272345920a47371b28732"
+  },
+  "2G87": {
+   "residues": 9,
+   "atoms": 157,
+   "components": {
+    "HTG": 3,
+    "PLM": 6
+   },
+   "source_sha256": "7ebbadbaf1f91a6ca5bef7b7a500b422e0dc7ee62d0654edc84d34d6bc0a0ed9"
+  },
+  "2HPY": {
+   "residues": 9,
+   "atoms": 157,
+   "components": {
+    "HTG": 3,
+    "PLM": 6
+   },
+   "source_sha256": "6a093048f18a2c40bd829b753445c2350bfa12a44a6e78a27ca2f1f00f3752c6"
+  },
+  "2I36": {
+   "residues": 1,
+   "atoms": 17,
+   "components": {
+    "PLM": 1
+   },
+   "source_sha256": "cb5e7bd6736a3a68661faaeb79f0556ee64edd9e664ad74309fc266992599f5f"
+  },
+  "2PED": {
+   "residues": 9,
+   "atoms": 157,
+   "components": {
+    "HTG": 3,
+    "PLM": 6
+   },
+   "source_sha256": "ac7501fd7cc812651602101695fa4e6f16ef27a9cb908973950fa56d7665c2e8"
+  },
+  "2VT4": {
+   "residues": 6,
+   "atoms": 100,
+   "components": {
+    "D10": 1,
+    "SOG": 5
+   },
+   "source_sha256": "7181f90447aea6b42d67142bf1a5df1f9ba5c16d8d50172022a65e820aa4ea50"
+  },
+  "2Y00": {
+   "residues": 11,
+   "atoms": 270,
+   "components": {
+    "2CV": 8,
+    "Y01": 3
+   },
+   "source_sha256": "85e042571b350cbc8e1ae157bb494dd94a7054637f7892429149160b24528e35"
+  },
+  "2Y01": {
+   "residues": 11,
+   "atoms": 270,
+   "components": {
+    "2CV": 8,
+    "Y01": 3
+   },
+   "source_sha256": "4de18a1bbafa00e989055dad7d656cf5f8cfa52a5b43a2efd9d5218c09f7341d"
+  },
+  "2Y02": {
+   "residues": 11,
+   "atoms": 270,
+   "components": {
+    "2CV": 8,
+    "Y01": 3
+   },
+   "source_sha256": "e9f5ee11aedb513d70c9a157c43409df32afdbc5fd792af91da5fa86b2d4da64"
+  },
+  "2Y03": {
+   "residues": 7,
+   "atoms": 157,
+   "components": {
+    "2CV": 5,
+    "Y01": 2
+   },
+   "source_sha256": "7d40d63f65a37479c53d697b6927a6ea098f0641930de6450b9334cbc39f8036"
+  },
+  "2Y04": {
+   "residues": 11,
+   "atoms": 270,
+   "components": {
+    "2CV": 8,
+    "Y01": 3
+   },
+   "source_sha256": "c0a003e210c2ddbacca72cf5004369a6d1e503fea3544f7397b2e5341d957e10"
+  },
+  "2YCW": {
+   "residues": 5,
+   "atoms": 98,
+   "components": {
+    "2CV": 5
+   },
+   "source_sha256": "110755ba051f0f23abf3b2199fb00a9e150455de8282afd34e44cef9e685d6f8"
+  },
+  "2YCX": {
+   "residues": 3,
+   "atoms": 60,
+   "components": {
+    "SOG": 3
+   },
+   "source_sha256": "088b9a7f24477c18dccf2e8efb3c194e7a0d08e7af88342d21c13534c012a0d2"
+  },
+  "2YCY": {
+   "residues": 5,
+   "atoms": 100,
+   "components": {
+    "SOG": 5
+   },
+   "source_sha256": "16c6b6dabfc1c2312358f45c62c2a60e88e00c978bb68fc7dd180711bec58e2d"
+  },
+  "2YCZ": {
+   "residues": 1,
+   "atoms": 20,
+   "components": {
+    "SOG": 1
+   },
+   "source_sha256": "331924e41ac3033a7d3aa634239e0c318a97e47d32eb828418c7da65a756f16b"
+  },
+  "2Z73": {
+   "residues": 3,
+   "atoms": 54,
+   "components": {
+    "BOG": 1,
+    "PLM": 2
+   },
+   "source_sha256": "48c9cafa583e7e852e188e1c19ef1356826ccbccc34009a07bd39fef69237504"
+  },
+  "3AYM": {
+   "residues": 2,
+   "atoms": 37,
+   "components": {
+    "BOG": 1,
+    "PLM": 1
+   },
+   "source_sha256": "1c9dabaa7962d1b9034300b6661254200473f7b1b0d115dd79c52484236fb2e5"
+  },
+  "3AYN": {
+   "residues": 2,
+   "atoms": 34,
+   "components": {
+    "PLM": 2
+   },
+   "source_sha256": "7edbc0412f8826ba6c8a365fa8d0bce054dafbd9bd28ed76828fa0f7313a4861"
+  },
+  "3CAP": {
+   "residues": 7,
+   "atoms": 134,
+   "components": {
+    "BGL": 5,
+    "PLM": 2
+   },
+   "source_sha256": "b702dc209c2c61beb9334b07b1b9b4f085f0e19ddd409c08ee60e0b198208116"
+  },
+  "3OAX": {
+   "residues": 7,
+   "atoms": 125,
+   "components": {
+    "HTG": 3,
+    "PLM": 4
+   },
+   "source_sha256": "61db244ed0cf2a0f456869380e69ba45fd759f0c99bef59c6bdb46c57d1be63e"
+  },
+  "3ODU": {
+   "residues": 5,
+   "atoms": 86,
+   "components": {
+    "OLA": 2,
+    "OLC": 3
+   },
+   "source_sha256": "6d6c7fbdf5ffe1dd7c867ffbfc8cb68d6658d64c6a6775a0cfdf846b8f632643"
+  },
+  "3VG9": {
+   "residues": 7,
+   "atoms": 155,
+   "components": {
+    "LMT": 1,
+    "STE": 6
+   },
+   "source_sha256": "f7a14421d6daa52bfa04894d338567c73b1685566e7a30febef02cac69fbc483"
+  },
+  "3ZPQ": {
+   "residues": 9,
+   "atoms": 202,
+   "components": {
+    "2CV": 6,
+    "Y01": 3
+   },
+   "source_sha256": "01be7019f228b36c04cb416574c33653f81be0f9f5a89a51b6373a5e2597ab2c"
+  },
+  "3ZPR": {
+   "residues": 9,
+   "atoms": 204,
+   "components": {
+    "2CV": 6,
+    "Y01": 3
+   },
+   "source_sha256": "0a5c43c17bf633c425ebbdfe4cf1914e8224da7a4f299cc49c85c16f4ecfbd36"
+  },
+  "4AMI": {
+   "residues": 5,
+   "atoms": 77,
+   "components": {
+    "2CV": 5
+   },
+   "source_sha256": "c24a110efc148807c22f09138dab7d9e55c558d8853b30238a59e9d94c2e697b"
+  },
+  "4AMJ": {
+   "residues": 11,
+   "atoms": 139,
+   "components": {
+    "2CV": 11
+   },
+   "source_sha256": "42f86b2166531b8e4ea0959580846e951c4e0c29e9f52c1997edb13a5e9adf1c"
+  },
+  "4EA3": {
+   "residues": 2,
+   "atoms": 35,
+   "components": {
+    "OLA": 1,
+    "OLB": 1
+   },
+   "source_sha256": "5e4d63a09a181cb7ad1a1efefc6fbe98e2fb5848cdc46147597ac9d3653a6ace"
+  },
+  "4MBS": {
+   "residues": 6,
+   "atoms": 100,
+   "components": {
+    "OLC": 6
+   },
+   "source_sha256": "f674cf81a9ff26ff92a9e553a429ca01d0071a16ed275aeea5d7bd9b4f8d6cd7"
+  },
+  "4RWA": {
+   "residues": 1,
+   "atoms": 13,
+   "components": {
+    "OLC": 1
+   },
+   "source_sha256": "2839811934d4b888c8282e09da2b4da5dc2118d59b909689f860a63895e27c31"
+  },
+  "4RWD": {
+   "residues": 5,
+   "atoms": 69,
+   "components": {
+    "OLA": 3,
+    "OLC": 2
+   },
+   "source_sha256": "1215c8cfbcc861bd8417c090f622c46d6a68e22097831617a63051fdc8c1ba95"
+  },
+  "4U15": {
+   "residues": 1,
+   "atoms": 25,
+   "components": {
+    "OLC": 1
+   },
+   "source_sha256": "868607819ff3b7d495232335c0d7dbd0bbafde51203bded0e52a8ba48fed6206"
+  },
+  "4WW3": {
+   "residues": 3,
+   "atoms": 54,
+   "components": {
+    "BOG": 1,
+    "PLM": 2
+   },
+   "source_sha256": "c9af258d47354222eaf2fd53b957b258d709a7336745c2dc3b1f2c1070f2f64e"
+  },
+  "5DHG": {
+   "residues": 4,
+   "atoms": 32,
+   "components": {
+    "OLA": 4
+   },
+   "source_sha256": "58e8bc819e44820c56599d0dbb4e86de535b243f5ead36385e3e766d01af1a3f"
+  },
+  "5DHH": {
+   "residues": 6,
+   "atoms": 70,
+   "components": {
+    "OLA": 6
+   },
+   "source_sha256": "64bf0c9ab432e6158df5b86301db59ffc081375217b9954dddba4ace2338471e"
+  },
+  "5DSG": {
+   "residues": 7,
+   "atoms": 131,
+   "components": {
+    "OLA": 3,
+    "OLC": 4
+   },
+   "source_sha256": "2093e2b6677328d6f29b76288d0251f0e7b702d32aee65ba1113229ef3619f7f"
+  },
+  "5G53": {
+   "residues": 2,
+   "atoms": 40,
+   "components": {
+    "SOG": 2
+   },
+   "source_sha256": "faa9aca18b2b6a00a0695aa18098e0d2324049007b1e2d38cee769ac2464dfa6"
+  },
+  "5JQH": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "40414a348c0d13b9117aba1dd3093d3dcbb649a02dddb9bd6bd00370837ab9ad"
+  },
+  "5LWE": {
+   "residues": 17,
+   "atoms": 255,
+   "components": {
+    "CLR": 1,
+    "OLA": 16
+   },
+   "source_sha256": "a5d57c971769b62bd64e43674cca8781b01708d32fb6332668261d17e49b8784"
+  },
+  "5NLX": {
+   "residues": 4,
+   "atoms": 81,
+   "components": {
+    "CLR": 1,
+    "OLA": 3
+   },
+   "source_sha256": "619aafa71600a7cf77881d82dc96c1882ace65fe682a69d5318e70419e1cddff"
+  },
+  "5NM2": {
+   "residues": 20,
+   "atoms": 337,
+   "components": {
+    "CLR": 3,
+    "OLA": 13,
+    "OLB": 2,
+    "OLC": 2
+   },
+   "source_sha256": "ef5108047c7d066fdfa6af40d76d27ea4239b4937012b0bea152ce32a1f33d29"
+  },
+  "5NM4": {
+   "residues": 7,
+   "atoms": 145,
+   "components": {
+    "CLR": 2,
+    "OLA": 5
+   },
+   "source_sha256": "12eaf375d2b6206017278c5e3b875adb594ab57ea15c5bdfb6a6eb7dc106dd68"
+  },
+  "5O9H": {
+   "residues": 20,
+   "atoms": 300,
+   "components": {
+    "OLA": 20
+   },
+   "source_sha256": "2d1e2b59f3b14e155f569da03836e40ae2247d67a044431be2c21e5646d416b2"
+  },
+  "5UEN": {
+   "residues": 5,
+   "atoms": 86,
+   "components": {
+    "OLA": 5
+   },
+   "source_sha256": "6ff20c44f59a4555c6a6e636f1ed7766357733dcef1334678ccdcffcd90c08b5"
+  },
+  "5VRA": {
+   "residues": 18,
+   "atoms": 311,
+   "components": {
+    "CLR": 3,
+    "OLA": 8,
+    "OLB": 1,
+    "OLC": 6
+   },
+   "source_sha256": "6aa5c4540a3ff4beed46efcc490ffa566b04667e26a82736b096562b10be62b0"
+  },
+  "5WB2": {
+   "residues": 6,
+   "atoms": 139,
+   "components": {
+    "CLR": 2,
+    "OLC": 4
+   },
+   "source_sha256": "d9c6f56bb06bb25d02e09bac41cb30f2b8cdfde604588371064a7faea9dd0590"
+  },
+  "5ZKQ": {
+   "residues": 4,
+   "atoms": 82,
+   "components": {
+    "OLC": 4
+   },
+   "source_sha256": "bd67be949697af7f09c923f8bfc05ac9a6bdb80b0fa53da895f9140a8b08d836"
+  },
+  "6A93": {
+   "residues": 2,
+   "atoms": 38,
+   "components": {
+    "CLR": 1,
+    "PLM": 1
+   },
+   "source_sha256": "6d201ab7e64857074e5f3c576455d88205dd6e801ffafc7a569234d37f76d7bb"
+  },
+  "6A94": {
+   "residues": 3,
+   "atoms": 58,
+   "components": {
+    "A6L": 1,
+    "CLR": 1,
+    "PLM": 1
+   },
+   "source_sha256": "c1708ccabb69fe497b72ae22e5ebd92a4ee6685c1378d9d78f3d9ad740e7b6ec"
+  },
+  "6B73": {
+   "residues": 2,
+   "atoms": 42,
+   "components": {
+    "CLR": 1,
+    "OLA": 1
+   },
+   "source_sha256": "606cc4475bde9bf05a6c3504a22139d2b70c379538d4631d497a2bb2a5422803"
+  },
+  "6DO1": {
+   "residues": 3,
+   "atoms": 49,
+   "components": {
+    "OLC": 3
+   },
+   "source_sha256": "f3997f9d487cd15cb23e4ccb61b85dccff9b8a4f3ef4c74bad7d4a4b896e1aa4"
+  },
+  "6GPX": {
+   "residues": 11,
+   "atoms": 163,
+   "components": {
+    "OLA": 11
+   },
+   "source_sha256": "ec6c7384b5be299f48a25b344cc9d83d2da85b4d6f39a5a547d05f0ba2099b1f"
+  },
+  "6H7J": {
+   "residues": 5,
+   "atoms": 108,
+   "components": {
+    "2CV": 5
+   },
+   "source_sha256": "8ab4e7292695e99f417b0703f8ae0966ac232b02801307411dc765fb58ffad5f"
+  },
+  "6H7L": {
+   "residues": 7,
+   "atoms": 174,
+   "components": {
+    "2CV": 7
+   },
+   "source_sha256": "b06087c8101eb14a1e525de929ce99ddf4de2f50bbcca2d90ef4baef8eeb010e"
+  },
+  "6H7M": {
+   "residues": 6,
+   "atoms": 141,
+   "components": {
+    "2CV": 6
+   },
+   "source_sha256": "97292750eebe776363e8404ef526d8cfa0173ef3f360e6372773b623c3cceb28"
+  },
+  "6H7N": {
+   "residues": 5,
+   "atoms": 120,
+   "components": {
+    "2CV": 5
+   },
+   "source_sha256": "cbb802605294ef402a113f15bf53b666afaa8dfa43af6d36eba49d6947b8c174"
+  },
+  "6H7O": {
+   "residues": 6,
+   "atoms": 136,
+   "components": {
+    "2CV": 6
+   },
+   "source_sha256": "54f680536b20de329eb3f2f9522f58d55a17d616057042b7f7e74a23d5acb46d"
+  },
+  "6IBB": {
+   "residues": 16,
+   "atoms": 354,
+   "components": {
+    "CLR": 1,
+    "OLC": 15
+   },
+   "source_sha256": "fe9b3dbe7c6b7a3a19617815cffebcce5bb0f9729daf5b09bbfe9949eaa06c05"
+  },
+  "6IBL": {
+   "residues": 7,
+   "atoms": 180,
+   "components": {
+    "2CV": 7
+   },
+   "source_sha256": "b6fcbe7b937a1ca35387841e4511c7ccf6a181c98237f1c58dd52bd2abf1b9fd"
+  },
+  "6JZH": {
+   "residues": 20,
+   "atoms": 319,
+   "components": {
+    "CLR": 3,
+    "OLA": 17
+   },
+   "source_sha256": "2cf7f776d2491efe825c81265e898c14dbbd05fed7e6816511743f9e63979734"
+  },
+  "6KUW": {
+   "residues": 9,
+   "atoms": 173,
+   "components": {
+    "CLR": 2,
+    "OLA": 2,
+    "OLC": 5
+   },
+   "source_sha256": "fe85db98a32bdcdf294ac24c060f85359b54c2522eeb21c96632e27b66940f4d"
+  },
+  "6LFM": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "031c96568284ec82cf38f7713c4798b7c2f7ba1429b0f93ef80701ca3de01467"
+  },
+  "6LFO": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "f54c40e64c248c2e5abbba913eb623d9e84e2b000950356f25e13c908e1e2f48"
+  },
+  "6MXT": {
+   "residues": 2,
+   "atoms": 45,
+   "components": {
+    "OLA": 1,
+    "OLC": 1
+   },
+   "source_sha256": "a4ba5b79e9bff89c3f111ab02be9649e4db2bd304c2699d43b424f3659f15b58"
+  },
+  "6N4B": {
+   "residues": 2,
+   "atoms": 56,
+   "components": {
+    "CLR": 2
+   },
+   "source_sha256": "60e15e8c04755c78e60ca0701a49c558cb48f806895cd032b8bd205040658d91"
+  },
+  "6OIJ": {
+   "residues": 2,
+   "atoms": 70,
+   "components": {
+    "Y01": 2
+   },
+   "source_sha256": "ec62e6ebc94b6ba6470112f7793a674a03746934227da9bc56ce93e49b1f491c"
+  },
+  "6OMM": {
+   "residues": 8,
+   "atoms": 194,
+   "components": {
+    "CLR": 5,
+    "PLM": 3
+   },
+   "source_sha256": "4ec4b7ac6fe3e2718c52db9936272cb98798191272afad95a50a9bba29ef3463"
+  },
+  "6PT0": {
+   "residues": 8,
+   "atoms": 184,
+   "components": {
+    "CLR": 4,
+    "PLM": 4
+   },
+   "source_sha256": "b4e8f112ce82358fafd90e74577909293df40f2b600eb575a2825f80de14a51e"
+  },
+  "6PT2": {
+   "residues": 4,
+   "atoms": 81,
+   "components": {
+    "CLR": 1,
+    "OLA": 3
+   },
+   "source_sha256": "2a186a85f127eb92752071e78fb1890058cc80d5076e828d2c4fb678790e9cb0"
+  },
+  "6RZ5": {
+   "residues": 22,
+   "atoms": 288,
+   "components": {
+    "OLA": 13,
+    "OLC": 9
+   },
+   "source_sha256": "016e94a1cc2737b8d7c58f79c152ece5c570a380eb42f620163c4b4012140f88"
+  },
+  "6TO7": {
+   "residues": 32,
+   "atoms": 484,
+   "components": {
+    "PGW": 2,
+    "SOG": 30
+   },
+   "source_sha256": "070c4de747860c961104bb44c84b76ad0a8eab42425b9b724862740f32fb8c0a"
+  },
+  "6TOD": {
+   "residues": 30,
+   "atoms": 481,
+   "components": {
+    "PGW": 2,
+    "SOG": 28
+   },
+   "source_sha256": "c44c98cdd2b3cdda1285aa50cfcca4d0e2811313c9fdda9435abb9807848104e"
+  },
+  "6TOS": {
+   "residues": 19,
+   "atoms": 359,
+   "components": {
+    "PGW": 2,
+    "SOG": 17
+   },
+   "source_sha256": "f089862e87429ab58024cb60df21101fd687bf301821048398276a6c98bc4ac6"
+  },
+  "6TOT": {
+   "residues": 10,
+   "atoms": 244,
+   "components": {
+    "PGW": 2,
+    "SOG": 8
+   },
+   "source_sha256": "4c8d6d9e8d88627392a923255a36917f614a51eb36d4d33a3a01841c2f633d89"
+  },
+  "6TP3": {
+   "residues": 11,
+   "atoms": 268,
+   "components": {
+    "PGW": 2,
+    "SOG": 9
+   },
+   "source_sha256": "dc2baaa888777d77d9124db36020043840eb87ce71b2a93c400e3b7fe75d1123"
+  },
+  "6TP4": {
+   "residues": 6,
+   "atoms": 174,
+   "components": {
+    "PGW": 2,
+    "SOG": 4
+   },
+   "source_sha256": "31f75eeeb603008a5c5f050f8f32023e954b5f522a676b4696c4b7dfd52d63a4"
+  },
+  "6TP6": {
+   "residues": 8,
+   "atoms": 199,
+   "components": {
+    "PGW": 2,
+    "SOG": 6
+   },
+   "source_sha256": "896b9e68afddebaed9d85c42a762797097f1f44ebe9c4a8906bace8fb4428578"
+  },
+  "6TPJ": {
+   "residues": 15,
+   "atoms": 126,
+   "components": {
+    "OLA": 15
+   },
+   "source_sha256": "49348845a3f236ac86ecde9af9b20edd698b424c7cab434902051071dd4c90b1"
+  },
+  "6TQ4": {
+   "residues": 12,
+   "atoms": 252,
+   "components": {
+    "PGW": 2,
+    "SOG": 10
+   },
+   "source_sha256": "e7ffb19c0b9013213ddef74cc45cf6be7dac83d7d3c40d482317334fa40ad278"
+  },
+  "6TQ6": {
+   "residues": 8,
+   "atoms": 222,
+   "components": {
+    "PGW": 2,
+    "SOG": 6
+   },
+   "source_sha256": "007cbda8869a0bc73b16d6ece43273c553f9957202bee4b16d1daa7b39451cd3"
+  },
+  "6TQ7": {
+   "residues": 9,
+   "atoms": 197,
+   "components": {
+    "PGW": 2,
+    "SOG": 7
+   },
+   "source_sha256": "edd778dfda8344d62496f48f3409ff849e7553fb70669ec89612280192f3d745"
+  },
+  "6TQ9": {
+   "residues": 8,
+   "atoms": 211,
+   "components": {
+    "PGW": 2,
+    "SOG": 6
+   },
+   "source_sha256": "8cf7664470a7ff22759ae1de442ce1425949365aadc9dab4d379855e1aebb0fc"
+  },
+  "6WGT": {
+   "residues": 4,
+   "atoms": 93,
+   "components": {
+    "CLR": 2,
+    "OLA": 2
+   },
+   "source_sha256": "b6a78cf9daec09dc903697c9e88c63ef219827ff448b41e055089e490b82143f"
+  },
+  "6WH4": {
+   "residues": 3,
+   "atoms": 57,
+   "components": {
+    "CLR": 1,
+    "OLA": 2
+   },
+   "source_sha256": "e2ec50ef2b89f04d3f13af1dc4ca9a406c2c2ef62b6e9094d2868e57ceef5347"
+  },
+  "6YVR": {
+   "residues": 5,
+   "atoms": 105,
+   "components": {
+    "BNG": 5
+   },
+   "source_sha256": "aa02b7464b033746cfea97310de4727fba73f22c15570445f22ddb54ff5ed42d"
+  },
+  "7BTS": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "601788b1d1d2764b99b71eabfc41d554846d2851535ad157e8c912dc3acd0e8a"
+  },
+  "7BU6": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "611f7d3963602fb32ddfae0a25830eb921b5ba7a240c847ab7f28d87a9e3df50"
+  },
+  "7BU7": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "3637abdfc4e9165bd647fe904124db9f929f72cc03fe20314b2c77cb2612598d"
+  },
+  "7BVQ": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "923780eb63d36cdac829c6aa968bee4c2ba47483dfe8e3353bb06d96b539f18f"
+  },
+  "7CFM": {
+   "residues": 3,
+   "atoms": 84,
+   "components": {
+    "CLR": 3
+   },
+   "source_sha256": "d858fcb360383d516da9212bd2278fef7a66dfa148837c49da64e63ee01944b9"
+  },
+  "7CFN": {
+   "residues": 2,
+   "atoms": 46,
+   "components": {
+    "CLR": 1,
+    "PLM": 1
+   },
+   "source_sha256": "5ec2b86ce70fb37488d48618f6402dc18781a231b2dbfbdea30f324a3a165d81"
+  },
+  "7CKW": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "9e73b36e755c8425b6cb3211ffe820c543997cf068bdb7fc39f929b69ac3852f"
+  },
+  "7CKX": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "6f8af5b2632afcc2b738c2fed4902530df48c515783645f7add1225c36607a81"
+  },
+  "7CKY": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "ce93b0ad8772144885d7d0a72d791cbd197a87785af77796a90b63d92d19acf6"
+  },
+  "7CKZ": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "fad6afe14e4b2dfa3d1bc2798cec910dfb20ffecba379d8d66f99f865de34223"
+  },
+  "7DW9": {
+   "residues": 3,
+   "atoms": 84,
+   "components": {
+    "CLR": 3
+   },
+   "source_sha256": "bb8cca7a3bc19fbb3a10888b878a6c5d70e64faddb05d1eb6d063b99c4f4a8a9"
+  },
+  "7E2X": {
+   "residues": 14,
+   "atoms": 391,
+   "components": {
+    "CLR": 10,
+    "J40": 1,
+    "PLM": 3
+   },
+   "source_sha256": "7398552c244f13cb3567487fae7e37e3c78d5a84a11cbfaa9ffc5a6e4a506271"
+  },
+  "7E2Y": {
+   "residues": 5,
+   "atoms": 169,
+   "components": {
+    "CLR": 4,
+    "J40": 1
+   },
+   "source_sha256": "49c0e1521db1fcb1c9ac9292b7fe93a86b04ee670744805ad410dc95b5dc5f82"
+  },
+  "7E2Z": {
+   "residues": 4,
+   "atoms": 141,
+   "components": {
+    "CLR": 3,
+    "J40": 1
+   },
+   "source_sha256": "5570cd6f21e3a4a5a7c9c5a9eac9ccde58d373df9b37a683f3e6d747a7a0441b"
+  },
+  "7E32": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "c94ac440849ce4e81bdc027e6bdde61dc47ded69f350c285c563e7282ffab849"
+  },
+  "7EJX": {
+   "residues": 3,
+   "atoms": 84,
+   "components": {
+    "CLR": 3
+   },
+   "source_sha256": "ece3dea5699bb827286a00c4f3bd92e64d099a6c08e5954cc5f143fc6f49ad58"
+  },
+  "7EUO": {
+   "residues": 2,
+   "atoms": 56,
+   "components": {
+    "CLR": 2
+   },
+   "source_sha256": "4c0e151ff0c51e94d6e3efd2105a716e5a4ec90813087be7eeb5b8c660a17ccc"
+  },
+  "7EVZ": {
+   "residues": 4,
+   "atoms": 72,
+   "components": {
+    "PLM": 4
+   },
+   "source_sha256": "0b2a35a0326b5b134b1a99fad66d4a43662a1a798737eaaa4f1bc267126fb7a6"
+  },
+  "7EW3": {
+   "residues": 4,
+   "atoms": 72,
+   "components": {
+    "PLM": 4
+   },
+   "source_sha256": "e123d0bcc498512dd5c034dcf1e8524467ec5444957e2a0763a6e5a149df6adf"
+  },
+  "7EW4": {
+   "residues": 2,
+   "atoms": 36,
+   "components": {
+    "PLM": 2
+   },
+   "source_sha256": "1cd5f4db7f3209be36dab5f1d24717f152347d0b1bf5422ae78def9878377c1d"
+  },
+  "7F6G": {
+   "residues": 6,
+   "atoms": 168,
+   "components": {
+    "CLR": 6
+   },
+   "source_sha256": "c7f3b8736bd0584b56498462815da563b931b98cd2006a9bdd8322c46507cad2"
+  },
+  "7F6H": {
+   "residues": 2,
+   "atoms": 56,
+   "components": {
+    "CLR": 2
+   },
+   "source_sha256": "bdedf64af54935681fee2b53fce85653fdb019c15de649f39bba2ab55b879e34"
+  },
+  "7F6I": {
+   "residues": 3,
+   "atoms": 84,
+   "components": {
+    "CLR": 3
+   },
+   "source_sha256": "95925220f25b94714956abac190143f2b7f85c61001fe178ddc5a8c4c0f53674"
+  },
+  "7F83": {
+   "residues": 5,
+   "atoms": 103,
+   "components": {
+    "OLC": 5
+   },
+   "source_sha256": "498307e3bd169b844da74651bc8b34cac856645bb21e3fc4f34a5aaeacc22541"
+  },
+  "7F9Y": {
+   "residues": 2,
+   "atoms": 56,
+   "components": {
+    "CLR": 2
+   },
+   "source_sha256": "27c98a8d471d8183f7e4d4343b12cb904e06dc92c1fc4ed5e464804bc9a11b74"
+  },
+  "7JHJ": {
+   "residues": 1,
+   "atoms": 35,
+   "components": {
+    "Y01": 1
+   },
+   "source_sha256": "0e3fcef47deed3970fd3ce95fa4cab1fd99a11b4d86535abc74c34fcac8dd6c0"
+  },
+  "7JNI": {
+   "residues": 7,
+   "atoms": 139,
+   "components": {
+    "OLA": 4,
+    "OLC": 3
+   },
+   "source_sha256": "101d5dcb85845d82ed9ced258008866f2686933d67e89f472bb7fa19e6873eff"
+  },
+  "7JV5": {
+   "residues": 11,
+   "atoms": 258,
+   "components": {
+    "CLR": 6,
+    "PLM": 5
+   },
+   "source_sha256": "85ea59672fe63cf0953f1310b5e98d650cfe5068f7fb19dddd5dbd09b272cc1c"
+  },
+  "7JVP": {
+   "residues": 11,
+   "atoms": 258,
+   "components": {
+    "CLR": 6,
+    "PLM": 5
+   },
+   "source_sha256": "e41030725f79e07b6b35f1614bf281084d431b86c047edda5f869eeb73b5e602"
+  },
+  "7JVQ": {
+   "residues": 8,
+   "atoms": 194,
+   "components": {
+    "CLR": 5,
+    "PLM": 3
+   },
+   "source_sha256": "89885bf5b10acf691fa3cd2f57d44cc8239f48685f6d429e3bead3443c2abbb6"
+  },
+  "7LJC": {
+   "residues": 12,
+   "atoms": 276,
+   "components": {
+    "CLR": 6,
+    "PLM": 6
+   },
+   "source_sha256": "2638c0645a2aeab6966e9e5e6442344714216d224a0f7a75273ec40cf1a2d075"
+  },
+  "7LJD": {
+   "residues": 9,
+   "atoms": 212,
+   "components": {
+    "CLR": 5,
+    "PLM": 4
+   },
+   "source_sha256": "f618fd2487fae312b63641181e45fba59ef55b6e97436c8e1a95784d7c8ea8d8"
+  },
+  "7MBX": {
+   "residues": 1,
+   "atoms": 35,
+   "components": {
+    "Y01": 1
+   },
+   "source_sha256": "6613288a768d3341bb70de293c9e0e38e7990bf2095fb2f0f3fb0564d9e63ccd"
+  },
+  "7MBY": {
+   "residues": 1,
+   "atoms": 35,
+   "components": {
+    "Y01": 1
+   },
+   "source_sha256": "5bd44e58fa635aca89b1e7457100cd67439d73d58289596b4b58ac231e800c0a"
+  },
+  "7NA7": {
+   "residues": 2,
+   "atoms": 56,
+   "components": {
+    "CLR": 2
+   },
+   "source_sha256": "9e0b4dabc699506be5fc03f203f9cac3e4127dcc3a261cdddb4ea73670284aba"
+  },
+  "7NA8": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "47b04269c045bcebbf6381905a7a18f1f35ef766b126a506cf03fec61b552623"
+  },
+  "7P00": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "a68486ef11ada58bc1461f7020e865e6dd813cf39b75f4531e1e484df55c55bd"
+  },
+  "7P02": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "a49016a8288ff074f9d29d620276efdd37aec5ae3133f90bec421f78e780c113"
+  },
+  "7RKM": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "51ffe411cfc19dfbf4edb51f2b2d1f2dc726b2650de253996198dca521b855c6"
+  },
+  "7SK3": {
+   "residues": 8,
+   "atoms": 224,
+   "components": {
+    "CLR": 8
+   },
+   "source_sha256": "6cd929f7b31d10c52ef80e0e6ce95d178342610dc50d80ec58c5b5146f47a4de"
+  },
+  "7SK4": {
+   "residues": 2,
+   "atoms": 56,
+   "components": {
+    "CLR": 2
+   },
+   "source_sha256": "c9b2bd7a7ca14ed6813f40d571f9e7fd2387a2dc348c2d40864889ef04ff21db"
+  },
+  "7SK5": {
+   "residues": 7,
+   "atoms": 196,
+   "components": {
+    "CLR": 7
+   },
+   "source_sha256": "89ddefdaffcc51a091094104cc69d6b31b5d14dbed3e2f6d4d292c37ad18b7e2"
+  },
+  "7SK7": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "bd46134e8469104ad4080a516e28352502906c262022833550d7eb02f385c0da"
+  },
+  "7SK8": {
+   "residues": 7,
+   "atoms": 215,
+   "components": {
+    "CLR": 6,
+    "LMN": 1
+   },
+   "source_sha256": "71ee29360ef21dfa9112acebc276df68628a12fc34becacbc659f30fc2dcb543"
+  },
+  "7SK9": {
+   "residues": 2,
+   "atoms": 56,
+   "components": {
+    "CLR": 2
+   },
+   "source_sha256": "f9e59d04d445b6216d8c0a770eaa30b87cce5897905010fc914c7b97b1786333"
+  },
+  "7SQO": {
+   "residues": 4,
+   "atoms": 46,
+   "components": {
+    "OLA": 4
+   },
+   "source_sha256": "06f0be68add122321d6a560ec0124e1472de9eef755c755183cbc53b5fc705ca"
+  },
+  "7SR8": {
+   "residues": 4,
+   "atoms": 46,
+   "components": {
+    "OLA": 4
+   },
+   "source_sha256": "e1f2b8da512ddd71c2cfd75bfdd6db6285d299506cdcdfc58cefd3bbdcafa1df"
+  },
+  "7T2G": {
+   "residues": 2,
+   "atoms": 56,
+   "components": {
+    "CLR": 2
+   },
+   "source_sha256": "01037bb5aedaaab9461c2b16045d17ff1a301359720ecadeb1f95cab47ecb6fe"
+  },
+  "7T6T": {
+   "residues": 2,
+   "atoms": 36,
+   "components": {
+    "PLM": 2
+   },
+   "source_sha256": "3d76870bd473b118e0f1181819310a37be245b28e7118521dbf4c698874902e3"
+  },
+  "7T6U": {
+   "residues": 2,
+   "atoms": 36,
+   "components": {
+    "PLM": 2
+   },
+   "source_sha256": "cb7271aa6af590f72ce70f46d0d39919e18fe76d80d44346159694e9bcd83355"
+  },
+  "7T6V": {
+   "residues": 1,
+   "atoms": 18,
+   "components": {
+    "PLM": 1
+   },
+   "source_sha256": "31d187ecbf30b1979d1d0a2dbb09284385c3ac46b4c2e1e7918578fa4ef566e4"
+  },
+  "7VDH": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "862d3b7839d177d842c2a94a327bee8f28e0638835f563d86d7b1a7e5ff8221d"
+  },
+  "7VDL": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "7ca1788055d67ff1b11fa67a4dc5a954fec10628eedf7924003bce4bac55f2db"
+  },
+  "7VDM": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "1cfe5a8df83b7ab615856f218a010b2550bb469eb7b3240b78b418c60522248b"
+  },
+  "7VFX": {
+   "residues": 4,
+   "atoms": 102,
+   "components": {
+    "CLR": 3,
+    "PLM": 1
+   },
+   "source_sha256": "3bed1720251bb490f9db29d7220f19f2b9f4c06b96560e2003ec024bc20bc560"
+  },
+  "7VGY": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "ed4674a93242843c935c6e0938a1b95e37b6cab209281121a83fa42672b0b551"
+  },
+  "7VGZ": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "bc31ed8771c3553474bfc39f749f05703888ac403301c7c77de5e14a46e2d512"
+  },
+  "7VKT": {
+   "residues": 4,
+   "atoms": 140,
+   "components": {
+    "Y01": 4
+   },
+   "source_sha256": "b49ab665047922cad18c6bfe57b7dea2ec4fbabc357c4ec47bbcc2b0d9a1df05"
+  },
+  "7VL8": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "230586ca60a20dc874a514a16f75d6f3c0abe7a923176347a01d2886a4187e30"
+  },
+  "7VL9": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "782e2e7f2a95ba4aa7c52dbb7c3c3c76860d93dcf8b4e75b15f018791adbb947"
+  },
+  "7VLA": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "7642d7a8c46a9d1cb62940e832dc4ff2e597fa23b31fc675f758cda016069750"
+  },
+  "7VUY": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "a55530cd5c492e7270ae89f7f475a56d109ced10a4a9e22a498e2b1085c6f246"
+  },
+  "7VUZ": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "7f4d014bbfb4b9e212275edb6310fddb536e4c0aa5cc9d743ca0cf354c01c599"
+  },
+  "7VV3": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "edba04760a80af897a3691062b34675d269c8540092e18aa53b8ed14b8fd051f"
+  },
+  "7VV5": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "c3ec011393af5a2cc0ad226cceb4e4066e304a819a03e2860f5fc604b8b41164"
+  },
+  "7W2Z": {
+   "residues": 2,
+   "atoms": 56,
+   "components": {
+    "CLR": 2
+   },
+   "source_sha256": "6bad202b4e49ac181da80edef5b4c2ae66e6ba62a299653038528b9a16118fdb"
+  },
+  "7WQ3": {
+   "residues": 5,
+   "atoms": 140,
+   "components": {
+    "CLR": 5
+   },
+   "source_sha256": "9a6952b77d916d8b2a4f8a0c8976549ecd237c0dabad7450b7a7f7726d75cfde"
+  },
+  "7WQ4": {
+   "residues": 2,
+   "atoms": 56,
+   "components": {
+    "CLR": 2
+   },
+   "source_sha256": "456d2e9d77fa52270c9a50758a5d8f83d4c3fbb00c8b6a155580d14905df4aad"
+  },
+  "7X2C": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "17856743f2af686db6c406e532cbd064dd81b005ebd2a83db1e092dd9b9756f6"
+  },
+  "7X2D": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "2b4000fe2a75c02d4b13746d1ae27683a007723302a8ba7fdb9c7e88b9ff5ab1"
+  },
+  "7X2F": {
+   "residues": 2,
+   "atoms": 56,
+   "components": {
+    "CLR": 2
+   },
+   "source_sha256": "50654298a5d9e0231db5d77f025f60ff1261634f63ccb328a1f25afefa39a481"
+  },
+  "7XBW": {
+   "residues": 3,
+   "atoms": 84,
+   "components": {
+    "CLR": 3
+   },
+   "source_sha256": "c580930b21e4dfc8bd323d3d8fba269594ea40cc0bdc6400c3322db3ea783490"
+  },
+  "7XBX": {
+   "residues": 2,
+   "atoms": 56,
+   "components": {
+    "CLR": 2
+   },
+   "source_sha256": "e627f132c2d48e9a904e4c01cc788168fcd669bac91f5fc50453d82d688a6a15"
+  },
+  "7XT8": {
+   "residues": 7,
+   "atoms": 176,
+   "components": {
+    "CLR": 5,
+    "PLM": 2
+   },
+   "source_sha256": "93c821291b0deffd827721a624a518eaf3d6add396b7ef3e2dba3e16c35bf11b"
+  },
+  "7XT9": {
+   "residues": 6,
+   "atoms": 148,
+   "components": {
+    "CLR": 4,
+    "PLM": 2
+   },
+   "source_sha256": "64d6c540a67d9f1fef87883dc7edeb939a735646ca5bf96b039430e5fd4cafab"
+  },
+  "7XTC": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "6f83f53c8b0b6f07c13a3fdbadd7f7624aa4c14d82af57221e3e3ce84bf06519"
+  },
+  "7XW5": {
+   "residues": 18,
+   "atoms": 454,
+   "components": {
+    "CLR": 13,
+    "PLM": 5
+   },
+   "source_sha256": "f2600ded74579c2b8f67da88fb2d290011422b557f485b63281b5be6fa2738b0"
+  },
+  "7XW6": {
+   "residues": 21,
+   "atoms": 538,
+   "components": {
+    "CLR": 16,
+    "PLM": 5
+   },
+   "source_sha256": "bddb282b213df2b26580c5b3f95efa7c232f8e2895774f40e8b4de355fc2c54e"
+  },
+  "7Y12": {
+   "residues": 3,
+   "atoms": 54,
+   "components": {
+    "PLM": 3
+   },
+   "source_sha256": "7442215748867a8135c69e06413dffa9f0d1c9c539a15821a02bfad99b407970"
+  },
+  "7Y15": {
+   "residues": 3,
+   "atoms": 54,
+   "components": {
+    "PLM": 3
+   },
+   "source_sha256": "5800f2ff7104dc4eac8f23fdd2d48fe5f10132f79044187d4658a8cc884c890d"
+  },
+  "7Y27": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "f5c44ba031bae76a9b2ba80ffa8c8485ffb4ef8013678cf442d9b2d9189150c8"
+  },
+  "7YAE": {
+   "residues": 2,
+   "atoms": 56,
+   "components": {
+    "CLR": 2
+   },
+   "source_sha256": "0acc3c9cf63e3df31c8923219a121d55cef13900c51729b0e36631c1a8bedf19"
+  },
+  "7YFC": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "ac8e24987f2ea51a8250931f739851e9fe7e58e16ce5e7732d294d1cb010c53e"
+  },
+  "7YFD": {
+   "residues": 2,
+   "atoms": 56,
+   "components": {
+    "CLR": 2
+   },
+   "source_sha256": "7a4da65581ccbbd8716311b3fbd6d566781f37f813c37f29d1f15a5725594f01"
+  },
+  "7YKD": {
+   "residues": 5,
+   "atoms": 140,
+   "components": {
+    "CLR": 5
+   },
+   "source_sha256": "2ed420a6219023d35059c0721de00ccce54b4001c4d3d75ae3fd18d981db996c"
+  },
+  "7YXA": {
+   "residues": 3,
+   "atoms": 68,
+   "components": {
+    "OLC": 3
+   },
+   "source_sha256": "cedaeac8098189944ed5593e4e170cd5f930f791077ca7a611407ff2dfe9cd03"
+  },
+  "7ZBC": {
+   "residues": 13,
+   "atoms": 208,
+   "components": {
+    "DAO": 1,
+    "OLC": 11,
+    "PLM": 1
+   },
+   "source_sha256": "f9647b16dfc51cb6e8146935aad964e854fd4b951e42aa68407a0374b2a4bb75"
+  },
+  "7ZBE": {
+   "residues": 13,
+   "atoms": 189,
+   "components": {
+    "DAO": 1,
+    "OLC": 11,
+    "PLM": 1
+   },
+   "source_sha256": "9ba481afe58783385cd8681fde275cb6dfabab789c5b1698fb665d4ccd3121ef"
+  },
+  "8A6C": {
+   "residues": 13,
+   "atoms": 189,
+   "components": {
+    "DAO": 1,
+    "OLC": 11,
+    "PLM": 1
+   },
+   "source_sha256": "23b2b452b0b990443e13bdf67d4f00ab06c1f07d7ba35e9b61812a61476f04a2"
+  },
+  "8A6D": {
+   "residues": 13,
+   "atoms": 189,
+   "components": {
+    "DAO": 1,
+    "OLC": 11,
+    "PLM": 1
+   },
+   "source_sha256": "616b593dcfecf5b4efb9f362d8da69996a3a513614faa04bc6020d9d835ce920"
+  },
+  "8A6E": {
+   "residues": 13,
+   "atoms": 208,
+   "components": {
+    "DAO": 1,
+    "OLC": 11,
+    "PLM": 1
+   },
+   "source_sha256": "07f9a72d1a3f9437b7c13cc33282579d4a066e6a3330727107c14f52ab67ad71"
+  },
+  "8C9W": {
+   "residues": 10,
+   "atoms": 203,
+   "components": {
+    "CLR": 3,
+    "OLA": 4,
+    "OLB": 1,
+    "OLC": 2
+   },
+   "source_sha256": "a48e73ea16663e45bf01a8efa59e32f9f8e9fed2e424d694b60c3abd8ac340b5"
+  },
+  "8DPF": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "63123e8d6881d0b7caccec7c2145f4f01715351423bb936edf80596f75239b28"
+  },
+  "8DPG": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "497953fe38cb5acc8ce4d97ea65f13d28810f0d36f1bcf639c900ebd825e2ec5"
+  },
+  "8DPH": {
+   "residues": 2,
+   "atoms": 56,
+   "components": {
+    "CLR": 2
+   },
+   "source_sha256": "5774c15a4c5eb78c2e472105c0070949eff392e16337bd76915ed89d81194307"
+  },
+  "8DPI": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "6cce206662e2407ea30c89f2e2a1d1bf122aba475235c8f85d35abe9242aebba"
+  },
+  "8E9Z": {
+   "residues": 1,
+   "atoms": 35,
+   "components": {
+    "Y01": 1
+   },
+   "source_sha256": "0a37593b238cffcabf2c158442a520d9abe0652d3fb7bd2d3d1a925f88538af7"
+  },
+  "8EF5": {
+   "residues": 8,
+   "atoms": 224,
+   "components": {
+    "CLR": 8
+   },
+   "source_sha256": "b2c5454c92b99bb321a7d473d76ea0664a24ffba9fc42b0160a56987a2bcac04"
+  },
+  "8EF6": {
+   "residues": 8,
+   "atoms": 224,
+   "components": {
+    "CLR": 8
+   },
+   "source_sha256": "0f05f94c1eb273f3273b83d7b9c7de7b227eef89f00a21d26c757339afda88cb"
+  },
+  "8EFL": {
+   "residues": 8,
+   "atoms": 224,
+   "components": {
+    "CLR": 8
+   },
+   "source_sha256": "c51e772fd43d9da4818cafc0ab379564ee134db29be2acab43a279cb706018da"
+  },
+  "8EFO": {
+   "residues": 8,
+   "atoms": 224,
+   "components": {
+    "CLR": 8
+   },
+   "source_sha256": "ec9315a83845778da573a0417f202cee788f8ddd3cd6aa62fe818e52a49b7506"
+  },
+  "8F7Q": {
+   "residues": 8,
+   "atoms": 224,
+   "components": {
+    "CLR": 8
+   },
+   "source_sha256": "ce5e4eda33453f238cbcaf8483471cd9c3d170284f8c432a7c546d558a97c420"
+  },
+  "8F7R": {
+   "residues": 8,
+   "atoms": 224,
+   "components": {
+    "CLR": 8
+   },
+   "source_sha256": "f6480cb1228e9a75b198b82f3b18472c5e279cae28fc352def5f1b199ecf910c"
+  },
+  "8F7S": {
+   "residues": 11,
+   "atoms": 228,
+   "components": {
+    "CLR": 3,
+    "PLM": 8
+   },
+   "source_sha256": "cc2ba4aa7a4cff42a76800ae662f223e4fb5315b4c5f3375879b0d35ff8d8171"
+  },
+  "8F7W": {
+   "residues": 5,
+   "atoms": 120,
+   "components": {
+    "CLR": 3,
+    "PLM": 2
+   },
+   "source_sha256": "38ccfec5d1a7e45390fbe6d60a594db6b46c2c7df45ec7369fa87be1611b101c"
+  },
+  "8FY8": {
+   "residues": 3,
+   "atoms": 127,
+   "components": {
+    "J40": 1,
+    "Y01": 2
+   },
+   "source_sha256": "ecce7cf5bbd23825efafe4b33633a22185436be1ec23b4b359bc2eeb779ce7cb"
+  },
+  "8FYE": {
+   "residues": 3,
+   "atoms": 127,
+   "components": {
+    "J40": 1,
+    "Y01": 2
+   },
+   "source_sha256": "fedb1040a114138cd4af6b5e9060ef99f49ac094e7c3774d7446e35bf132a4b9"
+  },
+  "8FYL": {
+   "residues": 3,
+   "atoms": 127,
+   "components": {
+    "J40": 1,
+    "Y01": 2
+   },
+   "source_sha256": "6dca73c88e387f49c0ea2f6c4d9ae81b5218c5429b5cad70ac72ce965afbf7f7"
+  },
+  "8FYN": {
+   "residues": 22,
+   "atoms": 376,
+   "components": {
+    "CLR": 3,
+    "OLA": 13,
+    "OLB": 1,
+    "OLC": 5
+   },
+   "source_sha256": "d3b561801a6768b3ddd8a444605ca6ff6284af5975cb47d326b536b70b4bf392"
+  },
+  "8FYT": {
+   "residues": 3,
+   "atoms": 127,
+   "components": {
+    "J40": 1,
+    "Y01": 2
+   },
+   "source_sha256": "b29e5cef885fdceee11584e352081d5d12098c0350d4f76e90bd73915224e4d3"
+  },
+  "8FYX": {
+   "residues": 3,
+   "atoms": 127,
+   "components": {
+    "J40": 1,
+    "Y01": 2
+   },
+   "source_sha256": "97eef2ba03152f54cf088b7b715d952735070ed929501127fee3d4f18cbd2c87"
+  },
+  "8G05": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "9d683b2974f2e23d50954df94145dd3056de3442cea070a53ab8133d7e65b7b9"
+  },
+  "8GNG": {
+   "residues": 7,
+   "atoms": 111,
+   "components": {
+    "OLC": 7
+   },
+   "source_sha256": "af6cd99441e0b84bef13f1c9d23a6d49763bacb6897deb1bcd36580caca2a519"
+  },
+  "8H0Q": {
+   "residues": 3,
+   "atoms": 84,
+   "components": {
+    "CLR": 3
+   },
+   "source_sha256": "d3ef77911fa7db83979bfa6c0855e268483bd52680bbf70f7f203389f7846120"
+  },
+  "8H8J": {
+   "residues": 3,
+   "atoms": 84,
+   "components": {
+    "CLR": 3
+   },
+   "source_sha256": "589253f6ed4a44a63a43127ec504d4e90cb11c0465e3cb0ab0895f90d3b775aa"
+  },
+  "8HDO": {
+   "residues": 7,
+   "atoms": 196,
+   "components": {
+    "CLR": 7
+   },
+   "source_sha256": "02377db465272e676ad7a29da33b2fec2c67a96c6d329f6c733b9e1a012d3c55"
+  },
+  "8HDP": {
+   "residues": 4,
+   "atoms": 112,
+   "components": {
+    "CLR": 4
+   },
+   "source_sha256": "0765a6aafb1aa60f93d449f05ef5723d62e83d7f44b57bb30095182f85192b35"
+  },
+  "8HK2": {
+   "residues": 7,
+   "atoms": 176,
+   "components": {
+    "CLR": 5,
+    "PLM": 2
+   },
+   "source_sha256": "3a8d447665dc0d42de5416f9d6592f6383b5f5d01731231cf9c8cd486ec350cc"
+  },
+  "8HK5": {
+   "residues": 2,
+   "atoms": 36,
+   "components": {
+    "PLM": 2
+   },
+   "source_sha256": "191c6efa3dc67c202bfa8a02bbc9fe1cefc31f76160d3f1941e4c0cc2e68ffef"
+  },
+  "8HNK": {
+   "residues": 2,
+   "atoms": 56,
+   "components": {
+    "CLR": 2
+   },
+   "source_sha256": "e8ed389bf6e45eb8f774ac529b815d3ab4fe1ca46942f378d2eeee07f866f3ed"
+  },
+  "8HNL": {
+   "residues": 2,
+   "atoms": 56,
+   "components": {
+    "CLR": 2
+   },
+   "source_sha256": "f6349099ba5ac1c5d4097d8b5cf1370bdceb539d8c1d935e90ee711187acceb4"
+  },
+  "8HNM": {
+   "residues": 2,
+   "atoms": 56,
+   "components": {
+    "CLR": 2
+   },
+   "source_sha256": "34b1673dd90a893514506ca4b2eb19e8bbaac318dd5596fd04c6a4db388932ee"
+  },
+  "8I2G": {
+   "residues": 18,
+   "atoms": 450,
+   "components": {
+    "CLR": 13,
+    "MYR": 2,
+    "PLM": 3
+   },
+   "source_sha256": "ed7655c0f427aedbc83421ba47ca5ec9943b8c7f5f7eb93f9a113eb63ee18836"
+  },
+  "8IRR": {
+   "residues": 3,
+   "atoms": 84,
+   "components": {
+    "CLR": 3
+   },
+   "source_sha256": "225364277307b5b78ef18591c60c0898e4be97433a2af71748e25ec62cd8d43b"
+  },
+  "8IRU": {
+   "residues": 9,
+   "atoms": 252,
+   "components": {
+    "CLR": 9
+   },
+   "source_sha256": "bb840edc9be56bd7043f9b84fdc42cc08cb56d950406e12a461700751ee75c18"
+  },
+  "8IRV": {
+   "residues": 11,
+   "atoms": 298,
+   "components": {
+    "CLR": 10,
+    "PLM": 1
+   },
+   "source_sha256": "3d27ce5eedef919cc38379a827a5a6481d45d6f72884ec001f249c82866d908b"
+  },
+  "8IZ4": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "2e866e4b0baffe003a049efdd06ea8a909599ad996229c992dd1516d23cf4bd1"
+  },
+  "8IZB": {
+   "residues": 2,
+   "atoms": 56,
+   "components": {
+    "CLR": 2
+   },
+   "source_sha256": "470f3cbf6f66f2ceb561bc8a9bb02e93c480f0aef8fe7c86d1e54cbd680e3058"
+  },
+  "8J6P": {
+   "residues": 2,
+   "atoms": 56,
+   "components": {
+    "CLR": 2
+   },
+   "source_sha256": "3c965951833873e589db085d8ee67ac5ee6565eebd76ecc3eceebc0a7be803e8"
+  },
+  "8J6Q": {
+   "residues": 2,
+   "atoms": 56,
+   "components": {
+    "CLR": 2
+   },
+   "source_sha256": "0412e237ab0acdbc1caae523b1e455364a053fb26682b37a0bbfdc268492a017"
+  },
+  "8JHY": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "4ad272f72c7659511298f85b065a9647955d4a6dfa0f5e53861159eeff9f9a99"
+  },
+  "8JII": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "ef3bb4c62246bf643ee862ae9d89b2d65b759dc8a94fc10f2c023d3e247e4919"
+  },
+  "8JIL": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "7c60c2552e5dfd1c491022e283b607fdb1d5ae49a95ee3c7de16b6a176494522"
+  },
+  "8JIM": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "360814c8cf2b140b01b02259400566217bff8b16668e89fa8a26d83e66280e2d"
+  },
+  "8JJP": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "39d70b6c39f012c3937357ddbfbb5a32e5a6f063f57d6e795436007b9c38d242"
+  },
+  "8JT6": {
+   "residues": 8,
+   "atoms": 207,
+   "components": {
+    "CLR": 5,
+    "J40": 1,
+    "PLM": 2
+   },
+   "source_sha256": "44e62d3455632f0232c50ddf752f4bb8527e26c4fbc070d5f742eb4de1536931"
+  },
+  "8K2X": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "066f601bf9e05d63da892b924c2ae664ff8cd3cf872bf6981c8dcd41574be21f"
+  },
+  "8KH4": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "68bb60c97c79cb14a0282424f2bb32337b377abba669f0611cf502e6223c4706"
+  },
+  "8KH5": {
+   "residues": 2,
+   "atoms": 56,
+   "components": {
+    "CLR": 2
+   },
+   "source_sha256": "c581065ec84bebd3e8e110b5d0629bc565c3d695971b78b3dbcfd01abd7fabcb"
+  },
+  "8PJK": {
+   "residues": 2,
+   "atoms": 56,
+   "components": {
+    "CLR": 2
+   },
+   "source_sha256": "328a3368d812a6fc4d7d35e0efcae38a8ef54a4a792d1ea4424029fc785d3202"
+  },
+  "8PKM": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "690f244380809a661f7977fb00bc31e5d77af4acaadb6ea1fef2dda6786cb5ac"
+  },
+  "8PM2": {
+   "residues": 1,
+   "atoms": 35,
+   "components": {
+    "Y01": 1
+   },
+   "source_sha256": "78ee605113d0c4f5ad00eae62bb6744394c1748023ee8d29cad8ce6347ffaab7"
+  },
+  "8RLN": {
+   "residues": 10,
+   "atoms": 202,
+   "components": {
+    "CLR": 3,
+    "OLA": 3,
+    "OLB": 1,
+    "OLC": 3
+   },
+   "source_sha256": "f24c7051fb9e41a6d98e4af94e1791724ddd627d580ed6e715b5cfec673468bd"
+  },
+  "8RQQ": {
+   "residues": 3,
+   "atoms": 84,
+   "components": {
+    "CLR": 3
+   },
+   "source_sha256": "db9c74bf237183c9ab2c55f47bd4e124e93f729c138b386c4eecbd3f346b00b1"
+  },
+  "8SG1": {
+   "residues": 3,
+   "atoms": 64,
+   "components": {
+    "CLR": 1,
+    "PLM": 2
+   },
+   "source_sha256": "8667a821e5e27f00f52a119d89af736497cc6cac9ff1931b0cf22939b7dcd600"
+  },
+  "8SMV": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "2cdf0d9ba7b93f85d2b21694555137959d12378527656cd423f0a8006eff00da"
+  },
+  "8T3O": {
+   "residues": 1,
+   "atoms": 18,
+   "components": {
+    "PLM": 1
+   },
+   "source_sha256": "7986cb9919806a7ee5c7ede1664e36260bf3d3a62bc9e1542d54ae73fda04bc8"
+  },
+  "8T3S": {
+   "residues": 3,
+   "atoms": 64,
+   "components": {
+    "CLR": 1,
+    "PLM": 2
+   },
+   "source_sha256": "dbda615b923f3ad3922a5623a66787ca8e27e90b9cac7efe9fcefe3d77a04e3f"
+  },
+  "8T3V": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "82211e7f66d27b7c7763ecbd35c99abe83a85d415e39bf8c091afeb78fa4c1f6"
+  },
+  "8TH3": {
+   "residues": 2,
+   "atoms": 70,
+   "components": {
+    "Y01": 2
+   },
+   "source_sha256": "557a6daab73e912ef6fea8db1b266a12100505c7d5000e610f50608c6937cf91"
+  },
+  "8U4N": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "512c042a1de2a72b2d337422b87f1993aafd94b959109e3c5fd4226175dab901"
+  },
+  "8U4O": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "4adad9a8b3c3d4400b74630863619124fc5880832d4b2f957a48edb6775cb498"
+  },
+  "8U4P": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "f4052a69ae99731bc9a27f3b4069c3211f66f9e3df095074d490a73791908a28"
+  },
+  "8U4Q": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "ce3d9943edab57664d26015942657c3ccfc00ad3e5149c95fbd004a1659b1e05"
+  },
+  "8U4R": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "a1a51119568795e177f6844b3455a894eb99a268a37087123af6a84450388956"
+  },
+  "8U4S": {
+   "residues": 5,
+   "atoms": 170,
+   "components": {
+    "CLR": 3,
+    "D21": 2
+   },
+   "source_sha256": "9aa46961256632dd29b94b4da5f603c53c1e4d8234f9fd7b6ab88bde2e27f197"
+  },
+  "8U4T": {
+   "residues": 8,
+   "atoms": 240,
+   "components": {
+    "CLR": 6,
+    "D21": 2
+   },
+   "source_sha256": "37ec42484ced928666ff12b2f1c1d29639fbcd84f0e383e16ac15976790de4b0"
+  },
+  "8UGY": {
+   "residues": 5,
+   "atoms": 140,
+   "components": {
+    "CLR": 5
+   },
+   "source_sha256": "0183a24c7ffef09a3514578f61a93e6badef70a5a954e437d14a26011f5333e9"
+  },
+  "8UH3": {
+   "residues": 4,
+   "atoms": 112,
+   "components": {
+    "CLR": 4
+   },
+   "source_sha256": "0d3a58f31bcaeee99a8e910751dad0058435a79ecebf9921c9f05a33e80cc29f"
+  },
+  "8W88": {
+   "residues": 3,
+   "atoms": 84,
+   "components": {
+    "CLR": 3
+   },
+   "source_sha256": "24c939c67a52b44a7003159c3023457f27fc27b1f6f2b19516a4453649510d43"
+  },
+  "8W8B": {
+   "residues": 6,
+   "atoms": 158,
+   "components": {
+    "CLR": 5,
+    "PLM": 1
+   },
+   "source_sha256": "48d3801c97315f6240be18867a7bb2caee309e6e0a0b9cb5eac999b8b47e1430"
+  },
+  "8WJX": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "9184966c19e3d19c7881df04993e989653a4941514a3a46b96d1da5587379854"
+  },
+  "8WRB": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "603fa182bc04f3d602fda0ac4db934a031f290a9bfd62bbc5e3b9071acc97eb3"
+  },
+  "8XGM": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "f2086f5799a864f20929dbe61eb56722e6908afa7e662cb28f3d4b50c5077edc"
+  },
+  "8XOR": {
+   "residues": 6,
+   "atoms": 168,
+   "components": {
+    "CLR": 6
+   },
+   "source_sha256": "11f56b6a40e6ec0183c216d4c6d5c76dfb17bfc23454fb5c259418b6b81d3005"
+  },
+  "8XOS": {
+   "residues": 2,
+   "atoms": 56,
+   "components": {
+    "CLR": 2
+   },
+   "source_sha256": "306e2c74139e357374c7077bc16a93bc94543f97573464f280d58f07bb5b0972"
+  },
+  "8Y69": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "b2124e8eadd9a6bb02bfd23fcc9be8423dd33ad719aca3e479ec2c4a38ddada7"
+  },
+  "8YN2": {
+   "residues": 5,
+   "atoms": 140,
+   "components": {
+    "CLR": 5
+   },
+   "source_sha256": "628b5de4b38a2f17c6de9bbf38b580596ed7b850991f196a1f555fa355609f28"
+  },
+  "8YN3": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "3e15db9db1660f2d99cba460ca06cc7b690f596cfc3e4d5e1971782f8042e31f"
+  },
+  "8YN4": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "0bc659369d5bcf59a30dc76d4334667f14c2432c787f2d7af767b09a8d8677b0"
+  },
+  "8YN5": {
+   "residues": 5,
+   "atoms": 140,
+   "components": {
+    "CLR": 5
+   },
+   "source_sha256": "e3455b56e7834189ce34eab31680d3b6e09d27a579f353b1f7b72df9fed0761c"
+  },
+  "8YN6": {
+   "residues": 5,
+   "atoms": 140,
+   "components": {
+    "CLR": 5
+   },
+   "source_sha256": "2a27c24e12d1071b4024e720be69b85833f2b2739af6dee80b8fcbc8ec175fb2"
+  },
+  "8YN7": {
+   "residues": 5,
+   "atoms": 140,
+   "components": {
+    "CLR": 5
+   },
+   "source_sha256": "7d9489d9971c0dfd17747933eec38ad3245a76822db20c8f56e0938f63982477"
+  },
+  "8YN8": {
+   "residues": 5,
+   "atoms": 140,
+   "components": {
+    "CLR": 5
+   },
+   "source_sha256": "1b91c14d81e65e52390ac8743d9e3f4949c89a363f840e8a88c42723d85ed7d0"
+  },
+  "8YN9": {
+   "residues": 7,
+   "atoms": 196,
+   "components": {
+    "CLR": 7
+   },
+   "source_sha256": "e508997c5a56e41294756acea931efc6fbd901dbde7f15efd7b19504019ad5b0"
+  },
+  "8YNA": {
+   "residues": 7,
+   "atoms": 196,
+   "components": {
+    "CLR": 7
+   },
+   "source_sha256": "bfda29c40c28cbbb107879232a8acba2f6ef5fa34d1e9df94326467a0c2df9cc"
+  },
+  "8YUT": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "4f718c5b707cfd8cecd7c5c0946d0e3f94e4f115c7ce8844c9645f1e7556f8f5"
+  },
+  "8YUU": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "54188d48d61bf2331d229a8d7abd31c81fae159d198f50d11ed09513cc4a576f"
+  },
+  "8YUV": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "000aa85699f6b9362ed3b1bcfd0219afd1134abbd21a4df3577b56eece16b199"
+  },
+  "8ZSJ": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "f9d66ffe63054c6c274fa92c5bc8eae058bf689cb9c707168357c5b841bd19e3"
+  },
+  "9D3E": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "312f3d42f32abded17581455f1f02f6fdff6e0ea5647e74d2005e7131fa47871"
+  },
+  "9D3G": {
+   "residues": 1,
+   "atoms": 28,
+   "components": {
+    "CLR": 1
+   },
+   "source_sha256": "7df8b08aaf884af954ef6b32bc5248ba578a2d3215f3a3e1049a6888e1b7d952"
+  },
+  "9GYO": {
+   "residues": 3,
+   "atoms": 84,
+   "components": {
+    "CLR": 3
+   },
+   "source_sha256": "49db041a3675eab9fbd1e3e5f9c6d1591332a2dc8dd705976bbcea8cb3745c1b"
+  },
+  "9K1D": {
+   "residues": 5,
+   "atoms": 140,
+   "components": {
+    "CLR": 5
+   },
+   "source_sha256": "618e195f1b348f7fa79732f276285e9438c2446a3e37617a19fefe89d4e54457"
+  }
+ },
+ "schema": "lipid_overlay_index",
+ "schema_version": "1.0.0",
+ "generated": "2026-09-30",
+ "source": "RCSB PDB mmCIF (https://files.rcsb.org/download/<PDB>.cif.gz), CC0",
+ "rule": "component reference membrane_lipid or detergent; heavy atom within 6.0 A of a receptor-chain heavy atom; not a component the structure counts as its ligand",
+ "components": [
+  "2CV",
+  "9YU",
+  "A1D5Q",
+  "A6L",
+  "BGL",
+  "BNG",
+  "BOG",
+  "C8E",
+  "CHD",
+  "CLR",
+  "D10",
+  "D21",
+  "DAO",
+  "DD9",
+  "HEX",
+  "HTG",
+  "J40",
+  "JZR",
+  "LDA",
+  "LMN",
+  "LMT",
+  "LMU",
+  "MYR",
+  "OLA",
+  "OLB",
+  "OLC",
+  "P5S",
+  "PC1",
+  "PCW",
+  "PEE",
+  "PEF",
+  "PEV",
+  "PGW",
+  "PLM",
+  "POV",
+  "R16",
+  "SOG",
+  "STE",
+  "UND",
+  "Y01"
+ ],
+ "note": "Interim: build_bundles.py includes these lipids in the bundles from the next full build."
+}

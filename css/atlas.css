@@ -214,6 +214,9 @@ body.modal-open { overflow:hidden; }
    panel; a card carries the separation on the entry itself. */
 .result-item { display:block; width:100%; min-width:0; border:1px solid var(--line); border-radius:9px;
   background:var(--panel); color:var(--ink); text-align:left; padding:10px 12px; cursor:pointer; }
+/* A button does not inherit the page's font; left to the browser it falls back to Arial, which on a
+   system without Arial is whatever the fallback happens to be - a serif on some Linux installs. */
+.result-item { font-family:inherit; }
 .result-item:hover { border-color:var(--accent); }
 .result-item.selected { border-color:var(--accent);
   background:color-mix(in srgb,var(--accent) 10%,var(--panel)); box-shadow:inset 3px 0 var(--accent); }
@@ -1627,3 +1630,61 @@ a.result-item:focus-visible { outline:2px solid var(--accent); outline-offset:-2
 /* The interaction layers sit on their own line under the button that reveals them. */
 .viewer-tools .interaction-options { flex:1 0 100%; }
 .viewer-tools .surface-options { flex:1 0 100%; }
+
+/* ---------------------------------------------------------------- contact map */
+:root { --cm-lo:#f4f8fd; --cm-hi:#0d366b; --cm-neg:#c43c3b; --cm-mid:#f0efec; --cm-pos:#1c5cab; }
+:root[data-theme="dark"] { --cm-lo:#1f2327; --cm-hi:#6aa8ef; --cm-neg:#e66767; --cm-mid:#2a2d31; --cm-pos:#5598e7; }
+.cm-intro { max-width:72rem; }
+.cm-controls { margin:0.75rem 0; }
+.cm-grid { grid-template-columns:repeat(auto-fill, minmax(13rem, 1fr)); }
+.cm-row { display:flex; flex-wrap:wrap; gap:1.5rem; align-items:center; margin-top:0.75rem; }
+.cm-row .rep-toggle { display:flex; gap:0.4rem; align-items:center; }
+.cm-min { display:flex; gap:0.6rem; align-items:center; }
+.cm-min input[type=range] { width:12rem; }
+.cm-summary { display:flex; flex-direction:column; gap:0.25rem; margin:0.5rem 0 0.75rem; }
+.cm-summary .notice { display:block; }
+.cm-scroll { overflow-x:auto; border:1px solid var(--line); border-radius:6px; background:var(--panel); }
+.cm-table { border-collapse:separate; border-spacing:2px; font-size:0.72rem; }
+.cm-table th.cm-rowhead { position:sticky; left:0; z-index:1; background:var(--panel); text-align:right;
+  white-space:nowrap; padding:0 0.6rem 0 0.4rem; font-weight:normal; color:var(--ink); }
+.cm-table tr.cm-first th.cm-rowhead strong { margin-right:0.3rem; }
+.cm-table tr.cm-first td, .cm-table tr.cm-first th { border-top:6px solid var(--panel); }
+.cm-table tr.cm-delta td, .cm-table tr.cm-delta th { border-top:10px solid var(--panel); }
+.cm-colhead { vertical-align:bottom; padding:0; }
+.cm-pos { writing-mode:vertical-rl; transform:rotate(180deg); background:none; border:0; cursor:pointer;
+  color:var(--muted); font:inherit; padding:0.3rem 0; white-space:nowrap; }
+.cm-pos:hover, .cm-pos[aria-pressed="true"] { color:var(--accent); font-weight:600; }
+.cm-cell { min-width:2.1rem; height:1.55rem; text-align:center; border-radius:3px;
+  font-variant-numeric:tabular-nums; }
+.cm-cell.selected { outline:2px solid var(--accent); outline-offset:-1px; }
+.cm-delta .cm-cell { font-size:0.66rem; }
+.cm-legend { display:flex; flex-wrap:wrap; gap:1.5rem; margin:0.6rem 0; font-size:0.78rem; color:var(--muted); }
+.cm-legend-item { display:flex; align-items:center; gap:0.4rem; }
+.cm-ramp { display:inline-block; width:8rem; height:0.7rem; border-radius:3px; border:1px solid var(--line); }
+.cm-exports { margin:0.4rem 0 1rem; }
+.cm-detail { margin:1rem 0; max-width:48rem; }
+.cm-detail-table { margin-bottom:0.6rem; }
+.cm-limit { max-width:72rem; margin-top:1rem; }
+.cm-detail-table th:nth-child(n+2), .cm-detail-table td:nth-child(n+2) { text-align:right; width:7rem; }
+/* A colour well beside each structure chip, and the row of fixed colours it opens. */
+.structure-chip-wrap { display:inline-flex; align-items:center; gap:2px; position:relative; }
+.structure-colour { width:20px; height:20px; padding:0; border:1px solid var(--line); border-radius:4px;
+  cursor:pointer; }
+.structure-colour:hover, .structure-colour[aria-expanded="true"] { outline:2px solid var(--accent);
+  outline-offset:1px; }
+.colour-pop { position:absolute; top:calc(100% + 4px); left:0; z-index:30; display:grid;
+  grid-template-columns:repeat(5, 22px); gap:5px; padding:7px; background:var(--panel);
+  border:1px solid var(--line); border-radius:6px; box-shadow:0 4px 14px rgba(0,0,0,.18); }
+.colour-pop[hidden] { display:none; }
+.colour-preset { width:22px; height:22px; padding:0; border:1px solid rgba(0,0,0,.15); border-radius:4px;
+  cursor:pointer; }
+.colour-preset.selected { outline:2px solid var(--ink); outline-offset:1px; }
+.colour-add { background:var(--chip); color:var(--ink); font:600 14px/20px system-ui,sans-serif; }
+/* Opened by the "+" button; kept in the layout so the browser will open it, but never seen. */
+.structure-colour-custom { position:absolute; width:1px; height:1px; opacity:0; pointer-events:none;
+  border:0; padding:0; }
+/* The superposed-structure list: each card makes its structure the active one. */
+.align-row[role="button"] { cursor:pointer; }
+.align-row[role="button"]:hover { border-color:var(--accent); }
+.align-row.is-active { border-color:var(--accent); box-shadow:inset 3px 0 var(--accent); }
+.tm-loop-columns { margin-top:6px; }

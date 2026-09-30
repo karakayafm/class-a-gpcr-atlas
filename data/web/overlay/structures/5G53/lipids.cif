@@ -1,0 +1,81 @@
+data_5G53_lipids
+#
+# Membrane lipids and detergents within 6.0 A of the receptor in 5G53,
+# copied unchanged from the RCSB PDB entry (CC0). Atlas lipid overlay.
+#
+_entry.id 5G53
+#
+loop_
+_entity.id
+_entity.type
+_entity.pdbx_description
+4 non-polymer 'octyl 1-thio-beta-D-glucopyranoside'
+#
+loop_
+_chem_comp.id
+_chem_comp.type
+_chem_comp.name
+SOG D-saccharide 'octyl 1-thio-beta-D-glucopyranoside'
+#
+loop_
+_atom_site.group_PDB
+_atom_site.id
+_atom_site.type_symbol
+_atom_site.label_atom_id
+_atom_site.label_alt_id
+_atom_site.label_comp_id
+_atom_site.label_asym_id
+_atom_site.label_entity_id
+_atom_site.label_seq_id
+_atom_site.pdbx_PDB_ins_code
+_atom_site.Cartn_x
+_atom_site.Cartn_y
+_atom_site.Cartn_z
+_atom_site.occupancy
+_atom_site.B_iso_or_equiv
+_atom_site.auth_seq_id
+_atom_site.auth_comp_id
+_atom_site.auth_asym_id
+_atom_site.auth_atom_id
+_atom_site.pdbx_PDB_model_num
+HETATM 7270 C C1 . SOG F 4 . ? -8.099 -12.973 29.726 1.00 65.18 501 SOG A C1 1
+HETATM 7271 C C2 . SOG F 4 . ? -7.360 -12.137 30.802 1.00 65.40 501 SOG A C2 1
+HETATM 7272 C C3 . SOG F 4 . ? -6.387 -11.043 30.290 1.00 61.36 501 SOG A C3 1
+HETATM 7273 C C4 . SOG F 4 . ? -5.980 -11.110 28.818 1.00 60.14 501 SOG A C4 1
+HETATM 7274 C C5 . SOG F 4 . ? -7.054 -11.785 27.996 1.00 60.78 501 SOG A C5 1
+HETATM 7275 C C6 . SOG F 4 . ? -6.663 -11.980 26.554 1.00 62.34 501 SOG A C6 1
+HETATM 7276 C C1' . SOG F 4 . ? -7.745 -15.739 29.190 1.00 67.01 501 SOG A C1' 1
+HETATM 7277 C C2' . SOG F 4 . ? -8.217 -17.184 29.393 1.00 66.71 501 SOG A C2' 1
+HETATM 7278 C C3' . SOG F 4 . ? -8.878 -17.698 28.115 1.00 68.34 501 SOG A C3' 1
+HETATM 7279 C C4' . SOG F 4 . ? -9.147 -19.195 28.129 1.00 70.12 501 SOG A C4' 1
+HETATM 7280 C C5' . SOG F 4 . ? -9.193 -19.742 26.700 1.00 70.61 501 SOG A C5' 1
+HETATM 7281 C C6' . SOG F 4 . ? -7.808 -20.195 26.254 1.00 71.03 501 SOG A C6' 1
+HETATM 7282 C C7' . SOG F 4 . ? -7.836 -20.771 24.846 1.00 71.32 501 SOG A C7' 1
+HETATM 7283 C C8' . SOG F 4 . ? -7.940 -19.692 23.792 1.00 71.69 501 SOG A C8' 1
+HETATM 7284 S S1 . SOG F 4 . ? -8.525 -14.608 30.297 1.00 66.50 501 SOG A S1 1
+HETATM 7285 O O2 . SOG F 4 . ? -8.338 -11.497 31.653 1.00 68.37 501 SOG A O2 1
+HETATM 7286 O O3 . SOG F 4 . ? -5.181 -11.098 31.056 1.00 59.00 501 SOG A O3 1
+HETATM 7287 O O4 . SOG F 4 . ? -5.769 -9.791 28.303 1.00 59.03 501 SOG A O4 1
+HETATM 7288 O O5 . SOG F 4 . ? -7.306 -13.066 28.550 1.00 60.48 501 SOG A O5 1
+HETATM 7289 O O6 . SOG F 4 . ? -7.635 -12.888 26.033 1.00 63.57 501 SOG A O6 1
+HETATM 7290 C C1 . SOG G 4 . ? -19.749 -29.362 -1.313 1.00 144.03 502 SOG A C1 1
+HETATM 7291 C C2 . SOG G 4 . ? -20.615 -28.887 -0.140 1.00 145.62 502 SOG A C2 1
+HETATM 7292 C C3 . SOG G 4 . ? -20.061 -29.309 1.218 1.00 146.31 502 SOG A C3 1
+HETATM 7293 C C4 . SOG G 4 . ? -19.626 -30.769 1.226 1.00 148.36 502 SOG A C4 1
+HETATM 7294 C C5 . SOG G 4 . ? -18.712 -31.064 0.028 1.00 148.99 502 SOG A C5 1
+HETATM 7295 C C6 . SOG G 4 . ? -18.228 -32.520 -0.031 1.00 146.36 502 SOG A C6 1
+HETATM 7296 C C1' . SOG G 4 . ? -19.594 -29.793 -4.044 1.00 126.29 502 SOG A C1' 1
+HETATM 7297 C C2' . SOG G 4 . ? -20.238 -29.566 -5.411 1.00 124.47 502 SOG A C2' 1
+HETATM 7298 C C3' . SOG G 4 . ? -20.193 -28.098 -5.860 1.00 121.90 502 SOG A C3' 1
+HETATM 7299 C C4' . SOG G 4 . ? -21.504 -27.321 -5.667 1.00 114.25 502 SOG A C4' 1
+HETATM 7300 C C5' . SOG G 4 . ? -21.717 -26.249 -6.738 1.00 107.59 502 SOG A C5' 1
+HETATM 7301 C C6' . SOG G 4 . ? -20.799 -25.041 -6.560 1.00 102.58 502 SOG A C6' 1
+HETATM 7302 C C7' . SOG G 4 . ? -20.909 -24.097 -7.754 1.00 99.35 502 SOG A C7' 1
+HETATM 7303 C C8' . SOG G 4 . ? -20.097 -22.836 -7.545 1.00 97.19 502 SOG A C8' 1
+HETATM 7304 S S1 . SOG G 4 . ? -20.651 -29.111 -2.812 1.00 135.19 502 SOG A S1 1
+HETATM 7305 O O2 . SOG G 4 . ? -20.706 -27.458 -0.161 1.00 146.74 502 SOG A O2 1
+HETATM 7306 O O3 . SOG G 4 . ? -21.059 -29.100 2.225 1.00 143.31 502 SOG A O3 1
+HETATM 7307 O O4 . SOG G 4 . ? -18.970 -31.020 2.474 1.00 148.76 502 SOG A O4 1
+HETATM 7308 O O5 . SOG G 4 . ? -19.421 -30.749 -1.178 1.00 148.51 502 SOG A O5 1
+HETATM 7309 O O6 . SOG G 4 . ? -16.807 -32.588 -0.233 1.00 140.16 502 SOG A O6 1
+#

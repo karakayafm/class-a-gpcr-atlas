@@ -660,6 +660,9 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
   const d = panelMode ? await L.loadPanelStructures(panelSlug)
           : await L.loadFamilyFile(slug, "structures.json");
   const famOf = row => row.family_slug || slug;
+  // Structures deposited with more than one receptor copy in their first biological assembly
+  // (overlay/receptor_copies.json). The viewer draws one; the note sends the reader to the rest.
+  const receptorCopies = ((await L.loadOverlay("receptor_copies.json")) || {}).structures || {};
   const wrap = el("section", { class: "view" });
   const family = (L.getManifest().families || []).find(f => f.slug === slug);
   const availableSites = new Set(d.structures.flatMap(x => x.observations.map(o => o.binding_site_class).filter(Boolean)));
@@ -976,6 +979,20 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
 
   /* Structures passing every non-chemistry filter. Chemistry is applied afterwards so the
      three-state split can be counted rather than silently folded into the result list. */
+  /* The evidence tier is read for the pathway being looked at, not for any pathway: in the
+     beta-arrestin panel, tier A means beta-arrestin is in the deposited coordinates, and tier B
+     that the structure is in the panel on a functional assay. Read across pathways, 6MXT's tier A
+     "no transducer in the structure" row put it under beta-arrestin + tier A. With no panel in
+     view the tier still means any pathway. */
+  function tierMatches(x) {
+    const tier = filters.evidenceTier;
+    if (!tier) return true;
+    const panel = filters.transducer || (panelMode ? d.panel : "");
+    if (!panel) return (x.pathway_evidence_tiers || []).includes(tier);
+    const structural = (x.transducer_panels_structural || []).includes(panel);
+    return tier === "A" ? structural
+      : !structural && (x.transducer_panels || []).includes(panel);
+  }
   function baseFiltered() {
     const q = filters.search.trim().toLowerCase();
     const rows = d.structures.filter(x =>
@@ -985,7 +1002,7 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
       (!filters.site || x.observations.some(o => o.binding_site_class === filters.site)) &&
       (!filters.state || x.structural_state === filters.state) &&
       (!filters.transducer || (x.transducer_panels||[]).includes(filters.transducer)) &&
-      (!filters.evidenceTier || (x.pathway_evidence_tiers||[]).includes(filters.evidenceTier)) &&
+      tierMatches(x) &&
       (!filters.representativeOnly || x.analysis_unit_representative === true) &&
       // The chemical component code is searchable too: a similarity hit is a CCD, and a reader
       // arriving from one would otherwise land on an empty list.
@@ -1093,6 +1110,17 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
           onclick: () => onOpen3D(x.pdb_id, o.observation_id, null, { whole: true }) })])
     ]));
     if (x.superseded) detail.appendChild(supersededNotice(x));
+    // What a curator found where the source annotation does not describe the structure - an apo
+    // structure whose annotated ligand is a lipid or a detergent, a ligand annotated but not modelled.
+    const copies = receptorCopies[x.pdb_id];
+    if (copies) detail.appendChild(el("p", { class: "notice curation-note receptor-copies-note" }, [
+      el("strong", { text: t("receptor_copies_title") + " " }),
+      t("receptor_copies_text", { n: copies.copies_assembly_1, chains: copies.chains_assembly_1.join(", ") }) + " ",
+      el("a", { href: "https://www.rcsb.org/3d-view/" + x.pdb_id + "/1", target: "_blank", rel: "noopener",
+        text: t("receptor_copies_link", { pdb: x.pdb_id }) })]));
+    for (const note of x.curation_notes || [])
+      detail.appendChild(el("p", { class: "notice curation-note" }, [
+        el("strong", { text: t("curation_note") + " " }), note[getLang()] || note.en]));
     detail.appendChild(el("div", { class: "detail-tags" }, [
       el("span", { class: "chip", text: plainName(x.receptor_family_name || "—") }),
       el("span", { class: "chip", text: stateLabel(x.structural_state || "unknown") }),
@@ -1732,6 +1760,7 @@ export async function methods() {
     ["Receptor and generic mapping", "auth_seq_id → label_seq_id → UniProt position → GPCRdb generic number, with three candidate routes scored against observed residue identity and an 0.80 agreement floor."],
     ["Contact definition", "Exact minimum heavy-atom distance between receptor and ligand, hydrogens excluded, deterministic altloc policy."],
     ["Thresholds", "4.0, 4.5 and 5.0 Å are derived from the exact distance; nothing is rounded at generation time."],
+    ["Lipid and transducer contacts in the viewer", "Membrane lipids and detergents are taken from the deposited model where a heavy atom lies within 6.0 Å of a receptor heavy atom; G protein and arrestin chains are taken whole as backbone, with complete residues within 8.0 Å of the receptor. When either layer is switched on, a receptor residue is shown as a contact when any of its heavy atoms lies within 4.0 Å of a heavy atom of the lipid or the transducer (exact distance, hydrogens excluded). The interaction lines are NGL's interaction detection with the same settings as the ligand's: hydrogen bond donor-acceptor ≤3.6 Å (sulfur ≤4.1 Å) within 45° angle limits, hydrophobic carbon-carbon ≤4.2 Å, π-stacking ring centroids ≤5.5 Å (offset ≤2.0 Å, angle ≤30°), ionic ≤5.0 Å, cation-π ≤6.0 Å, halogen bond ≤4.0 Å, weak hydrogen bonds included. These are geometric criteria on deposited coordinates, not interaction energies."],
     ["Site-class separation", "Small-molecule pockets and polymer interfaces are different analysis objects and never share a denominator."],
     ["Polymer interface model", "Residue-pair contacts with ligand residue identity preserved; the ligand is never reduced to a bag of atoms."],
     ["Motif extraction", "Eight core motifs defined by 21 generic positions; residue identity is measured, not assumed."],
@@ -2070,8 +2099,10 @@ export async function guide(root) {
     ["families", ["read", "use", "limit"]],
     ["structure", ["read", "use", "limit"]],
     ["viewer", ["read", "use", "limit"]],
+    ["partners", ["read", "use", "limit"]],
     ["panels", ["read", "use", "limit"]],
     ["motifsearch", ["read", "use", "limit"]],
+    ["contactmap", ["read", "use", "limit"]],
     ["ligands", ["read", "use", "limit"]],
     ["similarity", ["read", "use", "limit"]],
     ["isomers", ["read", "use", "limit"]],

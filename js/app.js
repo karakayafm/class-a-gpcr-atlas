@@ -10,6 +10,7 @@ import { downloadXLSX } from "./components/xlsx.js";
 import * as V from "./views/views.js";
 import { ligandExplorer } from "./views/ligands.js";
 import * as MQ from "./views/motifquery.js";
+import { contactMap } from "./views/contactmap.js";
 import * as VIEW from "./viewer/viewer.js";
 import * as ALIGN from "./viewer/align.js";
 import * as DIAGRAM from "./viewer/diagram.js";
@@ -43,11 +44,11 @@ function buildChrome(manifest) {
   const r = parseRoute();
   const items = r.family
     ? [["structures", "nav_structures"], ["panels", "nav_panels"], ["motifsearch", "nav_motifs"],
-       ["ligands", "nav_ligands"],
+       ["contactmap", "nav_contactmap"], ["ligands", "nav_ligands"],
        ["guide", "nav_guide"], ["methods", "nav_methods"], ["sources", "nav_sources"],
        ["references", "nav_references"], ["cite", "nav_cite"]]
     : [["landing", "families"], ["panels", "nav_panels"], ["motifsearch", "nav_motifs"],
-       ["ligands", "nav_ligands"],
+       ["contactmap", "nav_contactmap"], ["ligands", "nav_ligands"],
        ["guide", "nav_guide"], ["methods", "nav_methods"], ["sources", "nav_sources"],
        ["references", "nav_references"], ["cite", "nav_cite"]];
   for (const [view, key] of items) {
@@ -237,7 +238,18 @@ function buildAlignSection(meta) {
        here too - otherwise green is the one colour in the scene the panel does not explain. */
     const baseSwatch = el("i", { class: "align-swatch" });
     baseSwatch.style.background = ALIGN.baseColour();
-    list.appendChild(el("div", { class: "align-row align-row-base" }, [
+    /* Each card makes its structure the active one, as the chips above do - the list is where the
+       structures are named in full, so it is where a reader looks for them. */
+    const activate = pdb => ({ role: "button", tabindex: "0",
+      title: t("align_activate", { pdb }),
+      onclick: e => { if (e.target.closest("button")) return;
+        activeStructure = pdb; buildViewerSide(meta); },
+      onkeydown: e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault();
+        activeStructure = pdb; buildViewerSide(meta); } } });
+    const current = activePdb(meta);
+    const isCurrent = pdb => pdb === current ? " is-active" : "";
+    list.appendChild(el("div", Object.assign({ class: "align-row align-row-base" +
+      isCurrent(String(meta.pdb_id).toUpperCase()) }, activate(String(meta.pdb_id).toUpperCase())), [
       baseSwatch,
       el("div", { class: "align-row-text" }, [
         el("strong", { text: meta.pdb_id }),
@@ -249,7 +261,8 @@ function buildAlignSection(meta) {
       const swatch = el("i", { class: "align-swatch" });
       // The colour is decided by the align module, so the legend has to be told rather than styled.
       swatch.style.background = "#" + row.colour.toString(16).padStart(6, "0");
-      list.appendChild(el("div", { class: "align-row" }, [
+      list.appendChild(el("div", Object.assign({ class: "align-row" + isCurrent(row.pdb) },
+        activate(row.pdb)), [
         swatch,
         el("div", { class: "align-row-text" }, [
           el("strong", { text: row.pdb }),
@@ -357,7 +370,7 @@ async function openModal(pdb, observationId, focusResidue, opts) {
      here rather than removed - the components are already going. Opening a second structure while
      the modal stays open, which changing the address does, comes through here too. */
   ALIGN.reset();
-  activeStructure = null;
+  activeStructure = null; baseToggles = null;
   interactionPanelOpen = false;
   surfacePanelOpen = false;
   // the viewport is visible now; the viewer resizes only after this point
@@ -440,7 +453,7 @@ function closeModal() {
   if (!m || m.hidden) return;
   VIEW.close();
   ALIGN.reset();
-  activeStructure = null;
+  activeStructure = null; baseToggles = null;
   interactionPanelOpen = false;
   surfacePanelOpen = false;
   m.hidden = true;
@@ -460,7 +473,7 @@ function closeModal() {
    one of them. The choice is offered in three places now - the modal title, the side panel and an
    overlay on the viewer - so they all route through here and refresh each other. */
 function applyObservation(meta, id) {
-  VIEW.setObservation(id);
+  VIEW.setObservation(id); baseToggles = null;   // setObservation puts every layer back to default
   const status = VIEW.statusMessage(), node = document.getElementById("viewer-status");
   node.textContent = status; node.hidden = !status;
   navigate(Object.assign({}, parseRoute(), { observation:id }), true);
@@ -504,6 +517,9 @@ function buildObservationSwitch(meta) {
    outside the pocket, had no way to say so. Named rather than inferred, so the panel can say which
    structure it is describing. */
 let activeStructure = null;
+/* The base structure's layer toggles, carried across rebuilds of the panel. Forgotten whenever the
+   viewer goes back to its defaults: a new structure, the modal closing, Reset view. */
+let baseToggles = null;
 /* Whether the interaction layers are showing. Held outside buildViewerSide because that function
    rebuilds the panel from scratch - switching to the whole receptor, changing observation, changing
    language - and a disclosure that closes itself every time is one the reader has to keep
@@ -517,6 +533,18 @@ function activePdb(meta) {
   return String(activeStructure || meta.pdb_id).toUpperCase();
 }
 
+/* The fixed colours offered for a structure, in the order the atlas assigns them - the base
+   structure's green first, then the four overlay colours, then a few more that stay distinct on
+   the black background. */
+const PRESET_COLOURS = [["#3fa96a", "colour_green"], ["#4f9de0", "colour_blue"],
+  ["#d95f9a", "colour_pink"], ["#c9a227", "colour_yellow"], ["#a07ad6", "colour_violet"],
+  ["#ee7a22", "colour_orange"], ["#e34948", "colour_red"], ["#1baf7a", "colour_teal"],
+  ["#9aa2aa", "colour_grey"]];
+document.addEventListener("click", e => {
+  if (!e.target.closest || !e.target.closest(".structure-chip-wrap"))
+    for (const pop of document.querySelectorAll(".colour-pop")) pop.hidden = true;
+});
+
 /* The strip that switches between the structures in the scene. Only drawn once there is more than
    one - with nothing superposed it would be a control with a single option. */
 function buildStructureSwitch(meta, onChange) {
@@ -525,7 +553,7 @@ function buildStructureSwitch(meta, onChange) {
   const strip = el("div", { class:"structure-switch", role:"group",
     "aria-label":t("v_active_structure") });
   strip.appendChild(el("span", { class:"structure-switch-label", text:t("v_active_structure") }));
-  const chip = (pdb, colour, label) => {
+  const chip = (pdb, colour, label, isBase) => {
     const isActive = pdb === active;
     const b = el("button", { class:"structure-chip" + (isActive ? " selected" : ""), type:"button",
       "aria-pressed":isActive ? "true" : "false", title:label,
@@ -534,13 +562,45 @@ function buildStructureSwitch(meta, onChange) {
     sw.style.background = colour;
     b.appendChild(sw);
     b.appendChild(el("span", { text:pdb }));
-    return b;
+    /* The structure's colour can be chosen - three agonist structures green and two antagonists
+       orange, for instance. A row of fixed colours covers most choices in one click; "+" opens the
+       system picker for anything else. The structure is repainted once, when a colour is chosen,
+       not on every movement of the picker - repainting five structures per mouse move is what
+       made the first version stutter. */
+    const apply = hex => {
+      if (isBase) ALIGN.setBaseColour(hex); else ALIGN.setOverlayColour(pdb, hex);
+      onChange();
+    };
+    const custom = el("input", { type:"color", class:"structure-colour-custom", value:colour,
+      tabindex:"-1", "aria-hidden":"true", onchange:e => apply(e.target.value) });
+    const pop = el("div", { class:"colour-pop", hidden:true, role:"group",
+      "aria-label":t("v_colour_pick", { pdb }) }, [
+      ...PRESET_COLOURS.map(([hex, name]) => {
+        const c = el("button", { type:"button", class:"colour-preset" +
+          (hex.toLowerCase() === colour.toLowerCase() ? " selected" : ""),
+          title:t(name), "aria-label":t(name), onclick:() => apply(hex) });
+        c.style.background = hex;
+        return c;
+      }),
+      el("button", { type:"button", class:"colour-preset colour-add", text:"+",
+        title:t("v_colour_custom"), "aria-label":t("v_colour_custom"),
+        onclick:() => custom.click() }),
+      custom]);
+    const well = el("button", { type:"button", class:"structure-colour",
+      title:t("v_colour_pick", { pdb }), "aria-label":t("v_colour_pick", { pdb }),
+      "aria-expanded":"false", onclick:e => {
+        e.stopPropagation();
+        for (const other of document.querySelectorAll(".colour-pop")) if (other !== pop) other.hidden = true;
+        pop.hidden = !pop.hidden; well.setAttribute("aria-expanded", pop.hidden ? "false" : "true");
+      } });
+    well.style.background = colour;
+    return el("span", { class:"structure-chip-wrap" }, [b, well, pop]);
   };
   strip.appendChild(chip(String(meta.pdb_id).toUpperCase(), ALIGN.baseColour(),
-    V.plainName(meta.receptor_name || "")));
+    V.plainName(meta.receptor_name || ""), true));
   for (const row of ALIGN.overlayList())
     strip.appendChild(chip(row.pdb, "#" + row.colour.toString(16).padStart(6, "0"),
-      V.plainName(row.name || "")));
+      V.plainName(row.name || ""), false));
   return strip;
 }
 
@@ -583,9 +643,14 @@ function buildViewerSide(meta) {
   const onBase = active === String(meta.pdb_id).toUpperCase();
   const switcher = buildStructureSwitch(meta, () => buildViewerSide(meta));
   if (switcher) side.appendChild(switcher);
-  const on = { cartoon: true, ligand: true, contacts: true, motifs: false, motifLabels: true,
+  /* The base structure's toggles outlive a rebuild of this panel. Switching the active structure
+     to an overlay and back rebuilt the panel from defaults, so Side chains and Motif labels showed
+     as on while the scene had them off. Kept per loaded structure, so opening another starts fresh. */
+  const remembered = onBase ? baseToggles : null;
+  const on = remembered || { cartoon: true, ligand: true, contacts: true, motifs: false, motifLabels: true,
     surface: false, surfaceReceptor:false, surfaceLigand:false, lines: true,
-    allLigands: false, ions: false, aux: false, spin: false };
+    allLigands: false, ions: false, aux: false, spin: false, lipids: false, transducer: false };
+  if (onBase) baseToggles = on;
   /* The layers an overlay carries. Anything outside this map is disabled and says why, because a
      toggle that does nothing is worse than one that is visibly unavailable. */
   const OVERLAY_LAYER = { cartoon:"cartoon", contacts:"sidechains", ligand:"ligand",
@@ -598,6 +663,9 @@ function buildViewerSide(meta) {
     on.surfaceLigand = !!state.surfaceLigand;
   } else {
     Object.assign(on, VIEW.surfaceState());
+    // The panel is rebuilt whenever the active structure, an overlay or a colour changes; the
+    // ligand's visibility is read back rather than reset to shown.
+    on.ligand = VIEW.ligandIsShown();
   }
   on.surface = on.surfaceReceptor || on.surfaceLigand;
   const ctrl = el("div", { class: "viewer-tools" });
@@ -621,6 +689,13 @@ function buildViewerSide(meta) {
   // The contacting side chains were drawn unconditionally; a reader looking at ligand
   // topology alone had no way to clear them.
   add("contacts", t("v_side_chains"), apo || !hasLig);
+  // Membrane lipids and detergents: off by default, unavailable where the bundle carries none.
+  const lipidButton = add("lipids", t("v_lipids"), onBase && !VIEW.hasLipids());
+  if (onBase) lipidButton.title = t(VIEW.hasLipids() ? "v_lipids_hint" : "v_lipids_none");
+  // G protein and arrestin chains, loaded when asked for; not antibodies, nanobodies or fusions.
+  const transducerButton = add("transducer", t("v_transducer_layer"), onBase && !VIEW.hasTransducer());
+  if (onBase) transducerButton.title = VIEW.hasTransducer()
+    ? t("v_transducer_hint", { chains: VIEW.transducerSummary() }) : t("v_transducer_none");
   /* Interactions is no longer one thing, so its button is a disclosure rather than a switch.
      Clicking it opens the three layers it covers and changes nothing on screen: the ligand's
      contacts, which is what this view was built for, and the two helical ones, which answer what
@@ -719,7 +794,8 @@ function buildViewerSide(meta) {
     const cartoonLigand = ligandModeButton("cartoon", t("v_ligand_cartoon"), true);
     const licoriceLigand = ligandModeButton("licorice", t("v_ligand_licorice"), false);
     const ligandVisibility = el("button", { class:"viewer-tool ligand-visibility",
-      "aria-pressed":"true", text:t("v_ligand_hide"), onclick:() => {
+      "aria-pressed":on.ligand ? "true" : "false", text:t(on.ligand ? "v_ligand_hide" : "v_ligand_show"),
+      onclick:() => {
         on.ligand = !on.ligand;
         ligandVisibility.setAttribute("aria-pressed", on.ligand ? "true" : "false");
         ligandVisibility.textContent = t(on.ligand ? "v_ligand_hide" : "v_ligand_show");
@@ -734,7 +810,9 @@ function buildViewerSide(meta) {
           covalentButton.setAttribute("aria-pressed", on.ligand ? "true" : "false");
           covalentButton.classList.toggle("selected", on.ligand);
         }
-        VIEW.toggles.ligand(on.ligand);
+        // The ligand of whichever structure is active, like every other layer button here.
+        if (onBase) VIEW.toggles.ligand(on.ligand);
+        else ALIGN.setLayer(active, "ligand", on.ligand);
       } });
     ligandPanel.append(cartoonLigand, licoriceLigand, ligandVisibility);
     const ligandButton = el("button", { class:"viewer-tool disclosure", "aria-expanded":"false",
@@ -745,7 +823,8 @@ function buildViewerSide(meta) {
     ctrl.appendChild(ligandButton);
   } else {
     const ligandButton = el("button", { class:"viewer-tool", disabled:apo || !hasLig,
-      "aria-pressed":hasLig ? "true" : "false", text:t("v_ligand_hide"), onclick:() => {
+      "aria-pressed":hasLig && on.ligand ? "true" : "false",
+      text:t(on.ligand ? "v_ligand_hide" : "v_ligand_show"), onclick:() => {
         on.ligand = !on.ligand;
         ligandButton.setAttribute("aria-pressed", on.ligand ? "true" : "false");
         ligandButton.textContent = t(on.ligand ? "v_ligand_hide" : "v_ligand_show");
@@ -758,7 +837,9 @@ function buildViewerSide(meta) {
           covalentButton.setAttribute("aria-pressed", on.ligand ? "true" : "false");
           covalentButton.classList.toggle("selected", on.ligand);
         }
-        VIEW.toggles.ligand(on.ligand);
+        // The ligand of whichever structure is active, like every other layer button here.
+        if (onBase) VIEW.toggles.ligand(on.ligand);
+        else ALIGN.setLayer(active, "ligand", on.ligand);
       } });
     ctrl.appendChild(ligandButton);
   }
@@ -819,7 +900,7 @@ function buildViewerSide(meta) {
   paintBackground();
   ctrl.appendChild(backgroundSwitch);
   ctrl.appendChild(el("button", { class: "viewer-tool", text: t("v_reset"),
-    onclick: () => { VIEW.resetView(); buildViewerSide(meta); } }));
+    onclick: () => { VIEW.resetView(); baseToggles = null; buildViewerSide(meta); } }));
   ctrl.appendChild(el("button", { class: "viewer-tool", text: t("v_snapshot"),
     onclick: () => VIEW.snapshot() }));
   /* The 2D diagram. It takes whatever is on screen - the structure being viewed, then each
@@ -1204,13 +1285,32 @@ function buildReceptorColumns(container, meta, onSelectionChange) {
   // H8 and the resolved loop residues are as real as the helical ones; they are simply not one of
   // the seven columns, so they get a disclosure of their own instead of being dropped.
   if (other) {
-    const list = el("div", { class:"tm-other-list" });
-    for (const row of other.residues) list.appendChild(residueButton(row));
+    /* One column per loop, in the order they run along the chain, like the helices above. As a
+       single run of buttons a reader looking for ECL2 had to find where ICL2 stopped. */
+    const LOOP_ORDER = ["ICL1", "ECL1", "ICL2", "ECL2", "ICL3", "ECL3", "H8"];
+    const bySegment = new Map();
+    for (const row of other.residues) {
+      if (!bySegment.has(row.s)) bySegment.set(row.s, []);
+      bySegment.get(row.s).push(row);
+    }
+    const order = [...bySegment.keys()].sort((a, b) =>
+      (LOOP_ORDER.indexOf(a) + 1 || 99) - (LOOP_ORDER.indexOf(b) + 1 || 99));
+    const loops = el("div", { class:"tm-columns tm-loop-columns" });
+    for (const seg of order) {
+      const list = el("div", { class:"tm-column-list" });
+      for (const row of bySegment.get(seg)) list.appendChild(residueButton(row));
+      loops.appendChild(el("div", { class:"tm-column" }, [
+        el("div", { class:"tm-column-head" }, [
+          el("span", { class:"tm-column-name", text:seg }),
+          el("span", { class:"tm-column-count", text:String(bySegment.get(seg).length) })]),
+        list]));
+    }
     // Open, like the seven columns beside it. A reader who asked for the whole receptor asked for
     // this part of it too; closing it by default would hide the only H8 and loop positions there
     // are behind a disclosure they have no reason to suspect.
     container.appendChild(el("details", { class:"tm-other", open:true }, [
-      el("summary", { text:t("v_segment_other") + " (" + other.residues.length + ")" }), list]));
+      el("summary", { text:t("v_segment_other") + " (" + other.residues.length + ")" }), loops,
+      el("p", { class:"muted small", text:t("v_loops_note") })]));
   }
 }
 
@@ -1250,6 +1350,8 @@ async function render(r) {
       // Rebuilt as its own module: the panel scores receptors rather than filtering depositions,
       // and its state is restored from the route rather than from a closure.
       case "motifsearch": node = await MQ.motifQuery(main, r); break;
+      // A family taken apart by ligand class and distance threshold; its state is in the route.
+      case "contactmap": node = await contactMap(main, r); break;
       case "evidence": node = await V.evidence(main, r.family, r.open === "1"); break;
       case "contacts": case "interfaces": case "motifs": case "compare":
         navigate(r.family ? { family: r.family, view: "structures" } : { view: "landing" }, true); return;
