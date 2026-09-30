@@ -27,6 +27,15 @@ EXCLUDED_LIGAND_CHAINS={"7XWO":{"F"}, "3ZEV":{"D"}, "4BV0":{"D"},
                         "8F7Q":{"P"}, "8F7R":{"P"}, "8F7S":{"P"}, "8GY7":{"P"},
                         "8G94":{"F","G"}}
 NON_LIGAND_STRUCTURES={"8G94"}  # F/G are CD69 antigen, not S1P1 ligands.
+# Site-class and lipid review of 2026-09-30: apo structures whose only annotated "ligand" is a
+# membrane lipid (phosphatidylinositol) or a detergent. Mirrors REVIEW_APO in build_payloads.py.
+NON_LIGAND_STRUCTURES|={"8XXU","8XXV","9IYB","4J4Q","4PXF","5TE3","5WKT","6NWE","4X1H"}
+# Membrane lipids and detergents, from the component reference. Those within LIPID_SHELL of the
+# receptor enter every bundle, whatever the size budget: they are a few kilobytes, and leaving them
+# with the auxiliary chains dropped them from 289 bundles whose deposited models carry them.
+_REF=json.loads((ROOT/"config/component_reference.json").read_text(encoding="utf-8"))
+LIPID_COMPONENTS={k for k,v in _REF["curated_components"].items() if v[1] in ("membrane_lipid","detergent")}
+LIPID_SHELL=6.0
 STRUCTURE_LIGAND_OVERRIDES={
   "7T9M":{"inventory_ids":{"7T9M:EI:poly:1","7T9M:EI:poly:2"},
            "ligand_chain":"H","ligand_entity":"1","display_ligand_chains":{"H","L"},
@@ -825,6 +834,18 @@ def main()->int:
                   "auth_asym_id":ch,"auth_seq_id":seq,"residue_identity":a["comp"]})
         na=[{"auth_asym_id":a["auth_asym"],"auth_seq_id":a["auth_seq"]} for a in A if a["comp"]=="NA"]
 
+        # membrane lipids and detergents in contact with the receptor, never this structure's ligand
+        rec_xyz=[(a["x"],a["y"],a["z"]) for a in A if a["group"]=="ATOM" and a["auth_asym"] in rec_chains]
+        near_lipids=set()
+        for a in A:
+            key=(a["auth_asym"],a["auth_seq"])
+            if (a["group"]!="HETATM" or a["comp"] not in LIPID_COMPONENTS or key in near_lipids or
+                is_ligand(a["auth_asym"],a["auth_seq"],a["entity"],"HETATM")): continue
+            if any((a["x"]-x)**2+(a["y"]-y)**2+(a["z"]-z)**2<=LIPID_SHELL**2 for x,y,z in rec_xyz):
+                near_lipids.add(key)
+        lipid_residues=sorted({(a["auth_asym"],a["auth_seq"],a["comp"]) for a in A
+                               if (a["auth_asym"],a["auth_seq"]) in near_lipids})
+
         # filter the deposited atom_site rows
         ci=colidx or {}
         def field(parts,name,default=""):
@@ -841,7 +862,8 @@ def main()->int:
             ch=field(parts,"auth_asym_id") or field(parts,"label_asym_id")
             ent=field(parts,"label_entity_id")
             seq=field(parts,"auth_seq_id")
-            if is_receptor(ch,ent,grp) or is_ligand(ch,seq,ent,grp) or comp=="NA":
+            if (is_receptor(ch,ent,grp) or is_ligand(ch,seq,ent,grp) or comp=="NA" or
+                (grp=="HETATM" and (ch,seq) in near_lipids)):
                 core.append(line)
             else:
                 aux.append(line)
@@ -876,6 +898,7 @@ def main()->int:
           "observed_sodium":na,
           "auxiliary_chains_included":aux_included,
           "auxiliary_chains":[c for c in aux_chains if c],
+          "lipid_residues":[{"auth_asym_id":c,"auth_seq_id":q,"component":k} for c,q,k in lipid_residues],
           "auxiliary_note_en":("Auxiliary and environment chains (antibody, nanobody, G protein, "
             "arrestin, fusion partner, detergent, buffer, bulk lipid, glycan, crystallisation "
             "additive) are hidden by default." + ("" if aux_included else

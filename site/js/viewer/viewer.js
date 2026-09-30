@@ -2,7 +2,8 @@
 // terminology, different default representations and different camera framing.
 import { t, siteClassLabel } from "../core/i18n.js";
 import { el, clear } from "../components/dom.js";
-import { loadBundleMeta, bundleCifUrl, loadReceptorResidues, errorMessage } from "../data/loader.js";
+import { loadBundleMeta, bundleCifUrl, loadReceptorResidues, errorMessage, loadOverlay, base }
+  from "../data/loader.js";
 import * as LC from "./lifecycle.js";
 
 let comp = null, meta = null, current = null, reps = {};
@@ -269,7 +270,12 @@ export async function open(host, pdb, observationId, onStatus) {
   measureAtoms.length = 0; measureKept.length = 0; measureMode = false;
   focusSelection = false; uniformColour = null; foreignTables.clear();
   interactionLayers.ligand = true; interactionLayers.inter = false;
-  interactionLayers.intra = false; ligandShown = true;
+  interactionLayers.intra = false; ligandShown = true; lipidOverlay = null;
+  // Which structures have their lipids in the lipid overlay rather than the bundle. Fetched once;
+  // a build without the overlay answers null, and the bundle's own lipids still work.
+  if (lipidIndex === undefined) {
+    try { lipidIndex = await loadOverlay("lipids_index.json"); } catch (e) { lipidIndex = null; }
+  }
   try { meta = await loadBundleMeta(pdb); }
   catch (e) { onStatus(errorMessage(e)); return null; }
   let stage;
@@ -1450,10 +1456,12 @@ export const toggles = {
      so they are off by default and never drawn as one: a component the record counts as this
      structure's ligand is left to the ligand layer, even where the same component is a bulk lipid
      elsewhere (oleic acid is a membrane lipid in most bundles and the agonist in 8ID6). */
-  lipids(on) { if (!on) { dropRep("lipids"); return; }
+  lipids(on) {
+    if (!on) { dropRep("lipids"); if (lipidOverlay) lipidOverlay.setVisibility(false); return; }
     const s = lipidSelection();
-    if (s) addRep("lipids", "licorice", { sele: s, colorScheme: "element", colorValue: 0xc9ced4,
-      radiusScale: 0.55, opacity: 0.9 }); },
+    if (s) addRep("lipids", "licorice", Object.assign({ sele: s }, LIPID_STYLE));
+    if (overlayHasLipids()) showLipidOverlay();
+  },
   ions(on) { if (!on) { dropRep("ions"); return; }
     const na = (meta.observed_sodium || []).map(r => r.auth_seq_id + ":" + r.auth_asym_id);
     if (na.length) addRep("ions", "spacefill", { sele: na.join(" or "), color: "purple", scale: 0.4 }); },
@@ -1486,7 +1494,30 @@ function lipidSelection() {
   });
   return keys.size ? [...keys].join(" or ") : null;
 }
-export function hasLipids() { return !!lipidSelection(); }
+/* Lipids the bundle left out, from overlay/structures/<PDB>/lipids.cif: the same deposited frame
+   as the bundle, so the file is added to the scene as it is. Loaded the first time it is asked
+   for and kept for the rest of this structure's session. */
+let lipidIndex, lipidOverlay = null;
+const LIPID_STYLE = { colorScheme: "element", colorValue: 0xc9ced4, radiusScale: 0.55, opacity: 0.9 };
+function overlayHasLipids() {
+  return !!(meta && lipidIndex && lipidIndex.structures && lipidIndex.structures[meta.pdb_id]);
+}
+async function showLipidOverlay() {
+  const stage = LC.getStage();
+  if (!stage || !meta) return;
+  if (!lipidOverlay) {
+    const pdb = meta.pdb_id;
+    try {
+      const c = await stage.loadFile(base() + "overlay/structures/" + pdb + "/lipids.cif",
+        { ext: "cif", name: pdb + " lipids" });
+      if (!meta || meta.pdb_id !== pdb) { stage.removeComponent(c); return; }  // moved on meanwhile
+      c.addRepresentation("licorice", LIPID_STYLE);
+      lipidOverlay = c;
+    } catch (e) { return; }
+  }
+  lipidOverlay.setVisibility(true);
+}
+export function hasLipids() { return !!lipidSelection() || overlayHasLipids(); }
 
 export function resetView() { if (comp) applyDefaults(); }
 export function statusMessage() {

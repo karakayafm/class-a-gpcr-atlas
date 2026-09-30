@@ -1,0 +1,69 @@
+data_7VDH_lipids
+#
+# Membrane lipids and detergents within 6.0 A of the receptor in 7VDH,
+# copied unchanged from the RCSB PDB entry (CC0). Atlas lipid overlay.
+#
+_entry.id 7VDH
+#
+loop_
+_entity.id
+_entity.type
+_entity.pdbx_description
+6 non-polymer CHOLESTEROL
+#
+loop_
+_chem_comp.id
+_chem_comp.type
+_chem_comp.name
+CLR non-polymer CHOLESTEROL
+#
+loop_
+_atom_site.group_PDB
+_atom_site.id
+_atom_site.type_symbol
+_atom_site.label_atom_id
+_atom_site.label_alt_id
+_atom_site.label_comp_id
+_atom_site.label_asym_id
+_atom_site.label_entity_id
+_atom_site.label_seq_id
+_atom_site.pdbx_PDB_ins_code
+_atom_site.Cartn_x
+_atom_site.Cartn_y
+_atom_site.Cartn_z
+_atom_site.occupancy
+_atom_site.B_iso_or_equiv
+_atom_site.auth_seq_id
+_atom_site.auth_comp_id
+_atom_site.auth_asym_id
+_atom_site.auth_atom_id
+_atom_site.pdbx_PDB_model_num
+HETATM 8645 C C1 . CLR F 6 . ? 89.994 98.557 76.865 1.00 100.62 401 CLR R C1 1
+HETATM 8646 C C2 . CLR F 6 . ? 89.261 99.750 77.445 1.00 100.62 401 CLR R C2 1
+HETATM 8647 C C3 . CLR F 6 . ? 88.027 100.021 76.607 1.00 100.62 401 CLR R C3 1
+HETATM 8648 C C4 . CLR F 6 . ? 87.076 98.843 76.796 1.00 100.62 401 CLR R C4 1
+HETATM 8649 C C5 . CLR F 6 . ? 87.747 97.564 76.407 1.00 100.62 401 CLR R C5 1
+HETATM 8650 C C6 . CLR F 6 . ? 86.991 96.630 75.858 1.00 100.62 401 CLR R C6 1
+HETATM 8651 C C7 . CLR F 6 . ? 87.554 95.371 75.292 1.00 100.62 401 CLR R C7 1
+HETATM 8652 C C8 . CLR F 6 . ? 88.834 94.970 76.026 1.00 100.62 401 CLR R C8 1
+HETATM 8653 C C9 . CLR F 6 . ? 89.807 96.176 76.150 1.00 100.62 401 CLR R C9 1
+HETATM 8654 C C10 . CLR F 6 . ? 89.128 97.291 76.962 1.00 100.62 401 CLR R C10 1
+HETATM 8655 C C11 . CLR F 6 . ? 91.142 95.750 76.797 1.00 100.62 401 CLR R C11 1
+HETATM 8656 C C12 . CLR F 6 . ? 91.793 94.541 76.116 1.00 100.62 401 CLR R C12 1
+HETATM 8657 C C13 . CLR F 6 . ? 90.828 93.345 75.989 1.00 100.62 401 CLR R C13 1
+HETATM 8658 C C14 . CLR F 6 . ? 89.527 93.835 75.263 1.00 100.62 401 CLR R C14 1
+HETATM 8659 C C15 . CLR F 6 . ? 88.722 92.534 75.008 1.00 100.62 401 CLR R C15 1
+HETATM 8660 C C16 . CLR F 6 . ? 89.826 91.467 74.784 1.00 100.62 401 CLR R C16 1
+HETATM 8661 C C17 . CLR F 6 . ? 91.196 92.219 74.934 1.00 100.62 401 CLR R C17 1
+HETATM 8662 C C18 . CLR F 6 . ? 90.439 92.761 77.385 1.00 100.62 401 CLR R C18 1
+HETATM 8663 C C19 . CLR F 6 . ? 88.975 96.873 78.435 1.00 100.62 401 CLR R C19 1
+HETATM 8664 C C20 . CLR F 6 . ? 92.561 91.255 74.992 1.00 100.62 401 CLR R C20 1
+HETATM 8665 C C21 . CLR F 6 . ? 92.234 89.776 74.692 1.00 100.62 401 CLR R C21 1
+HETATM 8666 C C22 . CLR F 6 . ? 93.564 91.315 76.190 1.00 100.62 401 CLR R C22 1
+HETATM 8667 C C23 . CLR F 6 . ? 94.750 92.188 75.829 1.00 100.62 401 CLR R C23 1
+HETATM 8668 C C24 . CLR F 6 . ? 95.149 93.040 77.026 1.00 100.62 401 CLR R C24 1
+HETATM 8669 C C25 . CLR F 6 . ? 96.610 92.781 77.402 1.00 100.62 401 CLR R C25 1
+HETATM 8670 C C26 . CLR F 6 . ? 97.160 93.991 78.137 1.00 100.62 401 CLR R C26 1
+HETATM 8671 C C27 . CLR F 6 . ? 96.714 91.546 78.283 1.00 100.62 401 CLR R C27 1
+HETATM 8672 O O1 . CLR F 6 . ? 87.457 101.188 77.103 1.00 100.62 401 CLR R O1 1
+#

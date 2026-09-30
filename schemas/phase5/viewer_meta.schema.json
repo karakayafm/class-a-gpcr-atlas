@@ -105,6 +105,29 @@
     },
     "observed_sodium": {
       "type": "array"
+    },
+    "lipid_residues": {
+      "type": "array",
+      "description": "Membrane lipids and detergents within 6 A of the receptor, included whatever the size budget; never a component the structure counts as its ligand.",
+      "items": {
+        "type": "object",
+        "required": [
+          "auth_asym_id",
+          "auth_seq_id",
+          "component"
+        ],
+        "properties": {
+          "auth_asym_id": {
+            "type": "string"
+          },
+          "auth_seq_id": {
+            "type": "string"
+          },
+          "component": {
+            "type": "string"
+          }
+        }
+      }
     }
   }
 }

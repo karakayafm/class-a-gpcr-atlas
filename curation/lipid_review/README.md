@@ -50,8 +50,30 @@ structure note, not as a ligand), are written into `pipeline/phase5/build_payloa
 (`CURATED_APO_STRUCTURES`, `CURATED_NON_LIGAND_STRUCTURES`, `CURATED_STRUCTURE_NOTES`) for the next
 full build. The eleven lipid ligands of lipid receptors stay ligands.
 
+## Recovering the lipids the bundles left out (2026-09-30)
+
+A bundle carried lipids only when the whole of its auxiliary and environment content fitted a
+450 kB budget, so 1,086 of 1,358 bundles carry none - and 289 of those structures have lipids or
+detergents in their deposited models (RCSB entry records). Two fixes:
+
+- **Next build.** `pipeline/phase5/build_bundles.py` puts every membrane lipid and detergent within
+  6 Å of the receptor into the bundle, outside the budget, and lists them in `viewer_meta.json`
+  (`lipid_residues`). The component list is the component reference's membrane_lipid and detergent
+  entries, to which ten components found here were added (A1D5Q, J40, D21, PEF, DAO, A6L, BNG,
+  BGL, LDA, LMN). The phospho- and lysolipids that are lipid receptors' ligands were not added.
+- **Now.** `pipeline/overlays/build_lipid_overlay.py` applies the same rule to the RCSB entries and
+  writes `site/data/web/overlay/structures/<PDB>/lipids.cif` beside the frozen bundles, with
+  `overlay/lipids_index.json` recording the source, its hash and the rule. 271 structures, 1,391
+  lipid residues (cholesterol 496, oleic acid 188, palmitic acid 151, monoolein 149), 3.2 MB in
+  all. Coordinates are copied unchanged; the downloaded entries are cached in `data/cache/coordinates`,
+  where build_bundles.py reads them.
+
+The viewer's *Lipids* layer draws the bundle's own lipids where it has them and loads the overlay
+file where it does not; both are in the deposited frame, so the overlay needs no transformation.
+
 ## Re-running
 
 ```bash
 python3 curation/lipid_review/audit_lipids.py
+python3 pipeline/overlays/build_lipid_overlay.py        # downloads RCSB entries once, then cached
 ```

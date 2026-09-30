@@ -199,6 +199,56 @@
       "detergent",
       "Undecyl maltoside."
     ],
+    "A1D5Q": [
+      "lipid",
+      "membrane_lipid",
+      "Phosphatidylinositol (1-palmitoyl-2-oleoyl). Added 2026-09-30, curation/lipid_review; the reviewer confirmed it is not a ligand in 8XXU, 8XXV and 9IYB."
+    ],
+    "J40": [
+      "lipid",
+      "membrane_lipid",
+      "Phosphatidylinositol 4-phosphate. Added 2026-09-30, curation/lipid_review."
+    ],
+    "D21": [
+      "lipid",
+      "membrane_lipid",
+      "Phosphatidic acid (1-palmitoyl-2-oleoyl). Added 2026-09-30, curation/lipid_review."
+    ],
+    "PEF": [
+      "lipid",
+      "membrane_lipid",
+      "Dipalmitoyl phosphatidylethanolamine. Added 2026-09-30, curation/lipid_review."
+    ],
+    "DAO": [
+      "lipid",
+      "membrane_lipid",
+      "Lauric acid. Added 2026-09-30, curation/lipid_review."
+    ],
+    "A6L": [
+      "lipid",
+      "membrane_lipid",
+      "Monoolein (unspecified stereochemistry). Added 2026-09-30, curation/lipid_review."
+    ],
+    "BNG": [
+      "small_molecule",
+      "detergent",
+      "Nonyl glucoside. Added 2026-09-30, curation/lipid_review."
+    ],
+    "BGL": [
+      "small_molecule",
+      "detergent",
+      "Octyl glucoside (2-O-octyl). Added 2026-09-30, curation/lipid_review."
+    ],
+    "LDA": [
+      "small_molecule",
+      "detergent",
+      "Lauryldimethylamine N-oxide (LDAO). Added 2026-09-30, curation/lipid_review."
+    ],
+    "LMN": [
+      "small_molecule",
+      "detergent",
+      "Lauryl maltose neopentyl glycol (LMNG). Added 2026-09-30, curation/lipid_review."
+    ],
     "JZR": [
       "small_molecule",
       "detergent",

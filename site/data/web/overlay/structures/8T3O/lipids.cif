@@ -1,0 +1,59 @@
+data_8T3O_lipids
+#
+# Membrane lipids and detergents within 6.0 A of the receptor in 8T3O,
+# copied unchanged from the RCSB PDB entry (CC0). Atlas lipid overlay.
+#
+_entry.id 8T3O
+#
+loop_
+_entity.id
+_entity.type
+_entity.pdbx_description
+8 non-polymer 'PALMITIC ACID'
+#
+loop_
+_chem_comp.id
+_chem_comp.type
+_chem_comp.name
+PLM non-polymer 'PALMITIC ACID'
+#
+loop_
+_atom_site.group_PDB
+_atom_site.id
+_atom_site.type_symbol
+_atom_site.label_atom_id
+_atom_site.label_alt_id
+_atom_site.label_comp_id
+_atom_site.label_asym_id
+_atom_site.label_entity_id
+_atom_site.label_seq_id
+_atom_site.pdbx_PDB_ins_code
+_atom_site.Cartn_x
+_atom_site.Cartn_y
+_atom_site.Cartn_z
+_atom_site.occupancy
+_atom_site.B_iso_or_equiv
+_atom_site.auth_seq_id
+_atom_site.auth_comp_id
+_atom_site.auth_asym_id
+_atom_site.auth_atom_id
+_atom_site.pdbx_PDB_model_num
+HETATM 9092 C C1 . PLM H 8 . ? 88.276 109.146 144.464 1.00 112.65 403 PLM R C1 1
+HETATM 9093 O O1 . PLM H 8 . ? 87.569 108.326 143.817 1.00 113.81 403 PLM R O1 1
+HETATM 9094 O O2 . PLM H 8 . ? 88.519 109.175 145.701 1.00 111.67 403 PLM R O2 1
+HETATM 9095 C C2 . PLM H 8 . ? 88.931 110.273 143.589 1.00 108.81 403 PLM R C2 1
+HETATM 9096 C C3 . PLM H 8 . ? 87.952 111.237 142.916 1.00 110.77 403 PLM R C3 1
+HETATM 9097 C C4 . PLM H 8 . ? 88.613 112.237 141.954 1.00 110.98 403 PLM R C4 1
+HETATM 9098 C C5 . PLM H 8 . ? 89.014 111.623 140.606 1.00 110.99 403 PLM R C5 1
+HETATM 9099 C C6 . PLM H 8 . ? 89.734 112.596 139.661 1.00 109.27 403 PLM R C6 1
+HETATM 9100 C C7 . PLM H 8 . ? 91.035 113.181 140.237 1.00 110.29 403 PLM R C7 1
+HETATM 9101 C C8 . PLM H 8 . ? 92.197 112.179 140.321 1.00 110.72 403 PLM R C8 1
+HETATM 9102 C C9 . PLM H 8 . ? 92.463 111.652 141.739 1.00 112.71 403 PLM R C9 1
+HETATM 9103 C CA . PLM H 8 . ? 93.851 111.026 141.917 1.00 111.83 403 PLM R CA 1
+HETATM 9104 C CB . PLM H 8 . ? 94.999 111.992 141.605 1.00 111.44 403 PLM R CB 1
+HETATM 9105 C CC . PLM H 8 . ? 96.391 111.361 141.724 1.00 111.58 403 PLM R CC 1
+HETATM 9106 C CD . PLM H 8 . ? 97.513 112.239 141.152 1.00 111.55 403 PLM R CD 1
+HETATM 9107 C CE . PLM H 8 . ? 97.278 112.669 139.698 1.00 110.91 403 PLM R CE 1
+HETATM 9108 C CF . PLM H 8 . ? 97.210 111.497 138.712 1.00 107.90 403 PLM R CF 1
+HETATM 9109 C CG . PLM H 8 . ? 96.531 111.857 137.389 1.00 107.81 403 PLM R CG 1
+#

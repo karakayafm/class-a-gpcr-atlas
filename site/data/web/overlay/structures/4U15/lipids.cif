@@ -1,0 +1,66 @@
+data_4U15_lipids
+#
+# Membrane lipids and detergents within 6.0 A of the receptor in 4U15,
+# copied unchanged from the RCSB PDB entry (CC0). Atlas lipid overlay.
+#
+_entry.id 4U15
+#
+loop_
+_entity.id
+_entity.type
+_entity.pdbx_description
+5 non-polymer '(2R)-2,3-dihydroxypropyl (9Z)-octadec-9-enoate'
+#
+loop_
+_chem_comp.id
+_chem_comp.type
+_chem_comp.name
+OLC non-polymer '(2R)-2,3-dihydroxypropyl (9Z)-octadec-9-enoate'
+#
+loop_
+_atom_site.group_PDB
+_atom_site.id
+_atom_site.type_symbol
+_atom_site.label_atom_id
+_atom_site.label_alt_id
+_atom_site.label_comp_id
+_atom_site.label_asym_id
+_atom_site.label_entity_id
+_atom_site.label_seq_id
+_atom_site.pdbx_PDB_ins_code
+_atom_site.Cartn_x
+_atom_site.Cartn_y
+_atom_site.Cartn_z
+_atom_site.occupancy
+_atom_site.B_iso_or_equiv
+_atom_site.auth_seq_id
+_atom_site.auth_comp_id
+_atom_site.auth_asym_id
+_atom_site.auth_atom_id
+_atom_site.pdbx_PDB_model_num
+HETATM 6253 C C18 . OLC J 5 . ? 31.845 88.618 67.427 1.00 113.77 1202 OLC B C18 1
+HETATM 6254 C C10 . OLC J 5 . ? 27.815 90.345 68.745 1.00 111.04 1202 OLC B C10 1
+HETATM 6255 C C9 . OLC J 5 . ? 27.096 91.699 68.790 1.00 101.76 1202 OLC B C9 1
+HETATM 6256 C C17 . OLC J 5 . ? 31.882 87.956 66.046 1.00 98.69 1202 OLC B C17 1
+HETATM 6257 C C11 . OLC J 5 . ? 27.964 89.722 67.351 1.00 111.17 1202 OLC B C11 1
+HETATM 6258 C C8 . OLC J 5 . ? 26.618 92.233 67.437 1.00 102.48 1202 OLC B C8 1
+HETATM 6259 C C24 . OLC J 5 . ? 28.702 104.257 70.079 1.00 120.77 1202 OLC B C24 1
+HETATM 6260 C C16 . OLC J 5 . ? 31.227 86.572 66.107 1.00 97.00 1202 OLC B C16 1
+HETATM 6261 C C12 . OLC J 5 . ? 27.384 88.303 67.365 1.00 101.82 1202 OLC B C12 1
+HETATM 6262 C C7 . OLC J 5 . ? 25.758 93.484 67.634 1.00 102.98 1202 OLC B C7 1
+HETATM 6263 C C15 . OLC J 5 . ? 29.761 86.686 66.545 1.00 109.59 1202 OLC B C15 1
+HETATM 6264 C C13 . OLC J 5 . ? 27.510 87.657 65.979 1.00 92.89 1202 OLC B C13 1
+HETATM 6265 C C6 . OLC J 5 . ? 26.588 94.554 68.348 1.00 94.25 1202 OLC B C6 1
+HETATM 6266 C C14 . OLC J 5 . ? 28.978 87.550 65.547 1.00 104.26 1202 OLC B C14 1
+HETATM 6267 C C5 . OLC J 5 . ? 25.767 95.831 68.540 1.00 102.89 1202 OLC B C5 1
+HETATM 6268 C C4 . OLC J 5 . ? 26.635 96.871 69.254 1.00 107.13 1202 OLC B C4 1
+HETATM 6269 C C3 . OLC J 5 . ? 27.880 97.148 68.399 1.00 106.48 1202 OLC B C3 1
+HETATM 6270 C C2 . OLC J 5 . ? 28.822 98.186 69.035 1.00 99.06 1202 OLC B C2 1
+HETATM 6271 C C21 . OLC J 5 . ? 28.375 101.797 69.747 1.00 112.95 1202 OLC B C21 1
+HETATM 6272 C C1 . OLC J 5 . ? 28.184 99.575 69.209 1.00 117.77 1202 OLC B C1 1
+HETATM 6273 C C22 . OLC J 5 . ? 29.408 102.901 69.987 1.00 114.76 1202 OLC B C22 1
+HETATM 6274 O O19 . OLC J 5 . ? 27.009 99.802 68.926 1.00 124.40 1202 OLC B O19 1
+HETATM 6275 O O25 . OLC J 5 . ? 29.665 105.293 70.295 1.00 125.87 1202 OLC B O25 1
+HETATM 6276 O O23 . OLC J 5 . ? 30.100 102.638 71.211 1.00 124.10 1202 OLC B O23 1
+HETATM 6277 O O20 . OLC J 5 . ? 29.045 100.534 69.649 1.00 126.98 1202 OLC B O20 1
+#

@@ -1,0 +1,80 @@
+data_3AYM_lipids
+#
+# Membrane lipids and detergents within 6.0 A of the receptor in 3AYM,
+# copied unchanged from the RCSB PDB entry (CC0). Atlas lipid overlay.
+#
+_entry.id 3AYM
+#
+loop_
+_entity.id
+_entity.type
+_entity.pdbx_description
+2 non-polymer 'PALMITIC ACID'
+3 non-polymer 'octyl beta-D-glucopyranoside'
+#
+loop_
+_chem_comp.id
+_chem_comp.type
+_chem_comp.name
+BOG D-saccharide 'octyl beta-D-glucopyranoside'
+PLM non-polymer 'PALMITIC ACID'
+#
+loop_
+_atom_site.group_PDB
+_atom_site.id
+_atom_site.type_symbol
+_atom_site.label_atom_id
+_atom_site.label_alt_id
+_atom_site.label_comp_id
+_atom_site.label_asym_id
+_atom_site.label_entity_id
+_atom_site.label_seq_id
+_atom_site.pdbx_PDB_ins_code
+_atom_site.Cartn_x
+_atom_site.Cartn_y
+_atom_site.Cartn_z
+_atom_site.occupancy
+_atom_site.B_iso_or_equiv
+_atom_site.auth_seq_id
+_atom_site.auth_comp_id
+_atom_site.auth_asym_id
+_atom_site.auth_atom_id
+_atom_site.pdbx_PDB_model_num
+HETATM 5543 C C1 . PLM C 2 . ? -6.220 45.508 80.422 1.00 48.52 1001 PLM A C1 1
+HETATM 5544 O O2 . PLM C 2 . ? -7.269 44.906 80.438 1.00 45.17 1001 PLM A O2 1
+HETATM 5545 C C2 . PLM C 2 . ? -4.950 44.728 80.143 1.00 51.80 1001 PLM A C2 1
+HETATM 5546 C C3 . PLM C 2 . ? -4.283 45.107 78.816 1.00 58.34 1001 PLM A C3 1
+HETATM 5547 C C4 . PLM C 2 . ? -4.138 43.888 77.912 1.00 62.26 1001 PLM A C4 1
+HETATM 5548 C C5 . PLM C 2 . ? -3.253 44.179 76.724 1.00 65.92 1001 PLM A C5 1
+HETATM 5549 C C6 . PLM C 2 . ? -3.145 42.933 75.854 1.00 67.40 1001 PLM A C6 1
+HETATM 5550 C C7 . PLM C 2 . ? -2.765 43.282 74.416 1.00 66.82 1001 PLM A C7 1
+HETATM 5551 C C8 . PLM C 2 . ? -2.668 42.021 73.531 1.00 65.99 1001 PLM A C8 1
+HETATM 5552 C C9 . PLM C 2 . ? -1.919 42.277 72.222 1.00 70.13 1001 PLM A C9 1
+HETATM 5553 C CA . PLM C 2 . ? -2.808 42.787 71.098 1.00 69.98 1001 PLM A CA 1
+HETATM 5554 C CB . PLM C 2 . ? -1.973 43.618 70.131 1.00 72.27 1001 PLM A CB 1
+HETATM 5555 C CC . PLM C 2 . ? -2.642 43.755 68.770 1.00 73.70 1001 PLM A CC 1
+HETATM 5556 C CD . PLM C 2 . ? -1.774 44.600 67.830 1.00 74.80 1001 PLM A CD 1
+HETATM 5557 C CE . PLM C 2 . ? -1.680 43.960 66.443 1.00 71.57 1001 PLM A CE 1
+HETATM 5558 C CF . PLM C 2 . ? -2.371 44.807 65.360 1.00 69.92 1001 PLM A CF 1
+HETATM 5559 C CG . PLM C 2 . ? -2.268 44.159 63.971 1.00 68.01 1001 PLM A CG 1
+HETATM 5560 C C1 . BOG D 3 . ? 12.307 44.158 90.242 1.00 93.53 1005 BOG A C1 1
+HETATM 5561 O O1 . BOG D 3 . ? 13.163 44.112 89.169 1.00 86.85 1005 BOG A O1 1
+HETATM 5562 C C2 . BOG D 3 . ? 12.740 42.933 91.081 1.00 97.01 1005 BOG A C2 1
+HETATM 5563 O O2 . BOG D 3 . ? 12.604 41.625 90.372 1.00 100.87 1005 BOG A O2 1
+HETATM 5564 C C3 . BOG D 3 . ? 11.811 43.017 92.221 1.00 97.58 1005 BOG A C3 1
+HETATM 5565 O O3 . BOG D 3 . ? 12.195 41.932 93.013 1.00 95.67 1005 BOG A O3 1
+HETATM 5566 C C4 . BOG D 3 . ? 11.976 44.405 92.935 1.00 97.06 1005 BOG A C4 1
+HETATM 5567 O O4 . BOG D 3 . ? 11.091 44.477 94.001 1.00 95.52 1005 BOG A O4 1
+HETATM 5568 C C5 . BOG D 3 . ? 11.574 45.561 92.086 1.00 96.89 1005 BOG A C5 1
+HETATM 5569 O O5 . BOG D 3 . ? 12.473 45.470 90.978 1.00 94.93 1005 BOG A O5 1
+HETATM 5570 C C6 . BOG D 3 . ? 11.764 46.972 92.816 1.00 96.72 1005 BOG A C6 1
+HETATM 5571 O O6 . BOG D 3 . ? 10.559 47.885 92.556 1.00 92.00 1005 BOG A O6 1
+HETATM 5572 C C1' . BOG D 3 . ? 12.228 44.283 88.114 1.00 78.94 1005 BOG A C1' 1
+HETATM 5573 C C2' . BOG D 3 . ? 13.030 44.840 87.027 1.00 73.47 1005 BOG A C2' 1
+HETATM 5574 C C3' . BOG D 3 . ? 12.769 43.881 85.896 1.00 68.65 1005 BOG A C3' 1
+HETATM 5575 C C4' . BOG D 3 . ? 14.038 43.874 85.208 1.00 65.31 1005 BOG A C4' 1
+HETATM 5576 C C5' . BOG D 3 . ? 13.747 43.452 83.793 1.00 59.01 1005 BOG A C5' 1
+HETATM 5577 C C6' . BOG D 3 . ? 14.830 42.553 83.508 1.00 53.81 1005 BOG A C6' 1
+HETATM 5578 C C7' . BOG D 3 . ? 14.362 41.893 82.267 1.00 53.71 1005 BOG A C7' 1
+HETATM 5579 C C8' . BOG D 3 . ? 14.598 40.510 82.566 1.00 50.72 1005 BOG A C8' 1
+#
