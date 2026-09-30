@@ -56,7 +56,7 @@ export async function motifFind(root, route) {
   const state = {
     query: String(route.motif || ""),
     scope: String(route.scope || "class_a"),
-    pool: POOLS[route.pool] ? route.pool : "motif",
+    pool: POOLS[route.pool] ? route.pool : "receptor",
     tab: TABS.includes(route.tab) ? route.tab : "",
     open: String(route.open || "")
   };
@@ -77,7 +77,7 @@ export async function motifFind(root, route) {
     if (route.family) r.family = route.family;
     if (state.query) r.motif = state.query;
     if (state.scope !== "class_a") r.scope = state.scope;
-    if (state.pool !== "motif") r.pool = state.pool;
+    if (state.pool !== "receptor") r.pool = state.pool;
     if (state.tab) r.tab = state.tab;
     if (state.open) r.open = state.open;
     navigate(r, true);
@@ -127,7 +127,7 @@ export async function motifFind(root, route) {
   // Advanced: which position set the motifs and the field read from. Folded: the default answers
   // the question most readers arrive with.
   const poolSelect = el("select", { "aria-label": t("mq_pool") });
-  for (const [v, k] of [["motif", "mq_pool_motif"], ["pocket", "mq_pool_pocket"], ["receptor", "mq_pool_receptor"]])
+  for (const [v, k] of [["receptor", "mq_pool_receptor"], ["motif", "mq_pool_motif"], ["pocket", "mq_pool_pocket"]])
     poolSelect.appendChild(el("option", { value: v, text: t(k) }));
   poolSelect.value = state.pool;
   poolSelect.addEventListener("change", async () => {
@@ -142,6 +142,8 @@ export async function motifFind(root, route) {
       el("p", { class: "muted small" }, [el("span", { text: t("mf_full_panel_note") + " " }), fullLink])])]));
 
   /* ------------------------------------------------------------ 2. what was asked */
+  const logoBox = el("div", { class: "mf-logo-box" });
+  wrap.appendChild(logoBox);
   const cards = el("div", { class: "mf-cards" });
   wrap.appendChild(cards);
   const problems = el("div", {});
@@ -166,6 +168,9 @@ export async function motifFind(root, route) {
     chips.appendChild(el("span", { class: "muted small mf-chips-label", text: t("mf_ready") }));
     const held = new Set(parsed.groups.map(g => g.position));
     for (const m of payload.motifs || []) {
+      // The named motifs only: the whole-receptor set also carries one consensus group per binding
+      // site class, which are position sets rather than motifs and made the row twice as long.
+      if (t("motif_" + m.motif_id) === "motif_" + m.motif_id && !m.motif_id.startsWith("segment_")) continue;
       const tokens = consensusTokens(m);
       if (!tokens.length) continue;
       const text = tokens.join(" ");
@@ -292,8 +297,12 @@ export async function motifFind(root, route) {
     }
     writeRoute();
   }
-  function drawAnswer(parsed, agg) {
+  function drawAnswer(parsed, agg, logoOnly) {
     clear(answer);
+    if (!parsed.groups.length && logoOnly) {
+      answer.appendChild(el("p", { class: "muted mf-logo-only", text: t("mf_logo_only") }));
+      return;
+    }
     if (!parsed.groups.length) {
       answer.appendChild(el("div", { class: "mf-empty" }, [
         el("p", { text: t("mf_empty") }),
@@ -396,9 +405,109 @@ export async function motifFind(root, route) {
 
   }
 
+  /* Positions asked for without a residue - `3x50`, or a run such as `3x49-3x53` - are a request
+     to see the distribution there, not to match anything, so they go to the logo and not to the
+     scorer (which would report them as unreadable). */
+  const orderOf = p => { const m = /^(\d+)x(\d+)$/.exec(p); return m ? Number(m[1]) * 1000 + Number(m[2]) : 1e9; };
+  function splitQuery(text) {
+    const keep = [], positions = [], shownTokens = [], bad = [];
+    const bwIndex = (numbering && numbering.bw_index) || {};
+    for (const token of String(text || "").split(/[\s,;+]+/).filter(Boolean)) {
+      const range = /^(\d+)x(\d+)-(?:(\d+)x)?(\d+)$/.exec(token);
+      const bare = /^(\d+[x.]\d+)$/.exec(token);
+      if (range) {
+        const helix = range[1], from = Number(range[2]), to = Number(range[4]);
+        if (range[3] && range[3] !== helix) { keep.push(token); continue; }
+        const lo = Math.min(from, to), hi = Math.max(from, to);
+        const found = payload.positions.filter(p => { const m = /^(\d+)x(\d+)$/.exec(p);
+          return m && m[1] === helix && Number(m[2]) >= lo && Number(m[2]) <= hi; });
+        if (found.length) { positions.push(...found); shownTokens.push(token); } else keep.push(token);
+      } else if (bare) {
+        let p = bare[1];
+        if (p.includes(".")) p = bwIndex[p] || p;
+        if (known.has(p)) { positions.push(p); shownTokens.push(token); } else keep.push(token);
+      } else keep.push(token);
+    }
+    return { scored: keep.join(" "), positions: [...new Set(positions)], shownTokens };
+  }
+  /* The distribution at the positions in view, as a sequence logo: one column per position, the
+     residues stacked by frequency among the receptors in scope and the stack as tall as the
+     position's information content (log2 20 minus its entropy, in bits) - the conventional logo,
+     so a conserved position stands tall and a variable one stays low. Counted per receptor, as
+     everything here is. Clicking a letter asks for it. */
+  const LOGO_COLOURS = { G:"#0f9d58", S:"#0f9d58", T:"#0f9d58", Y:"#0f9d58", C:"#0f9d58",
+    Q:"#8e44ad", N:"#8e44ad", K:"#2563c9", R:"#2563c9", H:"#2563c9", D:"#d23a2f", E:"#d23a2f",
+    A:"#222", V:"#222", L:"#222", I:"#222", P:"#222", W:"#222", F:"#222", M:"#222" };
+  const MAX_BITS = Math.log2(20);
+  function drawLogo(parsed, split) {
+    clear(logoBox);
+    const positions = [...new Set([...parsed.groups.map(g => g.position), ...split.positions])]
+      .sort((a, b) => orderOf(a) - orderOf(b));
+    if (!positions.length) return;
+    const dist = (payload.variation || {})[state.scope] || {};
+    const asked = new Map(parsed.groups.map(g => [g.position, g.residues]));
+    const NS = "http://www.w3.org/2000/svg";
+    const colW = 30, H = 130, top = 8, left = 34, bottom = 44;
+    const W = left + positions.length * colW + 8;
+    const svg = document.createElementNS(NS, "svg");
+    svg.setAttribute("viewBox", "0 0 " + W + " " + (H + top + bottom));
+    svg.setAttribute("width", String(W)); svg.setAttribute("height", String(H + top + bottom));
+    svg.setAttribute("class", "mf-logo");
+    const mk = (name, attrs, text) => { const n = document.createElementNS(NS, name);
+      for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, String(v));
+      if (text !== undefined) n.textContent = text; return n; };
+    // Axis in bits.
+    svg.appendChild(mk("line", { x1: left - 4, y1: top, x2: left - 4, y2: top + H, class: "mf-logo-axis" }));
+    for (const b of [0, 1, 2, 3, 4]) {
+      const y = top + H - (b / MAX_BITS) * H;
+      svg.appendChild(mk("line", { x1: left - 8, y1: y, x2: left - 4, y2: y, class: "mf-logo-axis" }));
+      svg.appendChild(mk("text", { x: left - 11, y: y + 3.5, class: "mf-logo-tick", "text-anchor": "end" }, String(b)));
+    }
+    svg.appendChild(mk("text", { x: 9, y: top + H / 2, class: "mf-logo-tick",
+      transform: "rotate(-90 9 " + (top + H / 2) + ")", "text-anchor": "middle" }, t("mf_logo_bits")));
+    positions.forEach((p, i) => {
+      const x = left + i * colW;
+      const rec = dist[p];
+      const pairs = (rec && rec.by_receptor) || [];
+      const total = pairs.reduce((a, kv) => a + kv[1], 0);
+      if (asked.has(p)) svg.appendChild(mk("rect", { x: x + 1, y: top, width: colW - 2, height: H, class: "mf-logo-asked" }));
+      if (total) {
+        let Hs = 0;
+        for (const [, n] of pairs) { const q = n / total; if (q > 0) Hs -= q * Math.log2(q); }
+        const ic = Math.max(0, MAX_BITS - Hs);
+        let y = top + H;
+        // Smallest at the bottom, the most common on top, as logos are read.
+        for (const [res, n] of pairs.slice().sort((a, b) => a[1] - b[1])) {
+          const h = (n / total) * (ic / MAX_BITS) * H;
+          if (h < 0.6) { continue; }
+          const g = mk("text", { x: 0, y: 0, class: "mf-logo-letter", fill: LOGO_COLOURS[res] || "#666",
+            "text-anchor": "middle",
+            transform: "translate(" + (x + colW / 2) + " " + y + ") scale(" + (colW / 10 * 0.95).toFixed(3) + " " + (h / 7.3).toFixed(3) + ")" }, res);
+          g.appendChild(mk("title", {}, p + " " + res + ": " + n + " / " + total + " " + t("mf_logo_receptors")));
+          g.addEventListener("click", () => {
+            const cur = input.value.split(/[\s,;+]+/).filter(Boolean)
+              .filter(tok => !new RegExp("^" + p.replace(".", "\\.") + "[A-Za-z]*$").test(tok));
+            const next = [...cur, p + res].join(" ");
+            input.value = next; set({ query: next, open: "", tab: "" });
+          });
+          svg.appendChild(g);
+          y -= h;
+        }
+      }
+      svg.appendChild(mk("text", { x: x + colW / 2, y: top + H + 12, class: "mf-logo-pos",
+        transform: "rotate(-60 " + (x + colW / 2) + " " + (top + H + 12) + ")", "text-anchor": "end" }, p));
+    });
+    logoBox.appendChild(el("div", { class: "mf-logo-head" }, [
+      el("strong", { text: t("mf_logo_title") }),
+      el("span", { class: "muted small", text: " " + t("mf_logo_note") })]));
+    logoBox.appendChild(el("div", { class: "mf-logo-scroll" }, [svg]));
+  }
   function draw() {
-    const parsed = parseQuery(state.query, known, numbering);
-    if (document.activeElement !== input && !parsed.bad.length) input.value = queryText(parsed.groups) || state.query;
+    const split = splitQuery(state.query);
+    const parsed = parseQuery(split.scored, known, numbering);
+    if (document.activeElement !== input && !parsed.bad.length)
+      input.value = [queryText(parsed.groups), ...split.shownTokens].filter(Boolean).join(" ") || state.query;
+    drawLogo(parsed, split);
     const spec = specificity(payload, state.scope, parsed.groups, null);
     fullLink.href = "#" + buildHash({ view: "motifsearch", family: route.family, motif: queryText(parsed.groups) || null,
       scope: state.scope !== "class_a" ? state.scope : null, pool: state.pool !== "motif" ? state.pool : null }).slice(1);
@@ -406,7 +515,7 @@ export async function motifFind(root, route) {
     drawChips(parsed);
     drawCards(parsed, spec);
     const agg = parsed.groups.length ? aggregate(payload, parsed.groups, posIndex, spec, state.scope) : null;
-    drawAnswer(parsed, agg);
+    drawAnswer(parsed, agg, split.positions.length > 0);
   }
   draw();
   return wrap;
