@@ -613,7 +613,7 @@ export const DICT = {
     v_all_ligands: "Tüm farmakolojik ligandlar", v_contacts: "Temas kalıntıları",
     v_side_chains: "Yan zincirler",
     curation_note: "Kürasyon notu:",
-    v_transducer_layer: "Transdüser",
+    v_transducer_layer: "İletici",
     v_transducer_hint: "Bu yapının G proteini ya da arrestin zincirleri - {chains} - kurdele olarak çizilir; reseptöre 8 Å içindeki rezidülerde yan zincirler de gösterilir. Nanokor, scFv16, Fab parçaları ve füzyon ortakları dahil değildir.",
     v_transducer_none: "Bu yapıda modellenmiş G proteini ya da arrestin zinciri yok.",
     v_lipids: "Lipidler", v_lipids_hint: "Kayıtlı yapıda modellenmiş membran lipidleri ve deterjanlar - kolesterol, monoolein, fosfolipitler, yağ asitleri, glukozit ve maltozit deterjanları. Modelin parçasıdırlar, ligand değildirler; kaydın bu yapının ligandı saydığı bir bileşen burada çizilmez.",
