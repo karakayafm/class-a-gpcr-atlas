@@ -574,6 +574,7 @@ export function setMeasureMode(on, onChange) {
   measureMode = !!on;
   measureChanged = onChange || measureChanged;
   if (was !== measureMode && contactsOn) addContactSideChains();
+  if (was !== measureMode) restylePartners();
   if (!measureMode) { measureAtoms.length = 0; measureKept.length = 0; measureDraw(); }
   if (measureChanged) measureChanged();
   return measureMode;
@@ -581,9 +582,20 @@ export function setMeasureMode(on, onChange) {
 
 /* Attached once per stage. The guard is here rather than on the binding so that turning the mode
    off and on again does not accumulate handlers on a stage that outlives both. */
+/* A click on a stick lands on a bond at least as often as on an atom - on thin licorice, such as a
+   lipid tail, almost always - and a bond pick carries no atom. Those clicks used to be dropped
+   without a word. NGL knows which end of the bond is nearer the mouse, and that is the atom meant. */
+function pickedAtom(pick) {
+  if (pick.atom) return pick.atom;
+  try { return pick.type === "bond" ? pick.closestBondAtom || null : null; } catch (e) { return null; }
+}
 function onScenePick(pick) {
-  if (!measureMode || !pick || !pick.atom) return;
-  const atom = pick.atom;
+  if (!measureMode || !pick) return;
+  const found = pickedAtom(pick);
+  if (!found) return;
+  // A bond proxy's atoms are reused as the proxy moves; the measurement keeps coordinates, but the
+  // atom handed on must stay the one picked.
+  const atom = found.structure.getAtomProxy(found.index);
   /* Clicking a picked atom takes it back, the way clicking a selected residue does in the lists.
      Without this a second click on the same atom added a duplicate, and a duplicate can never
      produce an answer - two coincident points have no angle - so the reader was left with a
@@ -818,6 +830,11 @@ function dropRep(key) {
 export function applyDefaults() {
   if (!comp || !meta) return;
   for (const k of Object.keys(reps)) dropRep(k);
+  // The lipid and transducer layers live partly outside this component; a reset puts the panel's
+  // buttons back to off, so what they drew goes too rather than staying on under an "off" button.
+  for (const kind of ["lipids", "transducer"]) { partnerWanted[kind] = false; dropPartnerContacts(kind); }
+  if (lipidOverlay) lipidOverlay.setVisibility(false);
+  if (transducerOverlay) transducerOverlay.setVisibility(false);
   const rc = receptorSelection();
   ligandMode = "cartoon";
   selectedResidues.clear(); selectedMotifs.clear();
@@ -1467,9 +1484,9 @@ export const toggles = {
       if (transducerOverlay) transducerOverlay.setVisibility(false);
       dropPartnerContacts("transducer"); return;
     }
-    if (transducerEntry()) showTransducerOverlay().then(() => {
+    if (transducerEntry()) return showTransducerOverlay().then(() => {
       if (partnerWanted.transducer && transducerOverlay)
-        showPartnerContacts("transducer", [transducerOverlay.structure]);
+        return showPartnerContacts("transducer", [transducerOverlay.structure]);
     });
   },
   lipids(on) {
@@ -1479,13 +1496,14 @@ export const toggles = {
       dropPartnerContacts("lipids"); return;
     }
     const s = lipidSelection();
-    if (s) addRep("lipids", "licorice", Object.assign({ sele: s }, LIPID_STYLE));
-    (overlayHasLipids() ? showLipidOverlay() : Promise.resolve()).then(() => {
+    const ls = lipidStyle();
+    if (s) addRep("lipids", ls.type, Object.assign({ sele: s }, ls.params));
+    return (overlayHasLipids() ? showLipidOverlay() : Promise.resolve()).then(() => {
       if (!partnerWanted.lipids) return;
       const parts = [];
       if (s) parts.push(comp.structure.getView(new window.NGL.Selection(s)));
       if (lipidOverlay && overlayHasLipids()) parts.push(lipidOverlay.structure);
-      if (parts.length) showPartnerContacts("lipids", parts);
+      if (parts.length) return showPartnerContacts("lipids", parts);
     });
   },
   ions(on) { if (!on) { dropRep("ions"); return; }
@@ -1525,6 +1543,12 @@ function lipidSelection() {
    for and kept for the rest of this structure's session. */
 let lipidIndex, lipidOverlay = null;
 const LIPID_STYLE = { colorScheme: "element", colorValue: 0xc9ced4, radiusScale: 0.55, opacity: 0.9 };
+function lipidStyle() {
+  return measureMode
+    ? { type: "ball+stick", params: { colorScheme: "element", colorValue: LIPID_STYLE.colorValue,
+                                      aspectRatio: 1.9, scale: 0.30 } }
+    : { type: "licorice", params: LIPID_STYLE };
+}
 function overlayHasLipids() {
   return !!(meta && lipidIndex && lipidIndex.structures && lipidIndex.structures[meta.pdb_id]);
 }
@@ -1537,10 +1561,12 @@ async function showLipidOverlay() {
       const c = await stage.loadFile(base() + "overlay/structures/" + pdb + "/lipids.cif",
         { ext: "cif", name: pdb + " lipids" });
       if (!meta || meta.pdb_id !== pdb) { stage.removeComponent(c); return; }  // moved on meanwhile
-      c.addRepresentation("licorice", LIPID_STYLE);
       lipidOverlay = c;
     } catch (e) { return; }
   }
+  lipidOverlay.removeAllRepresentations();
+  const ls = lipidStyle();
+  lipidOverlay.addRepresentation(ls.type, ls.params);
   lipidOverlay.setVisibility(true);
 }
 export function hasLipids() { return !!lipidSelection() || overlayHasLipids(); }
@@ -1566,6 +1592,7 @@ function dropPartnerContacts(kind) {
   const stage = LC.getStage(), c = partnerContacts[kind];
   if (c && stage) { try { stage.removeComponent(c); } catch (e) {} }
   partnerContacts[kind] = null; partnerSummary[kind] = null;
+  dropRep("partner_" + kind + "_side"); dropRep("partner_" + kind + "_labels");
   if (kind === "transducer" && transducerOverlay) setTransducerShell(true);
 }
 async function showPartnerContacts(kind, partners) {
@@ -1609,8 +1636,14 @@ async function showPartnerContacts(kind, partners) {
   const recSele = "(" + [...recResidues.keys()].join(" or ") + ") and " + receptorPart;
   const partnerSele = "(" + [...partnerResidues.values()].map(r => r.n + ":" + r.c).join(" or ") +
     ") and " + partnerPart;
-  c.addRepresentation("licorice", { sele: "(" + recSele + ") and sidechainAttached and not hydrogen",
-    colorScheme: "element", colorValue: PARTNER_TINT[kind], radiusScale: 0.8 });
+  // The receptor's side of it goes on the receptor's own component, drawn and labelled the way
+  // the ligand's contacts are: an atom clicked there is the receptor's (so a measurement names it
+  // by generic position), and the labels sort with the receptor's cartoon instead of being washed
+  // out by it from half the angles.
+  const recOnBase = "(" + [...recResidues.keys()].join(" or ") + ") and " + receptorSele;
+  const side = partnerAtomStyle(PARTNER_TINT[kind], 0.8);
+  addRep("partner_" + kind + "_side", side.type,
+    Object.assign({ sele: "(" + recOnBase + ") and sidechainAttached and not hydrogen" }, side.params));
   if (kind === "transducer") {
     // The partner's own contacting side chains, in its subunit colours, replace the 8 A shell.
     setTransducerShell(false);
@@ -1618,10 +1651,10 @@ async function showPartnerContacts(kind, partners) {
     for (const [ch, info] of Object.entries(entry.chains)) {
       const mine = [...partnerResidues.values()].filter(r => r.c === ch);
       if (!mine.length) continue;
-      c.addRepresentation("licorice", {
+      const st = partnerAtomStyle(SUBUNIT_COLOURS[info.subunit] || 0xb0b4ba, 0.7);
+      c.addRepresentation(st.type, Object.assign({
         sele: "(" + mine.map(r => r.n + ":" + ch).join(" or ") + ") and " + partnerPart +
-          " and sidechainAttached and not hydrogen",
-        colorScheme: "element", colorValue: SUBUNIT_COLOURS[info.subunit] || 0xb0b4ba, radiusScale: 0.7 });
+          " and sidechainAttached and not hydrogen" }, st.params));
     }
   }
   // concatStructures makes each part a model of its own, and NGL drops every contact between two
@@ -1633,23 +1666,37 @@ async function showPartnerContacts(kind, partners) {
   // Receptor residues named by generic position where the numbering table has one.
   const generic = new Map(residueTable.map(r => [residueKey(r.c, r.n), r]));
   const text = {};
-  combined.eachAtom(a => {
-    if (!receptorSet.isSet(a.index)) return;
+  comp.structure.eachAtom(a => {
     const r = recResidues.get(residueKey(a.chainname, a.resno));
     if (!r) return;
     const g = generic.get(residueKey(a.chainname, a.resno));
     text[a.index] = g && g.p ? (g.a || oneLetter(r.name)) + genericShort(g.p) : r.name + r.n;
-  }, new NGL.Selection(".CA"));
-  const labels = c.addRepresentation("label", { sele: "(" + recSele + ") and .CA", labelType: "text",
-    labelText: text, color: labelColour("white"), backgroundColor: "#111111", backgroundOpacity: 0.68,
-    showBackground: true, fixedSize: false, labelSize: 2.2, radius: 0.8, zOffset: 2 });
-  // An interface sits inside the partner's fold, so the labels are drawn over everything; the
-  // names are what the reader came for, and a residue label cannot be mistaken for a structure.
-  drawOnTop(labels);
+  }, new NGL.Selection("(" + recOnBase + ") and .CA"));
+  // The same label parameters as the ligand's contact labels, on the same component.
+  addRep("partner_" + kind + "_labels", "label", { sele: "(" + recOnBase + ") and .CA",
+    labelType: "text", labelText: text, color: labelColour("white"), backgroundColor: "#111111",
+    backgroundOpacity: 0.68, showBackground: true, fixedSize: false, labelSize: 2.2, radius: 0.8,
+    zOffset: 2 });
   partnerContacts[kind] = c;
   partnerSummary[kind] = { receptor: recResidues.size, partner: partnerResidues.size };
-  // The contacts are what was asked for, so the camera goes to them.
-  try { c.autoView("(" + recSele + ") or (" + partnerSele + ")", 800); } catch (e) {}
+  // The contacts are what was asked for, so the camera goes to them - once, not on every redraw.
+  if (partnerFrame) try { c.autoView("(" + recSele + ") or (" + partnerSele + ")", 800); } catch (e) {}
+}
+/* Atoms a reader may want to measure to: licorice to look at, ball-and-stick in measurement mode,
+   exactly as the ligand's contacting side chains switch - licorice has no atom centres to click. */
+function partnerAtomStyle(colour, radiusScale) {
+  return measureMode
+    ? { type: "ball+stick", params: { colorScheme: "element", colorValue: colour, aspectRatio: 1.9, scale: 0.30 } }
+    : { type: "licorice", params: { colorScheme: "element", colorValue: colour, radiusScale } };
+}
+let partnerFrame = true;
+/* Measurement mode changed: redraw what is on, in the other form, without moving the camera. */
+async function restylePartners() {
+  partnerFrame = false;
+  try {
+    if (partnerWanted.lipids) await toggles.lipids(true);
+    if (partnerWanted.transducer) await toggles.transducer(true);
+  } finally { partnerFrame = true; }
 }
 /* While the contacts are on, the transducer's own cartoon is thinned and stops hiding what is
    behind it - the interface is inside the G protein, and an opaque ribbon covered every line and
@@ -1662,13 +1709,7 @@ function setTransducerShell(on) {
                                                         : { opacity: 0.45, depthWrite: false });
   }
 }
-function drawOnTop(element) {
-  for (const buffer of (element && element.repr && element.repr.bufferList) || []) {
-    for (const m of [buffer.material, buffer.wireframeMaterial]) {
-      if (m) { m.depthTest = false; m.needsUpdate = true; }
-    }
-  }
-}
+
 
 /* G protein and arrestin chains, from overlay/structures/<PDB>/transducer.cif.gz: backbone
    throughout and whole residues at the receptor interface, in the bundle's deposited frame. Each
