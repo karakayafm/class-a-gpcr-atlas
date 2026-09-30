@@ -243,7 +243,7 @@ export function parseQuery(text, known, numbering) {
   const groups = [...byPosition.values()].sort((a, b) => order(a.position) - order(b.position));
   return { groups, bad, retired, translated };
 }
-function queryText(groups) {
+export function queryText(groups) {
   return groups.map(g => g.position + [...g.residues].sort().join("")).join(" ");
 }
 
@@ -253,7 +253,7 @@ function queryText(groups) {
    derived from it. A position where every Class A receptor carries the same residue answers no
    question - every receptor matches it - so asking for the consensus there tells a reader
    nothing, and the weighted score discounts it towards zero. */
-function specificity(payload, scope, groups, allow) {
+export function specificity(payload, scope, groups, allow) {
   const dist = (payload.variation || {})[scope] || {};
   const stats = new Map();
   for (const p of payload.positions) {
@@ -361,7 +361,7 @@ function uniqueProfiles(structures) {
    Counted once per receptor - a receptor with eighty depositions is one receptor - and reported
    against the whole scope as a background, so "62% of peptide receptors, 3.4x the Class A rate"
    can be read off directly. Enrichment is the family's share divided by the scope's share. */
-function familyDistribution(payload, scope, position, residues, posIndex) {
+export function familyDistribution(payload, scope, position, residues, posIndex) {
   const index = posIndex.get(position);
   if (index === undefined) return null;
   const seen = new Map();                       // receptor -> { family, carries }
@@ -400,7 +400,7 @@ function median(values) {
    most of the query; where two saw the same, the one that matched more of it. Ranking a receptor
    on its best-covered structure keeps a partially disordered deposition from speaking for a
    receptor that also has a complete one. */
-function aggregate(payload, groups, posIndex, spec, scope) {
+export function aggregate(payload, groups, posIndex, spec, scope) {
   const byReceptor = new Map();
   for (const [pdb, record] of Object.entries(payload.structures)) {
     if (scope !== "class_a" && record.f !== scope) continue;

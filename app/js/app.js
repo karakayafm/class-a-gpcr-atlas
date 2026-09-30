@@ -10,6 +10,7 @@ import { downloadXLSX } from "./components/xlsx.js";
 import * as V from "./views/views.js";
 import { ligandExplorer } from "./views/ligands.js";
 import * as MQ from "./views/motifquery.js";
+import { motifFind } from "./views/motiffind.js";
 import { contactMap } from "./views/contactmap.js";
 import * as VIEW from "./viewer/viewer.js";
 import * as ALIGN from "./viewer/align.js";
@@ -1350,6 +1351,8 @@ async function render(r) {
       // Rebuilt as its own module: the panel scores receptors rather than filtering depositions,
       // and its state is restored from the route rather than from a closure.
       case "motifsearch": node = await MQ.motifQuery(main, r); break;
+      // The same scoring read as one question and its answer (prototype, reached by address).
+      case "motiffind": node = await motifFind(main, r); break;
       // A family taken apart by ligand class and distance threshold; its state is in the route.
       case "contactmap": node = await contactMap(main, r); break;
       case "evidence": node = await V.evidence(main, r.family, r.open === "1"); break;
