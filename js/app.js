@@ -53,7 +53,8 @@ function buildChrome(manifest) {
        ["guide", "nav_guide"], ["methods", "nav_methods"], ["sources", "nav_sources"],
        ["references", "nav_references"], ["cite", "nav_cite"]];
   for (const [view, key] of items) {
-    const on = r.view === view;
+    // Find motif has two readings - the page and its detailed panel - and both are that tab.
+    const on = r.view === view || (view === "motifsearch" && (r.view === "motifpanel" || r.view === "motiffind"));
     nav.appendChild(el("a", { class: "navlink" + (on ? " active" : ""),
       href: "#" + (r.family && view !== "landing" ? "family=" + r.family + "&" : "") + "view=" + view,
       "aria-current": on ? "page" : null, text: t(key) }));
@@ -1350,9 +1351,10 @@ async function render(r) {
       case "ligands": node = await ligandExplorer(main, r.ligand); break;
       // Rebuilt as its own module: the panel scores receptors rather than filtering depositions,
       // and its state is restored from the route rather than from a closure.
-      case "motifsearch": node = await MQ.motifQuery(main, r); break;
-      // The same scoring read as one question and its answer (prototype, reached by address).
-      case "motiffind": node = await motifFind(main, r); break;
+      // Find motif: one question and its answer. The detailed panel (entropy, weights, the position
+      // reference) is the same scoring read in full, linked from the page's settings.
+      case "motifsearch": case "motiffind": node = await motifFind(main, r); break;
+      case "motifpanel": node = await MQ.motifQuery(main, r); break;
       // A family taken apart by ligand class and distance threshold; its state is in the route.
       case "contactmap": node = await contactMap(main, r); break;
       case "evidence": node = await V.evidence(main, r.family, r.open === "1"); break;
