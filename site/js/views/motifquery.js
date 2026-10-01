@@ -100,7 +100,9 @@ function stateFromRoute(route) {
 /* The inverse. Defaults are omitted so an untouched panel keeps a short, readable address, and
    `family` is carried through because the chrome's breadcrumb reads it. */
 function routeFromState(s, route) {
-  const r = { view: "motifsearch" };
+  // The detailed panel. "Find motif" (view=motifsearch) is the simpler reading in motiffind.js;
+  // this one is reached from its settings, with the same query.
+  const r = { view: "motifpanel" };
   if (route && route.family) r.family = route.family;
   if (s.query) r.motif = s.query;
   if (s.scope && s.scope !== "class_a") r.scope = s.scope;
@@ -498,7 +500,7 @@ let mounted = null;
    family names. So the mount records the language it was built in, and a change to it falls
    through to a full re-render, which restores the query from the address anyway. */
 export function canUpdateInPlace(route) {
-  return !!(mounted && mounted.node.isConnected && route.view === "motifsearch" &&
+  return !!(mounted && mounted.node.isConnected && route.view === "motifpanel" &&
             mounted.lang === getLang());
 }
 export function applyRoute(route) {

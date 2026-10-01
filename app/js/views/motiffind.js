@@ -84,7 +84,7 @@ export async function motifFind(root, route) {
   const nameOf = new Map(families.map(f => [f.slug, familyDisplayName(f.name)]));
 
   function writeRoute() {
-    const r = { view: "motiffind" };
+    const r = { view: "motifsearch" };
     if (route.family) r.family = route.family;
     if (state.query) r.motif = state.query;
     if (state.scope !== "class_a") r.scope = state.scope;
@@ -111,8 +111,7 @@ export async function motifFind(root, route) {
 
   /* ------------------------------------------------------------ 1. the question */
   wrap.appendChild(el("div", { class: "mf-head" }, [
-    el("h2", { text: t("mf_title") }),
-    el("span", { class: "mf-beta", text: t("mf_prototype") })]));
+    el("h2", { text: t("mf_title") })]));
   wrap.appendChild(el("p", { class: "muted mf-lede", text: t("mf_lede") }));
 
   const input = el("input", { type: "text", class: "mf-input", spellcheck: "false",
@@ -708,7 +707,7 @@ export async function motifFind(root, route) {
       input.value = [queryText(parsed.groups), ...split.shownTokens].filter(Boolean).join(" ") || state.query;
     drawLogo(parsed, split);
     const spec = specificity(payload, state.scope, parsed.groups, null);
-    fullLink.href = "#" + buildHash({ view: "motifsearch", family: route.family, motif: queryText(parsed.groups) || null,
+    fullLink.href = "#" + buildHash({ view: "motifpanel", family: route.family, motif: queryText(parsed.groups) || null,
       scope: state.scope !== "class_a" ? state.scope : null, pool: state.pool !== "motif" ? state.pool : null }).slice(1);
     fullLink.textContent = t("mf_full_panel");
     drawChips(parsed);
