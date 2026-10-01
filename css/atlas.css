@@ -1902,3 +1902,4 @@ a.result-item:focus-visible { outline:2px solid var(--accent); outline-offset:-2
 .mf-bands-fold .mf-band { margin-top:5px; }
 .mf-row-main { grid-template-columns:minmax(160px,1.1fr) minmax(110px,.8fr) minmax(0,3fr) 150px 90px 16px; }
 .mf-logo-letter.sparse { opacity:.25; }
+.mf-logo-downloads { display:inline-flex; gap:4px; margin-left:8px; vertical-align:middle; }
