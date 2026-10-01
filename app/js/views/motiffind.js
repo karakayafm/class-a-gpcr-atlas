@@ -64,6 +64,11 @@ export async function motifFind(root, route) {
     siteClass: String(route.class || "canonical_7tm_pocket"),
     minFreq: route.minfreq !== undefined && Number.isFinite(Number(route.minfreq))
       ? Math.max(0, Math.min(1, Number(route.minfreq))) : 0.10,
+    // The whole-receptor set holds every position any receptor resolves - 3x17 is in three of 200 -
+    // so it is read, as in the full panel, through the share of receptors that have the position.
+    minCov: route.mincov !== undefined && Number.isFinite(Number(route.mincov))
+      ? Math.max(0, Math.min(1, Number(route.mincov))) : 0.10,
+    logo: route.logo === "freq" || route.logo === "bits" ? route.logo : "",
     open: String(route.open || "")
   };
   let payload, numbering = null, posIndex = new Map(), known = new Set();
@@ -84,6 +89,8 @@ export async function motifFind(root, route) {
     if (state.query) r.motif = state.query;
     if (state.scope !== "class_a") r.scope = state.scope;
     if (state.pool !== "receptor") r.pool = state.pool;
+    if (state.pool === "receptor" && state.minCov !== 0.10) r.mincov = String(state.minCov);
+    if (state.logo) r.logo = state.logo;
     if (state.pool === "pocket") {
       if (state.siteClass !== "canonical_7tm_pocket") r.class = state.siteClass;
       if (state.minFreq !== 0.10) r.minfreq = String(state.minFreq);
@@ -151,6 +158,13 @@ export async function motifFind(root, route) {
   for (const v of [0, 0.01, 0.05, 0.10, 0.25, 0.50])
     freqSelect.appendChild(el("option", { value: String(v), text: v === 0 ? t("mq_min_freq_any") : Math.round(v * 100) + "%" }));
   freqSelect.addEventListener("change", () => set({ minFreq: Number(freqSelect.value), open: "", tab: "" }));
+  const covSelect = el("select", { "aria-label": t("mq_min_coverage") });
+  for (const v of [0, 0.05, 0.10, 0.25, 0.50, 0.75])
+    covSelect.appendChild(el("option", { value: String(v), text: v === 0 ? t("mq_min_coverage_any") : Math.round(v * 100) + "%" }));
+  covSelect.addEventListener("change", () => set({ minCov: Number(covSelect.value), open: "", tab: "" }));
+  const receptorControls = el("div", { class: "mf-pocket-controls" }, [
+    el("label", { class: "filter-field" }, [el("span", { text: t("mq_min_coverage") }), covSelect]),
+    el("p", { class: "muted small", text: t("mf_coverage_note") })]);
   const pocketControls = el("div", { class: "mf-pocket-controls" }, [
     el("label", { class: "filter-field" }, [el("span", { text: t("mq_site_class") }), classSelect]),
     el("label", { class: "filter-field" }, [el("span", { text: t("mq_min_freq") }), freqSelect]),
@@ -158,6 +172,11 @@ export async function motifFind(root, route) {
   /* Which positions the chips, ranges and logo offer. Everything for the whole receptor and the
      microswitch set; for the pocket, the positions the chosen class's ligands reach often enough. */
   function activeSet() {
+    if (state.pool === "receptor" && payload.position_meta)
+      return new Set(payload.positions.filter(p => {
+        const meta = payload.position_meta[p];
+        return meta && typeof meta.coverage === "number" && meta.coverage >= state.minCov;
+      }));
     if (state.pool !== "pocket" || !payload.position_meta) return new Set(payload.positions);
     return new Set(payload.positions.filter(p => {
       const meta = payload.position_meta[p];
@@ -169,7 +188,7 @@ export async function motifFind(root, route) {
     el("summary", { text: t("mf_advanced") }),
     el("div", { class: "mf-advanced-body" }, [
       el("label", { class: "filter-field" }, [el("span", { text: t("mq_pool") }), poolSelect]),
-      pocketControls,
+      pocketControls, receptorControls,
       el("p", { class: "muted small" }, [el("span", { text: t("mf_full_panel_note") + " " }), fullLink])])]));
 
   /* ------------------------------------------------------------ 2. what was asked */
@@ -532,6 +551,14 @@ export async function motifFind(root, route) {
     logoBox.hidden = false;
     const dist = (payload.variation || {})[state.scope] || {};
     const asked = new Map(parsed.groups.map(g => [g.position, g.residues]));
+    /* Bits need numbers. With a handful of receptors the small-sample correction is larger than the
+       whole scale - two receptors take 6.9 bits off a 4.3-bit maximum - and every column is empty.
+       Below ten receptors the logo therefore shows frequencies unless the reader asks otherwise,
+       and says so. */
+    const scopeN = Math.max(0, ...positions.map(p => ((dist[p] && dist[p].by_receptor) || [])
+      .reduce((a, kv) => a + kv[1], 0)));
+    const autoFreq = scopeN < 10;
+    const freqMode = state.logo ? state.logo === "freq" : autoFreq;
     const NS = "http://www.w3.org/2000/svg";
     const colW = 30, H = 130, top = 8, left = 34, bottom = 44;
     const W = left + positions.length * colW + 8;
@@ -542,15 +569,17 @@ export async function motifFind(root, route) {
     const mk = (name, attrs, text) => { const n = document.createElementNS(NS, name);
       for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, String(v));
       if (text !== undefined) n.textContent = text; return n; };
-    // Axis in bits.
+    // Axis in bits, or in shares of receptors.
     svg.appendChild(mk("line", { x1: left - 4, y1: top, x2: left - 4, y2: top + H, class: "mf-logo-axis" }));
-    for (const b of [0, 1, 2, 3, 4]) {
-      const y = top + H - (b / MAX_BITS) * H;
+    const ticks = freqMode ? [[0, "0"], [0.5, "0.5"], [1, "1"]] : [0, 1, 2, 3, 4].map(b => [b / MAX_BITS, String(b)]);
+    for (const [f, label] of ticks) {
+      const y = top + H - f * H;
       svg.appendChild(mk("line", { x1: left - 8, y1: y, x2: left - 4, y2: y, class: "mf-logo-axis" }));
-      svg.appendChild(mk("text", { x: left - 11, y: y + 3.5, class: "mf-logo-tick", "text-anchor": "end" }, String(b)));
+      svg.appendChild(mk("text", { x: left - 11, y: y + 3.5, class: "mf-logo-tick", "text-anchor": "end" }, label));
     }
     svg.appendChild(mk("text", { x: 9, y: top + H / 2, class: "mf-logo-tick",
-      transform: "rotate(-90 9 " + (top + H / 2) + ")", "text-anchor": "middle" }, t("mf_logo_bits")));
+      transform: "rotate(-90 9 " + (top + H / 2) + ")", "text-anchor": "middle" },
+      t(freqMode ? "mf_logo_freq_axis" : "mf_logo_bits")));
     positions.forEach((p, i) => {
       const x = left + i * colW;
       const rec = dist[p];
@@ -563,7 +592,7 @@ export async function motifFind(root, route) {
         /* Small-sample correction (Schneider et al. 1986): with few receptors an observed column
            looks more conserved than it is - one receptor gives a single letter and the full 4.3
            bits. e(n) = (20 - 1) / (2 ln2 n) is subtracted, so a sparsely covered position stays low. */
-        const ic = Math.max(0, MAX_BITS - Hs - 19 / (2 * Math.LN2 * total));
+        const ic = freqMode ? MAX_BITS : Math.max(0, MAX_BITS - Hs - 19 / (2 * Math.LN2 * total));
         let y = top + H;
         // Smallest at the bottom, the most common on top, as logos are read.
         for (const [res, n] of pairs.slice().sort((a, b) => a[1] - b[1])) {
@@ -573,7 +602,7 @@ export async function motifFind(root, route) {
             "text-anchor": "middle",
             transform: "translate(" + (x + colW / 2) + " " + y + ") scale(" + (colW / 10 * 0.95).toFixed(3) + " " + (h / 7.3).toFixed(3) + ")" }, res);
           g.appendChild(mk("title", {}, p + " " + res + ": " + n + " / " + total + " " + t("mf_logo_receptors") +
-            " · " + ic.toFixed(2) + " " + t("mf_logo_bits")));
+            (freqMode ? "" : " · " + ic.toFixed(2) + " " + t("mf_logo_bits"))));
           g.addEventListener("click", () => {
             const cur = input.value.split(/[\s,;+]+/).filter(Boolean)
               .filter(tok => !new RegExp("^" + p.replace(".", "\\.") + "[A-Za-z]*$").test(tok));
@@ -587,13 +616,21 @@ export async function motifFind(root, route) {
       svg.appendChild(mk("text", { x: x + colW / 2, y: top + H + 12, class: "mf-logo-pos",
         transform: "rotate(-60 " + (x + colW / 2) + " " + (top + H + 12) + ")", "text-anchor": "end" }, p));
     });
+    const modeBtn = (mode, label) => el("button", { type: "button",
+      class: "mf-logo-mode" + ((mode === "freq") === freqMode ? " active" : ""),
+      onclick: () => set({ logo: mode }) }, [el("span", { text: t(label) })]);
     logoBox.appendChild(el("div", { class: "mf-logo-head" }, [
-      el("strong", { text: t("mf_logo_title") }),
-      el("span", { class: "muted small", text: " " + t("mf_logo_note") })]));
+      el("strong", { text: t(freqMode ? "mf_logo_title_freq" : "mf_logo_title") }),
+      el("span", { class: "mf-logo-modes" }, [modeBtn("bits", "mf_logo_mode_bits"), modeBtn("freq", "mf_logo_mode_freq")]),
+      el("div", { class: "muted small", text: t(freqMode ? "mf_logo_note_freq" : "mf_logo_note") })]));
+    if (freqMode && autoFreq && !state.logo)
+      logoBox.appendChild(el("p", { class: "mf-logo-auto small", text: t("mf_logo_auto_freq", { n: scopeN }) }));
     logoBox.appendChild(el("div", { class: "mf-logo-scroll" }, [svg]));
   }
   function draw() {
     pocketControls.hidden = state.pool !== "pocket";
+    receptorControls.hidden = state.pool !== "receptor";
+    covSelect.value = String(state.minCov);
     if (state.pool === "pocket" && payload.pool && payload.pool.site_classes) {
       const classes = Object.keys(payload.pool.site_classes)
         .sort((a, b) => payload.pool.site_classes[b].receptors - payload.pool.site_classes[a].receptors);
