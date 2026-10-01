@@ -679,13 +679,74 @@ export async function motifFind(root, route) {
     const modeBtn = (mode, label) => el("button", { type: "button",
       class: "mf-logo-mode" + ((mode === "freq") === freqMode ? " active" : ""),
       onclick: () => set({ logo: mode }) }, [el("span", { text: t(label) })]);
+    const scopeName = state.scope === "class_a" ? t("motif_scope_class_a") : (nameOf.get(state.scope) || state.scope);
+    const caption = t(freqMode ? "mf_logo_title_freq" : "mf_logo_title") + " · " + scopeName + " · " +
+      positions[0] + (positions.length > 1 ? "–" + positions[positions.length - 1] : "") +
+      " · " + t("mf_logo_n_receptors", { n: scopeN });
+    const fileBase = "logo_" + (state.scope === "class_a" ? "classA" : state.scope) + "_" +
+      positions[0] + (positions.length > 1 ? "-" + positions[positions.length - 1] : "") + (freqMode ? "_freq" : "_bits");
     logoBox.appendChild(el("div", { class: "mf-logo-head" }, [
       el("strong", { text: t(freqMode ? "mf_logo_title_freq" : "mf_logo_title") }),
       el("span", { class: "mf-logo-modes" }, [modeBtn("bits", "mf_logo_mode_bits"), modeBtn("freq", "mf_logo_mode_freq")]),
+      el("span", { class: "mf-logo-downloads" }, [
+        el("button", { type: "button", class: "btn small", text: "SVG", title: t("mf_logo_download_svg"),
+          onclick: () => downloadLogo(svg, caption, fileBase, "svg") }),
+        el("button", { type: "button", class: "btn small", text: "PNG", title: t("mf_logo_download_png"),
+          onclick: () => downloadLogo(svg, caption, fileBase, "png") })]),
       el("div", { class: "muted small", text: t(freqMode ? "mf_logo_note_freq" : "mf_logo_note") })]));
     if (freqMode && autoFreq && !state.logo)
       logoBox.appendChild(el("p", { class: "mf-logo-auto small", text: t("mf_logo_auto_freq", { n: scopeN }) }));
     logoBox.appendChild(el("div", { class: "mf-logo-scroll" }, [svg]));
+  }
+  /* The logo as a file. The on-screen SVG takes its axis colours and font from the page's style
+     sheet, which a file does not carry, so a copy is made with every presentational value written
+     onto it, a caption line naming scope, positions and receptor count added above, and a white
+     background - a figure that reads on its own. PNG is that SVG drawn at three times the size. */
+  function standaloneLogo(svg, caption) {
+    const NS = "http://www.w3.org/2000/svg";
+    const copy = svg.cloneNode(true);
+    const vb = svg.getAttribute("viewBox").split(" ").map(Number);
+    const capH = 22, W = vb[2], H = vb[3] + capH;
+    copy.setAttribute("xmlns", NS);
+    copy.setAttribute("viewBox", "0 " + (-capH) + " " + W + " " + H);
+    copy.setAttribute("width", String(W)); copy.setAttribute("height", String(H));
+    for (const n of copy.querySelectorAll("title")) n.remove();
+    for (const n of copy.querySelectorAll(".mf-logo-letter")) {
+      n.setAttribute("font-family", "DejaVu Sans Mono, Menlo, Consolas, monospace");
+      n.setAttribute("font-weight", "700"); n.setAttribute("font-size", "10");
+      if (n.classList.contains("sparse")) n.setAttribute("opacity", "0.25");
+    }
+    for (const n of copy.querySelectorAll(".mf-logo-tick, .mf-logo-pos")) {
+      n.setAttribute("fill", "#5b6169"); n.setAttribute("font-size", "10");
+      n.setAttribute("font-family", "DejaVu Sans, Arial, sans-serif");
+    }
+    for (const n of copy.querySelectorAll(".mf-logo-axis")) { n.setAttribute("stroke", "#5b6169"); n.setAttribute("stroke-width", "1"); }
+    for (const n of copy.querySelectorAll(".mf-logo-asked-bar")) n.setAttribute("fill", "#2f6f8f");
+    const bg = document.createElementNS(NS, "rect");
+    bg.setAttribute("x", "0"); bg.setAttribute("y", String(-capH)); bg.setAttribute("width", String(W));
+    bg.setAttribute("height", String(H)); bg.setAttribute("fill", "#ffffff");
+    copy.insertBefore(bg, copy.firstChild);
+    const title = document.createElementNS(NS, "text");
+    title.setAttribute("x", "8"); title.setAttribute("y", String(-capH + 15));
+    title.setAttribute("font-family", "DejaVu Sans, Arial, sans-serif"); title.setAttribute("font-size", "12");
+    title.setAttribute("fill", "#1e2124"); title.textContent = caption;
+    copy.appendChild(title);
+    return { text: new XMLSerializer().serializeToString(copy), W, H };
+  }
+  function downloadLogo(svg, caption, base, kind) {
+    const { text, W, H } = standaloneLogo(svg, caption);
+    const save = (blob, name) => { const url = URL.createObjectURL(blob); const a = document.createElement("a");
+      a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 2000); };
+    if (kind === "svg") { save(new Blob([text], { type: "image/svg+xml" }), base + ".svg"); return; }
+    const img = new Image(), scale = 3;
+    img.onload = () => {
+      const c = document.createElement("canvas"); c.width = W * scale; c.height = H * scale;
+      const g = c.getContext("2d"); g.fillStyle = "#ffffff"; g.fillRect(0, 0, c.width, c.height);
+      g.drawImage(img, 0, 0, c.width, c.height);
+      c.toBlob(b => b && save(b, base + ".png"), "image/png");
+    };
+    img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(text);
   }
   function draw() {
     pocketControls.hidden = state.pool !== "pocket";
