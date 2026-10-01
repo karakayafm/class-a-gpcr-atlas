@@ -217,9 +217,8 @@ export async function motifFind(root, route) {
   }
   const SEGMENT_ORDER = ["TM1", "ICL1", "TM2", "ECL1", "TM3", "ICL2", "TM4", "ECL2", "TM5", "ICL3",
     "TM6", "ECL3", "TM7", "H8"];
-  /* Segments are offered as a run, which the logo reads: a whole helix asked for residue by residue
-     was forty letters in the field and forty cards, and what a reader wants from a helix is first
-     its distribution. A letter in the logo then asks for that residue. */
+  /* Segments fill the field position by position with each position's consensus residue in scope,
+     like the motif chips. A range (3x21-3x56) is still accepted when typed, for the logo alone. */
   function drawSegmentChips(active, held) {
     const bySeg = new Map();
     for (const p of payload.positions) {
@@ -235,9 +234,10 @@ export async function motifFind(root, route) {
       (SEGMENT_ORDER.indexOf(a) + 1 || 99) - (SEGMENT_ORDER.indexOf(b) + 1 || 99));
     for (const seg of segs) {
       const list = bySeg.get(seg).sort((a, b) => orderOf(a) - orderOf(b));
-      const helix = /^(\d+)x/.exec(list[0]);
-      const sameHelix = helix && list.every(p => p.startsWith(helix[1] + "x"));
-      const token = sameHelix && list.length > 1 ? list[0] + "-" + list[list.length - 1] : list.join(" ");
+      // Written out position by position with the consensus residue in scope, as the motif chips
+      // are, so every position of the segment is in the query and can be edited one by one.
+      const dist = (payload.variation || {})[state.scope] || {};
+      const token = list.map(p => p + ((dist[p] && dist[p].consensus) || "")).join(" ");
       const current = state.query.trim() === token;
       row.appendChild(el("button", { type: "button", class: "mf-seg" + (current ? " active" : ""),
         title: t("mf_segment_hint", { segment: seg, n: list.length, from: list[0], to: list[list.length - 1] }),
