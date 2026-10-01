@@ -14,7 +14,7 @@
  * The statistics (entropy, weights, enrichment) and the position reference are one link away in
  * the full panel, carrying the same query.
  */
-import { t, getLang } from "../core/i18n.js";
+import { t, getLang, siteClassLabel } from "../core/i18n.js";
 import { el, clear, pct, debounce } from "../components/dom.js";
 import { plainName, familyDisplayName } from "./views.js";
 import { toCSV, download } from "../components/csv.js";
@@ -58,6 +58,12 @@ export async function motifFind(root, route) {
     scope: String(route.scope || "class_a"),
     pool: POOLS[route.pool] ? route.pool : "receptor",
     tab: TABS.includes(route.tab) ? route.tab : "",
+    // The pocket set lists every position any ligand has touched in any binding site class, which
+    // is most of the bundle; it is read through one class and a contact threshold, as in the full
+    // panel, so "the pocket" means the positions that class's ligands actually reach.
+    siteClass: String(route.class || "canonical_7tm_pocket"),
+    minFreq: route.minfreq !== undefined && Number.isFinite(Number(route.minfreq))
+      ? Math.max(0, Math.min(1, Number(route.minfreq))) : 0.10,
     open: String(route.open || "")
   };
   let payload, numbering = null, posIndex = new Map(), known = new Set();
@@ -78,6 +84,10 @@ export async function motifFind(root, route) {
     if (state.query) r.motif = state.query;
     if (state.scope !== "class_a") r.scope = state.scope;
     if (state.pool !== "receptor") r.pool = state.pool;
+    if (state.pool === "pocket") {
+      if (state.siteClass !== "canonical_7tm_pocket") r.class = state.siteClass;
+      if (state.minFreq !== 0.10) r.minfreq = String(state.minFreq);
+    }
     if (state.tab) r.tab = state.tab;
     if (state.open) r.open = state.open;
     navigate(r, true);
@@ -121,7 +131,7 @@ export async function motifFind(root, route) {
   wrap.appendChild(ask);
   wrap.appendChild(el("p", { class: "muted small mf-hint", text: t("mf_hint") }));
 
-  const chips = el("div", { class: "mf-chips" });
+  const chips = el("div", { class: "mf-chip-rows" });
   wrap.appendChild(chips);
 
   // Advanced: which position set the motifs and the field read from. Folded: the default answers
@@ -135,10 +145,31 @@ export async function motifFind(root, route) {
     await loadPool(); writeRoute(); draw();
   });
   const fullLink = el("a", { class: "mf-full-link" });
+  const classSelect = el("select", { "aria-label": t("mq_site_class") });
+  classSelect.addEventListener("change", () => set({ siteClass: classSelect.value, open: "", tab: "" }));
+  const freqSelect = el("select", { "aria-label": t("mq_min_freq") });
+  for (const v of [0, 0.01, 0.05, 0.10, 0.25, 0.50])
+    freqSelect.appendChild(el("option", { value: String(v), text: v === 0 ? t("mq_min_freq_any") : Math.round(v * 100) + "%" }));
+  freqSelect.addEventListener("change", () => set({ minFreq: Number(freqSelect.value), open: "", tab: "" }));
+  const pocketControls = el("div", { class: "mf-pocket-controls" }, [
+    el("label", { class: "filter-field" }, [el("span", { text: t("mq_site_class") }), classSelect]),
+    el("label", { class: "filter-field" }, [el("span", { text: t("mq_min_freq") }), freqSelect]),
+    el("p", { class: "muted small", text: t("mf_pocket_note") })]);
+  /* Which positions the chips, ranges and logo offer. Everything for the whole receptor and the
+     microswitch set; for the pocket, the positions the chosen class's ligands reach often enough. */
+  function activeSet() {
+    if (state.pool !== "pocket" || !payload.position_meta) return new Set(payload.positions);
+    return new Set(payload.positions.filter(p => {
+      const meta = payload.position_meta[p];
+      const f = meta && meta.frequency ? meta.frequency[state.siteClass] : undefined;
+      return f !== undefined && f >= state.minFreq;
+    }));
+  }
   wrap.appendChild(el("details", { class: "mf-advanced" }, [
     el("summary", { text: t("mf_advanced") }),
     el("div", { class: "mf-advanced-body" }, [
       el("label", { class: "filter-field" }, [el("span", { text: t("mq_pool") }), poolSelect]),
+      pocketControls,
       el("p", { class: "muted small" }, [el("span", { text: t("mf_full_panel_note") + " " }), fullLink])])]));
 
   /* ------------------------------------------------------------ 2. what was asked */
@@ -163,15 +194,51 @@ export async function motifFind(root, route) {
     if (m.motif_id.startsWith("segment_")) return m.motif_id.slice(8);
     return m.motif_id.replace(/^consensus_/, "").replaceAll("_", " ");
   }
+  const SEGMENT_ORDER = ["TM1", "ICL1", "TM2", "ECL1", "TM3", "ICL2", "TM4", "ECL2", "TM5", "ICL3",
+    "TM6", "ECL3", "TM7", "H8"];
+  /* Segments are offered as a run, which the logo reads: a whole helix asked for residue by residue
+     was forty letters in the field and forty cards, and what a reader wants from a helix is first
+     its distribution. A letter in the logo then asks for that residue. */
+  function drawSegmentChips(active, held) {
+    const bySeg = new Map();
+    for (const p of payload.positions) {
+      if (!active.has(p)) continue;
+      const seg = payload.segments[p];
+      if (!seg) continue;
+      if (!bySeg.has(seg)) bySeg.set(seg, []);
+      bySeg.get(seg).push(p);
+    }
+    const row = el("div", { class: "mf-chips mf-seg-chips" },
+      [el("span", { class: "muted small mf-chips-label", text: t("mf_segments") })]);
+    const segs = [...bySeg.keys()].sort((a, b) =>
+      (SEGMENT_ORDER.indexOf(a) + 1 || 99) - (SEGMENT_ORDER.indexOf(b) + 1 || 99));
+    for (const seg of segs) {
+      const list = bySeg.get(seg).sort((a, b) => orderOf(a) - orderOf(b));
+      const helix = /^(\d+)x/.exec(list[0]);
+      const sameHelix = helix && list.every(p => p.startsWith(helix[1] + "x"));
+      const token = sameHelix && list.length > 1 ? list[0] + "-" + list[list.length - 1] : list.join(" ");
+      const current = state.query.trim() === token;
+      row.appendChild(el("button", { type: "button", class: "mf-seg" + (current ? " active" : ""),
+        title: t("mf_segment_hint", { segment: seg, n: list.length, from: list[0], to: list[list.length - 1] }),
+        onclick: () => { const next = current ? "" : token; input.value = next; set({ query: next, open: "", tab: "" }); } },
+        [el("span", { text: seg }), el("span", { class: "tab-count", text: String(list.length) })]));
+    }
+    return row;
+  }
   function drawChips(parsed) {
     clear(chips);
-    chips.appendChild(el("span", { class: "muted small mf-chips-label", text: t("mf_ready") }));
+    const active = activeSet();
+    const named = el("div", { class: "mf-chips" },
+      [el("span", { class: "muted small mf-chips-label", text: t("mf_ready") })]);
+    chips.appendChild(named);
     const held = new Set(parsed.groups.map(g => g.position));
     for (const m of payload.motifs || []) {
-      // The named motifs only: the whole-receptor set also carries one consensus group per binding
-      // site class, which are position sets rather than motifs and made the row twice as long.
-      if (t("motif_" + m.motif_id) === "motif_" + m.motif_id && !m.motif_id.startsWith("segment_")) continue;
-      const tokens = consensusTokens(m);
+      // The named motifs only. The sets also carry consensus groups per binding site class and
+      // per-segment groups; segments get their own row, built from the positions themselves so
+      // every set offers the same ones.
+      if (t("motif_" + m.motif_id) === "motif_" + m.motif_id) continue;
+      if (!m.positions.some(p => active.has(p))) continue;
+      const tokens = consensusTokens(m).filter(tok => active.has(tok.replace(/[A-Z]+$/, "")));
       if (!tokens.length) continue;
       const text = tokens.join(" ");
       const current = queryText(parsed.groups) === text;
@@ -188,8 +255,9 @@ export async function motifFind(root, route) {
           const next = (input.value.trim() + " " + add.join(" ")).trim();
           input.value = next; set({ query: next, open: "", tab: "" });
         } }));
-      chips.appendChild(chip);
+      named.appendChild(chip);
     }
+    chips.appendChild(drawSegmentChips(active, held));
   }
 
   function drawCards(parsed, spec) {
@@ -200,25 +268,38 @@ export async function motifFind(root, route) {
       problems.appendChild(el("p", { class: "muted small",
         text: t("mq_bw_translated", { pairs: item.from + " → " + item.to }) }));
     if (!parsed.groups.length) return;
+    /* Grouped by how common the residue is rather than one card per position: a helix asked for in
+       full was forty cards. The rarest first, because those are the positions that select. */
+    const bands = new Map();
     for (const a of spec.asked) {
       const c = commonness(a.frequency);
-      const residues = [...a.residues].sort().join(" / ");
-      const remove = el("button", { class: "mf-card-x", type: "button", text: "×",
-        title: t("mf_remove_position", { position: a.position }),
-        "aria-label": t("mf_remove_position", { position: a.position }),
-        onclick: () => {
-          const next = queryText(parsed.groups.filter(g => g.position !== a.position));
-          input.value = next; set({ query: next, open: "", tab: "" });
-        } });
-      cards.appendChild(el("div", { class: "mf-card mf-common-" + c.cls }, [
-        remove,
-        el("div", { class: "mf-card-pos" }, [el("strong", { text: a.position }),
-          el("span", { class: "muted small", text: " " + (payload.segments[a.position] || "") })]),
-        el("div", { class: "mf-card-res", text: residues }),
-        el("div", { class: "mf-card-freq" }, [
-          el("strong", { text: a.frequency === null ? "—" : pct(a.frequency) }),
-          el("span", { class: "muted small", text: " " + t("mf_of_receptors") })]),
-        el("div", { class: "mf-card-word", text: t(c.key) })]));
+      if (!bands.has(c.cls)) bands.set(c.cls, { key: c.key, items: [] });
+      bands.get(c.cls).items.push(a);
+    }
+    for (const cls of ["few", "some", "most", "all", "unknown"]) {
+      const band = bands.get(cls);
+      if (!band) continue;
+      const row = el("div", { class: "mf-band mf-common-" + cls }, [
+        el("span", { class: "mf-band-label", title: t(band.key + "_hint"), text: t(band.key) })]);
+      for (const a of band.items) {
+        const residues = [...a.residues].sort().join("/");
+        row.appendChild(el("span", { class: "mf-tag",
+          title: a.position + " " + (payload.segments[a.position] || "") + " · " + residues + " · " +
+            (a.frequency === null ? "—" : pct(a.frequency)) + " " + t("mf_of_receptors") }, [
+          el("strong", { text: a.position }),
+          el("span", { class: "mf-tag-res", text: residues }),
+          el("span", { class: "mf-tag-pct", text: a.frequency === null ? "—" : pct(a.frequency) }),
+          el("button", { class: "mf-tag-x", type: "button", text: "\u00d7",
+            "aria-label": t("mf_remove_position", { position: a.position }),
+            title: t("mf_remove_position", { position: a.position }),
+            onclick: () => {
+              const keep = parsed.groups.filter(g => g.position !== a.position);
+              const rest = input.value.split(/[\s,;+]+/).filter(tok => /-|^\d+[x.]\d+$/.test(tok));
+              const next = [queryText(keep), ...rest].filter(Boolean).join(" ");
+              input.value = next; set({ query: next, open: "", tab: "" });
+            } })]));
+      }
+      cards.appendChild(row);
     }
     if (spec.allLowSpecificity)
       problems.appendChild(el("p", { class: "notice mf-warn", text: t("mf_all_common") }));
@@ -408,7 +489,9 @@ export async function motifFind(root, route) {
   /* Positions asked for without a residue - `3x50`, or a run such as `3x49-3x53` - are a request
      to see the distribution there, not to match anything, so they go to the logo and not to the
      scorer (which would report them as unreadable). */
-  const orderOf = p => { const m = /^(\d+)x(\d+)$/.exec(p); return m ? Number(m[1]) * 1000 + Number(m[2]) : 1e9; };
+  // A third digit is an insertion: 6x461 sits between 6x46 and 6x47, not after 6x66.
+  const posNum = d => d.length === 3 ? Number(d) / 10 : Number(d);
+  const orderOf = p => { const m = /^(\d+)x(\d+)$/.exec(p); return m ? Number(m[1]) * 1000 + posNum(m[2]) : 1e9; };
   function splitQuery(text) {
     const keep = [], positions = [], shownTokens = [], bad = [];
     const bwIndex = (numbering && numbering.bw_index) || {};
@@ -416,11 +499,12 @@ export async function motifFind(root, route) {
       const range = /^(\d+)x(\d+)-(?:(\d+)x)?(\d+)$/.exec(token);
       const bare = /^(\d+[x.]\d+)$/.exec(token);
       if (range) {
-        const helix = range[1], from = Number(range[2]), to = Number(range[4]);
+        const helix = range[1], from = posNum(range[2]), to = posNum(range[4]);
         if (range[3] && range[3] !== helix) { keep.push(token); continue; }
         const lo = Math.min(from, to), hi = Math.max(from, to);
+        const act = activeSet();
         const found = payload.positions.filter(p => { const m = /^(\d+)x(\d+)$/.exec(p);
-          return m && m[1] === helix && Number(m[2]) >= lo && Number(m[2]) <= hi; });
+          return act.has(p) && m && m[1] === helix && posNum(m[2]) >= lo && posNum(m[2]) <= hi; });
         if (found.length) { positions.push(...found); shownTokens.push(token); } else keep.push(token);
       } else if (bare) {
         let p = bare[1];
@@ -441,9 +525,11 @@ export async function motifFind(root, route) {
   const MAX_BITS = Math.log2(20);
   function drawLogo(parsed, split) {
     clear(logoBox);
+    logoBox.hidden = true;
     const positions = [...new Set([...parsed.groups.map(g => g.position), ...split.positions])]
       .sort((a, b) => orderOf(a) - orderOf(b));
     if (!positions.length) return;
+    logoBox.hidden = false;
     const dist = (payload.variation || {})[state.scope] || {};
     const asked = new Map(parsed.groups.map(g => [g.position, g.residues]));
     const NS = "http://www.w3.org/2000/svg";
@@ -474,7 +560,10 @@ export async function motifFind(root, route) {
       if (total) {
         let Hs = 0;
         for (const [, n] of pairs) { const q = n / total; if (q > 0) Hs -= q * Math.log2(q); }
-        const ic = Math.max(0, MAX_BITS - Hs);
+        /* Small-sample correction (Schneider et al. 1986): with few receptors an observed column
+           looks more conserved than it is - one receptor gives a single letter and the full 4.3
+           bits. e(n) = (20 - 1) / (2 ln2 n) is subtracted, so a sparsely covered position stays low. */
+        const ic = Math.max(0, MAX_BITS - Hs - 19 / (2 * Math.LN2 * total));
         let y = top + H;
         // Smallest at the bottom, the most common on top, as logos are read.
         for (const [res, n] of pairs.slice().sort((a, b) => a[1] - b[1])) {
@@ -483,7 +572,8 @@ export async function motifFind(root, route) {
           const g = mk("text", { x: 0, y: 0, class: "mf-logo-letter", fill: LOGO_COLOURS[res] || "#666",
             "text-anchor": "middle",
             transform: "translate(" + (x + colW / 2) + " " + y + ") scale(" + (colW / 10 * 0.95).toFixed(3) + " " + (h / 7.3).toFixed(3) + ")" }, res);
-          g.appendChild(mk("title", {}, p + " " + res + ": " + n + " / " + total + " " + t("mf_logo_receptors")));
+          g.appendChild(mk("title", {}, p + " " + res + ": " + n + " / " + total + " " + t("mf_logo_receptors") +
+            " · " + ic.toFixed(2) + " " + t("mf_logo_bits")));
           g.addEventListener("click", () => {
             const cur = input.value.split(/[\s,;+]+/).filter(Boolean)
               .filter(tok => !new RegExp("^" + p.replace(".", "\\.") + "[A-Za-z]*$").test(tok));
@@ -503,6 +593,17 @@ export async function motifFind(root, route) {
     logoBox.appendChild(el("div", { class: "mf-logo-scroll" }, [svg]));
   }
   function draw() {
+    pocketControls.hidden = state.pool !== "pocket";
+    if (state.pool === "pocket" && payload.pool && payload.pool.site_classes) {
+      const classes = Object.keys(payload.pool.site_classes)
+        .sort((a, b) => payload.pool.site_classes[b].receptors - payload.pool.site_classes[a].receptors);
+      if (!classes.includes(state.siteClass)) state.siteClass = classes[0];
+      clear(classSelect);
+      for (const c of classes) classSelect.appendChild(el("option", { value: c,
+        text: siteClassLabel(c) + " (" + payload.pool.site_classes[c].receptors + ")" }));
+      classSelect.value = state.siteClass;
+      freqSelect.value = String(state.minFreq);
+    }
     const split = splitQuery(state.query);
     const parsed = parseQuery(split.scored, known, numbering);
     if (document.activeElement !== input && !parsed.bad.length)

@@ -1853,3 +1853,30 @@ a.result-item:focus-visible { outline:2px solid var(--accent); outline-offset:-2
 .mf-logo-tick, .mf-logo-pos { fill:var(--muted); font-size:10px; }
 .mf-logo-asked { fill:color-mix(in srgb, var(--accent) 12%, transparent); }
 .mf-logo-only { padding:14px; }
+/* Chips in two rows: the named motifs, then the segments, which open as a logo. */
+.mf-chip-rows { display:grid; gap:4px; margin:4px 0 8px; }
+.mf-chip-rows .mf-chips { margin:0; }
+.mf-seg { font:inherit; font-size:12px; display:inline-flex; gap:5px; align-items:center; padding:3px 9px;
+  border:1px solid var(--line); border-radius:6px; background:var(--panel); color:inherit; cursor:pointer; }
+.mf-seg:hover { border-color:var(--accent); }
+.mf-seg.active { background:var(--accent); border-color:var(--accent); color:#fff; }
+.mf-seg .tab-count { font-size:10.5px; }
+.mf-pocket-controls { display:flex; flex-wrap:wrap; gap:14px; align-items:end; }
+.mf-pocket-controls p { margin:0; max-width:420px; }
+/* What was asked, as compact tags grouped by how common the residue is. */
+.mf-cards { display:grid; gap:6px; }
+.mf-band { display:flex; flex-wrap:wrap; gap:5px; align-items:center; padding:6px 8px;
+  background:var(--panel); border:1px solid var(--line); border-left-width:5px; border-radius:8px; }
+.mf-band-label { min-width:130px; font-size:11.5px; font-weight:650; padding:2px 9px; border-radius:999px;
+  cursor:help; text-align:center; }
+.mf-common-all  .mf-band-label { background:#eceef0; color:#5b6169; }
+.mf-common-most .mf-band-label { background:#dcebf7; color:#1f4f75; }
+.mf-common-some .mf-band-label { background:#ece3fa; color:#4b2c80; }
+.mf-common-few  .mf-band-label { background:#3f9a55; color:#fff; }
+.mf-tag { display:inline-flex; align-items:center; gap:4px; padding:2px 4px 2px 7px; border:1px solid var(--line);
+  border-radius:6px; font-size:12px; background:var(--panel); }
+.mf-tag-res { font-family:ui-monospace, SFMono-Regular, Menlo, monospace; font-weight:700; color:var(--accent); }
+.mf-tag-pct { color:var(--muted); font-size:11px; }
+.mf-tag-x { border:0; background:none; color:var(--muted); cursor:pointer; font-size:14px; line-height:1; padding:0 2px; }
+.mf-tag-x:hover { color:var(--mq-mismatch-ink); }
+.mf-logo-box[hidden] { display:none; }
