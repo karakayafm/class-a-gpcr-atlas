@@ -184,8 +184,10 @@ export async function motifFind(root, route) {
       return f !== undefined && f >= state.minFreq;
     }));
   }
-  wrap.appendChild(el("details", { class: "mf-advanced" }, [
-    el("summary", { text: t("mf_advanced") }),
+  // Always open: the position set and its threshold decide what the chips and the logo offer, so
+  // they stay in sight rather than behind a disclosure a reader forgets is there.
+  wrap.appendChild(el("div", { class: "mf-advanced" }, [
+    el("div", { class: "mf-advanced-title", text: t("mf_advanced") }),
     el("div", { class: "mf-advanced-body" }, [
       el("label", { class: "filter-field" }, [el("span", { text: t("mq_pool") }), poolSelect]),
       pocketControls, receptorControls,
@@ -279,7 +281,7 @@ export async function motifFind(root, route) {
     chips.appendChild(drawSegmentChips(active, held));
   }
 
-  function drawCards(parsed, spec) {
+  function drawCards(parsed, spec, split) {
     clear(cards); clear(problems);
     if (parsed.bad.length) problems.appendChild(el("p", { class: "motif-bad",
       text: t("motif_query_bad", { tokens: parsed.bad.join(", ") }) }));
@@ -287,6 +289,15 @@ export async function motifFind(root, route) {
       problems.appendChild(el("p", { class: "muted small",
         text: t("mq_bw_translated", { pairs: item.from + " → " + item.to }) }));
     if (!parsed.groups.length) return;
+    /* What is scored and what is only shown. A segment opens forty positions in the logo, and a
+       letter clicked there puts one position in the query; without saying so, two scored positions
+       under a forty-column logo read as a broken query. */
+    const logoOnly = split.positions.filter(p => !parsed.groups.some(g => g.position === p));
+    const summary = el("div", { class: "mf-asked-summary" }, [
+      el("span", { class: "mf-asked-scored", text: t("mf_asked_scored", { n: parsed.groups.length }) })]);
+    if (logoOnly.length) summary.appendChild(el("span", { class: "muted small",
+      text: " · " + t("mf_asked_logo_only", { n: logoOnly.length, tokens: split.shownTokens.join(" ") }) }));
+    cards.appendChild(summary);
     /* Grouped by how common the residue is rather than one card per position: a helix asked for in
        full was forty cards. The rarest first, because those are the positions that select. */
     const bands = new Map();
@@ -422,7 +433,8 @@ export async function motifFind(root, route) {
 
     answer.appendChild(el("h3", { class: "mf-answer-title" }, [
       el("span", { class: "mf-answer-n", text: String(groups.exact.length) }),
-      el("span", { text: " " + t("mf_answer_title_rest", { total }) })]));
+      el("span", { text: " " + t("mf_answer_title_rest", { total, n: parsed.groups.length }) }),
+      el("code", { class: "mf-answer-query", text: queryText(parsed.groups) })]));
     // Which families carry the motif exactly: the share of each family's receptors in the first tab.
     const fam = new Map();
     for (const r of agg.receptors) {
@@ -585,7 +597,10 @@ export async function motifFind(root, route) {
       const rec = dist[p];
       const pairs = (rec && rec.by_receptor) || [];
       const total = pairs.reduce((a, kv) => a + kv[1], 0);
-      if (asked.has(p)) svg.appendChild(mk("rect", { x: x + 1, y: top, width: colW - 2, height: H, class: "mf-logo-asked" }));
+      if (asked.has(p)) {
+        svg.appendChild(mk("rect", { x: x + 1, y: top, width: colW - 2, height: H, class: "mf-logo-asked" }));
+        svg.appendChild(mk("rect", { x: x + 1, y: top + H + 2, width: colW - 2, height: 4, class: "mf-logo-asked-bar" }));
+      }
       if (total) {
         let Hs = 0;
         for (const [, n] of pairs) { const q = n / total; if (q > 0) Hs -= q * Math.log2(q); }
@@ -651,7 +666,7 @@ export async function motifFind(root, route) {
       scope: state.scope !== "class_a" ? state.scope : null, pool: state.pool !== "motif" ? state.pool : null }).slice(1);
     fullLink.textContent = t("mf_full_panel");
     drawChips(parsed);
-    drawCards(parsed, spec);
+    drawCards(parsed, spec, split);
     const agg = parsed.groups.length ? aggregate(payload, parsed.groups, posIndex, spec, state.scope) : null;
     drawAnswer(parsed, agg, split.positions.length > 0);
   }
