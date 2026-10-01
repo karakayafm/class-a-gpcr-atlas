@@ -598,7 +598,6 @@ export async function motifFind(root, route) {
       const pairs = (rec && rec.by_receptor) || [];
       const total = pairs.reduce((a, kv) => a + kv[1], 0);
       if (asked.has(p)) {
-        svg.appendChild(mk("rect", { x: x + 1, y: top, width: colW - 2, height: H, class: "mf-logo-asked" }));
         svg.appendChild(mk("rect", { x: x + 1, y: top + H + 2, width: colW - 2, height: 4, class: "mf-logo-asked-bar" }));
       }
       if (total) {
