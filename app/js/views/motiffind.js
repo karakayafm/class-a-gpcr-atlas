@@ -130,7 +130,29 @@ export async function motifFind(root, route) {
   scopeSelect.appendChild(el("option", { value: "class_a", text: t("motif_scope_class_a") }));
   for (const f of families) scopeSelect.appendChild(el("option", { value: f.slug, text: familyDisplayName(f.name) }));
   scopeSelect.value = state.scope;
-  scopeSelect.addEventListener("change", () => set({ scope: scopeSelect.value, open: "", tab: "" }));
+  /* A query a chip wrote carries that scope's consensus residues. Changed scope, the letters stayed
+     and read as 0% (Class A's V at 2x38 against five sensory receptors that all carry P), so a query
+     the reader has not edited since a chip wrote it is rewritten with the new scope's consensus. */
+  let chipSource = null;            // { kind: "segment" | "motif", id, text }
+  scopeSelect.addEventListener("change", () => {
+    const fromChip = chipSource && state.query.trim() === chipSource.text;
+    state.scope = scopeSelect.value;
+    if (fromChip) {
+      const text = chipText(chipSource);
+      chipSource.text = text; input.value = text;
+      set({ query: text, open: "", tab: "" });
+    } else set({ open: "", tab: "" });
+  });
+  function chipText(src) {
+    const active = activeSet();
+    const dist = (payload.variation || {})[state.scope] || {};
+    if (src.kind === "segment")
+      return payload.positions.filter(p => active.has(p) && payload.segments[p] === src.id)
+        .sort((a, b) => orderOf(a) - orderOf(b))
+        .map(p => p + ((dist[p] && dist[p].consensus) || "")).join(" ");
+    const m = (payload.motifs || []).find(x => x.motif_id === src.id);
+    return m ? consensusTokens(m).filter(tok => active.has(tok.replace(/[A-Z]+$/, ""))).join(" ") : "";
+  }
 
   const ask = el("div", { class: "mf-ask" }, [
     el("div", { class: "mf-ask-row" }, [input, clearBtn]),
@@ -241,7 +263,8 @@ export async function motifFind(root, route) {
       const current = state.query.trim() === token;
       row.appendChild(el("button", { type: "button", class: "mf-seg" + (current ? " active" : ""),
         title: t("mf_segment_hint", { segment: seg, n: list.length, from: list[0], to: list[list.length - 1] }),
-        onclick: () => { const next = current ? "" : token; input.value = next; set({ query: next, open: "", tab: "" }); } },
+        onclick: () => { const next = current ? "" : token; chipSource = next ? { kind: "segment", id: seg, text: next } : null;
+          input.value = next; set({ query: next, open: "", tab: "" }); } },
         [el("span", { text: seg }), el("span", { class: "tab-count", text: String(list.length) })]));
     }
     return row;
@@ -267,7 +290,8 @@ export async function motifFind(root, route) {
       const chip = el("span", { class: "mf-chip" + (current ? " active" : inQuery ? " partial" : "") });
       chip.appendChild(el("button", { type: "button", class: "mf-chip-main",
         title: t("mf_chip_hint", { motif: motifName(m), tokens: text }),
-        onclick: () => { const next = current ? "" : text; input.value = next; set({ query: next, open: "", tab: "" }); } },
+        onclick: () => { const next = current ? "" : text; chipSource = next ? { kind: "motif", id: m.motif_id, text: next } : null;
+          input.value = next; set({ query: next, open: "", tab: "" }); } },
         [el("span", { text: motifName(m) })]));
       chip.appendChild(el("button", { type: "button", class: "mf-chip-add", text: "+",
         title: t("mf_chip_add", { motif: motifName(m) }), "aria-label": t("mf_chip_add", { motif: motifName(m) }),
@@ -281,6 +305,7 @@ export async function motifFind(root, route) {
     chips.appendChild(drawSegmentChips(active, held));
   }
 
+  let bandsOpen = false;
   function drawCards(parsed, spec, split) {
     clear(cards); clear(problems);
     if (parsed.bad.length) problems.appendChild(el("p", { class: "motif-bad",
@@ -306,6 +331,22 @@ export async function motifFind(root, route) {
       if (!bands.has(c.cls)) bands.set(c.cls, { key: c.key, items: [] });
       bands.get(c.cls).items.push(a);
     }
+    /* A segment is thirty-odd positions, and thirty-odd tags fill the screen above the answer they
+       lead to. Past ten, the bands fold into one line of counts; the logo above already shows each
+       position, and the tags are one click away for removing one. */
+    let host = cards;
+    if (spec.asked.length > 10) {
+      const counts = ["few", "some", "most", "all", "unknown"].filter(c => bands.has(c))
+        .map(c => el("span", { class: "mf-band-count mf-common-" + c }, [
+          el("span", { class: "mf-band-label", text: t(bands.get(c).key) }),
+          el("strong", { text: " " + bands.get(c).items.length })]));
+      const fold = el("details", { class: "mf-bands-fold" }, [el("summary", {}, [
+        el("span", { class: "muted small", text: t("mf_bands_show") + " " }), ...counts])]);
+      fold.open = bandsOpen;
+      fold.addEventListener("toggle", () => { bandsOpen = fold.open; });
+      cards.appendChild(fold);
+      host = fold;
+    }
     for (const cls of ["few", "some", "most", "all", "unknown"]) {
       const band = bands.get(cls);
       if (!band) continue;
@@ -329,7 +370,7 @@ export async function motifFind(root, route) {
               input.value = next; set({ query: next, open: "", tab: "" });
             } })]));
       }
-      cards.appendChild(row);
+      host.appendChild(row);
     }
     if (spec.allLowSpecificity)
       problems.appendChild(el("p", { class: "notice mf-warn", text: t("mf_all_common") }));
@@ -433,8 +474,7 @@ export async function motifFind(root, route) {
 
     answer.appendChild(el("h3", { class: "mf-answer-title" }, [
       el("span", { class: "mf-answer-n", text: String(groups.exact.length) }),
-      el("span", { text: " " + t("mf_answer_title_rest", { total, n: parsed.groups.length }) }),
-      el("code", { class: "mf-answer-query", text: queryText(parsed.groups) })]));
+      el("span", { text: " " + t("mf_answer_title_rest", { total, n: parsed.groups.length }) })]));
     // Which families carry the motif exactly: the share of each family's receptors in the first tab.
     const fam = new Map();
     for (const r of agg.receptors) {
@@ -503,7 +543,10 @@ export async function motifFind(root, route) {
         r.score.cells.length ? residueStrip(r) : el("span", {}),
         el("span", { class: "mf-row-read small" + (partial ? " partial" : " muted"),
           title: t("mf_read_hint"),
-          text: r.score.covered ? t("mf_read", { n: r.score.covered, total: r.score.cells.length }) : t("mf_read_none") }),
+          text: r.score.covered
+            ? t("mf_same", { n: r.score.exact, total: r.score.cells.length }) +
+              (partial ? " · " + t("mf_unread", { n: r.score.cells.length - r.score.covered }) : "")
+            : t("mf_read_none") }),
         el("span", { class: "mf-row-structs muted small", text: t(r.structureCount === 1 ? "mf_one_structure" : "mf_n_structures", { n: r.structureCount }) }),
         el("span", { class: "mf-row-caret", "aria-hidden": "true", text: opened ? "▾" : "▸" })]);
       row.appendChild(main);
@@ -572,7 +615,7 @@ export async function motifFind(root, route) {
     const autoFreq = scopeN < 10;
     const freqMode = state.logo ? state.logo === "freq" : autoFreq;
     const NS = "http://www.w3.org/2000/svg";
-    const colW = 30, H = 130, top = 8, left = 34, bottom = 44;
+    const colW = 30, H = 130, top = 8, left = 44, bottom = 44;
     const W = left + positions.length * colW + 8;
     const svg = document.createElementNS(NS, "svg");
     svg.setAttribute("viewBox", "0 0 " + W + " " + (H + top + bottom));
@@ -612,7 +655,11 @@ export async function motifFind(root, route) {
         for (const [res, n] of pairs.slice().sort((a, b) => a[1] - b[1])) {
           const h = (n / total) * (ic / MAX_BITS) * H;
           if (h < 0.6) { continue; }
-          const g = mk("text", { x: 0, y: 0, class: "mf-logo-letter", fill: LOGO_COLOURS[res] || "#666",
+          /* In frequency mode every column is full height, so a position three receptors have stood
+             as tall as one all two hundred have. Columns with fewer than a quarter of the scope's
+             receptors are drawn faint; bits need no such mark, their correction already lowers them. */
+          const sparse = freqMode && total < scopeN / 4;
+          const g = mk("text", { x: 0, y: 0, class: "mf-logo-letter" + (sparse ? " sparse" : ""), fill: LOGO_COLOURS[res] || "#666",
             "text-anchor": "middle",
             transform: "translate(" + (x + colW / 2) + " " + y + ") scale(" + (colW / 10 * 0.95).toFixed(3) + " " + (h / 7.3).toFixed(3) + ")" }, res);
           g.appendChild(mk("title", {}, p + " " + res + ": " + n + " / " + total + " " + t("mf_logo_receptors") +

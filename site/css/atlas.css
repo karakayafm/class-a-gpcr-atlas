@@ -1894,3 +1894,11 @@ a.result-item:focus-visible { outline:2px solid var(--accent); outline-offset:-2
 .mf-answer-query { font-size:13px; padding:2px 8px; border-radius:6px; background:var(--chip); margin-left:4px; }
 .mf-logo-asked { fill:color-mix(in srgb, var(--accent) 20%, transparent); }
 .mf-logo-asked-bar { fill:var(--accent); }
+.mf-bands-fold { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:6px 10px; }
+.mf-bands-fold > summary { cursor:pointer; display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+.mf-bands-fold[open] > summary { margin-bottom:6px; }
+.mf-band-count { display:inline-flex; align-items:center; gap:2px; font-size:12px; }
+.mf-band-count .mf-band-label { min-width:0; }
+.mf-bands-fold .mf-band { margin-top:5px; }
+.mf-row-main { grid-template-columns:minmax(160px,1.1fr) minmax(110px,.8fr) minmax(0,3fr) 150px 90px 16px; }
+.mf-logo-letter.sparse { opacity:.25; }
