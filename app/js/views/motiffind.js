@@ -596,6 +596,13 @@ export async function motifFind(root, route) {
     Q:"#8e44ad", N:"#8e44ad", K:"#2563c9", R:"#2563c9", H:"#2563c9", D:"#d23a2f", E:"#d23a2f",
     A:"#222", V:"#222", L:"#222", I:"#222", P:"#222", W:"#222", F:"#222", M:"#222" };
   const MAX_BITS = Math.log2(20);
+  /* The letters are drawn as outlines, not as text. A text letter is a glyph from whatever font the
+     viewer has, stretched by a transform, and SVG renderers disagree on how a centred, scaled text
+     is placed: the downloaded logo opened in an image viewer (librsvg) had its letters a column to
+     the left. Outlines are geometry and draw the same everywhere, and they fill their box exactly.
+     DejaVu Sans Mono Bold (free licence, Bitstream Vera terms), each normalised to a 100 x 100 box,
+     y down; generated once with fontTools. */
+  const GLYPHS = {"A":"M50 18.1 38 59H62ZM34.5 -0H65.5L100 100H74.7L66.8 75.3H33L25.3 100H0Z","C":"M100 95.4Q92.5 97.7 84.2 98.8Q75.9 100 66.7 100Q34.2 100 17.1 87.2Q0 74.3 0 50Q0 25.7 17.1 12.8Q34.2 0 66.7 0Q75.9 0 84.3 1.2Q92.7 2.3 100 4.6V25.8Q91.8 21.3 84.1 19.2Q76.4 17.1 68.2 17.1Q50.8 17.1 41.9 25.4Q33 33.7 33 50Q33 66.3 41.9 74.6Q50.8 82.9 68.2 82.9Q76.4 82.9 84.1 80.8Q91.8 78.7 100 74.2Z","D":"M29.4 17.8V82.2H37.4Q54.7 82.2 62.1 74.8Q69.4 67.5 69.4 49.9Q69.4 32.4 62.1 25.1Q54.7 17.8 37.4 17.8ZM0 -0H31.5Q67.9 -0 84 11.7Q100 23.4 100 49.9Q100 76.5 84 88.2Q67.9 100 31.5 100H0Z","E":"M100 100H0V-0H100V17.4H31.7V39H93.5V56.4H31.7V82.6H100Z","F":"M100 17.4H31.7V39H93.9V56.4H31.7V100H0V-0H100Z","G":"M74.5 80.7V62.3H54.6V46.3H100V90.4Q91.6 95.2 81.5 97.6Q71.4 100 59.8 100Q31.2 100 15.6 87Q0 74 0 50Q0 25.7 15.7 12.8Q31.5 0 61.2 0Q70.1 0 78.7 1.6Q87.3 3.3 94.8 6.4V27.5Q88.6 22.3 80.7 19.7Q72.8 17.1 63.3 17.1Q46.7 17.1 38.5 25.3Q30.3 33.4 30.3 50Q30.3 66.1 38.2 74.5Q46.1 82.9 61.2 82.9Q65.7 82.9 69.1 82.3Q72.5 81.8 74.5 80.7Z","H":"M-0 -0H30.8V38.1H69.2V-0H100V100H69.2V55.5H30.8V100H-0Z","I":"M0 17.4V-0H100V17.4H66.6V82.6H100V100H0V82.6H33.4V17.4Z","K":"M0 -0H26.6V39.5L68.3 -0H98.5L56 39.4L100 100H70.4L38.4 55L26.6 66.1V100H0Z","L":"M0 100V-0H31.9V82.6H100V100Z","M":"M0 -0H33.2L50 43.9L66.6 -0H100V100H76.1V19.9L61.2 63.6H39L23.9 19.9V100H0Z","N":"M0 -0H31.9L73.8 72.7V-0H100V100H68.3L26.2 27.3V100H0Z","P":"M29.9 16.6V45.9H42.2Q57 45.9 62.9 42.7Q68.8 39.4 68.8 31.3Q68.8 23.2 62.9 19.9Q57 16.6 42.2 16.6ZM0 -0H41.1Q72.5 -0 86.2 7.4Q100 14.7 100 31.3Q100 47.8 86.2 55.2Q72.5 62.6 41.1 62.6H29.9V100H0Z","Q":"M53.8 85.7Q52.4 85.8 51.5 85.9Q50.6 86 49.8 86Q25.3 86 12.6 75.1Q0 64.2 0 43Q0 21.8 12.6 10.9Q25.3 0 50 0Q74.7 0 87.4 10.9Q100 21.8 100 43Q100 57.6 94 67.5Q88 77.3 76.5 81.6L94.3 91.7L75 100ZM50 14.7Q39.2 14.7 34.2 21.4Q29.3 28.1 29.3 43Q29.3 57.9 34.2 64.6Q39.2 71.3 50 71.3Q60.8 71.3 65.8 64.6Q70.7 57.9 70.7 43Q70.7 28.1 65.8 21.4Q60.8 14.7 50 14.7Z","R":"M61.3 52.8Q65.3 53.4 68.2 55.6Q71.2 57.7 75.5 64L100 100H70.5L54.2 74.7Q53.5 73.7 52.3 71.8Q45.1 60.5 35.4 60.5H26.8V100H0V-0H38.7Q64.9 -0 76.3 6.8Q87.7 13.7 87.7 29.1Q87.7 39.4 80.9 45.5Q74.1 51.6 61.3 52.8ZM26.8 16.6V43.9H39.5Q50.5 43.9 55.2 40.7Q60 37.5 60 30.2Q60 22.9 55.3 19.8Q50.5 16.6 39.5 16.6Z","S":"M38.8 55.8Q16.1 50.4 8.1 44.3Q-0 38.3 -0 28.1Q-0 15 13.3 7.5Q26.5 0 49.6 0Q60.1 0 70.6 1.5Q81.1 3 91.4 6V24.6Q81.8 20.3 71.8 18Q61.8 15.8 52 15.8Q41.1 15.8 35.3 18.5Q29.5 21.3 29.5 26.5Q29.5 30.5 33.7 33.1Q37.9 35.7 51.4 38.9L64.3 42Q82.7 46.2 91.3 53.3Q100 60.3 100 71Q100 85.6 86.4 92.8Q72.8 100 45.3 100Q33.9 100 22.6 98.3Q11.2 96.6 0.6 93.2V73.5Q12.6 79 23.9 81.6Q35.2 84.2 46.2 84.2Q57.3 84.2 63.4 81.1Q69.5 77.9 69.5 72.1Q69.5 67.8 65.4 64.5Q61.4 61.3 53.6 59.4Z","T":"M64 100H36V17.3H0V-0H100V17.3H64Z","V":"M50 83.5 73.5 -0H100L68.3 100H31.7L0 -0H26.5Z","W":"M0 -0H20.9L29.6 73.4L40.1 25.9H59.9L72.1 73.4L78.9 -0H100L86.1 100H63.7L50 47.5L37.1 100H14.9Z","Y":"M0 -0H26.1L50 40.2L73.9 -0H100L62.1 60.6V100H37.9V60.6Z"};
   function drawLogo(parsed, split) {
     clear(logoBox);
     logoBox.hidden = true;
@@ -658,9 +665,11 @@ export async function motifFind(root, route) {
              as tall as one all two hundred have. Columns with fewer than a quarter of the scope's
              receptors are drawn faint; bits need no such mark, their correction already lowers them. */
           const sparse = freqMode && total < scopeN / 4;
-          const g = mk("text", { x: 0, y: 0, class: "mf-logo-letter" + (sparse ? " sparse" : ""), fill: LOGO_COLOURS[res] || "#666",
-            "text-anchor": "middle",
-            transform: "translate(" + (x + colW / 2) + " " + y + ") scale(" + (colW / 10 * 0.95).toFixed(3) + " " + (h / 7.3).toFixed(3) + ")" }, res);
+          const w = colW * 0.92;
+          const g = mk("path", { d: GLYPHS[res] || "", class: "mf-logo-letter" + (sparse ? " sparse" : ""),
+            fill: LOGO_COLOURS[res] || "#666",
+            transform: "translate(" + (x + (colW - w) / 2).toFixed(2) + " " + (y - h).toFixed(2) + ") scale(" +
+              (w / 100).toFixed(4) + " " + (h / 100).toFixed(4) + ")" });
           g.appendChild(mk("title", {}, p + " " + res + ": " + n + " / " + total + " " + t("mf_logo_receptors") +
             (freqMode ? "" : " · " + ic.toFixed(2) + " " + t("mf_logo_bits"))));
           g.addEventListener("click", () => {
@@ -706,16 +715,13 @@ export async function motifFind(root, route) {
     const NS = "http://www.w3.org/2000/svg";
     const copy = svg.cloneNode(true);
     const vb = svg.getAttribute("viewBox").split(" ").map(Number);
-    const capH = 22, W = vb[2], H = vb[3] + capH;
+    // Wide enough for the caption as well as the logo; a narrow logo cut its caption off.
+    const capH = 22, W = Math.max(vb[2], Math.ceil(caption.length * 6.8) + 16), H = vb[3] + capH;
     copy.setAttribute("xmlns", NS);
     copy.setAttribute("viewBox", "0 " + (-capH) + " " + W + " " + H);
     copy.setAttribute("width", String(W)); copy.setAttribute("height", String(H));
     for (const n of copy.querySelectorAll("title")) n.remove();
-    for (const n of copy.querySelectorAll(".mf-logo-letter")) {
-      n.setAttribute("font-family", "DejaVu Sans Mono, Menlo, Consolas, monospace");
-      n.setAttribute("font-weight", "700"); n.setAttribute("font-size", "10");
-      if (n.classList.contains("sparse")) n.setAttribute("opacity", "0.25");
-    }
+    for (const n of copy.querySelectorAll(".mf-logo-letter.sparse")) n.setAttribute("opacity", "0.25");
     for (const n of copy.querySelectorAll(".mf-logo-tick, .mf-logo-pos")) {
       n.setAttribute("fill", "#5b6169"); n.setAttribute("font-size", "10");
       n.setAttribute("font-family", "DejaVu Sans, Arial, sans-serif");
