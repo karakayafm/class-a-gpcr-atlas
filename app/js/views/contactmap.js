@@ -34,6 +34,11 @@ import { toCSV, download } from "../components/csv.js";
 import { downloadXLSX } from "../components/xlsx.js";
 import * as L from "../data/loader.js";
 import { navigate, buildHash } from "../core/router.js";
+
+const capitalise = text => {
+  const s = String(text || "");
+  return s ? s.charAt(0).toLocaleUpperCase(getLang() === "tr" ? "tr-TR" : "en") + s.slice(1) : s;
+};
 import { familyDisplayName, plainName, metricHelp } from "./views.js";
 
 const THRESHOLDS = [4.0, 4.5, 5.0];
@@ -450,11 +455,15 @@ export async function contactMap(root, route) {
         .sort((x, y) => y.shares[di] - x.shares[di] || plainName(x.name).localeCompare(plainName(y.name)));
       const missing = X.receptors - rows.length;
       const tbl = el("table", { class: "data cm-detail-table" }, [
-        el("thead", {}, el("tr", {}, [t("receptors"), t("structures"), "≤ " + state.delta.toFixed(1) + " Å"]
+        // Column headings start with a capital; the dictionary's "receptors" and "structures" are
+        // the lower-case words used inside sentences elsewhere.
+        el("thead", {}, el("tr", {}, [capitalise(t("receptors")), capitalise(t("structures")), "≤ " + state.delta.toFixed(1) + " Å"]
           .map(h => el("th", { text: h })))),
         el("tbody", {}, rows.map(r => el("tr", {}, [
+          // A new tab: the reader is in the middle of reading the map, and the structure list
+          // replacing it lost the position, threshold and groups they had set up.
           el("td", {}, el("a", { href: buildHash({ family: state.fam, view: "structures",
-              rcpt: r.name, mode: r.mode, rep: state.rep ? null : "0" }),
+              rcpt: r.name, mode: r.mode, rep: state.rep ? null : "0" }), target: "_blank", rel: "noopener",
             title: t("cm_open_receptor", { mode: ligandClassLabel(r.mode), k: r.modeCount, n: r.n }),
             html: r.name })),
           el("td", { class: "num", text: String(r.n) }),
