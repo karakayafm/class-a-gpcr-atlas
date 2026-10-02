@@ -3,7 +3,8 @@ ca-001-001,Aminergic receptors,Carazolol,CAU,Agonist,1,adrb3_human,9IJD
 ca-001-001,Aminergic receptors,Carazolol,CAU,Antagonist,3,adrb1_melga adrb2_human,2YCW 5X7D 6PS0
 ca-001-001,Aminergic receptors,Carazolol,CAU,Inverse agonist,8,adrb1_human adrb2_human,2RH1 4GBR 5D5A 5D5B 5D6L 5JQH 7BVQ 9CHX
 ca-001-001,Aminergic receptors,(S)-Cyanopindolol,P32,Agonist,1,adrb1_melga,6H7O
-ca-001-001,Aminergic receptors,(S)-Cyanopindolol,P32,Antagonist,6,adrb1_melga,2VT4 2YCX 2YCY 4BVN 5F8U 8DCS
+ca-001-001,Aminergic receptors,(S)-Cyanopindolol,P32,Agonist (partial),1,adrb1_melga,8DCS
+ca-001-001,Aminergic receptors,(S)-Cyanopindolol,P32,Antagonist,5,adrb1_melga,2VT4 2YCX 2YCY 4BVN 5F8U
 ca-001-001,Aminergic receptors,Dobutamine,Y00,Agonist,1,adrb1_melga,6H7L
 ca-001-001,Aminergic receptors,Dobutamine,Y00,Agonist (partial),3,adrb1_melga,2Y00 2Y01 8DCR
 ca-001-001,Aminergic receptors,levosalbutamol,68H,Agonist,2,adrb1_melga adrb2_human,6H7M 7DHI
@@ -16,8 +17,6 @@ ca-001-001,Aminergic receptors,CHEMBL3799125,CVD,Antagonist,1,adrb2_human,6PS3
 ca-001-001,Aminergic receptors,CHEMBL3799125,CVD,Inverse agonist,1,adrb1_melga,4AMJ
 ca-001-001,Aminergic receptors,tiotropium,0HK,Antagonist,5,acm1_human acm3_rat acm4_human,4DAJ 4U14 4U15 5CXV 5DSG
 ca-001-001,Aminergic receptors,tiotropium,0HK,Inverse agonist,1,acm5_human,6OL9
-ca-001-001,Aminergic receptors,ergotamine,ERM,Agonist,5,5ht1b_human 5ht2b_human 5ht2c_human,4IAR 4IB4 4NC3 5TUD 6BQG
-ca-001-001,Aminergic receptors,ergotamine,ERM,Antagonist,1,5ht1b_human,7C61
 ca-001-001,Aminergic receptors,LY2119620,2CU,Ago-PAM,1,acm2_human,6OIK
 ca-001-001,Aminergic receptors,LY2119620,2CU,Agonist,1,acm2_human,6U1N
 ca-001-001,Aminergic receptors,LY2119620,2CU,PAM,4,acm2_human acm4_human,4MQT 7T94 7T96 7V68

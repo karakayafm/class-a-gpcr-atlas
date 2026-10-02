@@ -1,7 +1,7 @@
 {
  "schema": "curation_pending",
  "schema_version": "1.0.0",
- "generated": "2026-10-02",
+ "generated": "2026-10-03",
  "note": "Applied by the site's loader until the next build; the permanent corrections are in pipeline/phase5/build_payloads.py. Precomputed aggregates are not changed by this file.",
  "corrections": {
   "9IJD:LE:np:CAU": {
@@ -13,6 +13,26 @@
    "evidence": "RCSB 9IJD 'Carazolol-activated human beta3 adrenergic receptor', active state with Gs; primary citation 'Molecular Mechanism of the beta3AR Agonist Activity of a beta-Blocker', ChemPlusChem 2024, doi:10.1002/cplu.202400288; GPCRdb lists (S)-carazolol in 9IJD as Agonist.",
    "note_en": "Carazolol was recorded here as an inverse agonist. 9IJD is the carazolol-activated human beta3 receptor in its active, Gs-coupled state, and the primary publication and GPCRdb describe carazolol as an agonist at beta3. The label is corrected to Agonist; until the next build the correction is applied by the site, and precomputed aggregates still count the old label.",
    "note_tr": "Carazolol burada ters agonist olarak kayıtlıydı. 9IJD, carazolol ile aktive edilmiş insan beta3 reseptörünün Gs'ye bağlı aktif yapısıdır; birincil yayın ve GPCRdb carazolol'ü beta3'te agonist olarak tanımlar. Etiket Agonist olarak düzeltildi; bir sonraki build'e kadar düzeltmeyi site uygular, önceden hesaplanmış toplamlar ise eski etiketi saymaya devam eder."
+  },
+  "8DCS:LE:np:P32": {
+   "pdb": "8DCS",
+   "ligand": "Cyanopindolol",
+   "from": "Antagonist",
+   "to": "Agonist (partial)",
+   "decided": "2026-10-03",
+   "evidence": "RCSB 8DCS 'Cryo-EM structure of cyanopindolol-bound beta1-adrenergic receptor in complex with heterotrimeric Gs-protein', keywords 'partial agonist'; active state with Gs; primary citation 'Structures of beta1-adrenergic receptor in complex with Gs and ligands of different efficacies' (2022); GPCRdb lists cyanopindolol in 8DCS as Agonist (partial).",
+   "note_en": "Cyanopindolol was recorded here as an antagonist. 8DCS is the turkey beta1 receptor bound to cyanopindolol in complex with Gs, in its active state; the entry and GPCRdb describe cyanopindolol here as a partial agonist. The label is corrected to Agonist (partial); until the next build the correction is applied by the site, and precomputed aggregates still count the old label.",
+   "note_tr": "Siyanopindolol burada antagonist olarak kayıtlıydı. 8DCS, siyanopindolol bağlı hindi beta1 reseptörünün Gs ile kompleksidir ve aktif durumdadır; girdi ve GPCRdb siyanopindolol'ü burada kısmi agonist olarak tanımlar. Etiket Agonist (kısmi) olarak düzeltildi; bir sonraki build'e kadar düzeltmeyi site uygular, önceden hesaplanmış toplamlar ise eski etiketi saymaya devam eder."
+  },
+  "7C61:LE:np:ERM": {
+   "pdb": "7C61",
+   "ligand": "ergotamine",
+   "from": "Antagonist",
+   "to": "Agonist",
+   "decided": "2026-10-03",
+   "evidence": "GPCRdb lists ergotamine in 7C61 as Agonist; the same compound at the same receptor (5-HT1B, 4IAR) is recorded as Agonist in the atlas and in GPCRdb.",
+   "note_en": "Ergotamine was recorded here as an antagonist. GPCRdb lists it as an agonist in 7C61, and the same compound at the same receptor (4IAR) is an agonist in the atlas. The label is corrected to Agonist; until the next build the correction is applied by the site.",
+   "note_tr": "Ergotamin burada antagonist olarak kayıtlıydı. GPCRdb 7C61'de onu agonist olarak listeler ve aynı bileşik aynı reseptörde (4IAR) atlasta da agonisttir. Etiket Agonist olarak düzeltildi; bir sonraki build'e kadar düzeltmeyi site uygular."
   }
  },
  "blocker_label_conflicts": {
@@ -35,7 +55,7 @@
     }
    },
    {
-    "ligand": "CHEMBL3799125",
+    "ligand": "Carvedilol (CHEMBL3799125)",
     "components": "CVD",
     "labels": {
      "Antagonist": [
@@ -43,18 +63,6 @@
      ],
      "Inverse agonist": [
       "adrb1_melga"
-     ]
-    }
-   },
-   {
-    "ligand": "CHEMBL428892",
-    "components": "89F",
-    "labels": {
-     "Antagonist": [
-      "5ht1b_human"
-     ],
-     "Inverse agonist": [
-      "5ht2a_human"
      ]
     }
    },
@@ -67,6 +75,18 @@
      ],
      "Inverse agonist": [
       "adrb2_human"
+     ]
+    }
+   },
+   {
+    "ligand": "Metitepine (CHEMBL428892)",
+    "components": "89F",
+    "labels": {
+     "Antagonist": [
+      "5ht1b_human"
+     ],
+     "Inverse agonist": [
+      "5ht2a_human"
      ]
     }
    },

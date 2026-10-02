@@ -42,6 +42,16 @@ def _opsin_note(comp_en, comp_tr, contacts):
             "tr":f"GPCRdb bu yapıyı apo olarak listeler. {comp_tr}, retinal (ortosterik) cebinde durur ve "
                  f"{contacts} pozisyonlarına temas eder. Bilgi olarak kaydedilmiştir; ligand sayılmaz."}
 CURATED_STRUCTURE_NOTES={
+  "8DCS":{"en":"Cyanopindolol was recorded as an antagonist. 8DCS is cyanopindolol-bound turkey beta1 in complex "
+               "with Gs, in its active state; the entry and GPCRdb describe cyanopindolol here as a partial agonist, "
+               "and it is counted as one.",
+          "tr":"Siyanopindolol antagonist olarak kayıtlıydı. 8DCS, siyanopindolol bağlı hindi beta1 reseptörünün Gs "
+               "ile aktif kompleksidir; girdi ve GPCRdb siyanopindolol'ü burada kısmi agonist olarak tanımlar ve "
+               "burada da öyle sayılır."},
+  "7C61":{"en":"Ergotamine was recorded as an antagonist. GPCRdb lists it as an agonist in 7C61, as the atlas does "
+               "for the same compound at the same receptor in 4IAR.",
+          "tr":"Ergotamin antagonist olarak kayıtlıydı. GPCRdb 7C61'de onu agonist olarak listeler; atlas da aynı "
+               "bileşiği aynı reseptörde 4IAR'da agonist sayar."},
   "9IJD":{"en":"Carazolol was recorded as an inverse agonist. 9IJD is the carazolol-activated human beta3 "
                "receptor in its active, Gs-coupled state; the primary publication and GPCRdb describe carazolol "
                "as an agonist at beta3, and it is counted as one here.",
@@ -88,6 +98,10 @@ CURATED_LIGAND_ROLES={
   # (ChemPlusChem 2024, doi:10.1002/cplu.202400288) and GPCRdb give carazolol as an agonist there.
   # See curation/ligand_label_review.
   "9IJD:LE:np:CAU":("pharmacological_orthosteric_ligand","Agonist"),
+  # 8DCS: cyanopindolol-bound beta1 with Gs, active; entry keywords and GPCRdb: partial agonist.
+  "8DCS:LE:np:P32":("pharmacological_orthosteric_ligand","Agonist (partial)"),
+  # 7C61: GPCRdb lists ergotamine as an agonist, as the atlas does for the same pair in 4IAR.
+  "7C61:LE:np:ERM":("pharmacological_orthosteric_ligand","Agonist"),
 }
 CURATED_OBSERVED_LIGANDS={"9D3E:LE:np:A1A1W","9D3E:LE:np:EBX",
   "9D3G:LE:np:A1A2A","9D3G:LE:np:EBX",
