@@ -592,9 +592,14 @@ export async function motifFind(root, route) {
      position's information content (log2 20 minus its entropy, in bits) - the conventional logo,
      so a conserved position stands tall and a variable one stays low. Counted per receptor, as
      everything here is. Clicking a letter asks for it. */
-  const LOGO_COLOURS = { G:"#0f9d58", S:"#0f9d58", T:"#0f9d58", Y:"#0f9d58", C:"#0f9d58",
-    Q:"#8e44ad", N:"#8e44ad", K:"#2563c9", R:"#2563c9", H:"#2563c9", D:"#d23a2f", E:"#d23a2f",
-    A:"#222", V:"#222", L:"#222", I:"#222", P:"#222", W:"#222", F:"#222", M:"#222" };
+  /* Residue colours: hydrophobic residues, serine and cysteine in yellow (cysteine a darker mustard
+     so it stays apart), the remaining polar G T Y green, amide N Q purple, basic K R H blue, acidic
+     D E red. Yellow rather than the usual black so the hydrophobic stacks read as a group. */
+  const HYDROPHOBIC_YELLOW = "#e0a210", MUSTARD = "#b58a12";
+  const LOGO_COLOURS = { A:HYDROPHOBIC_YELLOW, V:HYDROPHOBIC_YELLOW, L:HYDROPHOBIC_YELLOW, I:HYDROPHOBIC_YELLOW,
+    P:HYDROPHOBIC_YELLOW, W:HYDROPHOBIC_YELLOW, F:HYDROPHOBIC_YELLOW, M:HYDROPHOBIC_YELLOW,
+    S:HYDROPHOBIC_YELLOW, C:MUSTARD, G:"#0f9d58", T:"#0f9d58", Y:"#0f9d58",
+    Q:"#8e44ad", N:"#8e44ad", K:"#2563c9", R:"#2563c9", H:"#2563c9", D:"#d23a2f", E:"#d23a2f" };
   const MAX_BITS = Math.log2(20);
   /* The letters are drawn as outlines, not as text. A text letter is a glyph from whatever font the
      viewer has, stretched by a transform, and SVG renderers disagree on how a centred, scaled text
