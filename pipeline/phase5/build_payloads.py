@@ -42,6 +42,12 @@ def _opsin_note(comp_en, comp_tr, contacts):
             "tr":f"GPCRdb bu yapıyı apo olarak listeler. {comp_tr}, retinal (ortosterik) cebinde durur ve "
                  f"{contacts} pozisyonlarına temas eder. Bilgi olarak kaydedilmiştir; ligand sayılmaz."}
 CURATED_STRUCTURE_NOTES={
+  "9IJD":{"en":"Carazolol was recorded as an inverse agonist. 9IJD is the carazolol-activated human beta3 "
+               "receptor in its active, Gs-coupled state; the primary publication and GPCRdb describe carazolol "
+               "as an agonist at beta3, and it is counted as one here.",
+          "tr":"Carazolol ters agonist olarak kayıtlıydı. 9IJD, carazolol ile aktive edilmiş insan beta3 "
+               "reseptörünün Gs'ye bağlı aktif yapısıdır; birincil yayın ve GPCRdb carazolol'ü beta3'te agonist "
+               "olarak tanımlar ve burada da öyle sayılır."},
   "8XXU":{"en":"Apo. The only hetero group modelled, A1D5Q, is phosphatidylinositol, a membrane lipid; it is "
                "not counted as a ligand and is shown with the lipids.",
           "tr":"Apo. Modellenmiş tek hetero grup olan A1D5Q bir membran lipidi olan fosfatidilinositoldür; "
@@ -78,6 +84,10 @@ CURATED_LIGAND_ROLES={
   "5TZY:LE:np:MK6":(_BITOPIC,None), "8EJC:LE:np:2YB":(_BITOPIC,None), "8EJK:LE:np:2YB":(_BITOPIC,None),
   # GPCRdb gives LY2119620 as PAM; the agonist label came from the unmodelled iperoxo.
   "6U1N:LE:np:2CU":("positive_allosteric_modulator","PAM"),
+  # 9IJD is carazolol-activated beta3 in its active, Gs-coupled state; the primary publication
+  # (ChemPlusChem 2024, doi:10.1002/cplu.202400288) and GPCRdb give carazolol as an agonist there.
+  # See curation/ligand_label_review.
+  "9IJD:LE:np:CAU":("pharmacological_orthosteric_ligand","Agonist"),
 }
 CURATED_OBSERVED_LIGANDS={"9D3E:LE:np:A1A1W","9D3E:LE:np:EBX",
   "9D3G:LE:np:A1A2A","9D3G:LE:np:EBX",

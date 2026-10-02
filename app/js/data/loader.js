@@ -63,6 +63,7 @@ export async function loadPanelStructures(panelSlug) {
   if (famCache.has(key)) { const v = famCache.get(key); touch(famCache, key, v); return v; }
   const d = await getJSON(base() + entry.url);
   checkSchema(d, "panels/" + panelSlug);
+  applyPending(d, await pendingCuration());
   touch(famCache, key, d);
   lru(famCache, MAX_FAMILY_ENTRIES * 4);
   return d;
@@ -111,6 +112,7 @@ export async function loadLigandStructures(classSlug) {
   if (famCache.has(key)) { const v = famCache.get(key); touch(famCache, key, v); return v; }
   const d = await getJSON(base() + entry.url);
   checkSchema(d, "ligands/" + classSlug);
+  applyPending(d, await pendingCuration());
   touch(famCache, key, d);
   lru(famCache, MAX_FAMILY_ENTRIES * 4);
   return d;
@@ -166,6 +168,7 @@ export async function loadFamilyFile(slug, name) {
   if (famCache.has(key)) { const v = famCache.get(key); touch(famCache, key, v); return v; }
   const d = await getJSON(base() + "families/" + entry.url.replace(/^families\//, ""));
   checkSchema(d, slug + "/" + name);
+  if (name === "structures.json") applyPending(d, await pendingCuration());
   touch(famCache, key, d);
   lru(famCache, MAX_FAMILY_ENTRIES * 4);
   return d;
@@ -197,7 +200,42 @@ export async function loadBundleMeta(pdb) {
   const key = "bm:" + pdb;
   if (bundleCache.has(key)) { const v = bundleCache.get(key); touch(bundleCache, key, v); return v; }
   const d = await getJSON(base() + "structures/" + pdb + "/viewer_meta.json");
+  applyPending({ structures: [Object.assign(d, { pdb_id: d.pdb_id || pdb })] }, await pendingCuration());
   touch(bundleCache, key, d); lru(bundleCache, MAX_BUNDLE_ENTRIES);
+  return d;
+}
+/* Label corrections decided in curation but not yet carried by a build (overlay/curation_pending.json,
+   written by curation/ligand_label_review/scan_labels.py). The permanent correction is in the pipeline;
+   this applies the same correction to every structure list the site loads, so the lists, filters, the
+   contact map and the viewer agree with what the next build will publish. Precomputed aggregates are
+   not touched and still count the old label until then; the structure page says so. */
+let pendingPromise = null;
+export function pendingCuration() {
+  if (!pendingPromise) pendingPromise = loadOverlay("curation_pending.json").catch(() => null);
+  return pendingPromise;
+}
+function applyPending(d, P) {
+  if (!d || !P || !P.corrections || d.__pendingApplied) return d;
+  for (const s of d.structures || []) {
+    for (const o of s.observations || []) {
+      const c = P.corrections[o.ligand_entity_id];
+      if (!c || o.binding_mode !== c.from) continue;
+      o.binding_mode = c.to;
+      o.binding_mode_pending = { from: c.from };
+      const notes = s.curation_notes || (s.curation_notes = []);
+      if (!notes.some(n => n.pending === o.ligand_entity_id))
+        notes.push({ en: c.note_en, tr: c.note_tr, pending: o.ligand_entity_id });
+    }
+  }
+  // A per-class list drops an observation the correction moved out of its class, and a structure left
+  // with nothing of that class; observations it never touched are left as they were.
+  if (d.ligand_class && Array.isArray(d.structures)) {
+    for (const s of d.structures)
+      s.observations = (s.observations || []).filter(o => !o.binding_mode_pending || o.binding_mode === d.ligand_class);
+    d.structures = d.structures.filter(s => s.observations.some(o => o.binding_mode === d.ligand_class));
+    d.count = d.structures.length;
+  }
+  Object.defineProperty(d, "__pendingApplied", { value: true });
   return d;
 }
 export function bundleCifUrl(pdb) { return base() + "structures/" + pdb + "/viewer.cif"; }
