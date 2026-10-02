@@ -689,9 +689,9 @@ export async function motifFind(root, route) {
       class: "mf-logo-mode" + ((mode === "freq") === freqMode ? " active" : ""),
       onclick: () => set({ logo: mode }) }, [el("span", { text: t(label) })]);
     const scopeName = state.scope === "class_a" ? t("motif_scope_class_a") : (nameOf.get(state.scope) || state.scope);
-    const caption = t(freqMode ? "mf_logo_title_freq" : "mf_logo_title") + " · " + scopeName + " · " +
-      positions[0] + (positions.length > 1 ? "–" + positions[positions.length - 1] : "") +
-      " · " + t("mf_logo_n_receptors", { n: scopeN });
+    // The figure's caption: who it counts. The positions are on the axis and the kind of logo is
+    // in the axis title (bits or share), so neither is repeated here.
+    const caption = scopeName + " · " + t("mf_logo_n_receptors", { n: scopeN });
     const fileBase = "logo_" + (state.scope === "class_a" ? "classA" : state.scope) + "_" +
       positions[0] + (positions.length > 1 ? "-" + positions[positions.length - 1] : "") + (freqMode ? "_freq" : "_bits");
     logoBox.appendChild(el("div", { class: "mf-logo-head" }, [
