@@ -1,0 +1,28 @@
+{
+  "version": "1.0.0",
+  "policy": "A curated offset is used only when a cleaned GPCR reference maps the same deposited atoms exactly and residue identity agreement remains at least 0.80. Residues outside the validated native interval are construct/fusion regions.",
+  "references": {
+    "cofolding_recovery": {
+      "description": "Previously recovered and strictly sequence-validated aminergic crystal references",
+      "project": "/media/arma/Elements/python_projeler/cofolding_tools_confidence",
+      "validation_report": "/media/arma/Elements/betikler/CODEX_PDB_DUZENLEME_SCRIPTS_AND_REPORTS/reports/codex_basarili_duzeltme_yontemi/strict_residue_dogrulama/all_pdb_alignment_summary.tsv"
+    },
+    "gpcrdb_refined": {
+      "description": "GPCRdb refined structure download; generic numbers are encoded by GPCRdb and the receptor sequence was checked against ADRB2",
+      "url_template": "https://gpcrdb.org/structure/refined/{pdb}_full/download_pdb"
+    }
+  },
+  "structures": {
+    "4LDE": {"accession":"P07550","author_offset":-1000,"native_min":29,"native_max":342,"reference":"cofolding_recovery","reference_sha256":"7de7792b356a3aa7d7458569662d3fbf0b7111cce7ae4fc19c31cf6923b6ccff","exact_coordinate_residues":283},
+    "4LDL": {"accession":"P07550","author_offset":-1000,"native_min":29,"native_max":342,"reference":"cofolding_recovery","reference_sha256":"18da711cabbda05ab698bb86f8fe1629b60fc1f26b43ede62a119f2cccf6a709","exact_coordinate_residues":283},
+    "4LDO": {"accession":"P07550","author_offset":-1000,"native_min":29,"native_max":342,"reference":"cofolding_recovery","reference_sha256":"b100d4c2da0b09bdea758cec6ae12537655728696f1eb840d4f42e048b9b7fd2","exact_coordinate_residues":283},
+    "4QKX": {"accession":"P07550","author_offset":-1000,"native_min":29,"native_max":342,"reference":"cofolding_recovery","reference_sha256":"9ee824a175e1167d8ad0d48a7b846a7a369ba09f5f91bc510a8d3d815ac583a5","exact_coordinate_residues":283},
+    "5JQH": {"accession":"P07550","author_offset":-1000,"native_min":29,"native_max":343,"reference":"cofolding_recovery","reference_sha256":"d21c20c9efd118b76882e0c9b82c6774722773f6c72af04dd0c8d4dadb44daac","exact_coordinate_residues":284},
+    "6MXT": {"accession":"P07550","author_offset":-1000,"native_min":29,"native_max":342,"reference":"cofolding_recovery","reference_sha256":"f7b4ea3943fe9d28a812da17933fd5330f2de50e6016b54f6d5e088946664f8e","exact_coordinate_residues":284},
+    "6N48": {"accession":"P07550","author_offset":-1000,"native_min":29,"native_max":339,"reference":"gpcrdb_refined","reference_sha256":"efd239c84a954324988d9715fc32a45fe80f3f46b872ffdadb7ea6239fa4ce7e","exact_coordinate_residues":263},
+    "7BTS": {"accession":"P08588","author_offset":-1000,"native_min":54,"native_max":392,"reference":"cofolding_recovery","reference_sha256":"303ed308ecc40f1446707cc8b3891269b28f420fcb15b41c7746b0fcfb0070f5","exact_coordinate_residues":279},
+    "7BVQ": {"accession":"P08588","author_offset":-1000,"native_min":54,"native_max":392,"reference":"cofolding_recovery","reference_sha256":"38a9ef369dfb2fbbe0c75e42fc4fea85892f7fba32e135998bf5ddb0afde50cc","exact_coordinate_residues":285},
+    "7XK9": {"accession":"P07550","author_offset":-1000,"native_min":29,"native_max":342,"reference":"cofolding_recovery","reference_sha256":"1c5cd350a3166160818109fedeeaf7286fe252a6d099e4704b1dfc059c66760d","exact_coordinate_residues":283},
+    "7XKA": {"accession":"P07550","author_offset":-1000,"native_min":29,"native_max":342,"reference":"cofolding_recovery","reference_sha256":"75ecb97a5232e49dc685ad3e9ed189357c4a4dc666bf0d59d7d0fe9cbaaa626e","exact_coordinate_residues":283}
+  }
+}

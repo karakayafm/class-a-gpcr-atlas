@@ -1,0 +1,269 @@
+{
+    "_status": "COPYRIGHT HOLDER: Muhammed Fatih Karakaya. Sole authority for licence, release and redistribution; no approval is routed through an institution. Code PolyForm-Noncommercial-1.0.0, project-created data CC BY-NC 4.0, published with DOI 10.5281/zenodo.21901790. Remaining: the stable-release curation gate and the contact-rule reference test.",
+    "_recorded": "2026-08-05",
+    "_rule": "No field below may be filled by an automated process. Fields marked evidence_supported have a value the project's own artefacts determine; they are still shown unset, with the supporting evidence named, for a person to confirm.",
+    "fields": {
+        "PROJECT_TITLE": {
+            "value": "Class A GPCR Structure–Ligand Contact and Interface Atlas",
+            "who": "owner",
+            "note": "Current artefacts use 'Class A GPCR Atlas' (release_metadata.json, references.json).",
+            "resolution": "settled"
+        },
+        "SHORT_NAME": {
+            "value": "Class A GPCR Contact Atlas",
+            "who": "owner",
+            "flag": "OVERCLAIM_RISK",
+            "note": "The suggested 'Class A GPCR Structural Pharmacology Atlas' asserts pharmacology content the atlas does not contain. functional_pathway_evidence is null for all 1358 structures (SD-04); GtoPdb, ChEMBL and PubChem are never called; there is no potency, affinity, efficacy or agonist/antagonist activity data. Ligand ROLE annotations (orthosteric/allosteric/PAM/NAM) are present but are source-relayed binding-mode classifications, not measured pharmacology.",
+            "resolution": "settled",
+            "decision_note": "Overclaim flag cleared: the name no longer asserts pharmacology content the atlas lacks."
+        },
+        "RELEASE_POLICY": {
+            "value": "transparent_public_beta",
+            "who": "owner",
+            "evidence": "PUBLIC_PRERELEASE_READINESS.md, STABLE_RELEASE_READINESS.md",
+            "resolution": "settled"
+        },
+        "PUBLIC_VERSION": {
+            "value": "0.1.0-beta.2",
+            "who": "owner",
+            "note": "Setting this also resolves decision D08: two identifiers currently ship (5.0.0-pre in payloads, 0.1.0-rc.4 in manifests).",
+            "resolution": "settled",
+            "decision_note": "Resolves D08. Stamped in the release layer so one identifier is user-visible; the Phase 5 payload is not rewritten."
+        },
+        "CODE_LICENSE": {
+            "value": "PolyForm-Noncommercial-1.0.0",
+            "who": "owner",
+            "evidence": "CODE_LICENSE_DECISION_PACKET.md §3",
+            "note": "No upstream source constrains this choice.",
+            "resolution": "settled",
+            "decision_note": "Now effective: grantor confirmed. LICENSE written with an explicit exclusion of the CC0 coordinates and the vendored third-party code.",
+            "reference_text": "data/licences/third_party/PolyForm-Noncommercial-1.0.0.md (sha256 8fb635fd…)"
+        },
+        "CODE_LICENSE_APPROVED_BY": {
+            "value": "Muhammed Fatih Karakaya, copyright holder",
+            "who": "owner",
+            "resolution": "settled"
+        },
+        "DATA_RELEASE_POLICY": {
+            "value": "Project-created contact data, motif measurements, aggregate tables, documentation and original content under CC BY-NC 4.0; source-derived fields remain under their source licences",
+            "who": "owner",
+            "evidence": "CODE_LICENSE_DECISION_PACKET.md §4",
+            "resolution": "settled",
+            "decision_note": "LICENSE-DATA written, including the CC BY 4.0 section 2(a)(5)(B) no-downstream-restrictions statement for mixed records.",
+            "reference_text": "data/licences/third_party/CC-BY-NC-4.0.legalcode.txt (sha256 41003d4a…)"
+        },
+        "DERIVED_DATA_REVIEW_STATUS": {
+            "value": "owner_decision_required",
+            "who": "owner",
+            "evidence": "DERIVED_DATA_REVIEW_PACKET.md",
+            "resolution": "pending",
+            "decision_note": "The packet in docs/DERIVED_DATA_REVIEW_PACKET.md is the material for this decision and the copyright holder is the one who takes it. The open item is the share-alike question in §3, not a review queue."
+        },
+        "SHARE_ALIKE_REVIEW_STATUS": {
+            "value": "not_applicable_no_share_alike_content_is_redistributed",
+            "who": "owner",
+            "evidence_supported": true,
+            "note": "GtoPdb, ChEMBL, PubChem and UniChem are called by pipeline/enrichment/fetch_chemical_xrefs.py and their responses are cached under data/cache/, which is not published. What the release carries from them is the identifier, the link, the retrieval date and the basis on which the match was made — facts about which entry corresponds to which component, not content. The preferred compound name each source publishes is no longer carried. Component name, formula and InChIKey come from the RCSB chemical component dictionary.",
+            "resolution": "settled",
+            "decision_note": "Closed by removing the names rather than by arguing about them. The interface shows the identifier and links to the page where the source publishes the name."
+        },
+        "PUBLIC_REDISTRIBUTION_APPROVED": {
+            "value": "yes_by_copyright_holder",
+            "who": "owner",
+            "resolution": "settled",
+            "decision_note": "Granted by the copyright holder, who is the sole authority for this project."
+        },
+        "REPOSITORY_OWNER": {
+            "value": "karakayafm (GitHub account controlled by the copyright holder)",
+            "who": "owner",
+            "resolution": "settled",
+            "decision_note": "Organisation name still unresolved if the organisation route is taken."
+        },
+        "GITHUB_ORGANIZATION": {
+            "value": "karakayafm",
+            "who": "owner",
+            "resolution": "settled",
+            "decision_note": "[ORGANIZATION NAME — UNRESOLVED]"
+        },
+        "REPOSITORY_NAME": {
+            "value": "class-a-gpcr-atlas",
+            "who": "owner",
+            "note": "Mechanical; 'class-a-gpcr-atlas' matches the directory name.",
+            "resolution": "settled"
+        },
+        "LEAD_DEVELOPER": {
+            "value": "Muhammed Fatih Karakaya",
+            "who": "owner",
+            "note": "The only field supplied with a value.",
+            "resolution": "settled"
+        },
+        "LABORATORY": {
+            "value": "Cancer Signaling Laboratory (CSL), Boğaziçi University",
+            "who": "owner/institution",
+            "note": "Never inferred. Placeholder [LAB] remains unfilled.",
+            "resolution": "settled",
+            "decision_note": "Spelling taken from the laboratory's own site title (https://csl.bogazici.edu.tr/, retrieved 2026-08-05, HTTP 200): 'Cancer Signaling Laboratory'. The owner wrote 'Cancer signalling laboratory'; the source spelling is used."
+        },
+        "INSTITUTION": {
+            "value": "Boğaziçi University",
+            "who": "owner/institution",
+            "note": "Never inferred. Placeholder [INSTITUTION] remains unfilled.",
+            "resolution": "settled",
+            "decision_note": "Acknowledgement only; not a rights holder."
+        },
+        "LAB_REPRESENTATIVE": {
+            "value": "not_required_for_release_authorisation",
+            "who": "owner",
+            "resolution": "settled",
+            "decision_note": "No release authorisation is routed through the laboratory."
+        },
+        "REPOSITORY_MAINTAINERS": {
+            "value": "Muhammed Fatih Karakaya",
+            "who": "owner",
+            "note": "Answers governance gap G5: no maintainer is currently named.",
+            "resolution": "settled",
+            "decision_note": "One maintainer named; governance gap G5 partially closed."
+        },
+        "RELEASE_AUTHORITY": {
+            "value": "Muhammed Fatih Karakaya",
+            "who": "owner",
+            "resolution": "settled",
+            "decision_note": "Single authority. Supersedes the earlier joint-approval arrangement; LAB_REPRESENTATIVE is no longer a release blocker."
+        },
+        "PROJECT_STEWARDSHIP_TEXT": {
+            "value": "Developed and maintained by Fatih Karakaya. Developed as part of research conducted at Boğaziçi University. Laboratory and institutional affiliations are acknowledged separately.",
+            "who": "owner+institution",
+            "resolution": "settled",
+            "decision_note": "Acknowledgement wording, not a claim of institutional ownership or endorsement. No laboratory or advisor is named as an author or maintainer.",
+            "withheld_note": "governance/OPEN_QUESTIONS.local.json"
+        },
+        "COPYRIGHT_HOLDER": {
+            "value": "Muhammed Fatih Karakaya",
+            "who": "owner",
+            "resolution": "settled",
+            "decision_note": "Full legal name used in every legal notice and citation file."
+        },
+        "CONTACT_EMAIL": {
+            "value": "edu.mfatih@gmail.com",
+            "who": "owner",
+            "note": "Answers governance gap G7: no error-reporting route currently exists.",
+            "resolution": "settled",
+            "decision_note": "Closes governance gap G7: an error-reporting route now exists for the public beta."
+        },
+        "CURATION_POLICY": {
+            "value": "transparent_beta_with_open_items_visible_and_review_gated",
+            "who": "owner",
+            "evidence": "curation/review_items.csv",
+            "workload": {
+                "all_189": {
+                    "items": 189,
+                    "priority_1": 108,
+                    "priority_2": 81
+                },
+                "priority_1_only": {
+                    "items": 108
+                },
+                "gold_subset": {
+                    "items": 55,
+                    "open": 48,
+                    "control": 7
+                }
+            },
+            "resolution": "settled",
+            "decision_note": "Implemented and verified in Phase 6A.1: issue-specific gating, 2 observations excluded, 2 units removed, against 48 a blanket rule would have taken."
+        },
+        "GOLD_SUBSET_POLICY": {
+            "value": "before_stable_release_review_all_55_stratified_records_with_second_review_for_the_predefined_34_records_total_89_review_events",
+            "who": "owner",
+            "note": "The plan recommends second review for 34 of the 55, not all 55. As planned: 89 reviews. All 55 double-reviewed: 110 reviews.",
+            "resolution": "settled",
+            "decision_note": "Matches curation/gold_subset_plan.json exactly: 55 records, 34 second reviews, 89 review events."
+        },
+        "CROSS_FAMILY_CONTACT_VALIDATION": {
+            "value": "pending_and_explicitly_disclosed_for_beta_required_before_stable_release",
+            "who": "owner",
+            "evidence": "DD-07, STABLE_RELEASE_READINESS.md S6",
+            "note": "The 5 A definition was validated against 9 reference structures, all aminergic, all small-molecule. 10 of 11 families rest on that inherited assumption.",
+            "resolution": "settled",
+            "decision_note": "Disclosure implemented in Phase 6A.1: 21 rows across 11 families, shown in seven UI locations."
+        },
+        "DOI_POLICY": {
+            "value": "zenodo_concept_doi_10.5281/zenodo.21901790",
+            "who": "owner",
+            "note": "No DOI exists. Absence is enforced by rc_integrity_tests.py.",
+            "resolution": "settled",
+            "decision_note": "Zenodo archives every published release. The concept DOI 10.5281/zenodo.21901790 resolves to the most recent release and is what CITATION.cff carries; each release also has a version DOI, 0.1.0-beta.2 being 10.5281/zenodo.21901791. A DOI on a pre-release cites what was published at that point and is not a claim that the release is curated or independently validated; the citation file says so."
+        },
+        "PUBLICATION_TARGET": {
+            "value": "github_pages",
+            "who": "owner",
+            "resolution": "settled",
+            "decision_note": "Published from the project's own GitHub repository; no mirror is planned."
+        },
+        "CUSTOM_DOMAIN": {
+            "value": "none_for_beta",
+            "who": "owner",
+            "resolution": "settled"
+        },
+        "CODE_LICENSE_STATUS": {
+            "who": "owner",
+            "value": "approved_by_copyright_holder",
+            "resolution": "settled"
+        },
+        "COMMERCIAL_USE_POLICY": {
+            "who": "owner",
+            "value": "Commercial use of project-created code and outputs requires separate written permission from Fatih Karakaya",
+            "resolution": "settled"
+        },
+        "OPEN_SOURCE_STATUS": {
+            "who": "owner",
+            "value": "source_available_noncommercial_not_OSI_open_source",
+            "resolution": "settled",
+            "decision_note": "Neither licence is an OSI-approved open-source licence. The project must not be described as open source anywhere. Audited: no such claim exists, and a release test now enforces it."
+        },
+        "COPYRIGHT_STATUS": {
+            "who": "owner",
+            "value": "owner_declared_under_the_university_policy_for_student-authored_scientific_works",
+            "resolution": "settled",
+            "withheld_note": "governance/OPEN_QUESTIONS.local.json"
+        },
+        "AFFILIATION": {
+            "who": "owner",
+            "value": "Cancer Signaling Laboratory, Boğaziçi University",
+            "resolution": "settled",
+            "decision_note": "Affiliation, not copyright. Spelling from the laboratory's own site (csl.bogazici.edu.tr)."
+        },
+        "ACKNOWLEDGEMENT": {
+            "who": "owner",
+            "value": "Developed as part of research conducted at the Cancer Signaling Laboratory, Boğaziçi University.",
+            "resolution": "settled"
+        },
+        "SCIENTIFIC_BETA_GATE": {
+            "who": "owner",
+            "value": "passed_with_disclosed_open_review_items",
+            "resolution": "settled",
+            "decision_note": "Justified by the Phase 6A.1 implementation: issue-specific gating excluded the two observations that genuinely affect identity, did not blindly exclude metadata items, made open records visible, and re-derived the default beta aggregates."
+        },
+        "STABLE_CURATED_RELEASE_GATE": {
+            "who": "owner",
+            "value": "pending",
+            "resolution": "pending",
+            "decision_note": "0.1.0-beta.1 may be published. v1.0.0, 'fully curated' and 'independently validated across Class A' may not be claimed."
+        },
+        "LICENCE_TEXT_INTEGRITY": {
+            "who": "owner",
+            "value": "official_texts_distributed_unmodified",
+            "resolution": "settled",
+            "decision_note": "An earlier draft embedded scope commentary inside LICENSE ahead of the PolyForm text. PolyForm requires the terms (or their URL) and the Required Notice lines to travel with copies; mixing project commentary into the licence body makes it unclear which text is the licence. LICENSE and LICENSE-DATA are now byte-identical to the retrieved official texts, and all scope moved to LICENSE-NOTICE.md and LICENSE-SCOPE.json."
+        }
+    },
+    "_resolution_counts": {
+        "settled": 34,
+        "conditional": 0,
+        "proposed": 0,
+        "partial": 1,
+        "pending": 2,
+        "unresolved": 0
+    },
+    "open_questions_location": "governance/OPEN_QUESTIONS.local.json (kept outside the repository)"
+}

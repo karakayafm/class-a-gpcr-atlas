@@ -1,0 +1,160 @@
+{
+ "policy": "review_gating_for_public_beta_pooled_analysis",
+ "rule_version": "phase6a1-review-gating-1.0.0",
+ "phase": "6A.1",
+ "principle": "A review item is gated by its demonstrated scientific effect, never by the mere existence of an open item on the same PDB. The forbidden rule is: 'if any open review item touches an analysis unit, exclude the whole unit.'",
+ "granularity_order": [
+  "observation",
+  "structure_slot",
+  "aggregation_unit",
+  "family_summary"
+ ],
+ "narrowest_scope_rule": "Exclusion is applied at the narrowest level that removes the unreliable identity. An unresolved ligand in a PDB never removes a separate, reliable ligand observation in the same PDB.",
+ "unit_removal_rule": "A unit is removed from public-beta pooled analysis only when its eligible structure-slot denominator becomes zero. Otherwise the blocked slots are removed and the unit metric is re-derived from the remaining eligible slots.",
+ "zero_denominator_rule": "A zero denominator yields NA (not_estimable). Never 0%.",
+ "affected_scope_vocabulary": [
+  "metadata_only",
+  "observation",
+  "structure_slot",
+  "aggregation_unit",
+  "family_summary",
+  "no_current_aggregate_effect",
+  "already_excluded_upstream",
+  "unresolved"
+ ],
+ "aggregation_effect_vocabulary": [
+  "exclude_from_public_beta_pooled_analysis",
+  "warning_only",
+  "already_excluded",
+  "no_effect",
+  "human_policy_required",
+  "unresolved_blocker"
+ ],
+ "rules": [
+  {
+   "rule_id": "RG-01",
+   "issue_type": "site_class_unresolved",
+   "test": "site_class_remediation.enters_pooled_aggregation is false for the ligand entity",
+   "effect_if_true": "already_excluded",
+   "scope_if_true": "already_excluded_upstream",
+   "effect_if_false": "exclude_from_public_beta_pooled_analysis",
+   "scope_if_false": "observation",
+   "reason": "An unresolved binding-site class is an aggregation-identity blocker under rule A. Where Phase 4 already kept the entity out of the site-class pooled aggregate, the exclusion exists and must not be counted a second time."
+  },
+  {
+   "rule_id": "RG-02",
+   "issue_type": "apo_assignment",
+   "test": "the PDB contributes no observation to any aggregation unit",
+   "effect_if_true": "already_excluded",
+   "scope_if_true": "already_excluded_upstream",
+   "effect_if_false": "exclude_from_public_beta_pooled_analysis",
+   "scope_if_false": "structure_slot",
+   "reason": "Unresolved apo versus ligand-bound status is a blocker only where a ligand-contact row exists. A confirmed apo structure with no contact row is already excluded."
+  },
+  {
+   "rule_id": "RG-03",
+   "issue_type": "generic_mapping_unvalidated",
+   "test": "the receptor instance is in the Phase 4 mapping_unresolved_excluded_from_generic_aggregation set",
+   "effect_if_true": "already_excluded",
+   "scope_if_true": "already_excluded_upstream",
+   "effect_if_false": "exclude_from_public_beta_pooled_analysis",
+   "scope_if_false": "structure_slot",
+   "reason": "Phase 4 already excludes unvalidated mapping routes from generic aggregation. Re-excluding is double counting."
+  },
+  {
+   "rule_id": "RG-04",
+   "issue_type": "receptor_mapping",
+   "test": "the PDB contributes at least one observation to an aggregation unit",
+   "effect_if_true": "exclude_from_public_beta_pooled_analysis",
+   "scope_if_true": "structure_slot",
+   "effect_if_false": "no_effect",
+   "scope_if_false": "no_current_aggregate_effect",
+   "reason": "Unresolved receptor identity or receptor mapping changes which receptor the contacts belong to, so every structure slot of that PDB is unreliable."
+  },
+  {
+   "rule_id": "RG-05",
+   "issue_type": "ligand_classification",
+   "test": "the ligand entity appears as the ligand of an observation in an aggregation unit",
+   "effect_if_true": "exclude_from_public_beta_pooled_analysis",
+   "scope_if_true": "observation",
+   "effect_if_false": "no_effect",
+   "scope_if_false": "no_current_aggregate_effect",
+   "reason": "Unresolved ligand identity is a blocker for the observation it names, and only for that observation. A different ligand in the same PDB is unaffected."
+  },
+  {
+   "rule_id": "RG-06",
+   "issue_type": "polymer_chain_role",
+   "test": "the polymer entity is itself the ligand of an observation in an aggregation unit",
+   "effect_if_true": "exclude_from_public_beta_pooled_analysis",
+   "scope_if_true": "observation",
+   "effect_if_false": "warning_only",
+   "scope_if_false": "no_current_aggregate_effect",
+   "reason": "Rule A blocks an unresolved polymer-chain role only when the chain is treated as a ligand. Where the chain is a tag, fusion or transducer construct, resolving it can ADD a missing polymer-interface observation but cannot invalidate an existing small-molecule observation. That is an under-inclusion risk, recorded as a warning rather than removing sound data."
+  },
+  {
+   "rule_id": "RG-07",
+   "issue_type": "source_conflict:transducer_presence_disagreement",
+   "test": "the unit's normalized structural state was derived from transducer presence",
+   "effect_if_true": "exclude_from_public_beta_pooled_analysis",
+   "scope_if_true": "structure_slot",
+   "effect_if_false": "warning_only",
+   "scope_if_false": "metadata_only",
+   "reason": "Rule C: a transducer disagreement is warning-only where the aggregate is not transducer-stratified. Units are stratified by normalized structural state; the disagreement matters only where that state was derived from transducer presence."
+  },
+  {
+   "rule_id": "RG-08",
+   "issue_type": "tethered_ligand_candidate",
+   "test": "the tethered-ligand question is unresolved AND the PDB contributes an observation whose site class is a pocket class",
+   "effect_if_true": "exclude_from_public_beta_pooled_analysis",
+   "scope_if_true": "observation",
+   "effect_if_false": "warning_only",
+   "scope_if_false": "no_current_aggregate_effect",
+   "reason": "For a receptor whose endogenous ligand is a tethered segment, whether a co-bound small molecule occupies the orthosteric pocket is undecidable until the tethered ligand is resolved. That is an unresolved binding-site classification under rule A, so the observation is excluded rather than presented as a settled pocket contact."
+  },
+  {
+   "rule_id": "RG-09",
+   "issue_type": "annotated_not_observed",
+   "test": "always",
+   "effect_if_true": "already_excluded",
+   "scope_if_true": "already_excluded_upstream",
+   "reason": "An annotated component absent from coordinates has no contact row to exclude."
+  },
+  {
+   "rule_id": "RG-10",
+   "issue_type": "source_conflict:annotated_component_absent",
+   "test": "the component appears as the ligand of an observation in an aggregation unit",
+   "effect_if_true": "exclude_from_public_beta_pooled_analysis",
+   "scope_if_true": "observation",
+   "effect_if_false": "already_excluded",
+   "scope_if_false": "already_excluded_upstream",
+   "reason": "A component absent from coordinates contributes no contact row."
+  },
+  {
+   "rule_id": "RG-11",
+   "issue_type": "mutation_mapping_unresolved",
+   "test": "the unresolved residues intersect the contacted or motif residues of an observation",
+   "effect_if_true": "warning_only",
+   "scope_if_true": "metadata_only",
+   "effect_if_false": "no_effect",
+   "scope_if_false": "no_current_aggregate_effect",
+   "reason": "Rule C: a mutation metadata issue outside contacted or motif residues does not change a pooled contact metric."
+  },
+  {
+   "rule_id": "RG-12",
+   "issue_type": "aminergic_regression_discrepancy",
+   "test": "always",
+   "effect_if_true": "warning_only",
+   "scope_if_true": "metadata_only",
+   "reason": "A regression crosswalk discrepancy is a reconciliation record against the frozen aminergic project, not a defect in the current observation's identity."
+  }
+ ],
+ "metadata_only_issue_types": [
+  "missing_doi",
+  "incomplete_bibliographic_metadata",
+  "citation_metadata_issue",
+  "source_url_unavailable",
+  "non_analytic_licence_metadata"
+ ],
+ "never_auto_excluded": "Metadata-only review items remain visible and never automatically remove otherwise eligible data.",
+ "policy_wording_constraint": "The public wording is 'open items visible and excluded from pooled analyses where required'. It must never be widened to 'all open items are excluded'."
+}

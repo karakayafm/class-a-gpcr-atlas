@@ -45,3 +45,6 @@ tests/phase5/*
 !tests/phase5/cdp.py
 !tests/phase5/p8_smoke.py
 _checksums_*.sha256
+
+# Governance notes kept outside the repository. Not recoverable from here - keep a backup.
+governance/*.local.json
