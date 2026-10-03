@@ -61,7 +61,10 @@ pranlukast or zafirlukast, and the two sources agree on the drug itself.
   **Agonist**. The lipid's identity is tentative and oleic acid is not a characterised GPR6 agonist, so the
   note says it should not be read as a pharmacological ligand in the ligand-chemistry and affinity panels.
   *Open, as separate work:* `ligand_role` is `pharmacological_orthosteric_ligand` for both 8TF5 and 8U8F,
-  which that caveat contradicts. A co-purified-lipid role value should be added and given to both together.
+  which that caveat contradicts. A role value for a lipid of uncertain identity and origin should be added
+  and given to both together - not `copurified_lipid`, which would settle a question the sources leave
+  open: the review could not separate a lipid carried through purification from one picked up during
+  crystallisation.
   `structural_lipid` is not the right value - both sets of authors give the density an activating role, so
   it would contradict the Agonist label beside it and a role-filtered panel would undo the correction.
 - **6H7O** (turkey beta1, cyanopindolol, active): recorded as Agonist; GPCRdb gives Agonist (partial), as for
@@ -94,17 +97,25 @@ Those that still **disagree with GPCRdb and are left for a decision**:
 
 ### What the six corrections do to the aminergic contact map
 
-Counted from the published payloads with the corrections applied, over the structures the contact map
-compares - contact-eligible observations of representative analysis units - in the aminergic family:
+Counted from the published payloads with the corrections applied, over exactly what the contact map
+compares - contact-eligible observations **in the canonical 7TM pocket**, on representative analysis
+units - in the aminergic family:
 
 | Group | Before | After |
 |---|---|---|
-| Agonist (Agonist + partial) | 34 units / 159 structures | 34 / 161 |
-| Blocker (Antagonist + inverse agonist) | 24 / 56 | 23 / 54 |
-| Antagonist alone | 20 / 43 | 20 / 42 |
+| Agonist (Agonist + partial) | 34 units / 157 structures | 34 / 159 |
+| Blocker (Antagonist + inverse agonist) | 24 / 55 | 23 / 53 |
+| Antagonist alone | 20 / 42 | 20 / 41 |
 | Inverse agonist alone | 8 / 13 | 7 / 12 |
 | Units with both sides (agonist × blocker) | 19 | **18** |
 | Units with both sides (agonist × inverse agonist) | 7 | 6 |
+
+The `binding_site_class` condition is part of the count, not a detail: without it three representative
+structures that carry a group label outside the canonical pocket are counted too - 3PDS and 4QKX
+(agonist, `covalent_core_site`) and 8HN1 (antagonist, `extracellular_polymer_interface`) - which inflates
+the agonist and antagonist rows by two and one. The inverse-agonist row is identical either way, because
+no inverse agonist in this family sits outside the canonical pocket, so matching a filter on that row
+alone does not prove it is right.
 
 The inverse-agonist row is the 9IJD change described above; the rest come from 8DCS and 7C61 moving from
 the blocker side to the agonist side. 6H7O, 8TF5 and 7PP1 move nothing here: 6H7O stays in the agonist

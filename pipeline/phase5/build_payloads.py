@@ -88,15 +88,15 @@ CURATED_STRUCTURE_NOTES={
                "Agonist, and the atlas records the same situation at GPR3 (8U8F, palmitic acid) as Agonist. The "
                "label is corrected to Agonist. The identity of the lipid is tentative - oleic acid is modelled at "
                "several sites in this entry and is not a characterised GPR6 agonist - so it should not be read as a "
-               "pharmacological ligand in the ligand-chemistry and affinity panels; a separate role for co-purified "
-               "lipids is pending for this entry and 8U8F.",
+               "pharmacological ligand in the ligand-chemistry and affinity panels; a separate role for lipids of "
+               "uncertain identity and origin is pending for this entry and 8U8F.",
           "tr":"Oleik asit ters agonist olarak kayıtlıydı. Girdi, GPR6'nın \"pseudoapo\" formudur: yazarlar yapıya "
                "ligand eklememiştir ve birincil yayın ortosterik cepte \"lipit benzeri endojen bir liganda karşılık "
                "gelen\" güçlü bir yoğunluk bildirir; bu yoğunluk oleik asit olarak modellenmiştir. GPCRdb Agonist "
                "der; atlas da aynı durumu GPR3'te (8U8F, palmitik asit) Agonist olarak kaydeder. Etiket Agonist "
                "olarak düzeltildi. Lipidin kimliği geçicidir - oleik asit bu girdide birden çok bölgede modellenmiştir "
                "ve GPR6 üzerinde karakterize edilmiş bir agonist değildir - bu nedenle ligand kimyası ve afinite "
-               "panellerinde farmakolojik ligand gibi okunmamalıdır; birlikte saflaşan lipitler için ayrı bir rol "
+               "panellerinde farmakolojik ligand gibi okunmamalıdır; kimliği ve kaynağı belirsiz lipitler için ayrı bir rol "
                "değeri bu girdi ve 8U8F için birlikte beklemededir."},
   "6H7O":{"en":"Cyanopindolol was recorded as an agonist. GPCRdb gives Agonist (partial) here, as it does for the "
                "same compound at the same receptor in 8DCS; the label is refined to Agonist (partial). Both entries "
@@ -152,7 +152,8 @@ CURATED_LIGAND_ROLES={
   # 8TF5: the "pseudoapo form" of GPR6. The authors add no ligand and report a strong orthosteric
   # density "corresponding to a lipid-like endogenous ligand", modelled as oleic acid. GPCRdb: Agonist,
   # as the atlas already records for the same situation at GPR3 (8U8F, palmitic acid). The role stays
-  # the orthosteric one pending a co-purified-lipid value, to be given to this entry and 8U8F together.
+  # the orthosteric one pending a role for lipids of uncertain identity and origin, to be given to this
+  # entry and 8U8F together; the sources do not separate a co-purified lipid from a crystallisation one.
   "8TF5:LE:np:OLA":("pharmacological_orthosteric_ligand","Agonist"),
   # 6H7O: active turkey beta1 with cyanopindolol; GPCRdb gives Agonist (partial), as for 8DCS above.
   "6H7O:LE:np:P32":("pharmacological_orthosteric_ligand","Agonist (partial)"),
