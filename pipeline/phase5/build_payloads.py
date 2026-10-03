@@ -82,7 +82,54 @@ CURATED_STRUCTURE_NOTES={
                "modulator); only LY2119620 is modelled in the deposited coordinates.",
           "tr":"Kaynak iperoksonu (ortosterik agonist) ve LY2119620'yi (pozitif allosterik modülatör) anote "
                "eder; kayıtlı koordinatlarda yalnızca LY2119620 modellenmiştir."},
+  "8TF5":{"en":"Oleic acid was recorded as an inverse agonist. The entry is the \"pseudoapo form\" of GPR6: the "
+               "authors add no ligand, and the primary publication reports a strong density in the orthosteric "
+               "pocket \"corresponding to a lipid-like endogenous ligand\", modelled as oleic acid. GPCRdb gives "
+               "Agonist, and the atlas records the same situation at GPR3 (8U8F, palmitic acid) as Agonist. The "
+               "label is corrected to Agonist. The identity of the lipid is tentative - oleic acid is modelled at "
+               "several sites in this entry and is not a characterised GPR6 agonist - so it should not be read as a "
+               "pharmacological ligand in the ligand-chemistry and affinity panels; a separate role for co-purified "
+               "lipids is pending for this entry and 8U8F.",
+          "tr":"Oleik asit ters agonist olarak kayıtlıydı. Girdi, GPR6'nın \"pseudoapo\" formudur: yazarlar yapıya "
+               "ligand eklememiştir ve birincil yayın ortosterik cepte \"lipit benzeri endojen bir liganda karşılık "
+               "gelen\" güçlü bir yoğunluk bildirir; bu yoğunluk oleik asit olarak modellenmiştir. GPCRdb Agonist "
+               "der; atlas da aynı durumu GPR3'te (8U8F, palmitik asit) Agonist olarak kaydeder. Etiket Agonist "
+               "olarak düzeltildi. Lipidin kimliği geçicidir - oleik asit bu girdide birden çok bölgede modellenmiştir "
+               "ve GPR6 üzerinde karakterize edilmiş bir agonist değildir - bu nedenle ligand kimyası ve afinite "
+               "panellerinde farmakolojik ligand gibi okunmamalıdır; birlikte saflaşan lipitler için ayrı bir rol "
+               "değeri bu girdi ve 8U8F için birlikte beklemededir."},
+  "6H7O":{"en":"Cyanopindolol was recorded as an agonist. GPCRdb gives Agonist (partial) here, as it does for the "
+               "same compound at the same receptor in 8DCS; the label is refined to Agonist (partial). Both entries "
+               "stay in the agonist group, so no group changes.",
+          "tr":"Siyanopindolol agonist olarak kayıtlıydı. GPCRdb burada Agonist (kısmi) der; aynı bileşik aynı "
+               "reseptörde 8DCS'te de öyledir. Etiket Agonist (kısmi) olarak inceltildi. Her iki girdi de agonist "
+               "grubunda kaldığı için gruplar değişmez."},
+  "7PP1":{"en":"Selatogrel was recorded as an antagonist. The entry is titled \"in complex with the inverse agonist "
+               "selatogrel\", the primary publication says selatogrel stabilises the inactive, basal state of the "
+               "receptor, and GPCRdb gives Inverse agonist; the label is corrected. Both labels are blockers, so the "
+               "combined group is unchanged. The structural state recorded here is computed from the geometry and "
+               "reads active, while the authors describe an inactive basal state; the computed value is kept and the "
+               "difference noted.",
+          "tr":"Selatogrel antagonist olarak kayıtlıydı. Girdinin başlığı \"ters agonist selatogrel ile kompleks\" "
+               "der, birincil yayın selatogrelin reseptörün inaktif bazal durumunu stabilize ettiğini söyler ve "
+               "GPCRdb Ters agonist verir; etiket düzeltildi. İki etiket de blokerdir, bu yüzden birleşik grup "
+               "değişmez. Buradaki yapısal durum geometriden hesaplanır ve aktif okunur; yazarlar ise inaktif bazal "
+               "durumdan söz eder. Hesaplanan değer korunmuş, fark not edilmiştir."},
 }
+# AT2 compounds 1 and 2 (5UNF/5UNG/5UNH). The source's Antagonist label is kept - it is not contradicted -
+# but the authors give no functional label, so the reason rule A flags these is recorded as a note.
+_AT2_NOTE={"en":"The authors describe this compound only as a ligand, with no functional label. The receptor is "
+                "captured in an active-like conformation, but helix VIII prevents the recruitment of G proteins or "
+                "beta-arrestins, \"in agreement with the lack of signalling responses in standard cellular assays\". "
+                "The source's Antagonist label is kept - nothing contradicts it - and this note records why the entry "
+                "is flagged as an active structure carrying a blocker label.",
+           "tr":"Yazarlar bu bileşiği yalnızca ligand olarak tanımlar, işlevsel bir etiket vermez. Reseptör aktif "
+                "benzeri bir konformasyonda yakalanmıştır, ancak heliks VIII G proteinlerinin veya beta-arrestinlerin "
+                "alımını engeller; bu da \"standart hücresel deneylerde sinyal yanıtının bulunmamasıyla uyumludur\". "
+                "Kaynağın Antagonist etiketi korunmuştur - onu çürüten bir şey yoktur - ve bu not, girdinin neden "
+                "bloker etiketi taşıyan aktif bir yapı olarak işaretlendiğini kaydeder."}
+for _at2 in ("5UNF","5UNG","5UNH"):
+    CURATED_STRUCTURE_NOTES[_at2]=_AT2_NOTE
 # Role and binding mode per ligand entity, where the source's orthosteric label does not describe
 # the site the ligand is in. CURATED_STRUCTURE_LIGANDS cannot do this: it applies to every
 # observation of a structure, and 5TZY carries two ligands with different roles.
@@ -102,6 +149,16 @@ CURATED_LIGAND_ROLES={
   "8DCS:LE:np:P32":("pharmacological_orthosteric_ligand","Agonist (partial)"),
   # 7C61: GPCRdb lists ergotamine as an agonist, as the atlas does for the same pair in 4IAR.
   "7C61:LE:np:ERM":("pharmacological_orthosteric_ligand","Agonist"),
+  # 8TF5: the "pseudoapo form" of GPR6. The authors add no ligand and report a strong orthosteric
+  # density "corresponding to a lipid-like endogenous ligand", modelled as oleic acid. GPCRdb: Agonist,
+  # as the atlas already records for the same situation at GPR3 (8U8F, palmitic acid). The role stays
+  # the orthosteric one pending a co-purified-lipid value, to be given to this entry and 8U8F together.
+  "8TF5:LE:np:OLA":("pharmacological_orthosteric_ligand","Agonist"),
+  # 6H7O: active turkey beta1 with cyanopindolol; GPCRdb gives Agonist (partial), as for 8DCS above.
+  "6H7O:LE:np:P32":("pharmacological_orthosteric_ligand","Agonist (partial)"),
+  # 7PP1: entry titled "in complex with the inverse agonist selatogrel"; the primary publication says
+  # selatogrel stabilises the inactive, basal state. GPCRdb also gives Inverse agonist.
+  "7PP1:LE:np:7Y5":("pharmacological_orthosteric_ligand","Inverse agonist"),
 }
 CURATED_OBSERVED_LIGANDS={"9D3E:LE:np:A1A1W","9D3E:LE:np:EBX",
   "9D3G:LE:np:A1A2A","9D3G:LE:np:EBX",

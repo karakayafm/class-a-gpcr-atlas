@@ -2,8 +2,7 @@ family,family_name,compound,components,label,n_structures,units,pdb_ids
 ca-001-001,Aminergic receptors,Carazolol,CAU,Agonist,1,adrb3_human,9IJD
 ca-001-001,Aminergic receptors,Carazolol,CAU,Antagonist,3,adrb1_melga adrb2_human,2YCW 5X7D 6PS0
 ca-001-001,Aminergic receptors,Carazolol,CAU,Inverse agonist,8,adrb1_human adrb2_human,2RH1 4GBR 5D5A 5D5B 5D6L 5JQH 7BVQ 9CHX
-ca-001-001,Aminergic receptors,(S)-Cyanopindolol,P32,Agonist,1,adrb1_melga,6H7O
-ca-001-001,Aminergic receptors,(S)-Cyanopindolol,P32,Agonist (partial),1,adrb1_melga,8DCS
+ca-001-001,Aminergic receptors,(S)-Cyanopindolol,P32,Agonist (partial),2,adrb1_melga,6H7O 8DCS
 ca-001-001,Aminergic receptors,(S)-Cyanopindolol,P32,Antagonist,5,adrb1_melga,2VT4 2YCX 2YCY 4BVN 5F8U
 ca-001-001,Aminergic receptors,Dobutamine,Y00,Agonist,1,adrb1_melga,6H7L
 ca-001-001,Aminergic receptors,Dobutamine,Y00,Agonist (partial),3,adrb1_melga,2Y00 2Y01 8DCR
@@ -38,8 +37,6 @@ ca-001-004,Lipid receptors,MK-8666,MK6,Agonist,1,ffar1_human,5TZY
 ca-001-004,Lipid receptors,MK-8666,MK6,Allosteric agonist,1,ffar1_human,5TZR
 ca-001-004,Lipid receptors,"[(2~{R})-1-hexadecanoyloxy-3-[oxidanyl-[(2~{S},3~{R},5~{R},6~{S})-2,3,4,5,6-pentakis(oxidanyl)cyclohexyl]oxy-phosphoryl]oxy-propan-2-yl] (~{Z})-octadec-9-enoate",A1D5Q,Agonist,1,pd2r2_human,9IYB
 ca-001-004,Lipid receptors,"[(2~{R})-1-hexadecanoyloxy-3-[oxidanyl-[(2~{S},3~{R},5~{R},6~{S})-2,3,4,5,6-pentakis(oxidanyl)cyclohexyl]oxy-phosphoryl]oxy-propan-2-yl] (~{Z})-octadec-9-enoate",A1D5Q,PAM,2,pd2r2_human,8XXU 8XXV
-ca-001-010,Orphan receptors,oleic acid,OLA,Agonist,1,gpr3_human,8WW2
-ca-001-010,Orphan receptors,oleic acid,OLA,Inverse agonist,1,gpr6_human,8TF5
 ca-001-003,Protein receptors,"4-[[3,4-Dioxo-2-[[(1R)-1-(4-propan-2-ylfuran-2-yl)propyl]amino]cyclobuten-1-yl]amino]-3-hydroxy-N,N-dimethylpyridine-2-carboxamide",EBX,Allosteric antagonist,2,ccr6_human cxcr2_human,6LFL 9D3E
 ca-001-003,Protein receptors,"4-[[3,4-Dioxo-2-[[(1R)-1-(4-propan-2-ylfuran-2-yl)propyl]amino]cyclobuten-1-yl]amino]-3-hydroxy-N,N-dimethylpyridine-2-carboxamide",EBX,NAM,1,ccr6_human,9D3G
 ca-001-009,Sensory receptors,Retinal (11-cis),RET,Agonist,23,b1b1u5_9arac opsd_bovin opsd_todpa opsr_human,2G87 2HPY 2X72 3AYM 3PQR 3PXO 4A4M 4WW3 5DYS 5EN0 6FUF 6OY9 6OYA 6QNO 7MT8 7MT9 7MTA 7MTB 8A6C 8A6D 8A6E 8IU2 9EPR

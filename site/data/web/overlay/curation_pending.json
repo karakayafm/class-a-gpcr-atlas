@@ -33,6 +33,36 @@
    "evidence": "GPCRdb lists ergotamine in 7C61 as Agonist; the same compound at the same receptor (5-HT1B, 4IAR) is recorded as Agonist in the atlas and in GPCRdb.",
    "note_en": "Ergotamine was recorded here as an antagonist. GPCRdb lists it as an agonist in 7C61, and the same compound at the same receptor (4IAR) is an agonist in the atlas. The label is corrected to Agonist; until the next build the correction is applied by the site.",
    "note_tr": "Ergotamin burada antagonist olarak kayıtlıydı. GPCRdb 7C61'de onu agonist olarak listeler ve aynı bileşik aynı reseptörde (4IAR) atlasta da agonisttir. Etiket Agonist olarak düzeltildi; bir sonraki build'e kadar düzeltmeyi site uygular."
+  },
+  "8TF5:LE:np:OLA": {
+   "pdb": "8TF5",
+   "ligand": "oleic acid",
+   "from": "Inverse agonist",
+   "to": "Agonist",
+   "decided": "2026-10-03",
+   "evidence": "RCSB 8TF5 'Crystal structure of orphan G protein-coupled receptor 6, pseudoapo form'; the authors add no ligand and the primary publication reports 'a strong density in the orthosteric pocket of GPR6 corresponding to a lipid-like endogenous ligand', modelled as oleic acid. GPCRdb lists oleic acid in 8TF5 as Agonist. The atlas records the same situation at GPR3 (8U8F, palmitic acid, an unmodelled-by-the-authors lipid in the orthosteric pocket) as Agonist.",
+   "note_en": "Oleic acid was recorded here as an inverse agonist. 8TF5 is the 'pseudoapo form' of GPR6: the authors add no ligand, and the primary publication reports a strong orthosteric density corresponding to a lipid-like endogenous ligand, modelled as oleic acid. GPCRdb gives Agonist, as the atlas already does for the same situation at GPR3 (8U8F). The label is corrected to Agonist. The identity of the lipid is tentative and it is not a characterised GPR6 agonist, so it should not be read as a pharmacological ligand in the ligand-chemistry and affinity panels.",
+   "note_tr": "Oleik asit burada ters agonist olarak kayıtlıydı. 8TF5, GPR6'nın 'pseudoapo' formudur: yazarlar yapıya ligand eklememiştir ve birincil yayın ortosterik cepte lipit benzeri endojen bir liganda karşılık gelen güçlü bir yoğunluk bildirir; bu oleik asit olarak modellenmiştir. GPCRdb Agonist der; atlas da aynı durumu GPR3'te (8U8F) zaten Agonist sayar. Etiket Agonist olarak düzeltildi. Lipidin kimliği geçicidir ve GPR6 üzerinde karakterize edilmiş bir agonist değildir; bu nedenle ligand kimyası ve afinite panellerinde farmakolojik ligand gibi okunmamalıdır."
+  },
+  "6H7O:LE:np:P32": {
+   "pdb": "6H7O",
+   "ligand": "(S)-Cyanopindolol",
+   "from": "Agonist",
+   "to": "Agonist (partial)",
+   "decided": "2026-10-03",
+   "evidence": "GPCRdb lists cyanopindolol in 6H7O as Agonist (partial), as it does for the same compound at the same receptor in 8DCS, corrected here on the same day. 6H7O is active.",
+   "note_en": "Cyanopindolol was recorded here as an agonist. GPCRdb gives Agonist (partial), as for the same compound at the same receptor in 8DCS; the label is refined to Agonist (partial). Both entries stay in the agonist group, so no group changes.",
+   "note_tr": "Siyanopindolol burada agonist olarak kayıtlıydı. GPCRdb Agonist (kısmi) der; aynı bileşik aynı reseptörde 8DCS'te de öyledir. Etiket Agonist (kısmi) olarak inceltildi. Her iki girdi de agonist grubunda kaldığı için gruplar değişmez."
+  },
+  "7PP1:LE:np:7Y5": {
+   "pdb": "7PP1",
+   "ligand": "selatogrel",
+   "from": "Antagonist",
+   "to": "Inverse agonist",
+   "decided": "2026-10-03",
+   "evidence": "RCSB 7PP1 'Crystal structure of the P2Y12 receptor in complex with the inverse agonist selatogrel'; the primary publication states that selatogrel stabilises the inactive, basal state of the receptor and abolishes its constitutive activity. GPCRdb lists selatogrel in 7PP1 as Inverse agonist.",
+   "note_en": "Selatogrel was recorded here as an antagonist. The entry title names it an inverse agonist, the primary publication says it stabilises the inactive, basal state, and GPCRdb agrees; the label is corrected. Both labels are blockers, so the combined group is unchanged. The structural state recorded here is computed from the geometry and reads active, while the authors describe an inactive basal state; the computed value is kept and the difference noted.",
+   "note_tr": "Selatogrel burada antagonist olarak kayıtlıydı. Girdinin başlığı onu ters agonist olarak adlandırır, birincil yayın inaktif bazal durumu stabilize ettiğini söyler ve GPCRdb de aynı etiketi verir; etiket düzeltildi. İki etiket de blokerdir, birleşik grup değişmez. Buradaki yapısal durum geometriden hesaplanır ve aktif okunur; yazarlar inaktif bazal durumdan söz eder. Hesaplanan değer korunmuş, fark not edilmiştir."
   }
  },
  "blocker_label_conflicts": {

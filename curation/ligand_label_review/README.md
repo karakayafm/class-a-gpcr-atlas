@@ -46,24 +46,78 @@ GPCRdb's own label for each candidate beside the atlas's (read-only lookups, cac
 - **B** - the same compound at the same receptor recorded as an agonist in one entry and a blocker in
   another.
 
-69 candidates remain after the three corrections. Most are not errors: retinal isomers share one component
+66 candidates remain after the six corrections. Most are not errors: retinal isomers share one component
 code (11-cis inverse agonist, all-trans agonist), and rule A also catches transducer-free crystal structures
-that the source calls active while GPCRdb agrees they hold antagonists. Those that disagree with GPCRdb and
-are **left for a decision**:
+that the source calls active while GPCRdb agrees they hold antagonists. A GPCRdb entry can also list a
+second "ligand" that is not the drug - in 6RZ4/6RZ5 the NAM label belongs to the bound Na+, not to
+pranlukast or zafirlukast, and the two sources agree on the drug itself.
 
-| PDB | Receptor | Compound | Atlas | GPCRdb | Note |
+### Three more decided 2026-10-03, after a second review
+
+- **8TF5** (GPR6, oleic acid): recorded as Inverse agonist. The entry is the "pseudoapo form" - the authors
+  add no ligand - and the primary publication reports "a strong density in the orthosteric pocket of GPR6
+  corresponding to a lipid-like endogenous ligand", modelled as oleic acid. GPCRdb gives Agonist, and the
+  atlas already records the same situation at GPR3 (8U8F, palmitic acid) as Agonist. Corrected to
+  **Agonist**. The lipid's identity is tentative and oleic acid is not a characterised GPR6 agonist, so the
+  note says it should not be read as a pharmacological ligand in the ligand-chemistry and affinity panels.
+  *Open, as separate work:* `ligand_role` is `pharmacological_orthosteric_ligand` for both 8TF5 and 8U8F,
+  which that caveat contradicts. A co-purified-lipid role value should be added and given to both together.
+  `structural_lipid` is not the right value - both sets of authors give the density an activating role, so
+  it would contradict the Agonist label beside it and a role-filtered panel would undo the correction.
+- **6H7O** (turkey beta1, cyanopindolol, active): recorded as Agonist; GPCRdb gives Agonist (partial), as for
+  the same compound at the same receptor in 8DCS. Refined to **Agonist (partial)**. Both entries stay in the
+  agonist group, so no group changes.
+- **7PP1** (P2Y12, selatogrel): recorded as Antagonist. The entry is titled "in complex with the inverse
+  agonist selatogrel", the primary publication says selatogrel stabilises the inactive, basal state and
+  abolishes the receptor's constitutive activity, and GPCRdb gives Inverse agonist. Corrected to **Inverse
+  agonist**. Both labels are blockers, so the combined group is unchanged.
+
+The structural state is computed from the geometry, so it can differ from the authors' functional
+description: 7PP1 reads active here and in GPCRdb, while the authors describe an inactive basal state. The
+computed value is kept and the difference recorded as a note - this is a definition difference, not an error.
+
+**Left as recorded, with a note (5UNF, 5UNG, 5UNH - AT2):** the authors give these compounds no functional
+label, and although the receptor is in an active-like conformation, helix VIII prevents G protein and
+beta-arrestin recruitment, "in agreement with the lack of signalling responses in standard cellular assays".
+Nothing contradicts the source's Antagonist label, so it stands; GPCRdb gives Antagonist for 5UNF/5UNG and
+leaves 5UNH unannotated, which is an absent annotation rather than evidence against it. The note on all
+three records why rule A flags them. It is a note only, with no label change, so it arrives at the next
+build rather than through the overlay.
+
+Those that still **disagree with GPCRdb and are left for a decision**:
+
+| PDB | Receptor | Compound | Atlas | GPCRdb | Decision |
 |---|---|---|---|---|---|
-| 8TF5 | GPR6 | oleic acid | Inverse agonist | Agonist | entry titled "pseudoapo form"; oleic acid may come from the crystallisation lipid - agonist, or apo? |
-| 4BVN | β1 (turkey) | cyanopindolol | Antagonist | Agonist (partial) | inactive; GPCRdb itself gives Antagonist for the same pair in 2VT4, 2YCX, 2YCY, 5F8U |
-| 9IYA | GPR55 | ONO-9710531 | Antagonist | Inverse agonist | both blockers; the combined group is unaffected |
-| 7PP1 | P2Y12 | selatogrel | Antagonist | Inverse agonist | both blockers |
-| 6H7O | β1 (turkey) | cyanopindolol | Agonist | Agonist (partial) | both in the agonist group |
-| 5UNH | AT2 | compound 2 | Antagonist | Unknown | |
+| 4BVN | beta1 (turkey) | cyanopindolol | Antagonist | Agonist (partial) | **Keep Antagonist.** 4BVN is inactive and is the representative structure, and GPCRdb itself gives Antagonist for the same pair in 2VT4, 2YCX, 2YCY and 5F8U - it disagrees with itself here. |
+| 9IYA | GPR55 | ONO-9710531 | Antagonist | Inverse agonist | **Waiting on the primary publication.** Both labels are blockers, so the combined group is unaffected either way. |
+| 5UNH | AT2 | compound 2 | Antagonist | Unknown | **Keep Antagonist**, with the AT2 note above. |
+
+### What the six corrections do to the aminergic contact map
+
+Counted from the published payloads with the corrections applied, over the structures the contact map
+compares - contact-eligible observations of representative analysis units - in the aminergic family:
+
+| Group | Before | After |
+|---|---|---|
+| Agonist (Agonist + partial) | 34 units / 159 structures | 34 / 161 |
+| Blocker (Antagonist + inverse agonist) | 24 / 56 | 23 / 54 |
+| Antagonist alone | 20 / 43 | 20 / 42 |
+| Inverse agonist alone | 8 / 13 | 7 / 12 |
+| Units with both sides (agonist × blocker) | 19 | **18** |
+| Units with both sides (agonist × inverse agonist) | 7 | 6 |
+
+The inverse-agonist row is the 9IJD change described above; the rest come from 8DCS and 7C61 moving from
+the blocker side to the agonist side. 6H7O, 8TF5 and 7PP1 move nothing here: 6H7O stays in the agonist
+group, 7PP1's two labels are both blockers, and 8TF5 is in another family.
+
+These counts are produced from the data, not carried over by hand. Regenerate them rather than editing
+them whenever a label decision changes, and note that the precomputed aggregates on the site only follow
+at the next full build - until then the overlay carries the labels but not these totals.
 
 ## 2. The same compound under two labels
 
 `scan_labels.py` lists every compound that carries more than one label within a family, from the published
-payloads (read only): 22 compound × family pairs after the corrections (`label_conflicts.csv`). The one that matters for the
+payloads (read only): 21 compound × family pairs after the corrections (`label_conflicts.csv`). The one that matters for the
 contact map is Antagonist against Inverse agonist, which separates two groups a reader can choose: in the
 aminergic family seven compounds carry both - carazolol, carvedilol (CHEMBL3799125), methiothepin /
 metitepine (CHEMBL428892), ICI 118551, risperidone, timolol and tiotropium; timolol and ICI 118551 carry both even at the same receptor (β2).
