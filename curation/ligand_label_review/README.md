@@ -103,12 +103,19 @@ units - in the aminergic family:
 
 | Group | Before | After |
 |---|---|---|
-| Agonist (Agonist + partial) | 34 units / 157 structures | 34 / 159 |
+| Agonist (Agonist + partial) | 34 units / 157 structures | 34 / 158 |
 | Blocker (Antagonist + inverse agonist) | 24 / 55 | 23 / 53 |
 | Antagonist alone | 20 / 42 | 20 / 41 |
 | Inverse agonist alone | 8 / 13 | 7 / 12 |
 | Units with both sides (agonist × blocker) | 19 | **18** |
 | Units with both sides (agonist × inverse agonist) | 7 | 6 |
+
+The "after" column is read off a build, not projected from the corrections. Projecting is not
+enough, and the agonist row shows why: the corrections add 9IJD and 8DCS to the group, but the
+same build also carries the site-class and role curation, and that takes **6U1N** out of it -
+its label becomes PAM in the extracellular allosteric pocket, so it is no longer an agonist in
+the canonical pocket. 7C61 moves label but changes no count, because its analysis unit is not the
+representative one. Net +1, not +3.
 
 The `binding_site_class` condition is part of the count, not a detail: without it three representative
 structures that carry a group label outside the canonical pocket are counted too - 3PDS and 4QKX
@@ -124,6 +131,25 @@ group, 7PP1's two labels are both blockers, and 8TF5 is in another family.
 These counts are produced from the data, not carried over by hand. Regenerate them rather than editing
 them whenever a label decision changes, and note that the precomputed aggregates on the site only follow
 at the next full build - until then the overlay carries the labels but not these totals.
+
+### What else the first build carries
+
+The label corrections are not the only curation waiting for a build. Diffing the built payloads against
+the published ones (`snapshot_payloads.py --web data/web`, then `--diff`) changes **7 of 11 families** and
+**30 observations**. Besides the six label corrections, the build carries:
+
+- the site-class and lipid reviews: 8XXU, 8XXV and 9IYB lose their A1D5Q "ligand" and six opsin
+  structures lose their detergent, so those entries become apo (`ca-001-004` gains three
+  `confirmed_apo`, `ca-001-009` six);
+- 6U1N becomes PAM in the extracellular allosteric pocket, the unmodelled iperoxo no longer lending its
+  agonist label;
+- the role curation in `CURATED_LIGAND_ROLES` moving ten observations out of
+  `pharmacological_orthosteric_ligand` into allosteric or bitopic roles and off the canonical pocket
+  (5O9H, 5TZY, 8HNN, 8IKG, 8IKH, 8TB7, 8W8R, 8W8S, 9K1C, 8EJC/8EJK).
+
+Every one of those is a decision already recorded under `curation/`; the build is where they take effect.
+Check a build against this list before publishing it, rather than assuming it carries only the labels
+decided here.
 
 ## 2. The same compound under two labels
 

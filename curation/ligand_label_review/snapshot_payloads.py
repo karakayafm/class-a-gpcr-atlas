@@ -114,10 +114,16 @@ def diff(a: dict, b: dict) -> None:
 
 
 def main() -> int:
+    global WEB
     if sys.argv[1:2] == ["--diff"]:
         diff(json.loads(Path(sys.argv[2]).read_text()), json.loads(Path(sys.argv[3]).read_text()))
         return 0
-    out = Path(sys.argv[1])
+    args = sys.argv[1:]
+    if "--web" in args:                       # e.g. --web data/web, the build's own output
+        i = args.index("--web")
+        WEB = ROOT / args[i + 1]
+        del args[i:i + 2]
+    out = Path(args[0])
     out.write_text(json.dumps(snapshot(), indent=1, default=lambda o: dict(o)) + "\n")
     print(f"snapshot -> {out}")
     return 0
