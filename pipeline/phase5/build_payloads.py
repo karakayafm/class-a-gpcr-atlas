@@ -330,6 +330,24 @@ def wj(p,obj):
             "sha256":hashlib.sha256(b).hexdigest()}
 def f(x,n=6): return None if x is None else round(x,n)
 
+# The search indices and the affinity file are written after this script, by generators of their
+# own, so they cannot be added to gfiles as they are built. The loader refuses a global file the
+# manifest does not list, so a manifest written without them leaves Find motif, Contact map and
+# search broken. Any that are already on disk are listed here, which keeps a standalone re-run of
+# this script from dropping them; register_side_files.py re-registers them with fresh hashes after
+# the generators have run.
+SIDE_FILES=["receptor_search.json","pocket_search.json","generic_numbering.json",
+            "supersessions.json","binding_affinity.json"]
+def side_files(global_dir):
+    out={}
+    for name in SIDE_FILES:
+        p=global_dir/name
+        if not p.is_file(): continue
+        raw=p.read_bytes()
+        out[name]={"url":"global/"+name,"bytes":len(raw),
+                   "sha256":hashlib.sha256(raw).hexdigest()}
+    return out
+
 def main()->int:
     if not (ENRICH/"freeze.json").is_file():
         raise SystemExit("missing enrichment freeze; run pipeline/enrichment/freeze_enrichment.py")
@@ -1032,7 +1050,7 @@ def main()->int:
                   for r in sorted(landing_rows,key=lambda x:-x["structure_count"])],
       "family_count":len(landing_rows),
       "structure_bundle_base":"structures/",
-      "global_files":{k:v for k,v in gfiles.items()},
+      "global_files":{k:v for k,v in dict(gfiles,**side_files(G)).items()},
       # Panel payloads are listed so the loader can resolve them and the integrity check
       # covers them like every other payload.
       "panel_files":panel_files,
