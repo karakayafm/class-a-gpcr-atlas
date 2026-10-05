@@ -134,8 +134,7 @@
             "value": "Developed and maintained by Fatih Karakaya. Developed as part of research conducted at Boğaziçi University. Laboratory and institutional affiliations are acknowledged separately.",
             "who": "owner+institution",
             "resolution": "settled",
-            "decision_note": "Acknowledgement wording, not a claim of institutional ownership or endorsement. No laboratory or advisor is named as an author or maintainer.",
-            "withheld_note": "governance/OPEN_QUESTIONS.local.json"
+            "decision_note": "Acknowledgement wording, not a claim of institutional ownership or endorsement. No laboratory or advisor is named as an author or maintainer."
         },
         "COPYRIGHT_HOLDER": {
             "value": "Muhammed Fatih Karakaya",
@@ -224,8 +223,7 @@
         "COPYRIGHT_STATUS": {
             "who": "owner",
             "value": "owner_declared_under_the_university_policy_for_student-authored_scientific_works",
-            "resolution": "settled",
-            "withheld_note": "governance/OPEN_QUESTIONS.local.json"
+            "resolution": "settled"
         },
         "AFFILIATION": {
             "who": "owner",
