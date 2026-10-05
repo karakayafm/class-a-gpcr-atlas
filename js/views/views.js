@@ -750,7 +750,8 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
   const median = contactCounts.slice().sort((a,b) => a-b)[Math.floor(contactCounts.length / 2)] || 0;
 
   wrap.appendChild(el("section", { class: "atlas-intro" }, [
-    el("div", {}, [el("h2", { text: panelMode ? transducerLabel(d.panel)
+    el("div", {}, [el("h2", { text: panelMode
+      ? (d.panel === L.ANY_PANEL ? t("panel_any_title") : transducerLabel(d.panel))
       : familyDisplayName(family ? family.name : slug) })]),
     el("div", { class: "summary-strip" }, [
       summaryMetric(d.count, t("structures")), summaryMetric(receptorNames.size, t("receptors")),
@@ -788,6 +789,19 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
   const transducerPanels = panelMode ? ALL_PANELS.filter(x => availablePanels[panelSlugOf(x)])
     : ALL_PANELS;
   const panelStrip=el("div", { class:"family-panel-strip", "aria-label":t("transducer") });
+  /* Every panel at once. The panels divide the same structures by transducer, so a reader after
+     "all the agonists, wherever they couple" has to leave the panels to see them together; this is
+     that step, and the ligand-class strip above then filters the union exactly as it filters one
+     panel. Panel mode only - inside a family the strip already clears to the same thing. */
+  if (panelMode) {
+    const anyActive = d.panel === L.ANY_PANEL;
+    const anyButton = el("button", { class:"panel-tab family-panel-tab", "data-panel":L.ANY_PANEL,
+      "aria-pressed":anyActive ? "true" : "false",
+      onclick:() => navigate({ view:"panels", panel:L.ANY_PANEL }) }, [
+        el("span", { class:"tab-label", text:t("panel_any") }), el("span") ]);
+    if (anyActive) anyButton.classList.add("active");
+    panelStrip.appendChild(anyButton);
+  }
   for (const panel of transducerPanels) {
     // In panel mode the strip switches between panels instead of filtering within one family,
     // so every panel is offered even though the current payload only holds one of them.
@@ -987,7 +1001,11 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
   function tierMatches(x) {
     const tier = filters.evidenceTier;
     if (!tier) return true;
-    const panel = filters.transducer || (panelMode ? d.panel : "");
+    /* The union of every panel is not a panel: asked whether a structure couples through "any",
+       the membership lists all answer no and the tier filter would empty the view. It means the
+       same as no panel in view - the tier stands for any pathway. */
+    const chosen = filters.transducer || (panelMode ? d.panel : "");
+    const panel = chosen === L.ANY_PANEL ? "" : chosen;
     if (!panel) return (x.pathway_evidence_tiers || []).includes(tier);
     const structural = (x.transducer_panels_structural || []).includes(panel);
     return tier === "A" ? structural
@@ -1083,8 +1101,20 @@ export async function structures(root, slug, onOpen3D, initialSite, initialPdb, 
       (!filters.mode || o.binding_mode === filters.mode));
     return matched.length ? matched : x.observations;
   }
+  /* Which observation speaks for the structure on the card. A deposition often carries a ligand it
+     annotates but never modelled - a calcium ion, say - and that one has no coordinates, so no
+     contacts and no binding site to classify. Taken first it made a structure whose real ligand is
+     a resolved antagonist read "Cofactor / Unresolved", which describes the ion rather than the
+     structure. An observation with coordinates is preferred, and a pharmacological one over a
+     cofactor; the unresolved entity is still in the list, and the viewer still says why it cannot
+     be drawn. A filter that asked for exactly that entity still wins, because observationsFor()
+     has already narrowed the list to what the filter matched. */
+  const SPEAKS_LAST = new Set(["cofactor", "unresolved"]);
   function observationFor(x) {
-    return observationsFor(x)[0] || {};
+    const rows = observationsFor(x);
+    return rows.find(o => o.coordinate_status === "observed" && !SPEAKS_LAST.has(o.ligand_role))
+      || rows.find(o => o.coordinate_status === "observed")
+      || rows[0] || {};
   }
   function drawDetail() {
     clear(detail);

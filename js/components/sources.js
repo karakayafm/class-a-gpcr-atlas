@@ -3,6 +3,7 @@
 import { t, getLang } from "../core/i18n.js";
 import { el, clear } from "./dom.js";
 import * as L from "../data/loader.js";
+import { plainName } from "../views/names.js";
 
 let opener = null;
 export function button(slug, structure) { return el("button", { class:"btn", type:"button",
@@ -45,7 +46,9 @@ export function linkRow(slug,structure) {
     // leaving the chemical-identity group silently empty.
     const polymerLigands=(structure.observations||[])
       .filter(row=>row.entity_form==="polymer_chain"&&row.ligand_name)
-      .map(row=>row.ligand_name);
+      // Payload names carry the PDB's markup for subscripts - "CX<sub>3</sub>CL1" - and this is
+      // written as text, so without stripping it the tags appeared in the sentence.
+      .map(row=>plainName(row.ligand_name));
     for (const [label,entries] of groups) {
       const live=entries.filter(([href,text])=>href&&text);
       if (!live.length) continue;

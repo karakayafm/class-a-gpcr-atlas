@@ -56,6 +56,12 @@ const selectedResidues = new Set();
 const selectedMotifs = new Set();
 const HELICES = ["TM1", "TM2", "TM3", "TM4", "TM5", "TM6", "TM7"];
 const POLYMER = { extracellular_polymer_interface: 1, tethered_ligand_interface: 1 };
+/* Labels carry identity in their text colour on one shared near-black background. Tinting the
+   background instead fails both ways: dark enough to read white text against it is
+   indistinguishable from black, light enough to recognise and the text stops being legible.
+   The align module paints an overlay's labels with the same value, so a label means the same
+   thing whichever structure carries it. */
+export const LABEL_BACKGROUND = "#111111";
 const MOTIF_SPECS = {
   PIF_connector: { positions:["3x40","5x50","6x44"], expected:{
     "3x40":["I"], "5x50":["P"], "6x44":["F"] } },
@@ -554,6 +560,9 @@ export function setFocusSelection(on) {
   if (contactsOn) addContactSideChains();
   addContactLabels(claimedResidues());
   addDisplayedInteractions();
+  // The superposed structures drop their own contact layers with this one; without the repaint
+  // "only the selection" emptied the base structure's pocket and left every overlay's in place.
+  repaintOverlays();
   if (focusSelection) frameSelection();
   return focusSelection;
 }
@@ -1254,7 +1263,23 @@ export function motifGroups() {
   });
 }
 
+/* Which structure the motif shortcuts draw on. null - the default - means every structure in the
+   scene, which is what the chips are usually pressed for. Set to a PDB id, they draw on that one
+   alone, for the reader who has four receptors superposed and wants to see one of them answer. */
+let motifScopePdb = null;
+export function motifScope() { return motifScopePdb; }
+export function setMotifScope(pdb) {
+  motifScopePdb = pdb ? String(pdb).toUpperCase() : null;
+  redrawSelections();
+  repaintOverlays();
+}
+/* True when this structure is the one the shortcuts are limited to, or when they are not limited. */
+export function motifScopeAllows(pdb) {
+  return !motifScopePdb || motifScopePdb === String(pdb || "").toUpperCase();
+}
+
 function residuesForMotif(id) {
+  if (!motifScopeAllows(meta && meta.pdb_id)) return [];
   if (id === "tm5_polar" || id === "aromatic_pocket") {
     const positions = id === "tm5_polar" ? new Set(["5x42","5x43","5x46","5x461"])
       : new Set(["6x48","6x51","6x52","7x42"]);
@@ -1337,9 +1362,13 @@ function redrawSelections() {
       const s = keys.join(" or ");
       addRep("picked_motifs", "ball+stick", { sele:withoutHydrogen(s), colorScheme:"uniform",
         colorValue:0x32b56b, scale:1.18, aspectRatio:2.1 });
+      /* Black behind the glyphs, identity in the glyphs. A green label on the green cartoon this
+         structure wears while superposition is on could not be read; the align module settled the
+         same question the same way, and a label means the same thing on either structure. */
       addRep("picked_motif_labels", "label", { sele: "(" + s + ") and .CA", labelType: "text",
-        labelText:labelTextFor(keys.map(k => byKey.get(k))), color:"white", backgroundColor:"#17683b",
-        backgroundOpacity:0.78, showBackground:true, fixedSize:false, labelSize:2.2, radius:0.8, zOffset:2 });
+        labelText:labelTextFor(keys.map(k => byKey.get(k))), color:uniformColour || "white",
+        backgroundColor:LABEL_BACKGROUND,
+        backgroundOpacity:0.8, showBackground:true, fixedSize:false, labelSize:2.2, radius:0.8, zOffset:2 });
     }
   }
 
@@ -1351,8 +1380,9 @@ function redrawSelections() {
     addRep("query_residues", "ball+stick", { sele:withoutHydrogen(sq), colorScheme:"uniform",
       colorValue:0x32b56b, scale:1.18, aspectRatio:2.1 });
     addRep("query_labels", "label", { sele:"(" + sq + ") and .CA", labelType:"text",
-      labelText:labelTextFor(rows), color:"white", backgroundColor:"#17683b",
-      backgroundOpacity:0.78, showBackground:true, fixedSize:false, labelSize:2.2,
+      labelText:labelTextFor(rows), color:uniformColour || "white",
+      backgroundColor:LABEL_BACKGROUND,
+      backgroundOpacity:0.8, showBackground:true, fixedSize:false, labelSize:2.2,
       radius:0.8, zOffset:2 });
   }
 
@@ -1381,9 +1411,28 @@ export function isResidueSelected(chain, seq) {
   return selectedResidues.has(residueKey(chain, seq));
 }
 
+/* A motif shortcut is one control over the whole scene, so a superposed structure has to answer it
+   too: the question these chips are pressed for is "where is this motif in the other receptor", and
+   until now they moved only the base structure, which made a chip look as though it had switched
+   the motif off. The align module registers its repaint here rather than being imported, for the
+   same reason the numbering tables are registered - importing it back would close a cycle. */
+let overlayRepaint = null;
+export function registerOverlayRepaint(fn) { overlayRepaint = typeof fn === "function" ? fn : null; }
+function repaintOverlays() { if (overlayRepaint) { try { overlayRepaint(); } catch (e) {} } }
+
+/* Which motifs are on, and which generic positions one covers, so an overlay resolves the same
+   motif against its own numbering instead of borrowing this structure's residue numbers. A motif
+   with no fixed position list answers null; the overlay then reads its own motif memberships. */
+export function selectedMotifIds() { return [...selectedMotifs]; }
+export function motifPositions(id) {
+  if (MOTIF_SPECS[id]) return MOTIF_SPECS[id].positions.slice();
+  return MOTIF_POSITIONS[id] ? MOTIF_POSITIONS[id].slice() : null;
+}
+
 export function toggleMotif(id) {
   selectedMotifs.has(id) ? selectedMotifs.delete(id) : selectedMotifs.add(id);
   redrawSelections();
+  repaintOverlays();
   releaseFocusIfEmpty();
   const residues = residuesForMotif(id);
   if (selectedMotifs.has(id) && residues.length) {
@@ -1397,6 +1446,7 @@ export function toggleMotif(id) {
 
 export function clearSelections() {
   selectedResidues.clear(); selectedMotifs.clear(); redrawSelections();
+  repaintOverlays();
   releaseFocusIfEmpty();
 }
 

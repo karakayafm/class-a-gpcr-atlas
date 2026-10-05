@@ -331,7 +331,7 @@ export async function contactMap(root, route) {
         .map(([id]) => [id, siteClassLabel(id)]);
       if (!siteCounts.has(state.site) && sites.length) state.site = siteCounts.has(DEFAULT_SITE)
         ? DEFAULT_SITE : sites[0][0];
-      data = { structures: st.structures, pocket, sites,
+      data = { structures: st.structures, pocket, sites, pending: await L.pendingCuration(),
                assigned: assign(st.structures, pocket, state.site) };
       drawControls(); draw();
     } catch (error) {
@@ -372,6 +372,19 @@ export async function contactMap(root, route) {
             share: (getLang() === "tr" ? "%" : "") + Math.round(100 / X.receptors) + (getLang() === "tr" ? "" : "%") }) }));
     if (state.a === state.b)
       summary.appendChild(el("span", { class: "notice small", text: t("cm_same_side") }));
+    /* Labels the comparison rests on. A correction decided in curation but not yet built is applied by
+       the loader and said here; and where the two blocker labels are separated, the compounds this
+       family records under both are named, because there the split follows the annotation. */
+    const applied = [];
+    for (const x of data.structures) for (const o of x.observations || [])
+      if (o.binding_mode_pending) applied.push(`${x.pdb_id} ${o.ligand_name || ""}: ${ligandClassLabel(o.binding_mode_pending.from)} → ${ligandClassLabel(o.binding_mode)}`);
+    if (applied.length)
+      summary.appendChild(el("span", { class: "notice small", text: t("cm_pending_applied", { list: applied.join("; ") }) }));
+    const conflicts = ((data.pending || {}).blocker_label_conflicts || {})[state.fam] || [];
+    const splits = [state.a, state.b].some(g => g === "inv" || g === "antonly");
+    if (splits && conflicts.length)
+      summary.appendChild(el("span", { class: "notice small", text: t("cm_label_conflict", {
+        n: conflicts.length, list: conflicts.map(c => c.ligand).join(", ") }) }));
     if (!A.receptors || !B.receptors || !shown.length) {
       body.appendChild(el("p", { class: "notice", text: !shown.length && A.receptors && B.receptors
         ? t("cm_none_above", { min: state.min }) : t("cm_empty") }));
