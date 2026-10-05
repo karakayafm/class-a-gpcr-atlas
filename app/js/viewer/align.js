@@ -73,7 +73,7 @@ export function diagramSpecs() {
  * light enough to be recognisable, the white text stops being legible. Colouring the glyphs keeps
  * the contrast of black behind them and puts the identity where the eye already is. */
 function hex(colour) { return "#" + colour.toString(16).padStart(6, "0"); }
-const LABEL_BACKGROUND = "#111111";
+const LABEL_BACKGROUND = V.LABEL_BACKGROUND;   // one value, defined with the base structure's labels
 
 /* generic position -> CA coordinate, for one chain of a loaded structure. Built by walking the
    structure once rather than by running a selection per position: a receptor has ~300 numbered
@@ -198,15 +198,18 @@ function paintOverlay(entry) {
   if (entry.layers.cartoon)
     comp.addRepresentation("cartoon", Object.assign({
       sele: entry.chain ? ":" + entry.chain : "polymer", opacity: 0.85, side: "front" }, flat));
+  /* "Show only the selection" drops the base structure's contact side chains; an overlay that kept
+     drawing its own left the reader with half a pocket hidden and half still there. */
+  const focus = V.isFocusSelection();
   const contacts = contactSelectionOf(entry.meta);
-  if (entry.layers.sidechains && contacts)
+  if (entry.layers.sidechains && contacts && !focus)
     comp.addRepresentation(atomType, Object.assign({ sele: contacts, opacity: 0.95 },
       atomExtra, byElement));
   const lig = ligandSelectionOf(entry.meta);
   if (entry.layers.ligand && lig)
     comp.addRepresentation("ball+stick", Object.assign({
       sele: lig, aspectRatio: 1.6, radiusScale: 1.1 }, byElement));
-  if (entry.layers.interactions) {
+  if (entry.layers.interactions && !focus) {
     const cr = contactResiduesOf(entry.meta);
     /* Both sides parenthesised. Unbracketed, `a or b or (c) and hetero and not hydrogen` is at the
        mercy of the selection language's precedence, and the reading that binds `and` across the
@@ -242,14 +245,21 @@ function paintOverlay(entry) {
       backgroundColor: LABEL_BACKGROUND, backgroundOpacity: 0.8,
       showBackground: true, fixedSize: false, labelSize: 2.2, radius: 0.8, zOffset: 2 });
   }
-  /* Residues picked from the whole-receptor list while this structure was the active one. Drawn and
-     labelled here rather than on the base component, which is the whole point: a position outside
-     the pocket of the *other* receptor is what superposition was opened to look at. */
-  if (entry.selected.size) {
-    const sele = [...entry.selected].join(" or ");
-    comp.addRepresentation("licorice", Object.assign({
-      sele: "(" + sele + ") and not hydrogen and sidechainAttached",
-      radiusScale: 1.5, opacity: 1 }, byElement));
+  /* Residues picked from the whole-receptor list while this structure was the active one, plus the
+     residues the motif shortcuts currently ask for, resolved against *this* structure's numbering.
+     Drawn and labelled here rather than on the base component, which is the whole point: a position
+     outside the pocket of the *other* receptor is what superposition was opened to look at. */
+  const picked = new Set(entry.selected);
+  for (const key of motifResidueKeys(entry)) picked.add(key);
+  if (picked.size) {
+    const sele = [...picked].join(" or ");
+    /* Drawn as the base structure draws the same thing - ball+stick over the whole residue, not
+       licorice over `sidechainAttached` - so the two answer a motif chip identically. Restricted to
+       the side chain, an overlay showed no backbone where the base structure showed one, and the
+       pair read as two different measurements of the same position. */
+    comp.addRepresentation("ball+stick", Object.assign({
+      sele: "(" + sele + ") and not hydrogen",
+      scale: 1.18, aspectRatio: 2.1, opacity: 1 }, byElement));
     /* Named by generic position, as the base structure names its selection - "S2x63", not
        "SER101", which meant something only in this one deposition. A residue with no generic
        position falls back to its deposited name. */
@@ -265,6 +275,25 @@ function paintOverlay(entry) {
       color: hex(colour), fixedSize: false, labelSize: 2.2, zOffset: 2,
       showBackground: true, backgroundColor: LABEL_BACKGROUND, backgroundOpacity: 0.8 });
   }
+}
+
+/* The motif shortcuts are one control over the whole scene. A motif is a set of generic positions,
+   and this structure's own numbering table says which of its residues carry them - so the chip that
+   draws 5x58 and 7x53 on the base receptor draws that receptor's 5x58 and 7x53 here, which is the
+   comparison superposition was opened for. Resolved per structure rather than by borrowing the base
+   structure's residue numbers, which belong to a different receptor. */
+function motifResidueKeys(entry) {
+  // The shortcuts can be limited to one structure, for a scene with several superposed.
+  if (!V.motifScopeAllows(entry.pdb)) return [];
+  const want = new Set();
+  for (const id of V.selectedMotifIds()) {
+    // A motif with no fixed position list cannot be resolved against a foreign numbering table.
+    for (const p of V.motifPositions(id) || []) want.add(p);
+  }
+  if (!want.size) return [];
+  return (entry.rows || [])
+    .filter(r => (!entry.chain || r.c === entry.chain) && want.has(r.p))
+    .map(r => residueKey(r.c, r.n));
 }
 
 /* Residue picking on an overlay, keyed the way NGL selections are written so the set can be joined
@@ -324,6 +353,9 @@ export function setLayer(pdb, name, on) {
 }
 /* Redraws every overlay in the form the current measurement mode calls for. */
 export function refreshStyle() { for (const o of overlays) paintOverlay(o); }
+/* Pressing a motif shortcut has to reach the overlays, and the viewer module cannot import this one
+   without closing a cycle, so the repaint is handed to it instead. Registered once, at load. */
+V.registerOverlayRepaint(refreshStyle);
 
 /* The numbering table an overlay was aligned on, so the panel can offer its positions the way it
    offers the base structure's. */
