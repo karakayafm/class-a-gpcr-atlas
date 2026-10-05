@@ -56,7 +56,26 @@ export function loadSearchIndex() {
 /* Per-panel structure list: every structure in one transducer panel, across families.
    Keyed on the manifest checksum like the family payloads, so a rebuilt payload is never
    served from a stale cache entry. */
+/* The slug "every panel at once" answers to. Built from the six payloads rather than from a seventh
+   of its own: every structure carries a transducer panel - "no transducer" is one of them - so the
+   six cover the set, and a structure that sits in two panels is kept once. ~2.4 MB in all, fetched
+   only when the reader asks for it. */
+export const ANY_PANEL = "any";
+async function loadEveryPanel() {
+  const slugs = Object.keys(getManifest().panel_files || {});
+  const parts = await Promise.all(slugs.map(loadPanelStructures));
+  const byPdb = new Map();
+  for (const part of parts)
+    for (const s of part.structures || []) if (!byPdb.has(s.pdb_id)) byPdb.set(s.pdb_id, s);
+  const structures = [...byPdb.values()];
+  return { schema: "structure_index", panel: ANY_PANEL, panel_slug: ANY_PANEL,
+           count: structures.length,
+           families: [...new Set(parts.flatMap(p => p.families || []))],
+           structures };
+}
+
 export async function loadPanelStructures(panelSlug) {
+  if (panelSlug === ANY_PANEL) return loadEveryPanel();
   const entry = (getManifest().panel_files || {})[panelSlug];
   if (!entry) throw new LoadError("schema", "panels/" + panelSlug);
   const key = "panel:" + panelSlug + ":" + entry.sha256;

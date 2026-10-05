@@ -242,12 +242,19 @@ function buildAlignSection(meta) {
     baseSwatch.style.background = ALIGN.baseColour();
     /* Each card makes its structure the active one, as the chips above do - the list is where the
        structures are named in full, so it is where a reader looks for them. */
+    /* Switching the active structure moves the motif shortcuts with it while they are limited to
+       one: left pointing at the structure the reader has just switched away from, the chips would
+       draw on a structure that is no longer the active one. */
+    const makeActive = pdb => {
+      activeStructure = pdb;
+      if (VIEW.motifScope() !== null) VIEW.setMotifScope(pdb);
+      buildViewerSide(meta);
+    };
     const activate = pdb => ({ role: "button", tabindex: "0",
       title: t("align_activate", { pdb }),
-      onclick: e => { if (e.target.closest("button")) return;
-        activeStructure = pdb; buildViewerSide(meta); },
+      onclick: e => { if (e.target.closest("button")) return; makeActive(pdb); },
       onkeydown: e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault();
-        activeStructure = pdb; buildViewerSide(meta); } } });
+        makeActive(pdb); } } });
     const current = activePdb(meta);
     const isCurrent = pdb => pdb === current ? " is-active" : "";
     list.appendChild(el("div", Object.assign({ class: "align-row align-row-base" +
@@ -594,6 +601,17 @@ function buildStructureSwitch(meta, onChange) {
         e.stopPropagation();
         for (const other of document.querySelectorAll(".colour-pop")) if (other !== pop) other.hidden = true;
         pop.hidden = !pop.hidden; well.setAttribute("aria-expanded", pop.hidden ? "false" : "true");
+        /* The palette is fixed so the scrolling side panel cannot clip it, which means it is placed
+           here rather than by the stylesheet. Kept inside the window on both axes: at the right
+           edge the five-column grid would otherwise run off screen, and low down it opens upwards. */
+        if (!pop.hidden) {
+          pop.style.visibility = "hidden";
+          const r = well.getBoundingClientRect(), box = pop.getBoundingClientRect(), gap = 4;
+          const below = r.bottom + gap, fits = below + box.height <= window.innerHeight - gap;
+          pop.style.left = Math.max(gap, Math.min(r.left, window.innerWidth - box.width - gap)) + "px";
+          pop.style.top = (fits ? below : Math.max(gap, r.top - box.height - gap)) + "px";
+          pop.style.visibility = "";
+        }
       } });
     well.style.background = colour;
     return el("span", { class:"structure-chip-wrap" }, [b, well, pop]);
@@ -1080,6 +1098,26 @@ function buildViewerSide(meta) {
   const motifs = VIEW.motifGroups();
   if (motifs.length || VIEW.hasCovalentBond()) {
     motifSection.appendChild(el("h4", { class: "viewer-section-title", text: t("v_motif_shortcuts") }));
+    /* With structures superposed the shortcuts answer on all of them, which is what they are
+       pressed for. This limits them to the active structure instead, for the reader comparing four
+       receptors who wants to see one of them on its own. Offered only when there is something to
+       choose between. */
+    if (ALIGN.hasOverlays()) {
+      const scoped = () => VIEW.motifScope() !== null;
+      const scopeButton = el("button", { class:"motif-scope-toggle",
+        "aria-pressed":scoped() ? "true" : "false",
+        text:scoped() ? t("v_motif_scope_active") : t("v_motif_scope_all"),
+        title:t("v_motif_scope_hint"),
+        onclick:() => {
+          VIEW.setMotifScope(scoped() ? null : activePdb(meta));
+          scopeButton.setAttribute("aria-pressed", scoped() ? "true" : "false");
+          scopeButton.classList.toggle("selected", scoped());
+          scopeButton.textContent = scoped() ? t("v_motif_scope_active") : t("v_motif_scope_all");
+          paintFocus();
+        } });
+      scopeButton.classList.toggle("selected", scoped());
+      motifSection.appendChild(el("div", { class:"motif-scope-row" }, [scopeButton]));
+    }
     const list = el("div", { class: "motif-picker" });
     if (VIEW.hasCovalentBond()) {
       list.appendChild(el("div", { class:"motif-group-title group-covalent",
@@ -1340,7 +1378,13 @@ async function render(r) {
         // Fall back to whatever panel this build actually carries; an offline single-family
         // export may not include Gs at all.
         const available = Object.keys(L.getManifest().panel_files || {});
-        const panel = available.includes(r.panel) ? r.panel
+        /* "Every panel at once" is not one of the carried payloads - it is joined from them - so it
+           has to be let through here, and only where there is more than one panel to join. It is
+           also where the view opens: landing in Gs answers a question the reader did not ask, and
+           the strip is right there to narrow it. */
+        const anyUsable = available.length > 1;
+        const panel = ((r.panel === L.ANY_PANEL || !r.panel) && anyUsable) ? L.ANY_PANEL
+          : available.includes(r.panel) ? r.panel
           : (available.includes("gs") ? "gs" : available[0]);
         if (!panel) { fatal(t("err_route")); return; }
         node = await V.structures(main, null, openModal, null, r.pdb, { panelSlug: panel }); break;
