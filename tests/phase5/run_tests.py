@@ -9,6 +9,9 @@ ROOT=Path(__file__).resolve().parents[2]; FROZEN=ROOT.parent
 sys.path.insert(0,str(ROOT/"pipeline"))
 from common.schema import validate            # noqa: E402
 from common.canonical import content_sha256   # noqa: E402
+# The bundles deliberately relabel a few polymer partners the lists keep the source label for
+# (an antibody, a gp160-CD4 complex); the drift check below exempts exactly those.
+from phase5.build_bundles import STRUCTURE_LIGAND_OVERRIDES   # noqa: E402
 WEB=ROOT/"data/web"; APP=ROOT/"app"; REL=ROOT/"releases/phase5"
 IN,P3,P4=ROOT/"data/intermediate",ROOT/"data/intermediate/phase3",ROOT/"data/intermediate/phase4"
 AGG=ROOT/"data/aggregates"
@@ -58,6 +61,33 @@ def A_read_only():
 def B_payload_integrity():
     g="B_payload_integrity"
     check(g,"preflight not blocked",PRE["blocked"] is False)
+    # The family lists and the viewer bundles are written by different scripts from the same
+    # curation, and twice they drifted: build_bundles.py did not read the ligand-role table, and
+    # then did not read the apo decisions, so a corrected label and an apo verdict reached the lists
+    # while the viewer kept the raw value. Neither showed up here, because nothing compared the two.
+    # The viewer reads both fields - the label in its header, apo_status in its "apo confirmed"
+    # message and its side-chain control - so both are compared, for every structure.
+    drift_apo=[]; drift_mode=[]
+    for f in M["families"]:
+        for s in js(WEB/"families"/f["slug"]/"structures.json")["structures"]:
+            vm=WEB/"structures"/s["pdb_id"]/"viewer_meta.json"
+            if not vm.is_file(): continue
+            d=js(vm)
+            if d.get("apo_status")!=s.get("apo_status"):
+                drift_apo.append(f'{s["pdb_id"]}: list {s.get("apo_status")} / viewer {d.get("apo_status")}')
+            # A structure the bundle overrides is drawing something it has decided is not the
+            # pharmacological ligand - an antibody chain, a gp160-CD4 complex - and gives it
+            # "Not specified" on purpose. That disagreement is a decision, not drift.
+            if s["pdb_id"] in STRUCTURE_LIGAND_OVERRIDES: continue
+            seen={o.get("ligand_entity_id"):o.get("binding_mode") for o in d.get("observations") or []}
+            for o in s.get("observations") or []:
+                lid=o.get("ligand_entity_id")
+                if lid in seen and seen[lid]!=o.get("binding_mode"):
+                    drift_mode.append(f'{lid}: list {o.get("binding_mode")} / viewer {seen[lid]}')
+    check(g,"viewer bundles carry the lists' apo_status",not drift_apo,
+          f"{len(drift_apo)}: "+"; ".join(drift_apo[:3]))
+    check(g,"viewer bundles carry the lists' binding modes",not drift_mode,
+          f"{len(drift_mode)}: "+"; ".join(drift_mode[:3]))
     check(g,"11 families in manifest and landing",
           M["family_count"]==11 and LAND["family_count"]==11 and len(M["families"])==11)
     fam_ids={f["family_id"] for f in M["families"]}

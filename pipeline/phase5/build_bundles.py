@@ -16,7 +16,8 @@ ROOT=Path(__file__).resolve().parents[2]; sys.path.insert(0,str(ROOT/"pipeline")
 from phase3.mmcif import read, atoms                          # noqa: E402
 from common import curated_copies                             # noqa: E402
 from common.canonical import content_sha256                   # noqa: E402
-from phase5.build_payloads import CURATED_LIGAND_ROLES        # noqa: E402
+from phase5.build_payloads import (CURATED_LIGAND_ROLES, CURATED_APO_STRUCTURES,
+                                   CURATED_STRUCTURE_LIGANDS)   # noqa: E402
 IN,P3,P4=ROOT/"data/intermediate",ROOT/"data/intermediate/phase3",ROOT/"data/intermediate/phase4"
 WEB=ROOT/"data/web/structures"; SCHEMA_VERSION="5.0.0"
 POLYMER={"extracellular_polymer_interface","tethered_ligand_interface"}
@@ -891,7 +892,20 @@ def main()->int:
           "species":st["species"],"major_family_id":st["major_family_id"],
           "experimental_method":st["experimental_method"],"resolution":st["resolution"],
           "structural_state":STN.get(pid),
-          "apo_status":("apo" if pid in ANTIBODY_ONLY_INTERACTION_STRUCTURES else st["apo_status"]),
+          # The curation the family lists apply (build_payloads.py). Written raw here, the two
+          # disagreed on 44 structures - the opsin detergents and the phosphatidylinositol entries
+          # read "unresolved" in the viewer while the lists called them confirmed_apo - and the
+          # viewer takes its "apo confirmed" message and its side-chain control from this field.
+          #
+          # The antibody-only structures used to be given "apo" here. That is not one of the three
+          # values anything else writes or reads - the app tests for "confirmed_apo" - so those
+          # three got neither the apo message nor the apo behaviour. All three are in
+          # CURATED_APO_STRUCTURES already, so the rule below covers them and the separate one is
+          # gone rather than corrected: one table, one answer.
+          "apo_status":("confirmed_apo" if pid in CURATED_APO_STRUCTURES else
+                        "not_apo" if pid in CURATED_STRUCTURE_LIGANDS and
+                        any(o["coordinate_status"]=="observed" for o in obs_meta)
+                        else st["apo_status"]),
           "receptor_instances":[{"receptor_instance_id":r["receptor_instance_id"],
             "auth_asym_id":r["auth_asym_id"],"polymer_entity_id":r["polymer_entity_id"],
             "generic_mapping":("unresolved" if REMED.get(r["receptor_instance_id"],{}).get("outcome")
