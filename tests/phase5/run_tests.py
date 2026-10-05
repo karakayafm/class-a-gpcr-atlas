@@ -285,7 +285,12 @@ def I_i18n():
             i+=1
         return out
     def block(lang):
-        s=src.index(lang+": {")+len(lang)+3
+        # Anchor the language object to the start of its line. A plain substring search finds
+        # "en: {" inside a Turkish value first - "İstenen: {wanted}" contains it - which gave an
+        # empty English block and reported every Turkish key as missing.
+        m=re.search(r"(?m)^\s*"+lang+r"\s*:\s*\{",src)
+        if not m: raise AssertionError(f"language object not found: {lang}")
+        s=m.end()
         depth=1; i=s; instr=None
         while i<len(src) and depth>0:
             c=src[i]

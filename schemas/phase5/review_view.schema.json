@@ -69,10 +69,24 @@
             ]
           },
           "human_curator_decision": {
-            "type": "null"
+            "description": "null while an item is open; the recorded decision once it is resolved.",
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "enum": [
+                  "resolved_by_source_verification_and_owner_review"
+                ]
+              }
+            ]
           },
           "human_review_status": {
-            "const": "not_started"
+            "description": "Items listed in config/phase5/resolved_review_items.json are 'completed'.",
+            "enum": [
+              "not_started",
+              "completed"
+            ]
           }
         }
       }
