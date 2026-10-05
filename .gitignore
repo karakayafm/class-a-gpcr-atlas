@@ -18,6 +18,19 @@ data/raw/
 # Enrichment intermediates. The published payload under site/data/web is the artefact;
 # the step that produces it re-runs from the cache and its intermediate is not shipped.
 data/intermediate/
+# The rest of the pipeline's working tree. Nothing under data/ is tracked - the published
+# artefact is site/data/web - but only three directories were named here, so a populated
+# data/ left ~900 MB of build inputs and outputs untracked and unignored, one `git add -A`
+# away from a commit.
+data/aggregates/
+data/contacts/
+data/curation/
+data/freezes/
+data/licences/
+data/manifests/
+data/normalized/
+data/pilots/
+data/web/
 releases/
 reports/
 curation/packets/
