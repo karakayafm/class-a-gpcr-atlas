@@ -16,6 +16,7 @@ ROOT=Path(__file__).resolve().parents[2]; sys.path.insert(0,str(ROOT/"pipeline")
 from phase3.mmcif import read, atoms                          # noqa: E402
 from common import curated_copies                             # noqa: E402
 from common.canonical import content_sha256                   # noqa: E402
+from phase5.build_payloads import CURATED_LIGAND_ROLES        # noqa: E402
 IN,P3,P4=ROOT/"data/intermediate",ROOT/"data/intermediate/phase3",ROOT/"data/intermediate/phase4"
 WEB=ROOT/"data/web/structures"; SCHEMA_VERSION="5.0.0"
 POLYMER={"extracellular_polymer_interface","tethered_ligand_interface"}
@@ -705,6 +706,11 @@ def main()->int:
             effective_form=(override or {}).get("entity_form",lg["entity_form"])
             effective_site=(override or {}).get("binding_site_class",
               CURATED_SITE_CLASSES.get(lg["ligand_entity_id"],lg["binding_site_class"]))
+            # The role and binding-mode decisions live with the payloads, and were not read here:
+            # a corrected label reached the family lists while the bundle the viewer loads kept the
+            # old one. The site-class half of the same review was mirrored into this file, which is
+            # why only the labels drifted. Read from the one table rather than copied again.
+            curated_role,curated_mode=CURATED_LIGAND_ROLES.get(lg["ligand_entity_id"],(None,None))
             if crows:
                 paired_chains={c["ligand_auth_asym_id"] for c in crows}
                 paired_residues={(c["ligand_auth_asym_id"],str(c["ligand_auth_seq_id"]))
@@ -738,9 +744,9 @@ def main()->int:
               "ligand_entity_id":lg["ligand_entity_id"],
               "ligand_name":(override or {}).get("ligand_name") or
                  (lg["source_annotations"].get("gpcrdb_ligand") or {}).get("name"),
-              "ligand_role":(override or {}).get("ligand_role",lg["ligand_role"]),
+              "ligand_role":(override or {}).get("ligand_role",curated_role or lg["ligand_role"]),
               "entity_form":effective_form,
-              "binding_mode":(override or {}).get("binding_mode",lg["binding_mode"]),
+              "binding_mode":(override or {}).get("binding_mode",curated_mode or lg["binding_mode"]),
               "binding_site_class":effective_site,
               "is_polymer_interface":effective_site in POLYMER,
               "coordinate_status":("observed" if observed else
