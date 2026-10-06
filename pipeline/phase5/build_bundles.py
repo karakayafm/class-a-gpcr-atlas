@@ -17,7 +17,7 @@ from phase3.mmcif import read, atoms                          # noqa: E402
 from common import curated_copies                             # noqa: E402
 from common.canonical import content_sha256                   # noqa: E402
 from phase5.build_payloads import (CURATED_LIGAND_ROLES, CURATED_APO_STRUCTURES,
-                                   CURATED_STRUCTURE_LIGANDS)   # noqa: E402
+                                   CURATED_STRUCTURE_LIGANDS, CURATED_SITE_CLASSES)   # noqa: E402
 IN,P3,P4=ROOT/"data/intermediate",ROOT/"data/intermediate/phase3",ROOT/"data/intermediate/phase4"
 WEB=ROOT/"data/web/structures"; SCHEMA_VERSION="5.0.0"
 POLYMER={"extracellular_polymer_interface","tethered_ligand_interface"}
@@ -251,61 +251,10 @@ OBSERVATION_LIGAND_OVERRIDES={
     "ligand_chain":"R","ligand_residue":"401","receptor_chain":"R","receptor_entity":"5",
     "entity_form":"nonpolymer_residue","binding_site_class":"lipid_facing_site"},
 }
-CURATED_SITE_CLASSES={
-  "5LWE:LE:np:79K":"intracellular_allosteric_pocket",
-  "5T1A:LE:np:VT5":"intracellular_allosteric_pocket",
-  "6LFL:LE:np:EBX":"intracellular_allosteric_pocket",
-  "9D3E:LE:np:EBX":"intracellular_allosteric_pocket",
-  "9D3G:LE:np:EBX":"intracellular_allosteric_pocket",
-  "6QZH:LE:np:JLW":"intracellular_allosteric_pocket",
-  "7FIH:LE:np:55Z":"extracellular_allosteric_pocket",
-  "7XW5:LE:np:HOI":"extracellular_allosteric_pocket",
-  "7XW6:LE:np:HOI":"extracellular_allosteric_pocket",
-  "8I2G:LE:np:O6F":"extracellular_allosteric_pocket",
-  "8JHY:LE:np:IX8":"lipid_facing_site",
-  "8JII:LE:np:IX8":"lipid_facing_site",
-  "7CFN:LE:np:FX0:pam":"lipid_facing_site",
-  "4XNV:LE:np:BUR":"lipid_facing_site",
-  "7LD3:LE:np:XTD":"lipid_facing_site",
-  "7EJX:LE:np:J5F":"bitopic_or_multi_region_site",
-  "8DWG:LE:np:U39":"extracellular_allosteric_pocket",
-  "5NDZ:LE:np:8UN":"lipid_facing_site",
-  "6C1Q:LE:np:9P2":"lipid_facing_site",
-  "6C1R:LE:np:EFD":"lipid_facing_site",
-  "8FN0:LE:np:SRW":"intracellular_allosteric_pocket",
-  "8JPB:LE:np:SRW":"intracellular_allosteric_pocket",
-  "8JPC:LE:np:SRW":"intracellular_allosteric_pocket",
-  "8JPF:LE:np:SRW":"intracellular_allosteric_pocket",
-  "8K9L:LE:np:VV9":"intracellular_allosteric_pocket",
-  "9BJK:LE:np:A1APU":"extracellular_allosteric_pocket",
-  "4MQT:LE:np:2CU":"extracellular_allosteric_pocket",
-  "5X7D:LE:np:8VS":"intracellular_allosteric_pocket",
-  "6N48:LE:np:KBY":"intracellular_allosteric_pocket",
-  "8PKM:LE:np:T7M":"lipid_facing_site",
-  "6OBA:LE:np:M3J":"lipid_facing_site",
-  "6OIK:LE:np:2CU":"extracellular_allosteric_pocket",
-  "7CKZ:LE:np:G4C":"lipid_facing_site",
-  "7LJC:LE:np:G4C":"intracellular_allosteric_pocket",
-  "7LJD:LE:np:G4C":"bitopic_or_multi_region_site",
-  "7T94:LE:np:2CU":"extracellular_allosteric_pocket",
-  "7T96:LE:np:2CU":"extracellular_allosteric_pocket",
-  "7TRP:LE:np:IUE":"extracellular_allosteric_pocket",
-  "7TRQ:LE:np:IUI":"extracellular_allosteric_pocket",
-  "7V68:LE:np:2CU":"extracellular_allosteric_pocket",
-  "7V6A:LE:np:5XI":"extracellular_allosteric_pocket",
-  "7X2F:LE:np:G4C":"intracellular_allosteric_pocket",
-  "8PJK:LE:np:T7M":"lipid_facing_site",
-  "4PHU:LE:np:2YB":"bitopic_or_multi_region_site",
-  "5TZR:LE:np:MK6":"bitopic_or_multi_region_site",
-  "5TZY:LE:np:7OS":"bitopic_or_multi_region_site",
-  "5KW2:LE:np:6XQ":"lipid_facing_site",
-  "6KQI:LE:np:9GL":"lipid_facing_site",
-  "7FEE:LE:np:7IC":"lipid_facing_site",
-  "7WV9:LE:np:7IC":"lipid_facing_site",
-  "8J20:LE:np:9T4":"intracellular_allosteric_pocket",
-  "8XXU:LE:np:A1D5Q":"bitopic_or_multi_region_site",
-  "8XXV:LE:np:A1D5Q":"bitopic_or_multi_region_site",
-}
+# CURATED_SITE_CLASSES lives with the payloads. It used to be copied here, and the copy fell
+# behind: 65 entries there against 53 here, so 15 observations the review had moved out of
+# the pocket still read canonical_7tm_pocket in the viewer. Imported, like the rest.
+
 SHORTCUT_GENERIC_POSITIONS={"5x42","5x43","5x46","5x461",
                             "6x48","6x51","6x52","7x42"}
 MCHR1_SPLIT_CONSTRUCTS={"8YNS","8YNT"}

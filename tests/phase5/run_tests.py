@@ -67,7 +67,7 @@ def B_payload_integrity():
     # while the viewer kept the raw value. Neither showed up here, because nothing compared the two.
     # The viewer reads both fields - the label in its header, apo_status in its "apo confirmed"
     # message and its side-chain control - so both are compared, for every structure.
-    drift_apo=[]; drift_mode=[]
+    drift_apo=[]; drift_mode=[]; drift_site=[]
     for f in M["families"]:
         for s in js(WEB/"families"/f["slug"]/"structures.json")["structures"]:
             vm=WEB/"structures"/s["pdb_id"]/"viewer_meta.json"
@@ -79,15 +79,23 @@ def B_payload_integrity():
             # pharmacological ligand - an antibody chain, a gp160-CD4 complex - and gives it
             # "Not specified" on purpose. That disagreement is a decision, not drift.
             if s["pdb_id"] in STRUCTURE_LIGAND_OVERRIDES: continue
-            seen={o.get("ligand_entity_id"):o.get("binding_mode") for o in d.get("observations") or []}
+            seen={o.get("ligand_entity_id"):o for o in d.get("observations") or []}
             for o in s.get("observations") or []:
                 lid=o.get("ligand_entity_id")
-                if lid in seen and seen[lid]!=o.get("binding_mode"):
-                    drift_mode.append(f'{lid}: list {o.get("binding_mode")} / viewer {seen[lid]}')
+                if lid not in seen: continue
+                if seen[lid].get("binding_mode")!=o.get("binding_mode"):
+                    drift_mode.append(f'{lid}: list {o.get("binding_mode")} / viewer {seen[lid].get("binding_mode")}')
+                # The site class decides which pocket an observation is counted in, so a copy of the
+                # table that fell behind put fifteen observations back in the canonical pocket.
+                if seen[lid].get("binding_site_class")!=o.get("binding_site_class"):
+                    drift_site.append(f'{lid}: list {o.get("binding_site_class")} / '
+                                      f'viewer {seen[lid].get("binding_site_class")}')
     check(g,"viewer bundles carry the lists' apo_status",not drift_apo,
           f"{len(drift_apo)}: "+"; ".join(drift_apo[:3]))
     check(g,"viewer bundles carry the lists' binding modes",not drift_mode,
           f"{len(drift_mode)}: "+"; ".join(drift_mode[:3]))
+    check(g,"viewer bundles carry the lists' binding-site classes",not drift_site,
+          f"{len(drift_site)}: "+"; ".join(drift_site[:3]))
     check(g,"11 families in manifest and landing",
           M["family_count"]==11 and LAND["family_count"]==11 and len(M["families"])==11)
     fam_ids={f["family_id"] for f in M["families"]}
